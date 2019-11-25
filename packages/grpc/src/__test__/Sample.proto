@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// this is only used for testing the gRPC library
+package sample;
+
+message SampleRequest {
+    int32 id = 1;
+}
+
+message SampleResponse {
+    string name = 1;
+}
+
+service SampleService {
+    rpc NoStreaming(SampleRequest) returns(SampleResponse);
+    rpc StreamingIn(stream SampleRequest) returns(SampleResponse);
+    rpc StreamingOut(SampleRequest) returns(stream SampleResponse);
+    rpc Streaming(stream SampleRequest) returns(stream SampleResponse);
+}

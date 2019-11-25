@@ -1,0 +1,29 @@
+{
+    "name": "@walmartlabs/cookie-cutter-azure",
+    "version": "1.1.1",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "@azure/cosmos": "2.1.5",
+        "azure-storage": "2.10.3",
+        "lodash": "4.17.11",
+        "opentracing": "0.14.3",
+        "tunnel": "0.0.6",
+        "uuid": "3.3.2"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.1.0"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.1.0"
+    },
+    "scripts": {
+        "build": "tsc",
+        "postbuild": "node postbuild.js",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "integrate": "docker-compose up -d && echo \"no tests yet\"; docker-compose down",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
+}

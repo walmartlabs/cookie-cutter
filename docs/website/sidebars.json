@@ -1,0 +1,33 @@
+{
+  "docs": {
+    "Introduction": [
+        "intro-getting-started",
+        "intro-inputs",
+        "intro-message-handling",
+        "intro-outputs",
+        "versioning-contribution"
+    ],
+    "Components": [
+        "comp-dispatch-context",
+        "comp-state",
+        "comp-metrics",
+        "comp-tracing",
+        "comp-logging",
+        "comp-validation",
+        "comp-encoding",
+        "comp-config",
+        "comp-testing"
+    ],
+    "Modules": [
+        "module-kafka",
+        "module-azure",
+        "module-grpc",
+        "module-validatejs",
+        "module-mssql",
+        "module-timer",
+        "module-statsd",
+        "module-protobuf",
+        "module-s3"
+    ]
+  }
+}

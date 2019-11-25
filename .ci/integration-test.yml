@@ -1,0 +1,10 @@
+parameters:
+  versionSpec: ''
+  packagePath: ''
+
+steps:
+  - template: setup.yml
+    parameters:
+      versionSpec: ${{ parameters.versionSpec }}
+  - script: yarn run --cwd=${{ parameters.packagePath }} integrate
+    displayName: Run Integration Tests

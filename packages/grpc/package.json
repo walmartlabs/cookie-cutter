@@ -1,0 +1,25 @@
+{
+    "name": "@walmartlabs/cookie-cutter-grpc",
+    "version": "1.1.1",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "change-case": "3.1.0",
+        "grpc": "1.20.3",
+        "opentracing": "0.14.3"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.1.0"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.1.0",
+        "protobufjs": "6.8.8"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
+}

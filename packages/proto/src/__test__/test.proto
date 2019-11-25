@@ -1,0 +1,14 @@
+syntax="proto3";
+package cookiecutter.test;
+import "google/protobuf/timestamp.proto";
+
+message SampleMessage {
+    int32 id = 1;
+    string text = 2;
+    repeated Nested nested = 3;
+
+    message Nested {
+        google.protobuf.Timestamp time = 1;
+        string text = 2;
+    }
+}

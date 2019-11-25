@@ -1,0 +1,45 @@
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+  kafka_broker1:
+    image: wurstmeister/kafka:2.11-2.0.0
+    ports:
+      - "30001:9092"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  kafka_broker2:
+    image: wurstmeister/kafka:2.11-2.0.0
+    ports:
+      - "30002:9092"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  kafka_broker3:
+    image: wurstmeister/kafka:2.11-2.0.0
+    ports:
+      - "30003:9092"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
