@@ -14,6 +14,7 @@ import {
     IComponentContext,
     IDisposable,
     IInputSource,
+    IInputSourceContext,
     ILogger,
     IMessage,
     IMetrics,
@@ -88,8 +89,8 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
         await this.consumer.initialize(context);
     }
 
-    public async *start(): AsyncIterableIterator<MessageRef> {
-        const messages: AsyncIterableIterator<IRawKafkaMessage> = this.consumer.consume();
+    public async *start(context: IInputSourceContext): AsyncIterableIterator<MessageRef> {
+        const messages: AsyncIterableIterator<IRawKafkaMessage> = this.consumer.consume(context);
         for await (let message of messages) {
             message = this.config.preprocessor.process(message);
             this.metrics.increment(KafkaMetrics.MsgReceived, {
@@ -148,6 +149,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                     [KafkaMetadata.Timestamp]: new Date(parseInt(message.timestamp, 10)),
                     [KafkaMetadata.ExactlyOnceSemantics]: this.config.eos,
                     [KafkaMetadata.ConsumerGroupId]: this.config.group,
+                    [KafkaMetadata.ConsumerGroupEpoch]: this.consumer.epoch,
                 };
 
                 const span = this.hydrateSpanContext(message.topic, type, headers);
@@ -161,9 +163,23 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                             const offset: string = msg.metadata(KafkaMetadata.Offset);
                             const topic: string = msg.metadata(KafkaMetadata.Topic);
                             const partition: number = msg.metadata(KafkaMetadata.Partition);
-                            if (err) {
-                                this.logger.error("Unable to release msg", err);
-                                failSpan(span, err);
+                            const epoch: number = msg.metadata(KafkaMetadata.ConsumerGroupEpoch);
+
+                            if (err || epoch !== this.consumer.epoch) {
+                                if (err) {
+                                    this.logger.error("Unable to release msg", err);
+                                } else {
+                                    this.logger.debug(
+                                        "Detected epoch mismatch, not committing offset",
+                                        {
+                                            offset,
+                                            topic,
+                                            partition,
+                                        }
+                                    );
+                                }
+
+                                failSpan(span, err || new Error("epoch mismatch"));
                                 this.metrics.increment(KafkaMetrics.MsgProcessed, {
                                     topic,
                                     event_type: type,
@@ -192,9 +208,24 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                         async (msg, __, err): Promise<void> => {
                             const topic: string = msg.metadata(KafkaMetadata.Topic);
                             const partition: string = msg.metadata(KafkaMetadata.Partition);
-                            if (err) {
-                                this.logger.error("Unable to release msg", err);
-                                failSpan(span, err);
+                            const offset: string = msg.metadata(KafkaMetadata.Offset);
+                            const epoch: number = msg.metadata(KafkaMetadata.ConsumerGroupEpoch);
+
+                            if (err || epoch !== this.consumer.epoch) {
+                                if (err) {
+                                    this.logger.error("Unable to release msg", err);
+                                } else {
+                                    this.logger.debug(
+                                        "Detected epoch mismatch, not committing offset",
+                                        {
+                                            offset,
+                                            topic,
+                                            partition,
+                                        }
+                                    );
+                                }
+
+                                failSpan(span, err || new Error("epoch mismatch"));
                                 this.metrics.increment(KafkaMetrics.MsgProcessed, {
                                     topic,
                                     event_type: type,
@@ -203,6 +234,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                                 });
                                 return;
                             }
+
                             this.metrics.increment(KafkaMetrics.MsgProcessed, {
                                 topic,
                                 event_type: type,

@@ -22,6 +22,7 @@ import {
     MessageRef,
     SequenceConflictError,
 } from "../model";
+import { RetrierContext } from "../utils";
 import { SinkCoordinator } from "./batching";
 
 export class CompositeOutputSink
@@ -56,17 +57,17 @@ export class CompositeOutputSink
 
     public async sink(
         output: IterableIterator<BufferedDispatchContext>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
-        const result = await this.coordinator.handle(output, bail);
+        const result = await this.coordinator.handle(output, retry);
 
         if (result.error) {
             if (result.error.error instanceof SequenceConflictError) {
-                bail(new SequenceConflictError(result.error.error.details, result.failed[0]));
+                retry.bail(new SequenceConflictError(result.error.error.details, result.failed[0]));
             }
 
             if (!result.error.retryable) {
-                bail(result.error.error);
+                retry.bail(result.error.error);
             }
 
             throw result.error.error;

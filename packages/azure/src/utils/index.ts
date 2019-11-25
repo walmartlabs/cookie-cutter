@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import { ErrorResponse } from "@azure/cosmos";
 import {
     EventSourcedMetadata,
     ISequenceConflictDetails,
@@ -16,6 +17,7 @@ export * from "./BlobClient";
 export * from "./CosmosClient";
 export * from "./CosmosOutputSinkBase";
 export * from "./QueueClient";
+export * from "./QueueClientWithLargeItemSupport";
 
 export interface ICosmosMetadata {
     readonly source?: {
@@ -54,31 +56,35 @@ export function cosmosMetadata(msg: MessageRef): ICosmosMetadata {
     }
 }
 
-export function isRetryableError(e: any): boolean {
-    if (!e) {
+export function isRetryableError(e: ErrorResponse): boolean {
+    if (!e || !e.body || !e.body.message) {
         return false;
     }
-    const body = e.body as string;
-    return e.code === 429 || (body && body.includes("DB Query returned FALSE: ")); // keep the strings synced to ../resources/bulkInsertSproc.js and ../resources/upsertSproc.js
+    const msg: string = e.body.message;
+    return e.code === 429 || (msg && msg.includes("DB Query returned FALSE: ")); // keep the strings synced to ../resources/bulkInsertSproc.js and ../resources/upsertSproc.js
 }
 
-export function isSequenceConflict(e: any): boolean {
-    if (!e || !e.body) {
+export function isSequenceConflict(e: ErrorResponse): boolean {
+    if (!e || !e.body || !e.body.message) {
         return false;
     }
-    const body = e.body as string;
+    const msg: string = e.body.message;
     return (
-        body.includes("Sequence Conflict for document") || // keep the strings synced to ../resources/bulkInsertSproc.js and ../resources/upsertSproc.js
-        (body.includes("Failed to create document number") && body.includes("Latest valid SN")) || // this is from old sprocs before changing the error messages
-        body.includes("Optimistic Concurrent Error") // this is from old sprocs before changing the error messages
+        msg.includes("Sequence Conflict for document") || // keep the strings synced to ../resources/bulkInsertSproc.js and ../resources/upsertSproc.js
+        (msg.includes("Failed to create document number") && msg.includes("Latest valid SN")) || // this is from old sprocs before changing the error messages
+        msg.includes("Optimistic Concurrent Error") // this is from old sprocs before changing the error messages
     );
 }
 
-export function getSequenceConflictDetails(e: any): ISequenceConflictDetails {
-    const body = e.body as string;
-    let matches =
-        body &&
-        body.match(/stream_id: (.+?), new sn: (\d+), expected sn: (\d+), actual sn: (\d+)./);
+export function getSequenceConflictDetails(e: ErrorResponse): ISequenceConflictDetails {
+    const noDetails = { key: "N/A", actualSn: -1, expectedSn: -1, newSn: -1 };
+    if (!e || !e.body || !e.body.message) {
+        return noDetails;
+    }
+    const msg: string = e.body.message;
+    let matches = msg.match(
+        /stream_id: (.+?), new sn: (\d+), expected sn: (\d+), actual sn: (\d+)./
+    );
     if (matches) {
         return {
             key: matches[1],
@@ -88,11 +94,9 @@ export function getSequenceConflictDetails(e: any): ISequenceConflictDetails {
         };
     }
 
-    matches =
-        body &&
-        body.match(
-            /Failed to create document number: \d+ with SN: (\d+)\. Latest valid SN: (\d+)\./
-        );
+    matches = msg.match(
+        /Failed to create document number: \d+ with SN: (\d+)\. Latest valid SN: (\d+)\./
+    );
     if (matches) {
         return {
             key: "N/A",
@@ -102,11 +106,9 @@ export function getSequenceConflictDetails(e: any): ISequenceConflictDetails {
         };
     }
 
-    matches =
-        body &&
-        body.match(
-            /Optimistic Concurrent Error: Expected Current SN: (\d+)\. Received SN: (\d+)\. Document's New SN: (\d+)/
-        );
+    matches = msg.match(
+        /Optimistic Concurrent Error: Expected Current SN: (\d+)\. Received SN: (\d+)\. Document's New SN: (\d+)/
+    );
     if (matches) {
         return {
             key: "N/A",
@@ -115,11 +117,5 @@ export function getSequenceConflictDetails(e: any): ISequenceConflictDetails {
             newSn: parseInt(matches[3], 10),
         };
     }
-
-    return {
-        key: "N/A",
-        actualSn: -1,
-        expectedSn: -1,
-        newSn: -1,
-    };
+    return noDetails;
 }

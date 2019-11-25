@@ -26,7 +26,7 @@ describe("BlobClient", () => {
         storageAccount: "myAccount",
         storageAccessKey: "myKey",
     };
-    const context: SpanContext = {};
+    const context = new SpanContext();
     const span: Span = new NullTracerBuilder()
         .create()
         .startSpan("unit-test", { childOf: context });
@@ -39,22 +39,30 @@ describe("BlobClient", () => {
         beforeEach(() => {
             MockCreateBlobService.mockImplementation(() => {
                 return {
-                    getBlobToText: (_, __, ___, cb) => cb(err, text, _, response),
-                    createBlockBlobFromText: (_, __, ____, _____, cb) => cb(err, _, response),
+                    getBlobToText: (_container, _blob, _options, cb) =>
+                        cb(err, text, undefined, response),
+                    createBlockBlobFromText: (_container, _blob, _text, _options, cb) =>
+                        cb(err, undefined, response),
+                    doesBlobExist: (_container, _blob, cb) => cb(err, undefined, response),
                 };
             });
         });
 
         it("rejects on error from azure-storage for read", async () => {
             const blobClient = new BlobClient(config);
-            await expect(blobClient.read(span, "BlobID")).rejects.toMatch(err);
+            await expect(blobClient.read(span.context(), "BlobID")).rejects.toMatch(err);
         });
 
         it("rejects on error from azure-storage for write", async () => {
             const blobClient = new BlobClient(config);
             await expect(
-                blobClient.write(span, "CONTENTS TO BE WRITTEN", "BlobID")
+                blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).rejects.toMatch(err);
+        });
+
+        it("rejects on error from azure-storage for 'exists'", async () => {
+            const blobClient = new BlobClient(config);
+            await expect(blobClient.exists(span.context(), "BlobID")).rejects.toMatch(err);
         });
     });
 
@@ -62,26 +70,30 @@ describe("BlobClient", () => {
         const err = undefined;
         const text = "THIS BLOB OPERATION WILL SUCCEED";
         const response = { statusCode: 200 };
+        const exists = { exists: true };
 
         beforeEach(() => {
             MockCreateBlobService.mockImplementation(() => {
                 return {
-                    getBlobToText: (_, __, ___, cb) => cb(err, text, _, response),
-                    createBlockBlobFromText: (_, __, ____, _____, cb) => cb(err, _, response),
+                    getBlobToText: (_container, _blob, _options, cb) =>
+                        cb(err, text, undefined, response),
+                    createBlockBlobFromText: (_container, _blob, _text, _options, cb) =>
+                        cb(err, undefined, response),
+                    doesBlobExist: (_container, _blob, cb) => cb(err, exists, response),
                 };
             });
         });
 
         it("performs a successful read", async () => {
             const blobClient = new BlobClient(config);
-            await expect(blobClient.read(span, "BlobID")).resolves.toBe(text);
+            await expect(blobClient.read(span.context(), "BlobID")).resolves.toBe(text);
         });
 
         it("performs a successful write", async () => {
             const blobClient = new BlobClient(config);
-            await expect(blobClient.write(span, "CONTENTS TO BE WRITTEN", "BlobID")).resolves.toBe(
-                undefined
-            );
+            await expect(
+                blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
+            ).resolves.toBe(undefined);
         });
 
         it("performs successful write for a request with specific timeout interval", async () => {
@@ -92,9 +104,14 @@ describe("BlobClient", () => {
                 requestTimeout: 1000,
             };
             const blobClient = new BlobClient(config);
-            await expect(blobClient.write(span, "CONTENTS TO BE WRITTEN", "BlobID")).resolves.toBe(
-                undefined
-            );
+            await expect(
+                blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
+            ).resolves.toBe(undefined);
+        });
+
+        it("performs a successful 'exists'", async () => {
+            const blobClient = new BlobClient(config);
+            await expect(blobClient.exists(span.context(), "BlobID")).resolves.toEqual(true);
         });
     });
 });

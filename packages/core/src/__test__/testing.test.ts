@@ -12,7 +12,13 @@ import {
     IMessage,
     MessageRef,
 } from "../../src";
-import { mockState, msg, runIntegrationTest, truncateOutputBeacon } from "../testing";
+import {
+    mockMaterializedState,
+    mockState,
+    msg,
+    runIntegrationTest,
+    truncateOutputBeacon,
+} from "../testing";
 
 class TestClass {
     constructor(public readonly field: string) {}
@@ -77,17 +83,22 @@ describe("runIntegrationTest and msg(...)", () => {
     });
 });
 
+class State {
+    public total: number = 0;
+    public constructor(snapshot?: any) {
+        if (snapshot) {
+            this.total = snapshot.total;
+        }
+    }
+
+    public snap(): any {
+        return { total: this.total };
+    }
+}
+
 describe("mockState", () => {
     class Event {
         constructor(public readonly count: number) {}
-    }
-
-    class State {
-        public total: number = 0;
-
-        public snap(): any {
-            return { total: this.total };
-        }
     }
 
     class StateAggregator {
@@ -102,8 +113,8 @@ describe("mockState", () => {
             msg(Event, new Event(5)),
         ]);
 
-        const abc = await state.get({}, "abc");
-        const xyz = await state.get({}, "xyz");
+        const abc = await state.get(undefined, "abc");
+        const xyz = await state.get(undefined, "xyz");
         expect(abc.state).toMatchObject({ total: 7 });
         expect(xyz.state).toMatchObject({ total: 7 });
     });
@@ -114,11 +125,29 @@ describe("mockState", () => {
             ["stream-2"]: [msg(Event, new Event(1)), msg(Event, new Event(1))],
         });
 
-        const stream1 = await state.get({}, "stream-1");
-        const stream2 = await state.get({}, "stream-2");
-        const xyz = await state.get({}, "xyz");
+        const stream1 = await state.get(undefined, "stream-1");
+        const stream2 = await state.get(undefined, "stream-2");
+        const xyz = await state.get(undefined, "xyz");
         expect(stream1.state).toMatchObject({ total: 7 });
         expect(stream2.state).toMatchObject({ total: 2 });
         expect(xyz.state).toMatchObject({ total: 0 });
+    });
+});
+
+describe("mockMaterializedState", () => {
+    it("works for get()", async () => {
+        const mock = mockMaterializedState<State>(State, {
+            "key-1": new State({ total: 10 }),
+            "key-2": new State({ total: 11 }),
+        });
+        const o1 = await mock.get(undefined, "key-1");
+        expect(o1.state.snap().total).toEqual(10);
+
+        const o2 = await mock.get(undefined, "key-2");
+        expect(o2.state.snap().total).toEqual(11);
+
+        const bogus = await mock.get(undefined, "bogus");
+        expect(bogus.isNew).toBeTruthy();
+        expect(bogus.state).toEqual(new State());
     });
 });

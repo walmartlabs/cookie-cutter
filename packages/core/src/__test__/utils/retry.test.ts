@@ -5,8 +5,19 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+const mockSleep: jest.Mock = jest.fn();
+jest.mock("../../utils", () => {
+    const utils = jest.requireActual("../../utils");
+    return {
+        ...utils,
+        sleep: mockSleep,
+    };
+});
 import { ErrorHandlingMode, IComponentRuntimeBehavior, RetryMode } from "../../model";
-import { createRetrier, InternalRetrier, IRetrier } from "../../utils/retry";
+import { createRetrier, InternalRetrier, IRetrier, RetrierContext } from "../../utils/retry";
+
+const mockIsFinalAttempt: jest.Mock = jest.fn();
+const mockNotFinalAttempt: jest.Mock = jest.fn();
 
 class NonRetriableError extends Error {
     constructor() {
@@ -17,6 +28,12 @@ class NonRetriableError extends Error {
 class RetriableError extends Error {
     constructor() {
         super("Retriable Error");
+    }
+}
+
+class InnerBailError extends Error {
+    constructor() {
+        super("InnerBail Error");
     }
 }
 
@@ -48,14 +65,37 @@ asyncThrowingFunction.mockImplementation(
     }
 );
 
+const throwingFunctionWithBail: jest.Mock = jest.fn();
+throwingFunctionWithBail.mockImplementation(
+    async (client: ThrowingClient, retry: RetrierContext): Promise<boolean> => {
+        if (client.errorsThrown === client.indexOfInnerBail) {
+            client.errorsThrown++;
+            retry.bail(new InnerBailError());
+        }
+        if (client.errorsThrown < client.errorsToThrow) {
+            client.errorsThrown++;
+            throw new RetriableError();
+        }
+        return true;
+    }
+);
+
 class ThrowingClient {
     public errorsThrown: number;
     public readonly indexOfNonRetriableError: number;
+    public readonly indexOfInnerBail: number;
+    public readonly retry: RetrierContext;
 
-    constructor(public readonly errorsToThrow: number, indexOfNonRetriableError?: number) {
+    constructor(
+        public readonly errorsToThrow: number,
+        indexOfNonRetriableError?: number,
+        indexOfInnerBail?: number
+    ) {
         this.errorsThrown = 0;
         this.indexOfNonRetriableError =
             indexOfNonRetriableError === undefined ? errorsToThrow + 1 : indexOfNonRetriableError;
+        this.indexOfInnerBail =
+            indexOfInnerBail === undefined ? errorsToThrow + 1 : indexOfInnerBail;
     }
 
     public throwingFunction() {
@@ -65,15 +105,41 @@ class ThrowingClient {
     public async asyncThrowingFunction() {
         return asyncThrowingFunction(this);
     }
+
+    public throwingFunctionWithBail(retry: RetrierContext) {
+        return throwingFunctionWithBail(this, retry);
+    }
 }
 
-async function asyncCallClientWithRetry(client: ThrowingClient, retrier: IRetrier): Promise<any> {
-    const val = await retrier.retry(async (bail: any) => {
+async function asyncCallClient(client: ThrowingClient, retrier: IRetrier): Promise<any> {
+    return baseCallClient(true, client, retrier);
+}
+
+async function callClient(client: ThrowingClient, retrier: IRetrier) {
+    return baseCallClient(false, client, retrier);
+}
+
+async function baseCallClient(
+    isAsync: boolean,
+    client: ThrowingClient,
+    retrier: IRetrier
+): Promise<any> {
+    const val = await retrier.retry(async (retry: RetrierContext) => {
         try {
-            return await client.asyncThrowingFunction();
+            if (isAsync) {
+                return await client.asyncThrowingFunction();
+            } else {
+                return await client.throwingFunction();
+            }
         } catch (e) {
             if (e instanceof NonRetriableError) {
-                bail(e);
+                mockIsFinalAttempt();
+                retry.bail(e);
+            }
+            if (retry.currentAttempt >= retry.maxAttempts) {
+                mockIsFinalAttempt();
+            } else {
+                mockNotFinalAttempt();
             }
             throw e;
         }
@@ -81,18 +147,38 @@ async function asyncCallClientWithRetry(client: ThrowingClient, retrier: IRetrie
     return val;
 }
 
-async function callClientWithRetry(client: ThrowingClient, retrier: IRetrier): Promise<any> {
-    const val = await retrier.retry(async (bail: any) => {
+async function callClientWithCustomInterval(
+    client: ThrowingClient,
+    retrier: InternalRetrier
+): Promise<void> {
+    await retrier.retry(async (retry: RetrierContext) => {
         try {
             return await client.throwingFunction();
         } catch (e) {
-            if (e instanceof NonRetriableError) {
-                bail(e);
+            if (retry.currentAttempt === 3) {
+                retry.setNextRetryInterval(retry.currentAttempt * retrier.behavior.retryIntervalMs);
             }
             throw e;
         }
     });
-    return val;
+}
+
+async function callClientWithInnerBail(
+    client: ThrowingClient,
+    retrier: InternalRetrier
+): Promise<void> {
+    await retrier.retry(async (retry: RetrierContext) => {
+        try {
+            return await client.throwingFunctionWithBail(retry);
+        } catch (e) {
+            if (retry.hasBailed) {
+                mockIsFinalAttempt();
+            } else {
+                mockNotFinalAttempt();
+            }
+            throw e;
+        }
+    });
 }
 
 const defaultBehavior: Required<IComponentRuntimeBehavior> = {
@@ -113,10 +199,10 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 10;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrier)).rejects.toThrowError(
-                new RetriableError()
-            );
+            await expect(callClient(client, retrier)).rejects.toThrowError(new RetriableError());
             expect(throwingFunction).toHaveBeenCalledTimes(1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(0);
         });
     });
 
@@ -127,10 +213,10 @@ describe("Testing Retrier", () => {
             const errorsToThrow = behavior.retries + 1;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrier)).rejects.toThrowError(
-                new RetriableError()
-            );
+            await expect(callClient(client, retrier)).rejects.toThrowError(new RetriableError());
             expect(throwingFunction).toHaveBeenCalledTimes(errorsToThrow);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(5);
         });
 
         it("makes one call, 2 retries and fails on NonRetriableError", async () => {
@@ -140,10 +226,10 @@ describe("Testing Retrier", () => {
             const indexOfNonRetriableError = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow, indexOfNonRetriableError);
-            await expect(callClientWithRetry(client, retrier)).rejects.toThrowError(
-                new NonRetriableError()
-            );
+            await expect(callClient(client, retrier)).rejects.toThrowError(new NonRetriableError());
             expect(throwingFunction).toHaveBeenCalledTimes(indexOfNonRetriableError + 1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
         });
 
         it("makes one call, 2 retries and succeeds", async () => {
@@ -152,8 +238,10 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrier)).resolves.toBeTruthy();
+            await expect(callClient(client, retrier)).resolves.toBeTruthy();
             expect(throwingFunction).toHaveBeenCalledTimes(errorsToThrow + 1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(0);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -164,8 +252,10 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 10;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrier)).resolves.toBeUndefined();
+            await expect(callClient(client, retrier)).resolves.toBeUndefined();
             expect(throwingFunction).toHaveBeenCalledTimes(1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(0);
         });
     });
 
@@ -176,8 +266,10 @@ describe("Testing Retrier", () => {
             const errorsToThrow = behavior.retries + 1;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrier)).resolves.toBeUndefined();
+            await expect(callClient(client, retrier)).resolves.toBeUndefined();
             expect(throwingFunction).toHaveBeenCalledTimes(errorsToThrow);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(5);
         });
 
         it("makes one call, 2 retries and continues on NonRetriableError", async () => {
@@ -187,8 +279,10 @@ describe("Testing Retrier", () => {
             const indexOfNonRetriableError = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow, indexOfNonRetriableError);
-            await expect(callClientWithRetry(client, retrier)).resolves.toBeUndefined();
+            await expect(callClient(client, retrier)).resolves.toBeUndefined();
             expect(throwingFunction).toHaveBeenCalledTimes(indexOfNonRetriableError + 1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
         });
 
         it("makes one call, 2 retries and succeeds", async () => {
@@ -197,8 +291,10 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrier)).resolves.toBeTruthy();
+            await expect(callClient(client, retrier)).resolves.toBeTruthy();
             expect(throwingFunction).toHaveBeenCalledTimes(errorsToThrow + 1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(0);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -209,10 +305,12 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 10;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(asyncCallClientWithRetry(client, retrier)).rejects.toThrowError(
+            await expect(asyncCallClient(client, retrier)).rejects.toThrowError(
                 new RetriableError()
             );
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(0);
         });
     });
 
@@ -223,10 +321,12 @@ describe("Testing Retrier", () => {
             const errorsToThrow = behavior.retries + 1;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(asyncCallClientWithRetry(client, retrier)).rejects.toThrowError(
+            await expect(asyncCallClient(client, retrier)).rejects.toThrowError(
                 new RetriableError()
             );
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(errorsToThrow);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(5);
         });
 
         it("makes one call, 2 retries and fails on NonRetriableError", async () => {
@@ -236,10 +336,12 @@ describe("Testing Retrier", () => {
             const indexOfNonRetriableError = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow, indexOfNonRetriableError);
-            await expect(asyncCallClientWithRetry(client, retrier)).rejects.toThrowError(
+            await expect(asyncCallClient(client, retrier)).rejects.toThrowError(
                 new NonRetriableError()
             );
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(indexOfNonRetriableError + 1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
         });
 
         it("makes one call, 2 retries and succeeds", async () => {
@@ -248,8 +350,38 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(asyncCallClientWithRetry(client, retrier)).resolves.toBeTruthy();
+            await expect(asyncCallClient(client, retrier)).resolves.toBeTruthy();
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(errorsToThrow + 1);
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(0);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe("Setting a custom retry interval", () => {
+        it("sets custom retry intervals on second and third calls", async () => {
+            const behavior = { ...defaultBehavior, retryMode: RetryMode.Exponential };
+            const errorsToThrow = 4;
+            const retrier = new InternalRetrier(behavior);
+            const client = new ThrowingClient(errorsToThrow);
+            await expect(callClientWithCustomInterval(client, retrier)).resolves.toBeUndefined();
+            expect(mockSleep).toHaveBeenNthCalledWith(2, retrier.nextRetryInterval(2));
+            expect(mockSleep).toHaveBeenNthCalledWith(3, 3 * behavior.retryIntervalMs);
+            expect(mockSleep).toHaveBeenNthCalledWith(4, retrier.nextRetryInterval(4));
+        });
+    });
+
+    describe("Bailing from inside a client", () => {
+        it("bails and records finalAttempt as true", async () => {
+            const behavior = { ...defaultBehavior, retryMode: RetryMode.Linear };
+            const indexOfInnerBail = 2;
+            const errorsToThrow = 4;
+            const retrier = new InternalRetrier(behavior);
+            const client = new ThrowingClient(errorsToThrow, undefined, indexOfInnerBail);
+            await expect(callClientWithInnerBail(client, retrier)).rejects.toThrowError(
+                new InnerBailError()
+            );
+            expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
+            expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -265,8 +397,8 @@ describe("Testing Retrier", () => {
             });
             const errorsToThrow = 0;
             const client = new ThrowingClient(errorsToThrow);
-            await expect(callClientWithRetry(client, retrierFail)).resolves.toBeTruthy();
-            await expect(callClientWithRetry(client, retrierContinue)).resolves.toBeTruthy();
+            await expect(callClient(client, retrierFail)).resolves.toBeTruthy();
+            await expect(callClient(client, retrierContinue)).resolves.toBeTruthy();
         });
     });
 

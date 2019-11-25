@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+const mockLogError: jest.Mock = jest.fn();
 import {
     Application,
     ErrorHandlingMode,
@@ -28,10 +29,12 @@ import {
     IValidateResult,
     MessageProcessingMetrics,
     MessageProcessingResults,
+    MessageRef,
     OutputSinkConsistencyLevel,
     SequenceConflictError,
     StateRef,
 } from "../model";
+import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
 import { runStatefulApp, runStatelessApp } from "./util";
 
@@ -417,6 +420,68 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
     });
 }
 
+for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
+    describe(`Application in ${ParallelismMode[mode]} mode`, () => {
+        it("does not process evicted messages", async () => {
+            const readyToEvict = new Future<void>();
+
+            const source: IInputSource = {
+                async *start(ctx) {
+                    const evicter = (async () => {
+                        await readyToEvict.promise;
+                        await ctx.evict((_) => true);
+                    })();
+
+                    yield new MessageRef({}, inc(1));
+                    yield new MessageRef({}, inc(2));
+                    yield new MessageRef({}, inc(3));
+                    yield new MessageRef({}, inc(4));
+
+                    await evicter;
+                },
+                stop: (): Promise<void> => {
+                    return Promise.resolve();
+                },
+            };
+
+            const capture = new Array();
+            await Application.create()
+                .input()
+                .add(source)
+                .done()
+                .dispatch({
+                    onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
+                        await sleep(50);
+                        ctx.publish(Increment, msg);
+                        if (msg.count === 2) {
+                            readyToEvict.resolve();
+                        }
+                    },
+                })
+                .output()
+                .published(new CapturingOutputSink(capture))
+                .done()
+                .run({
+                    dispatch: {
+                        mode: ErrorHandlingMode.LogAndFail,
+                    },
+                    sink: {
+                        mode: ErrorHandlingMode.LogAndFail,
+                    },
+                    parallelism: {
+                        mode,
+                        concurrencyConfiguration: {
+                            maximumParallelRpcRequests: 2,
+                        },
+                    },
+                });
+
+            const published = capture.map((m) => m.message);
+            expect(published).toMatchObject([inc(1), inc(2)]);
+        });
+    });
+}
+
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
         it("aggregates and persists correct state", async () => {
@@ -694,16 +759,17 @@ describe(`Application`, () => {
 
 async function runApplication(
     source: IInputSource,
-    dispatchTarger: any,
+    dispatchTarget: any,
     store: IOutputSink<IStoredMessage>,
     capture: IPublishedMessage[],
     appBehavior: IApplicationRuntimeBehavior
 ): Promise<void> {
     await Application.create()
+        .logger({ error: mockLogError, debug: jest.fn(), warn: jest.fn(), info: jest.fn() })
         .input()
         .add(source)
         .done()
-        .dispatch(dispatchTarger)
+        .dispatch(dispatchTarget)
         .output()
         .stored(store)
         .published(new CapturingOutputSink(capture))
@@ -711,6 +777,21 @@ async function runApplication(
         .run(appBehavior);
 }
 
+const expectLogNthCall = (mockFn: jest.Mock, nth: number, isFinalAttempt: boolean) => {
+    expect(mockFn).toHaveBeenNthCalledWith(
+        nth,
+        expect.any(String),
+        expect.any(Object),
+        expect.objectContaining({
+            type: expect.any(String),
+            currentAttempt: nth,
+            maxAttempts: expect.any(Number),
+            finalAttempt: isFinalAttempt,
+        })
+    );
+};
+const isFinalAttempt = true;
+const notFinalAttempt = false;
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]}`, () => {
         const behavior = { mode: ErrorHandlingMode.LogAndRetryOrContinue, retries: 2 };
@@ -745,19 +826,15 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             const throwSink: jest.Mock = jest.fn().mockImplementation(async () => {
                 throw thrownError;
             });
-            const bailSink: jest.Mock = jest.fn().mockImplementation(async (output, bail) => {
-                if (output || true) {
-                    bail(bailedError);
-                }
+            const bailSink: jest.Mock = jest.fn().mockImplementation(async (_, retry) => {
+                retry.bail(bailedError);
             });
-            const bailSeqConSink: jest.Mock = jest.fn().mockImplementation(async (output, bail) => {
+            const bailSeqConSink: jest.Mock = jest.fn().mockImplementation(async (_, retry) => {
                 if (counter > 0) {
                     return;
                 }
-                if (output || true) {
-                    counter++;
-                    bail(secConError);
-                }
+                counter++;
+                retry.bail(secConError);
             });
 
             const target = {
@@ -788,6 +865,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(throwSink).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -804,6 +883,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSink).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -820,6 +900,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(1);
                 expect(err).toBe(undefined);
             });
@@ -834,6 +915,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(throwSink).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });
@@ -848,6 +931,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSink).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });
@@ -862,6 +946,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(1);
                 expect(err).toBe(undefined);
             });
@@ -905,6 +990,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetThrow.onTest).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -920,6 +1007,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetBail.onTest).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -935,6 +1023,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetThrow.onTest).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });
@@ -948,6 +1038,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetBail.onTest).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });

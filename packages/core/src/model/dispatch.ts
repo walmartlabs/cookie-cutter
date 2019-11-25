@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { ILogger, IMessage, IMetrics, ITracing, StateRef } from ".";
+import { RetrierContext } from "../utils";
 
 export interface IClassType<T> {
     new (...args): T;
@@ -23,12 +24,13 @@ export interface IDispatchContext<TState = any> {
     publish<T>(type: IClassType<T>, msg: T, meta?: Readonly<{ [key in string]: any }>): void;
     store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void;
     typeName<T>(type: IClassType<T>): string;
+    bail(err: any): never;
     readonly services: IServiceRegistry;
     readonly state: IDispatchState<TState>;
     readonly metrics: IMetrics;
     readonly logger: ILogger;
     readonly trace: ITracing;
-    bail: (err: any) => never;
+    readonly retry: RetrierContext;
 }
 
 export interface IMessageDispatcher {

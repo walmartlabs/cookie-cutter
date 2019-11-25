@@ -1,19 +1,27 @@
 {
     "name": "@walmartlabs/cookie-cutter-grpc",
-    "version": "1.1.1",
+    "version": "1.2.0-beta.3",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "homepage": "https://walmartlabs.github.io/cookie-cutter",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/walmartlabs/cookie-cutter.git"
+    },
+    "bugs": {
+        "url": "https://github.com/walmartlabs/cookie-cutter/issues"
+    },
     "dependencies": {
         "change-case": "3.1.0",
-        "grpc": "1.20.3",
-        "opentracing": "0.14.3"
+        "grpc": "1.22.2",
+        "opentracing": "0.14.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.1.0"
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.1.0",
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta",
         "protobufjs": "6.8.8"
     },
     "scripts": {

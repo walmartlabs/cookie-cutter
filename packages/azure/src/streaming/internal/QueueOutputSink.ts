@@ -18,7 +18,7 @@ import {
     OutputSinkConsistencyLevel,
 } from "@walmartlabs/cookie-cutter-core";
 import { IQueueConfiguration, QueueMetadata } from "..";
-import { QueueClient } from "../../utils/QueueClient";
+import { QueueClient, QueueClientWithLargeItemSupport } from "../../utils";
 
 export class QueueOutputSink implements IOutputSink<IPublishedMessage>, IRequireInitialization {
     private readonly encoder: IMessageEncoder;
@@ -30,7 +30,7 @@ export class QueueOutputSink implements IOutputSink<IPublishedMessage>, IRequire
     };
 
     constructor(private config: IQueueConfiguration) {
-        this.client = new QueueClient(this.config);
+        this.client = QueueClientWithLargeItemSupport.create(this.config);
         this.encoder = config.encoder;
     }
 

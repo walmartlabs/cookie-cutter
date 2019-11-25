@@ -12,6 +12,7 @@ import {
     MessageRef,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
+import { SpanContext } from "opentracing";
 
 export interface IAzureError {
     statusCode: number;
@@ -39,8 +40,8 @@ export function makeIterableIterator(
     const someMessage: IStoredMessage = {
         message: someIMessage,
         state: new StateRef({}, key, sequenceNumber),
-        original: new MessageRef({}, someIMessage, {}),
-        spanContext: {},
+        original: new MessageRef({}, someIMessage),
+        spanContext: new SpanContext(),
     };
     return iterate([someMessage]);
 }

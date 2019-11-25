@@ -26,7 +26,7 @@ describe("GcsClient", () => {
         clientEmail: "myEmail",
         privateKey: "myKey",
     };
-    const context: SpanContext = {};
+    const context = new SpanContext();
     const span: Span = new NullTracerBuilder()
         .create()
         .startSpan("unit-test", { childOf: context });
@@ -55,7 +55,9 @@ describe("GcsClient", () => {
         it("rejects on error from gcs for put", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
-            await expect(client.putObject(span, content, "fileName")).rejects.toMatch(err);
+            await expect(client.putObject(span.context(), content, "fileName")).rejects.toMatch(
+                err
+            );
         });
     });
 
@@ -80,7 +82,9 @@ describe("GcsClient", () => {
         it("performs a successful write", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
-            await expect(client.putObject(span, content, "fileName")).resolves.toBe(undefined);
+            await expect(client.putObject(span.context(), content, "fileName")).resolves.toBe(
+                undefined
+            );
         });
     });
 });

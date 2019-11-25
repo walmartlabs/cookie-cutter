@@ -1,19 +1,45 @@
 # Cookie Cutter
 
-![Alt text](/docs/website/static/img/favicon.png?raw=true "Logo")
+An opinionated framework for building event-driven and request/response based micro services.
 
-Cookie Cutter is an opinionated framework for building event-driven micro services. Its main goal is to allow developers to focus on the domain problem and abstract away cross-cutting concerns like APM, logging, caching, state management, etc ...
+| Stable | Beta |
+|--------|------|
+| [![Build Status](https://travis-ci.org/walmartlabs/cookie-cutter.svg?branch=master)](https://travis-ci.org/walmartlabs/cookie-cutter) | [![Build Status](https://travis-ci.org/walmartlabs/cookie-cutter.svg?branch=develop)](https://travis-ci.org/walmartlabs/cookie-cutter) | 
 
-key design goals are
+## Features
 
-1. clear separation of concerns: don't get your domain code intermingled with your infrastructure code - no need to mock a Kafka consumer or for testing your domain logic
+* APM (Distributed Tracing with OpenTracing out of the box)
+* First Class Support for Event Sourcing
+* State Management with automatic Caching
+* Extensible and Pluggable
+* Can be used for RPC, message based services, and even cron jobs
+* Framework for Writing End-to-End Tests
 
-2. reduction of boiler-plate code: don't waste time writing code for bootstrapping, error handling, graceful shutdown, forceful shutdown, configuration management, ... let the framework take care of it.
+## Getting Started
 
-3. similarity of services: if you know your way around one service implemented with Cookie Cutter you will easily understand any other Cookie Cutter based service
+The documentation is available [here](https://walmartlabs.github.io/cookie-cutter).
 
-4. extensible / pluggable: connect to any message bus, use any opentracing-compliant APM, use your favorite logger, ...
+## Packages
 
-5. first-class support for event sourcing state management / aggregation built in as well as optimistic concurrency and support for exactly-once-semantics
+| Package | Stable | Beta |
+|---------|--------|------|
+| core | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-core)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-core) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-core/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-core/v/next) |
+| azure | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-azure)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-azure) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-azure/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-azure/v/next) |
+| gcp | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-gcp)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-gcp) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-gcp/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-gcp/v/next) |
+| grpc | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-grpc)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-grpc) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-grpc/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-grpc/v/next) |
+| instana | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-instana)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-instana) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-instana/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-instana/v/next) |
+| kafka | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-kafka)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-kafka) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-kafka/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-kafka/v/next) |
+| kubernetes | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-kubernetes)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-kubernetes) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-kubernetes/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-kubernetes/v/next) |
+| lightstep | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-lightstep)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-lightstep) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-lightstep/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-lightstep/v/next) |
+| mssql | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-mssql)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-mssql) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-mssql/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-mssql/v/next) |
+| prometheus | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-prometheus)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-prometheus) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-prometheus/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-prometheus/v/next) |
+| proto | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-proto)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-proto) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-proto/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-proto/v/next) |
+| redis | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-redis)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-redis) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-redis/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-redis/v/next) |
+| s3 | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-s3)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-s3) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-s3/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-s3/v/next) |
+| statsd | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-statsd)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-statsd) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-statsd/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-statsd/v/next) |
+| timer | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-timer)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-timer) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-timer/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-timer/v/next) |
+| validatejs | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-validatejs)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-validatejs) | [![npm version](https://badgen.net/npm/v/@walmartlabs/cookie-cutter-validatejs/next)](https://www.npmjs.com/package/@walmartlabs/cookie-cutter-validatejs/v/next) |
 
-6. RPC + batch jobs RPC services and batch jobs don't have to be design-snowflakes in a message-driven architecture, use the same framework to build them
+# License
+
+See [LICENSE](LICENSE.md) and [LICENSE-DOCS](LICENSE-DOCS) for more details.

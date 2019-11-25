@@ -39,6 +39,7 @@ import {
     IStateCacheLifecycle,
     IStateProvider,
     ITracerBuilder,
+    ITracingBuilder,
     Lifecycle,
     LogLevel,
     makeLifecycle,
@@ -54,10 +55,12 @@ import {
     IMessageProcessorConfiguration,
 } from "./processor";
 import { ServiceRegistryBuilder } from "./ServiceRegistryBuilder";
+import { TracingBuilder } from "./TracingBuilder";
 
 export class ApplicationBuilder implements IApplicationBuilder {
     private inputBuilder: InputBuilder;
     private outputBuilder: OutputBuilder;
+    private tracingBuilder: TracingBuilder;
     private serviceRegistryBuilder: ServiceRegistryBuilder;
     private dispatcher: IMessageDispatcher;
     private validator: IMessageValidator;
@@ -75,6 +78,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
         this.validator = new NullMessageValidator();
         this.activeMetrics = new NullMetrics();
         this.traceBuilder = new NullTracerBuilder();
+        this.tracingBuilder = new TracingBuilder(this);
         this.activeLogger = new NullLogger();
         this.stateProvider = new NullStateProvider();
         this.messageTypeMapper = new ObjectNameMessageTypeMapper();
@@ -168,6 +172,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
 
         let tracer: Tracer;
         const traceBuilder = makeLifecycle(this.traceBuilder);
+        const tracingBuilder = makeLifecycle(this.tracingBuilder);
         const metrics = makeLifecycle(this.activeMetrics);
         const dispatchRetrier = createRetrier(appBehavior.dispatch as Required<
             IComponentRuntimeBehavior
@@ -175,13 +180,23 @@ export class ApplicationBuilder implements IApplicationBuilder {
         const sinkRetrier = createRetrier(appBehavior.sink as Required<IComponentRuntimeBehavior>);
         let successfulInit = true;
         try {
-            await traceBuilder.initialize({
-                metrics,
-                logger: this.activeLogger,
-                tracer,
-            });
-            initGlobalTracer(traceBuilder.create());
+            if (tracingBuilder.hasTracer) {
+                await tracingBuilder.initialize({
+                    metrics,
+                    logger: this.activeLogger,
+                    tracer,
+                });
+                initGlobalTracer(tracingBuilder.build());
+            } else {
+                await traceBuilder.initialize({
+                    metrics,
+                    logger: this.activeLogger,
+                    tracer,
+                });
+                initGlobalTracer(traceBuilder.create());
+            }
             tracer = globalTracer();
+
             const dispatchContext: IComponentContext = {
                 metrics,
                 logger: this.activeLogger,
@@ -216,6 +231,17 @@ export class ApplicationBuilder implements IApplicationBuilder {
             stateProvider: state,
             validator: this.validator,
         });
+
+        try {
+            await processor.initialize({
+                metrics,
+                logger: this.activeLogger,
+                tracer,
+            });
+        } catch (e) {
+            successfulInit = false;
+            this.activeLogger.error("failed to initialize message processor", e);
+        }
 
         let successfulRun = false;
         if (successfulInit) {
@@ -286,7 +312,8 @@ export class ApplicationBuilder implements IApplicationBuilder {
             (await tryDispose(serviceRegistry)) &&
             (await tryDispose(state)) &&
             (await tryDispose(metrics)) &&
-            (await tryDispose(traceBuilder));
+            (await tryDispose(traceBuilder)) &&
+            (await tryDispose(tracingBuilder));
 
         if (!successfulInit || !successfulDispose || !successfulRun) {
             if (!isUnderTest()) {
@@ -332,6 +359,10 @@ export class ApplicationBuilder implements IApplicationBuilder {
     public tracer(traceBuilder: ITracerBuilder): IApplicationBuilder {
         this.traceBuilder = traceBuilder;
         return this;
+    }
+
+    public tracing(): ITracingBuilder {
+        return this.tracingBuilder;
     }
 
     public logger(logger: ILogger, level?: LogLevel): IApplicationBuilder {

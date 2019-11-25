@@ -79,9 +79,14 @@ export interface IQueueReadOptions extends IQueueRequestOptions {
     visibilityTimeout?: number;
 }
 
+export type IQueueMessage = QueueService.QueueMessageResult & {
+    headers?: Record<string, string>;
+    payload?: unknown;
+};
+
 export class QueueClient implements IRequireInitialization {
     private readonly queueService: QueueService;
-    private readonly defaultQueue: string;
+    public readonly defaultQueue: string;
     private tracer: Tracer;
     private metrics: IMetrics;
     private spanOperationName = "Azure Queue Client Call";
@@ -141,9 +146,9 @@ export class QueueClient implements IRequireInitialization {
     public write(
         spanContext: SpanContext,
         payload: any,
-        headers: { [key: string]: string },
+        headers: Record<string, string>,
         options?: IQueueCreateMessageOptions
-    ): Promise<QueueService.QueueMessageResult> {
+    ): Promise<IQueueMessage> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
         const queueName = (options && options.queueName) || this.defaultQueue;
         const kind = spanContext ? Tags.SPAN_KIND_RPC_CLIENT : undefined;
@@ -154,13 +159,14 @@ export class QueueClient implements IRequireInitialization {
             headers,
         });
 
-        return new Promise<QueueService.QueueMessageResult>((resolve, reject) => {
-            const sizeMb = this.getMB(text);
-            span.log({ sizeMb });
-            if (sizeMb >= 64) {
-                const error = new Error(
-                    "Queue Message too big, must be less then 64mb. is: " + sizeMb
+        return new Promise<IQueueMessage>((resolve, reject) => {
+            const { sizeKb, isTooBig } = this.isMessageTooBig(text);
+            span.log({ sizeKb });
+            if (isTooBig) {
+                const error: Error & { code?: number } = new Error(
+                    "Queue Message too big, must be less then 64kb. is: " + sizeKb
                 );
+                error.code = 413;
                 failSpan(span, error);
                 span.finish();
                 this.metrics.increment(
@@ -174,7 +180,7 @@ export class QueueClient implements IRequireInitialization {
                 text,
                 options,
                 (
-                    err: Error,
+                    err: Error & { code?: number },
                     message: QueueService.QueueMessageResult,
                     response: ServiceResponse
                 ) => {
@@ -184,6 +190,7 @@ export class QueueClient implements IRequireInitialization {
                     span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
                     span.finish();
                     if (err) {
+                        err.code = response.statusCode;
                         this.metrics.increment(
                             QueueMetrics.Write,
                             this.generateMetricTags(
@@ -202,7 +209,11 @@ export class QueueClient implements IRequireInitialization {
                                 QueueMetricResults.Success
                             )
                         );
-                        resolve(message);
+                        resolve({
+                            ...message,
+                            headers,
+                            payload,
+                        });
                     }
                 }
             );
@@ -212,7 +223,7 @@ export class QueueClient implements IRequireInitialization {
     public async read(
         spanContext: SpanContext,
         options?: IQueueReadOptions
-    ): Promise<QueueService.QueueMessageResult[]> {
+    ): Promise<IQueueMessage[]> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
         const { queueName, visibilityTimeout, numOfMessages } = Object.assign(
             {},
@@ -228,7 +239,7 @@ export class QueueClient implements IRequireInitialization {
             numOfMessages,
         });
 
-        return new Promise((resolve, reject) => {
+        return new Promise<IQueueMessage[]>((resolve, reject) => {
             this.queueService.getMessages(
                 queueName,
                 { visibilityTimeout, numOfMessages },
@@ -262,7 +273,18 @@ export class QueueClient implements IRequireInitialization {
                                 QueueMetricResults.Success
                             )
                         );
-                        resolve(results);
+                        resolve(
+                            results.map<IQueueMessage>((result) => {
+                                const mesageObj = JSON.parse(result.messageText) as {
+                                    headers: Record<string, string>;
+                                    payload: unknown;
+                                };
+                                return {
+                                    ...result,
+                                    ...mesageObj,
+                                };
+                            })
+                        );
                     }
                 }
             );
@@ -365,11 +387,19 @@ export class QueueClient implements IRequireInitialization {
         });
     }
 
-    private getMB(input: string | Buffer) {
-        const mb = (n: number) => n / 1024 / 1024;
+    private getKB(input: string | Buffer) {
+        const kb = (n: number) => n / 1024;
         if (typeof input === "string") {
-            return mb(Buffer.byteLength(input, "utf8"));
+            return kb(Buffer.byteLength(input, "utf16"));
         }
-        return mb(input.byteLength);
+        return kb(input.byteLength);
+    }
+
+    private isMessageTooBig(input: string | Buffer) {
+        const sizeKb = this.getKB(input);
+        return {
+            sizeKb,
+            isTooBig: sizeKb >= 64,
+        };
     }
 }

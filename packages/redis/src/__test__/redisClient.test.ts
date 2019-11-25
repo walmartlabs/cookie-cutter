@@ -27,7 +27,6 @@ jest.mock("redis", () => {
         set: mockSet,
         quit: mockQuit,
     }));
-    // const mockRedis = jest.fn(() => )
     return { RedisClient: mockRedisClient };
 });
 import { RedisClient } from "redis";

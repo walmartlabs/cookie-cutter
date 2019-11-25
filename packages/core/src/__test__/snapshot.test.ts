@@ -31,9 +31,9 @@ describe("snapshot", () => {
 
     it("handles out of order, repeated message", async () => {
         const result = await execute([
-            new MessageRef({ [EventSourcedMetadata.SequenceNumber]: 1 }, inc(5), {}),
-            new MessageRef({ [EventSourcedMetadata.SequenceNumber]: 2 }, inc(2), {}),
-            new MessageRef({ [EventSourcedMetadata.SequenceNumber]: 1 }, inc(5), {}),
+            new MessageRef({ [EventSourcedMetadata.SequenceNumber]: 1 }, inc(5)),
+            new MessageRef({ [EventSourcedMetadata.SequenceNumber]: 2 }, inc(2)),
+            new MessageRef({ [EventSourcedMetadata.SequenceNumber]: 1 }, inc(5)),
         ]);
         expect(result).toHaveLength(3);
         expect(result.map((m) => m.message.payload)).toMatchObject([

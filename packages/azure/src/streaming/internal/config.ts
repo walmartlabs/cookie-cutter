@@ -57,6 +57,14 @@ export class QueueConfiguration implements IQueueConfiguration {
     public get encoder(): IMessageEncoder {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set largeItemBlobContainer(_: string) {
+        config.noop();
+    }
+    public get largeItemBlobContainer(): string {
+        return config.noop();
+    }
 }
 
 @config.section

@@ -7,10 +7,13 @@ LICENSE file in the root directory of this source tree.
 
 import {
     config,
+    ErrorHandlingMode,
+    IComponentRuntimeBehavior,
     IDisposable,
     IInputSource,
     IMessage,
     IRequireInitialization,
+    RetryMode,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     convertOperationPath,
@@ -60,6 +63,7 @@ export interface IGrpcClientConfiguration {
     readonly definition: IGrpcServiceDefinition;
     readonly connectionTimeout?: number;
     readonly requestTimeout?: number;
+    readonly behavior?: Required<IComponentRuntimeBehavior>;
 }
 
 export enum GrpcMetadata {
@@ -106,6 +110,15 @@ export function grpcClient<T>(
             connectionTimeout: 2000,
             requestTimeout: 10000,
             allocator: Buffer,
+            behavior: {
+                exponentBase: 2,
+                maxRetryIntervalMs: 10000,
+                mode: ErrorHandlingMode.LogAndRetryOrFail,
+                randomize: false,
+                retries: 10,
+                retryIntervalMs: 100,
+                retryMode: RetryMode.Exponential,
+            },
         }
     );
     return createGrpcClient<T>(configuration);

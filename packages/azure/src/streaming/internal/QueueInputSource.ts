@@ -21,7 +21,12 @@ import {
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
 import { isArray } from "util";
 import { IQueueConfiguration, QueueMetadata } from "..";
-import { IQueueReadOptions, QueueClient, QueueOpenTracingTagKeys } from "../../utils";
+import {
+    IQueueReadOptions,
+    QueueClient,
+    QueueClientWithLargeItemSupport,
+    QueueOpenTracingTagKeys,
+} from "../../utils";
 
 enum QueueMetrics {
     ApproximateMessageCount = "cookie_cutter.azure_queue_consumer.approximate_message_count",
@@ -45,7 +50,7 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
 
     constructor(config: IQueueConfiguration & IQueueReadOptions) {
         this.config = config;
-        this.client = new QueueClient(config);
+        this.client = QueueClientWithLargeItemSupport.create(config);
         this.readOptions = config;
         this.encoder = config.encoder;
     }
@@ -64,7 +69,7 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
         while (this.running) {
             const messages = await this.client.read(undefined, this.readOptions);
             for (const message of messages) {
-                const { headers, payload } = JSON.parse(message.messageText) as {
+                const { headers, payload } = message as {
                     headers: any;
                     payload: IBufferToJSON | any;
                 };

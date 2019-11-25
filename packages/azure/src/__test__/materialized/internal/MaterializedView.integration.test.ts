@@ -41,7 +41,7 @@ describe.skip("Materialized Views", () => {
                             payload,
                         },
                         spanContext,
-                        original: new MessageRef({}, null, {}),
+                        original: new MessageRef({}, null),
                     },
                 ]),
                 undefined
@@ -75,7 +75,7 @@ describe.skip("Materialized Views", () => {
                                 payload,
                             },
                             spanContext,
-                            original: new MessageRef({}, null, {}),
+                            original: new MessageRef({}, null),
                         },
                     ]),
                     undefined
@@ -110,7 +110,7 @@ describe.skip("Materialized Views", () => {
                                 payload,
                             },
                             spanContext,
-                            original: new MessageRef({}, null, {}),
+                            original: new MessageRef({}, null),
                         },
                     ]),
                     undefined
@@ -153,7 +153,7 @@ describe.skip("Materialized Views", () => {
                                 payload: null,
                             },
                             spanContext,
-                            original: new MessageRef({}, null, {}),
+                            original: new MessageRef({}, null),
                         },
                     ]),
                     undefined
@@ -183,7 +183,7 @@ describe.skip("Materialized Views", () => {
                                     payload,
                                 },
                                 spanContext,
-                                original: new MessageRef({}, null, {}),
+                                original: new MessageRef({}, null),
                             },
                         ]),
                         undefined
@@ -218,7 +218,7 @@ describe.skip("Materialized Views", () => {
                                     payload,
                                 },
                                 spanContext,
-                                original: new MessageRef({}, null, {}),
+                                original: new MessageRef({}, null),
                             },
                         ]),
                         undefined
@@ -246,7 +246,7 @@ describe.skip("Materialized Views", () => {
                             payload,
                         },
                         spanContext,
-                        original: new MessageRef({}, null, {}),
+                        original: new MessageRef({}, null),
                     },
                 ]),
                 undefined
@@ -264,7 +264,7 @@ describe.skip("Materialized Views", () => {
                                     payload: { value: "bar1" },
                                 },
                                 spanContext,
-                                original: new MessageRef({}, null, {}),
+                                original: new MessageRef({}, null),
                             },
                         ]),
                         undefined
@@ -278,7 +278,7 @@ describe.skip("Materialized Views", () => {
                                     payload: { value: "bar2" },
                                 },
                                 spanContext,
-                                original: new MessageRef({}, null, {}),
+                                original: new MessageRef({}, null),
                             },
                         ]),
                         undefined

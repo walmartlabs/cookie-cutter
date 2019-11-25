@@ -35,11 +35,15 @@ describe("QueueClient", () => {
         retryInterval: "5s",
         retryCount: 3,
     } as any);
-    const context: SpanContext = {};
+    const context = new SpanContext();
     const span: Span = new MockTracer().startSpan("unit-test", { childOf: context });
     const payload = "hello world to queues";
     const headers = {};
-    const messageQueueResult = { messageId: "message123", popReceipt: "pop123" };
+    const messageQueueResult = {
+        messageId: "message123",
+        popReceipt: "pop123",
+        messageText: JSON.stringify({ headers, payload }),
+    };
 
     beforeEach(() => {
         MockCreateQueueService.mockReset();
@@ -96,10 +100,10 @@ describe("QueueClient", () => {
 
     describe("write", () => {
         const response = { statusCode: 200 };
-        const writeResultsIn = async (error?: any, result?: any) => {
+        const writeResultsIn = async (error?: any, result?: any, res = response) => {
             const createMessage = jest.fn();
             createMessage.mockImplementation((_q, _t, _o, cb) => {
-                cb(error, result, response);
+                cb(error, result, res);
             });
             MockCreateQueueService.mockImplementation(() => ({
                 createMessage,
@@ -141,13 +145,25 @@ describe("QueueClient", () => {
             await expect(client.write(span.context(), payload, headers)).rejects.toEqual(error);
         });
         it("should error if text is to big", async () => {
-            const bigText = new Buffer(65 * 1024 * 1024);
+            const bigText = new Buffer(65 * 1024);
             const { client, createMessage } = await writeResultsIn();
             const result = client.write(span.context(), bigText, headers);
             expect(createMessage).not.toBeCalled();
             await expect(result).rejects.toEqual(
-                new Error("Queue Message too big, must be less then 64mb. is: 130.00004863739014")
+                new Error("Queue Message too big, must be less then 64kb. is: 130.0498046875")
             );
+        });
+        it("should error get back 413 from azure", async () => {
+            const bigText = new Buffer(1024);
+            const e: Error & { statusCode?: number } = new Error(
+                "The request body is too large and exceeds the maximum permissible limit."
+            );
+            const { client, createMessage } = await writeResultsIn(e, undefined, {
+                statusCode: 413,
+            });
+            const result = client.write(span.context(), bigText, headers);
+            expect(createMessage).toBeCalled();
+            await expect(result).rejects.toMatchObject({ code: 413 });
         });
     });
     describe("read", () => {

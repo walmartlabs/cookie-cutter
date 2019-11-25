@@ -22,7 +22,6 @@ import { paramCase } from "change-case";
 import * as kafkajs from "kafkajs";
 import Long = require("long");
 import { isNullOrUndefined } from "util";
-import * as uuid from "uuid";
 import {
     IKafkaBrokerConfiguration,
     IKafkaPublisherConfiguration,
@@ -32,6 +31,7 @@ import {
 import { KafkaMessageProducer } from "./KafkaMessageProducer";
 import { IOffsetTracker, IProducerMessage } from "./model";
 import { createPartitioner } from "./Partitioner";
+import { generateClientId } from "./utils";
 
 type Message = { type: string } & IProducerMessage<Buffer>;
 
@@ -55,7 +55,7 @@ type Message = { type: string } & IProducerMessage<Buffer>;
  * if a given message was identified as requiring `ExactlyOnceSemantics` based on the message's
  * metadata field of the same name (This requires the corresponding KafkaSource to enable the
  * `eos` flag during setup to mark messages accordingly). The sink will only send offsets that
- * meet the the highwater mark for a topic-partition. This process allows the sink to
+ * meet the highwater mark for a topic-partition. This process allows the sink to
  * participate in a "consume-transform-produce" loop between multiple topics.
  */
 export class KafkaSink
@@ -87,9 +87,10 @@ export class KafkaSink
             idempotent = true;
             this.useTransactionalProducer = true;
         }
+        const { broker } = this.config;
         const client = new kafkajs.Kafka({
-            clientId: `${this.config.broker}-${uuid.v4()}`,
-            brokers: [this.config.broker],
+            clientId: generateClientId(),
+            brokers: Array.isArray(broker) ? broker : [broker],
         });
         this.producer = client.producer({
             idempotent, // An idempotent producer enforces EoS messaging

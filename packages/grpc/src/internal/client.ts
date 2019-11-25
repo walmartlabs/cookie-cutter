@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 
 import {
     AsyncPipe,
+    createRetrier,
     DefaultComponentContext,
     failSpan,
     IComponentContext,
@@ -23,6 +24,7 @@ import {
     makeGenericClientConstructor,
     Metadata,
     MethodDefinition,
+    status,
 } from "grpc";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
 import { performance } from "perf_hooks";
@@ -118,6 +120,8 @@ export function createGrpcClient<T>(
             };
         };
 
+        const retrier = createRetrier(config.behavior);
+
         if (method.responseStream) {
             wrapper[key] = async function*(
                 request: any,
@@ -130,17 +134,32 @@ export function createGrpcClient<T>(
                 });
                 const span = createCallSpan(wrapper.tracer, config.endpoint, method, spanContext);
                 if (!ready) {
-                    await whenReady(span);
+                    try {
+                        await whenReady(span);
+                    } catch (e) {
+                        throw new Error(
+                            `Endpoint: ${config.endpoint}, Service: ${method.path}, Original Error: [${e.stack}]`
+                        );
+                    }
                 }
 
-                const stream = client.makeServerStreamRequest(
-                    method.path,
-                    method.requestSerialize,
-                    method.responseDeserialize,
-                    request,
-                    createTracingMetadata(wrapper.tracer, span),
-                    callOptions()
-                );
+                const stream = await retrier.retry((bail) => {
+                    try {
+                        return client.makeServerStreamRequest(
+                            method.path,
+                            method.requestSerialize,
+                            method.responseDeserialize,
+                            request,
+                            createTracingMetadata(wrapper.tracer, span),
+                            callOptions()
+                        );
+                    } catch (e) {
+                        if (e.code === status.UNAVAILABLE) {
+                            throw e;
+                        }
+                        bail(e);
+                    }
+                });
 
                 const pipe = new AsyncPipe<any>();
                 stream.on("end", async () => {
@@ -186,39 +205,56 @@ export function createGrpcClient<T>(
                 });
                 const span = createCallSpan(wrapper.tracer, config.endpoint, method, spanContext);
                 if (!ready) {
-                    await whenReady(span);
+                    try {
+                        await whenReady(span);
+                    } catch (e) {
+                        throw new Error(
+                            `Endpoint: ${config.endpoint}, Service: ${method.path}, Original Error: [${e.stack}]`
+                        );
+                    }
                 }
 
-                return await new Promise((resolve, reject) => {
-                    client.makeUnaryRequest(
-                        method.path,
-                        method.requestSerialize,
-                        method.responseDeserialize,
-                        request,
-                        createTracingMetadata(wrapper.tracer, span),
-                        callOptions(),
-                        (error, value) => {
-                            this.metrics.increment(GrpcMetrics.RequestProcessed, {
-                                path: method.path,
-                                endpoint: config.endpoint,
-                                result: error ? GrpcMetricResult.Error : GrpcMetricResult.Success,
-                            });
-                            emitTimerMetric(
-                                startTime,
+                return await retrier.retry(async (bail) => {
+                    try {
+                        return await new Promise((resolve, reject) => {
+                            client.makeUnaryRequest(
                                 method.path,
-                                config.endpoint,
-                                wrapper.metrics
+                                method.requestSerialize,
+                                method.responseDeserialize,
+                                request,
+                                createTracingMetadata(wrapper.tracer, span),
+                                callOptions(),
+                                (error, value) => {
+                                    this.metrics.increment(GrpcMetrics.RequestProcessed, {
+                                        path: method.path,
+                                        endpoint: config.endpoint,
+                                        result: error
+                                            ? GrpcMetricResult.Error
+                                            : GrpcMetricResult.Success,
+                                    });
+                                    emitTimerMetric(
+                                        startTime,
+                                        method.path,
+                                        config.endpoint,
+                                        wrapper.metrics
+                                    );
+                                    if (error) {
+                                        failSpan(span, error);
+                                        span.finish();
+                                        reject(error);
+                                    } else {
+                                        span.finish();
+                                        resolve(value);
+                                    }
+                                }
                             );
-                            if (error) {
-                                failSpan(span, error);
-                                span.finish();
-                                reject(error);
-                            } else {
-                                span.finish();
-                                resolve(value);
-                            }
+                        });
+                    } catch (e) {
+                        if (e.code === status.UNAVAILABLE) {
+                            throw e;
                         }
-                    );
+                        bail(e);
+                    }
                 });
             };
         }
