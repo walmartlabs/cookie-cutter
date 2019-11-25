@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import k8s = require("@kubernetes/client-node");
 import {
     BoundedPriorityQueue,
     DefaultComponentContext,
@@ -15,12 +16,15 @@ import {
     IMessage,
     IMetrics,
     IRequireInitialization,
+    Lifecycle,
+    makeLifecycle,
     MessageRef,
 } from "@walmartlabs/cookie-cutter-core";
-import k8s = require("@kubernetes/client-node");
 import { Span, Tags, Tracer } from "opentracing";
 import {
+    IK8sQueryProvider,
     IK8sWatchConfiguration,
+    IWatchQueryParams,
     K8sResourceAdded,
     K8sResourceDeleted,
     K8sResourceModified,
@@ -52,6 +56,10 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
     private metrics: IMetrics;
     private currentContext: string | undefined;
     private spanOperationName = "Processing Kubernetes API Message";
+    private queryProvider: Lifecycle<IK8sQueryProvider>;
+    private queryPath: string;
+    private queryParams: IWatchQueryParams;
+    private reconnectTimeout: number;
 
     constructor(private readonly config: IK8sWatchConfiguration) {
         this.queue = new BoundedPriorityQueue<MessageRef>(100);
@@ -60,10 +68,39 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
         this.metrics = DefaultComponentContext.metrics;
         this.pendingRequest = undefined;
         this.done = false;
+        this.queryPath = config.queryPath;
+        this.queryParams = config.queryParams;
+        this.reconnectTimeout = config.reconnectTimeout;
+
+        if (config.queryProvider) {
+            this.queryProvider = makeLifecycle(config.queryProvider);
+        }
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
-        this.startWatch();
+        const kubeConfig = new k8s.KubeConfig();
+        if (this.config.configFilePath) {
+            kubeConfig.loadFromFile(this.config.configFilePath);
+        } else {
+            kubeConfig.loadFromDefault();
+        }
+        if (this.config.currentContext) {
+            kubeConfig.setCurrentContext(this.config.currentContext);
+        }
+        this.currentContext = kubeConfig.getCurrentContext();
+
+        if (this.queryProvider) {
+            const client = kubeConfig.makeApiClient(k8s.ApiextensionsV1beta1Api);
+            const config = await this.queryProvider.getQueryConfig(client);
+            if (config.queryPath) {
+                this.queryPath = config.queryPath;
+            }
+            if (config.queryParams) {
+                this.queryParams = config.queryParams;
+            }
+        }
+
+        this.startWatch(kubeConfig);
         yield* this.queue.iterate();
     }
 
@@ -76,6 +113,8 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
         this.logger = ctx.logger;
         this.tracer = ctx.tracer;
         this.metrics = ctx.metrics;
+
+        await this.queryProvider.initialize(ctx);
     }
 
     private spanLogAndSetTags(span: Span, phase: string, msgType: string): void {
@@ -88,26 +127,21 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
         span.setTag(K8OpenTracingTagKeys.MessageType, msgType);
     }
 
-    private startWatch() {
+    private startWatch(kubeConfig: k8s.KubeConfig) {
         if (this.done) {
             return;
         }
 
-        const config = new k8s.KubeConfig();
-        if (this.config.configFilePath) {
-            config.loadFromFile(this.config.configFilePath);
-        } else {
-            config.loadFromDefault();
-        }
-        if (this.config.currentContext) {
-            config.setCurrentContext(this.config.currentContext);
-        }
-        this.currentContext = config.getCurrentContext();
+        this.logger.info(`Starting watch`, {
+            queryPath: this.queryPath,
+            queryParams: this.queryParams,
+            reconnectTimeout: this.reconnectTimeout,
+        });
 
-        const watch = new k8s.Watch(config);
+        const watch = new k8s.Watch(kubeConfig);
         this.pendingRequest = watch.watch(
-            this.config.queryPath,
-            this.config.queryParams,
+            this.queryPath,
+            this.queryParams,
             async (phase: string, obj: any) => {
                 let msg: IMessage | undefined;
                 switch (phase) {
@@ -153,8 +187,12 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 }
             },
             (err: any) => {
-                this.logger.error("k8s watch failed, restarting in 5s", err);
-                setTimeout(() => this.startWatch(), 5000).unref();
+                this.logger.error(
+                    `k8s watch failed, restarting in ${this.reconnectTimeout} ms`,
+                    err,
+                    { queryPath: this.queryPath, queryParams: this.queryParams }
+                );
+                setTimeout(() => this.startWatch(kubeConfig), this.reconnectTimeout).unref();
             }
         );
     }
@@ -166,5 +204,9 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
             pr.abort();
         }
         await this.queue.close();
+    }
+
+    public async dispose(): Promise<void> {
+        await this.queryProvider.dispose();
     }
 }

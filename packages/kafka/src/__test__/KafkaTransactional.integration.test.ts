@@ -28,9 +28,10 @@ import {
     iterate,
     JsonMessageEncoder,
     MessageRef,
+    sleep,
 } from "@walmartlabs/cookie-cutter-core";
 import * as ip from "ip";
-import { Consumer, Kafka, Producer } from "kafkajs";
+import { Consumer, Kafka } from "kafkajs";
 import { KafkaMessagePublishingStrategy, KafkaMetadata, kafkaSink } from "..";
 import { KafkaSink } from "../KafkaSink";
 import { TRACE_HEADER } from "../model";
@@ -39,7 +40,6 @@ jest.setTimeout(60000);
 
 describe("Kafka Integration Tests", () => {
     let topicName;
-    let producer: Producer;
     let broker: string;
     let consumer: Consumer;
     let id: number;
@@ -51,8 +51,6 @@ describe("Kafka Integration Tests", () => {
         broker = `${host}:30001`;
 
         const client = new Kafka({ clientId: "integration", brokers: [broker] });
-        producer = client.producer();
-        await producer.connect();
 
         const admin = client.admin();
 
@@ -71,12 +69,11 @@ describe("Kafka Integration Tests", () => {
     });
 
     afterEach(async () => {
-        if (producer) {
-            await producer.disconnect();
-        }
         if (consumer) {
             await consumer.disconnect();
         }
+        // KafkaJS does not waitForConsumer() when process.env.NODE_ENV is test, which results in a KafkaJS log after tests are done
+        await sleep(1000);
     });
 
     describe("#kafkaSink", () => {
@@ -89,7 +86,7 @@ describe("Kafka Integration Tests", () => {
                         message,
                         metadata,
                         original: new MessageRef(metadata, message),
-                        spanContext: DefaultComponentContext.tracer.startSpan("test"),
+                        spanContext: DefaultComponentContext.tracer.startSpan("test").context(),
                     },
                 ];
             };
@@ -112,6 +109,7 @@ describe("Kafka Integration Tests", () => {
             await sink.initialize(DefaultComponentContext);
             mockSendMessages.mockRejectedValueOnce(new Error("Foobar"));
             await expect(sink.sink(iterate(messagesToAbort))).rejects.toEqual(new Error("Foobar"));
+            await sink.dispose();
 
             // Our mock error causes the abort to fail, leaving the transaction stuck in a weird state.
             // Need to re-initialize.

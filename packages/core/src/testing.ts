@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import { SpanContext } from "opentracing";
 import { isArray } from "util";
 import {
     CapturingOutputSink,
@@ -29,7 +30,14 @@ import {
     StaticInputSource,
     StaticInputSourceType,
 } from ".";
-import { IDispatchContext, IMessageDispatcher, isStoredMessage, IStateVerification } from "./model";
+import { MaterializedViewStateProvider } from "./defaults/MaterializedViewStateProvider";
+import {
+    IDispatchContext,
+    IMessageDispatcher,
+    isStoredMessage,
+    IStateVerification,
+    StateRef,
+} from "./model";
 
 const TRUNCATE_BEACON = "testing.TruncateOutputBeacon";
 
@@ -115,7 +123,7 @@ export function msg<T>(type: IClassType<T>, data: T, meta?: IMetadata): IMessage
         payload: data,
     };
 
-    return meta === undefined ? msg : new MessageRef(meta, msg, {});
+    return meta === undefined ? msg : new MessageRef(meta, msg);
 }
 
 export function truncateOutputBeacon(): IMessage {
@@ -151,4 +159,37 @@ export function mockState<TState extends IState<TSnapshot>, TSnapshot>(
     }
 
     return new EventSourcedStateProvider<TState, TSnapshot>(TState, aggregator, source);
+}
+
+class MockedMaterializedState<TSnapshot> extends MaterializedViewStateProvider<
+    IState<TSnapshot>,
+    TSnapshot
+> {
+    private snapshots: Map<string, IState<TSnapshot>> = new Map();
+
+    public constructor(
+        stateType: IStateType<IState<TSnapshot>, TSnapshot>,
+        states: { [key: string]: IState<TSnapshot> }
+    ) {
+        super(stateType);
+        for (const key of Object.keys(states)) {
+            this.snapshots.set(key, states[key]);
+        }
+    }
+
+    public async get(
+        _spanContext: SpanContext,
+        key: string,
+        atSn?: number
+    ): Promise<StateRef<IState<TSnapshot>>> {
+        const test = this.snapshots.get(key);
+        return test ? new StateRef(test, key, atSn) : new StateRef(new this.TState(), key, 0);
+    }
+}
+
+export function mockMaterializedState<TSnapshot>(
+    stateType: IStateType<IState<TSnapshot>, TSnapshot>,
+    states: { [key: string]: IState<TSnapshot> }
+): IStateProvider<IState<TSnapshot>> {
+    return new MockedMaterializedState(stateType, states);
 }

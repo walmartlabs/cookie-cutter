@@ -32,7 +32,6 @@ import {
 import * as LZ4Codec from "kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
 import Long = require("long");
-import * as uuid from "uuid";
 import {
     IKafkaBrokerConfiguration,
     IKafkaSubscriptionConfiguration,
@@ -41,6 +40,7 @@ import {
 } from ".";
 import { IRawKafkaMessage } from "./model";
 import { OffsetManager } from "./OffsetManager";
+import { generateClientId } from "./utils";
 
 CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
 CompressionCodecs[CompressionTypes.LZ4] = new (LZ4Codec as any)().codec;
@@ -128,9 +128,10 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             retries: 10,
         };
 
+        const { broker } = this.config;
         const client = new Kafka({
-            clientId: `${this.config.group}-${uuid.v4()}`,
-            brokers: [this.config.broker],
+            clientId: generateClientId(),
+            brokers: Array.isArray(broker) ? broker : [broker],
         });
 
         this.admin = client.admin({
@@ -142,6 +143,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             partitionAssigners: [PartitionAssigners.roundRobin],
             maxBytesPerPartition: this.config.maxBytesPerPartition,
             maxWaitTimeInMs: this.config.consumeTimeout,
+            sessionTimeout: this.config.sessionTimeout,
             retry,
         });
 

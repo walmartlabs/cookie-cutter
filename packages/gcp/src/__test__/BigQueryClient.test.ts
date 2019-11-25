@@ -25,7 +25,7 @@ describe("BigQueryClient", () => {
         clientEmail: "myEmail",
         privateKey: "myKey",
     };
-    const context: SpanContext = {};
+    const context = new SpanContext();
     const span: Span = new NullTracerBuilder()
         .create()
         .startSpan("unit-test", { childOf: context });
@@ -54,7 +54,7 @@ describe("BigQueryClient", () => {
         it("rejects on error from table for put", async () => {
             const client = bigQueryClient(config);
             await client.initialize(DefaultComponentContext);
-            await expect(client.putObject(span, content, "myTable")).rejects.toMatch(err);
+            await expect(client.putObject(span.context(), content, "myTable")).rejects.toMatch(err);
         });
     });
 
@@ -79,7 +79,9 @@ describe("BigQueryClient", () => {
         it("performs a successful write", async () => {
             const client = bigQueryClient(config);
             await client.initialize(DefaultComponentContext);
-            await expect(client.putObject(span, content, "myTable")).resolves.toBe(undefined);
+            await expect(client.putObject(span.context(), content, "myTable")).resolves.toBe(
+                undefined
+            );
         });
     });
 });

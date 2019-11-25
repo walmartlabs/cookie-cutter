@@ -16,6 +16,7 @@ import {
     MessageRef,
     RetryMode,
 } from "@walmartlabs/cookie-cutter-core";
+import { SpanContext } from "opentracing";
 import { ICosmosConfiguration } from "../../..";
 import { CosmosOutputSink } from "../../../streaming/internal";
 import { CosmosClient } from "../../../utils/CosmosClient";
@@ -60,7 +61,7 @@ describe("streaming CosmosOutputSink", () => {
     };
     const payload = {
         message: someMessage,
-        spanContext: {},
+        spanContext: new SpanContext(),
         original: new MessageRef(someMetadata, { type: "test", payload: null }, undefined),
     };
     const remainingFields = {
@@ -93,13 +94,13 @@ describe("streaming CosmosOutputSink", () => {
                 }
                 throw {
                     code: 400,
-                    body: tooManyRequestErrorBody,
+                    body: { message: tooManyRequestErrorBody },
                 };
             }
             if (partitionKey === unknown400ErrorKey) {
                 throw {
                     code: 400,
-                    body: unknown400ErrorKey,
+                    body: { message: unknown400ErrorKey },
                 };
             }
             if (partitionKey === not400ErrorKey) {
@@ -167,7 +168,7 @@ describe("streaming CosmosOutputSink", () => {
             )
         ).rejects.toMatchObject({
             code: 400,
-            body: unknown400ErrorKey,
+            body: { message: unknown400ErrorKey },
         });
         expect(bailed).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledTimes(1);

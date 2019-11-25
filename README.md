@@ -17,3 +17,18 @@ key design goals are
 5. first-class support for event sourcing state management / aggregation built in as well as optimistic concurrency and support for exactly-once-semantics
 
 6. RPC + batch jobs RPC services and batch jobs don't have to be design-snowflakes in a message-driven architecture, use the same framework to build them
+
+## Development
+
+Required Dependencies
+
+-   node (recommend install via nvm, so you can easily test locally different node versions)
+-   yarn
+
+Optional installations
+
+-   Visual Studio Code
+    -   EXTENSION: [jest](https://marketplace.visualstudio.com/items?itemName=Orta.vscode-jest)
+    -   EXTENSION: [prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+    -   EXTENSION: [tslint](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-typescript-tslint-plugin)
+    -   EXTENSION: [vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)

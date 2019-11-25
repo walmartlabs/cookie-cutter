@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import k8s = require("@kubernetes/client-node");
 import {
     Application,
     CancelablePromise,
@@ -12,7 +13,6 @@ import {
     ErrorHandlingMode,
     IDispatchContext,
 } from "@walmartlabs/cookie-cutter-core";
-import k8s = require("@kubernetes/client-node");
 import * as fs from "fs";
 import * as path from "path";
 import * as rp from "request-promise-native";

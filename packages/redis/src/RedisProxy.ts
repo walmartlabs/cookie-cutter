@@ -5,7 +5,13 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { ILogger } from "@walmartlabs/cookie-cutter-core";
+import {
+    DefaultComponentContext,
+    IComponentContext,
+    IDisposable,
+    ILogger,
+    IRequireInitialization,
+} from "@walmartlabs/cookie-cutter-core";
 import { ClientOpts, RedisClient } from "redis";
 import { promisify } from "util";
 
@@ -25,12 +31,14 @@ export enum RedisEvents {
     End = "end",
 }
 
-export class RedisProxy {
+export class RedisProxy implements IRequireInitialization, IDisposable {
     private client: RedisClient;
+    private logger: ILogger;
     private asyncGet: (key: string) => Promise<string>;
     private asyncSet: (key: string, value: string) => Promise<{}>;
     private asyncQuit: () => Promise<any>;
-    constructor(host: string, port: number, db: number, logger: ILogger) {
+    constructor(host: string, port: number, db: number) {
+        this.logger = DefaultComponentContext.logger;
         const opts: ClientOpts = {
             host,
             port,
@@ -38,23 +46,28 @@ export class RedisProxy {
         };
         this.client = new RedisClient(opts);
         this.client.on(RedisEvents.Connected, () => {
-            logger.info(RedisLogMessages.Connected);
+            this.logger.info(RedisLogMessages.Connected);
         });
         this.client.on(RedisEvents.Error, (err) => {
-            logger.error(RedisLogMessages.Error, err);
+            this.logger.error(RedisLogMessages.Error, err);
+            throw err;
         });
         this.client.on(RedisEvents.Ready, () => {
-            logger.info(RedisLogMessages.Ready);
+            this.logger.info(RedisLogMessages.Ready);
         });
         this.client.on(RedisEvents.Reconnecting, () => {
-            logger.info(RedisLogMessages.Reconnecting);
+            this.logger.info(RedisLogMessages.Reconnecting);
         });
         this.client.on(RedisEvents.End, () => {
-            logger.info(RedisLogMessages.End);
+            this.logger.info(RedisLogMessages.End);
         });
         this.asyncGet = promisify(this.client.get).bind(this.client);
         this.asyncSet = promisify(this.client.set).bind(this.client) as any;
         this.asyncQuit = promisify(this.client.quit).bind(this.client);
+    }
+
+    public async initialize(ctx: IComponentContext) {
+        this.logger = ctx.logger;
     }
 
     public async dispose() {

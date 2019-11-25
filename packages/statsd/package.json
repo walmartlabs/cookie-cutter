@@ -1,22 +1,22 @@
 {
-  "name": "@walmartlabs/cookie-cutter-statsd",
-  "version": "1.1.0",
-  "license": "Apache-2.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "dependencies": {
-    "hot-shots": "6.2.0"
-  },
-  "peerDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "devDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-    "lint": "tslint --project tsconfig.json",
-    "lint:fix": "yarn run lint --fix"
-  }
+    "name": "@walmartlabs/cookie-cutter-statsd",
+    "version": "1.2.0-beta.0",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "hot-shots": "6.3.0"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
 }

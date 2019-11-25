@@ -9,7 +9,8 @@
 // site configuration options.
 
 // List of projects/orgs using your project for the users page.
-const users = [];
+const users = [
+];
 
 const siteConfig = {
     title: "Cookie Cutter", // Title for your website.
@@ -29,23 +30,23 @@ const siteConfig = {
 
     // For no header links in the top nav bar -> headerLinks: [],
     headerLinks: [
-        { doc: "intro-getting-started", label: "Introduction" },
-        { doc: "intro-inputs", label: "API" },
-        { page: "help", label: "Help" },
+    {doc: 'intro-getting-started', label: 'Introduction'},
+    {doc: 'intro-inputs', label: 'API'},
+    {page: 'help', label: 'Help'},
     ],
 
     // If you have users set above, you add it here:
     users,
 
     /* path to images for header/footer */
-    headerIcon: "img/cookie.svg",
-    footerIcon: "img/cookie.svg",
-    favicon: "img/favicon.png",
+  headerIcon: 'img/cookie.svg',
+  footerIcon: 'img/cookie.svg',
+  favicon: 'img/favicon.png',
 
     /* Colors for website */
     colors: {
-        primaryColor: "#2E8555",
-        secondaryColor: "#205C3B",
+    primaryColor: '#2E8555',
+    secondaryColor: '#205C3B',
     },
 
     /* Custom fonts for website */
@@ -67,20 +68,20 @@ const siteConfig = {
 
     highlight: {
         // Highlight.js theme to use for syntax highlighting in code blocks.
-        theme: "vs",
+    theme: 'vs',
     },
 
     // Add custom scripts here that would be placed in <script> tags.
-    scripts: ["https://buttons.github.io/buttons.js"],
+  scripts: ['https://buttons.github.io/buttons.js'],
 
     // On page navigation for the current documentation page.
-    onPageNav: "separate",
+  onPageNav: 'separate',
     // No .html extensions for paths.
     cleanUrl: true,
 
     // Open Graph and Twitter card images.
-    ogImage: "img/docusaurus.png",
-    twitterImage: "img/docusaurus.png",
+  ogImage: 'img/docusaurus.png',
+  twitterImage: 'img/docusaurus.png',
 
     // Show documentation's last contributor's name.
     // enableUpdateBy: true,

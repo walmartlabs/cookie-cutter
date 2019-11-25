@@ -21,31 +21,22 @@ const client = new CosmosClient({
 
 describe.skip("cosmosClient", () => {
     it("validates query returns max number of events when specifying max events", async () => {
-        const result = await client.query(
-            {
-                query: getTopNEventsQuery,
-                parameters: [
-                    { name: "@stream_id", value: "journey-88888" },
-                    { name: "@sn", value: 1 },
-                    { name: "@max", value: 3 },
-                ],
-            },
-            undefined
-        );
+        const result = await client.query(undefined, {
+            query: getTopNEventsQuery,
+            parameters: [
+                { name: "@stream_id", value: "journey-88888" },
+                { name: "@sn", value: 1 },
+                { name: "@max", value: 3 },
+            ],
+        });
         expect(result).toHaveLength(3);
     });
 
     it("validates query returns max number of events when not specifying max events", async () => {
-        const result = await client.query(
-            {
-                query: getAllEventsQuery,
-                parameters: [
-                    { name: "@stream_id", value: "journey-88888" },
-                    { name: "@sn", value: 1 },
-                ],
-            },
-            undefined
-        );
+        const result = await client.query(undefined, {
+            query: getAllEventsQuery,
+            parameters: [{ name: "@stream_id", value: "journey-88888" }, { name: "@sn", value: 1 }],
+        });
         expect(result).toHaveLength(708);
     });
 });

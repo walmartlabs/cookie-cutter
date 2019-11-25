@@ -1,0 +1,24 @@
+syntax="proto3";
+package samples;
+
+message JoinRequest {
+    string userId = 1;
+}
+
+message JoinResponse {
+    string from = 1;
+    string msg = 2;
+}
+
+message SendMessageRequest {
+    string msg = 1;
+}
+
+message SendMessageResponse {
+
+}
+
+service ChatService {
+    rpc Join(JoinRequest) returns (stream JoinResponse);
+    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+}

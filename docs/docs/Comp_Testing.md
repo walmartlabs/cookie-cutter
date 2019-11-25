@@ -86,6 +86,21 @@ function createTestApp(): IApplicationBuilder {
 }
 ```
 
+## Mocking State (Materialized)
+
+Materialized views can be mocked with `mockMaterializedState` helper function:
+
+```typescript
+function createTestApp(): IApplicationBuilder {
+    return Application.create()
+        .dispatch(new MessageHandler())
+        .state(mockMaterializedState(Customer, {
+            "customer-1": new Customer({name: "John Doe"}),
+            "customer-2": new Customer({name: "Jane Doe"})
+        }));
+}
+```
+
 ## Truncating Outputs
 
 Sometimes it can be useful not to record all published or stored messages, but only some of them. An example might be multiple input messages that are required to setup the correct state on which the last input message is then supposed to act upon. This can be done with a special input message called the truncate beacon.

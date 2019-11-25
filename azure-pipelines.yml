@@ -1,108 +1,111 @@
 trigger:
-    branches:
-        include:
-            - master
-            - develop
-            - release/*
+  branches:
+    include:
+      - master
+      - develop
+      - release/*
 
 pr:
-    branches:
-        include:
-            - master
-            - develop
+  branches:
+    include:
+      - master
+      - develop
 
 jobs:
-    - job: build
-      displayName: Build
-      strategy:
-          maxParallel: 1
-          matrix:
-              linux-node-8:
-                  versionSpec: "8.x"
-                  imageName: "ubuntu-16.04"
-              linux-node-10:
-                  versionSpec: "10.x"
-                  imageName: "ubuntu-16.04"
-              linux-node-12:
-                  versionSpec: "12.x"
-                  imageName: "ubuntu-16.04"
-              # osx-node-8:
-              #   versionSpec: '8.x'
-              #   imageName: 'macOS-10.13'
-              # win-node-8:
-              #   versionSpec: '8.x'
-              #   imageName: 'vs2017-win2016'
-      pool:
-          vmImage: $(imageName)
-      steps:
-          - template: .ci/setup.yml
-            parameters:
-                versionSpec: $(versionSpec)
-          - script: yarn run build
-            displayName: Compile TypeScript
-          - script: yarn run test
-            displayName: Run Unit Tests
-          - script: yarn run lint
-            displayName: Lint
-          - task: PublishTestResults@2
-            inputs:
-                testResultsFormat: "JUnit"
-                testResultsFiles: "**/junit.xml"
+- job: build
+  displayName: Build
+  strategy:
+    maxParallel: 1
+    matrix:
+      linux-node-8:
+        versionSpec: '8.x'
+        imageName: 'ubuntu-16.04'
+      # osx-node-8:
+      #   versionSpec: '8.x'
+      #   imageName: 'macOS-10.13'
+      # win-node-8:
+      #   versionSpec: '8.x'
+      #   imageName: 'vs2017-win2016'
+      linux-node-10:
+        versionSpec: '10.x'
+        imageName: 'ubuntu-16.04'
+      linux-node-12:
+        versionSpec: '12.x'
+        imageName: 'ubuntu-16.04'
+  pool:
+    vmImage: $(imageName)
+  steps:
+    - template: .ci/setup.yml
+      parameters:
+        versionSpec: $(versionSpec)
+    - script: yarn run build
+      displayName: Compile TypeScript
+    - script: yarn run test
+      displayName: Run Unit Tests
+    - script: yarn run lint
+      displayName: Lint
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/junit.xml'
 
-    - job: integrate
-      displayName: Integration
-      dependsOn:
-          - build
-      strategy:
-          maxParallel: 1
-          matrix:
-              # azure:
-              #   packagePath: 'packages/azure'
-              #   imageName: 'win1803'
-              mssql:
-                  packagePath: "packages/mssql"
-                  imageName: "ubuntu-16.04"
-              s3:
-                  packagePath: "packages/s3"
-                  imageName: "ubuntu-16.04"
-              # kafka:
-              #   packagePath: 'packages/kafka'
-              #   imageName: 'ubuntu-16.04'
-      pool:
-          vmImage: $(imageName)
-      steps:
-          - template: .ci/integration-test.yml
-            parameters:
-                versionSpec: "8.x"
-                packagePath: $(packagePath)
-          - task: PublishTestResults@2
-            inputs:
-                testResultsFormat: "JUnit"
-                testResultsFiles: "**/junit.xml"
+- job: integrate
+  displayName: Integration
+  dependsOn:
+    - build
+  strategy:
+    maxParallel: 1
+    matrix:
+      # azure:
+      #   packagePath: 'packages/azure'
+      #   imageName: 'win1803'
+      mssql:
+        packagePath: 'packages/mssql'
+        imageName: 'ubuntu-16.04'
+      s3:
+        packagePath: 'packages/s3'
+        imageName: 'ubuntu-16.04'
+      kafka:
+        packagePath: 'packages/kafka'
+        imageName: 'ubuntu-16.04'
+      redis:
+        packagePath: 'packages/redis'
+        imageName: 'ubuntu-16.04'
+  pool:
+    vmImage: $(imageName)
+  steps:
+    - template: .ci/integration-test.yml
+      parameters:
+        versionSpec: '8.x'
+        packagePath: $(packagePath)
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/junit.xml'
 
-    - job: docs
-      displayName: Documentation
-      dependsOn:
-          - build
-          - integrate
-      pool:
-          vmImage: ubuntu-16.04
-      steps:
-          - script: |
-                cd docs
-                docker build -t docs .
-            displayName: Docker Build
+- job: docs
+  displayName: Documentation
+  dependsOn:
+    - build
+    - integrate
+  pool:
+    vmImage: ubuntu-16.04
+  steps:
+    - script: |
+        cd docs
+        docker build -t docs .
+      displayName: Docker Build
 
-    - job: deploy
-      displayName: Deploy
-      dependsOn:
-          - build
-          - integrate
-          - docs
-      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-      steps:
-          - template: .ci/setup.yml
-            parameters:
-                versionSpec: "8.x"
-          - script: yarn run build
-            displayName: Compile TypeScript
+- job: deploy
+  displayName: Deploy
+  dependsOn:
+    - build
+    - integrate
+    - docs
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  steps:
+    - template: .ci/setup.yml
+      parameters:
+        versionSpec: "8.x"
+    - script: yarn run build
+      displayName: Compile TypeScript

@@ -16,6 +16,7 @@ import {
     SequenceConflictError,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
+import { SpanContext } from "opentracing";
 import { ICosmosConfiguration } from "../../..";
 import { CosmosOutputSink } from "../../../materialized/internal";
 import { CosmosClient, ICosmosDocument } from "../../../utils";
@@ -44,7 +45,7 @@ describe("materialized CosmosOutputSink", () => {
         encoder: new JsonMessageEncoder(),
     };
     let upsert: jest.Mock;
-    const spanContext = {};
+    const spanContext = new SpanContext();
     const optimisticConcurrencyKey = "occErr";
     let dbQueryTimeout = "dbQueryTimeout";
     let counter = 0;
@@ -58,7 +59,7 @@ describe("materialized CosmosOutputSink", () => {
             if (partitionKey === optimisticConcurrencyKey) {
                 throw {
                     code: 400,
-                    body: bodyOptimisticConcurrency,
+                    body: { message: bodyOptimisticConcurrency },
                 };
             }
             if (partitionKey === dbQueryTimeout) {
@@ -69,7 +70,7 @@ describe("materialized CosmosOutputSink", () => {
                 }
                 throw {
                     code: 400,
-                    body: bodyDbQueryTimeout,
+                    body: { message: bodyDbQueryTimeout },
                 };
             }
             if (partitionKey === not400ErrorKey) {
@@ -156,7 +157,7 @@ describe("materialized CosmosOutputSink", () => {
                         payload: { value: "foo" },
                     },
                     spanContext,
-                    original: new MessageRef({}, null, {}),
+                    original: new MessageRef({}, null),
                 },
                 {
                     state: new StateRef({}, streamId, currentSn),
@@ -192,7 +193,7 @@ describe("materialized CosmosOutputSink", () => {
                         payload: { value: "foo" },
                     },
                     spanContext,
-                    original: new MessageRef({}, null, {}),
+                    original: new MessageRef({}, null),
                 },
                 {
                     state: new StateRef({}, streamId, currentSn),

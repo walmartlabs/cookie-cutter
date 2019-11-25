@@ -86,7 +86,7 @@ describe("event-sourced CosmosOutputSink", () => {
             if (partitionKey === seqNumAlreadyUsedErrorKey) {
                 throw {
                     code: 400,
-                    body: sequenceErrorBody,
+                    body: { message: sequenceErrorBody },
                 };
             }
             if (partitionKey === tooManyRequestsErrorKey) {
@@ -97,13 +97,13 @@ describe("event-sourced CosmosOutputSink", () => {
                 }
                 throw {
                     code: 429,
-                    body: tooManyRequestErrorBody,
+                    body: { message: tooManyRequestErrorBody },
                 };
             }
             if (partitionKey === unknown400ErrorKey) {
                 throw {
                     code: 400,
-                    body: unknown400ErrorKey,
+                    body: { message: unknown400ErrorKey },
                 };
             }
             if (partitionKey === not400ErrorKey) {
@@ -175,7 +175,7 @@ describe("event-sourced CosmosOutputSink", () => {
             )
         ).rejects.toMatchObject({
             code: 400,
-            body: unknown400ErrorKey,
+            body: { message: unknown400ErrorKey },
         });
         expect(bailed).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledTimes(1);

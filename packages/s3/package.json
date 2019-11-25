@@ -1,26 +1,26 @@
 {
-  "name": "@walmartlabs/cookie-cutter-s3",
-  "version": "1.1.0",
-  "license": "Apache-2.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "dependencies": {
-    "aws-sdk": "2.458.0",
-    "opentracing": "0.14.3"
-  },
-  "peerDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "devDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0",
-    "@types/node-fetch": "2.1.6",
-    "node-fetch": "2.3.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-    "integrate": "export MINIO_ACCESS_KEY=\"$(openssl rand -base64 32)\" MINIO_SECRET_KEY=\"$(openssl rand -base64 32)\" && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; docker-compose down",
-    "lint": "tslint --project tsconfig.json",
-    "lint:fix": "yarn run lint --fix"
-  }
+    "name": "@walmartlabs/cookie-cutter-s3",
+    "version": "1.2.0-beta.0",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "aws-sdk": "2.524.0",
+        "opentracing": "0.14.4"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta",
+        "@types/node-fetch": "2.5.0",
+        "node-fetch": "2.6.0"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "integrate": "export MINIO_ACCESS_KEY=\"$(openssl rand -base64 32)\" MINIO_SECRET_KEY=\"$(openssl rand -base64 32)\" && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; docker-compose down",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
 }

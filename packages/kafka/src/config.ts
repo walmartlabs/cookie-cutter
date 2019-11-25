@@ -19,11 +19,11 @@ import {
 
 @config.section
 export class KafkaBrokerConfiguration implements IKafkaBrokerConfiguration {
-    @config.field(config.converters.string)
-    public set broker(_: string) {
+    @config.field(config.converters.listOf(config.converters.string))
+    public set broker(_: string | string[]) {
         config.noop();
     }
-    public get broker(): string {
+    public get broker(): string | string[] {
         return config.noop();
     }
 
@@ -100,6 +100,14 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
         config.noop();
     }
     public get preprocessor(): IKafkaMessagePreprocessor {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set sessionTimeout(_: number) {
+        config.noop();
+    }
+    public get sessionTimeout(): number {
         return config.noop();
     }
 }

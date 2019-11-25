@@ -46,7 +46,7 @@ export const DefaultKafkaHeaderNames: IKafkaHeaderNames = {
 };
 
 export interface IKafkaBrokerConfiguration {
-    readonly broker: string;
+    readonly broker: string | string[];
     readonly encoder: IMessageEncoder;
     readonly headerNames?: IKafkaHeaderNames;
 }
@@ -77,6 +77,16 @@ export interface IKafkaSubscriptionConfiguration {
     readonly offsetCommitInterval?: number;
 
     readonly preprocessor?: IKafkaMessagePreprocessor;
+
+    /**
+     * Timeout used to detect failures.
+     * The consumer sends periodic heartbeats to indicate its liveness to the broker.
+     * If no heartbeats are received by the broker before the expiration of this session timeout,
+     * then the broker will remove this consumer from the group and initiate a rebalance.
+     *
+     * Defaults to 30s, src: https://kafka.js.org/docs/consuming
+     */
+    readonly sessionTimeout?: number;
 }
 
 export enum KafkaMessagePublishingStrategy {

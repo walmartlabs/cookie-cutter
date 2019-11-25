@@ -32,6 +32,8 @@ export interface IQueueConfiguration {
     readonly retryCount?: number;
     readonly retryInterval?: number;
     readonly encoder: IMessageEncoder;
+    /** Defaults to the `queue-large-items` */
+    readonly largeItemBlobContainer?: string;
 }
 
 export interface IQueueSourceConfiguration {
@@ -68,6 +70,7 @@ export function queueSink(configuration: IQueueConfiguration): IOutputSink<IPubl
     configuration = config.parse(QueueConfiguration, configuration, {
         retryCount: 3,
         retryInterval: 5000,
+        largeItemBlobContainer: "queue-large-items",
     });
     return new QueueOutputSink(configuration);
 }
@@ -78,6 +81,7 @@ export function queueSource(
     configuration = config.parse(QueueSourceConfiguration, configuration, {
         retryCount: 3,
         retryInterval: 5000,
+        largeItemBlobContainer: "queue-large-items",
     });
     return new QueueInputSource(configuration);
 }

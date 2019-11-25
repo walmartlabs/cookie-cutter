@@ -1,23 +1,23 @@
 {
-  "name": "@walmartlabs/cookie-cutter-gcp",
-  "version": "1.1.0-alpha",
-  "license": "Apache-2.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "dependencies": {
-    "@google-cloud/storage": "3.1.0",
-    "@google-cloud/bigquery": "4.1.8"
-  },
-  "peerDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "devDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-    "lint": "tslint --project tsconfig.json",
-    "lint:fix": "yarn run lint --fix"
-  }
+    "name": "@walmartlabs/cookie-cutter-gcp",
+    "version": "1.2.0-alpha.0",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "@google-cloud/storage": "3.2.1",
+        "@google-cloud/bigquery": "4.1.8"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
 }
