@@ -5,4 +5,4 @@ jobs:
   include:
     - stage: "Test"
       name: "Test"
-      script: echo "hello world"
+      script: echo "hallo world"
