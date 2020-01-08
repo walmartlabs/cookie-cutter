@@ -5,7 +5,11 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { IEncodedMessageEmbedder, IMessage, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
+import {
+    IEncodedMessageEmbedder,
+    IMessage,
+    IMessageEncoder,
+} from "@walmartlabs/cookie-cutter-core";
 import { IProtoMessageEncoderRegistry } from ".";
 
 export class ProtoJsonMessageEncoder implements IMessageEncoder, IEncodedMessageEmbedder {

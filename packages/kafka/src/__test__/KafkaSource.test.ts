@@ -7,7 +7,11 @@ LICENSE file in the root directory of this source tree.
 
 jest.mock("../KafkaConsumer");
 
-import { EventSourcedMetadata, JsonMessageEncoder, MessageRef } from "@walmartlabs/cookie-cutter-core";
+import {
+    EventSourcedMetadata,
+    JsonMessageEncoder,
+    MessageRef,
+} from "@walmartlabs/cookie-cutter-core";
 import { DefaultKafkaHeaderNames, KafkaMetadata } from "..";
 import { KafkaConsumer } from "../KafkaConsumer";
 import { KafkaSource } from "../KafkaSource";
