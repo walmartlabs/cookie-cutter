@@ -16,32 +16,34 @@ matrix:
           os: linux
           node_js: 8
           stage: test
-        - name: "Linux Node 10"
-          os: linux
-          node_js: 10
-          stage: test
-        - name: "Linux Node 12"
-          os: linux
-          node_js: 12
-          stage: test
+#        - name: "Linux Node 10"
+#          os: linux
+#          node_js: 10
+#          stage: test
+#        - name: "Linux Node 12"
+#          os: linux
+#          node_js: 12
+#          stage: test
 
-        - name: "OSX Node 8"
-          os: osx
-          node_js: 8
-          stage: test
-        - name: "OSX Node 10"
-          os: osx
-          node_js: 10
-          stage: test
-        - name: "OSX Node 12"
-          os: osx
-          node_js: 12
-          stage: test
+#        - name: "OSX Node 8"
+#          os: osx
+#          node_js: 8
+#          stage: test
+#        - name: "OSX Node 10"
+#          os: osx
+#          node_js: 10
+#          stage: test
+#        - name: "OSX Node 12"
+#          os: osx
+#          node_js: 12
+#          stage: test
           
         - name: "MSSQL"
           os: linux
           node_js: 8
           stage: integrate
+          services:
+            - docker
           script: |
                   sudo rm /usr/local/bin/docker-compose
                   curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
