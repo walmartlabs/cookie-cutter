@@ -3,13 +3,10 @@ node_js:
     - 8
     - 10
     - 12
-    
-stages:
-  - compile
-  - test
 
-jobs:
-  include:
-    - stage: compile
-      name: compile
-      script: yarn build
+os:
+    - linux
+    - osx
+    - windows
+
+script: yarn build && yarn test
