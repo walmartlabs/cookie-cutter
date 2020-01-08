@@ -1,8 +1,11 @@
 language: node_js
+cache: yarn
 stages:
     - lint
     - test
     - integrate
+    - name: deploy
+      if: branch = master
 
 matrix:
     include:
@@ -16,27 +19,27 @@ matrix:
           os: linux
           node_js: 8
           stage: test
-#        - name: "Linux Node 10"
-#          os: linux
-#          node_js: 10
-#          stage: test
-#        - name: "Linux Node 12"
-#          os: linux
-#          node_js: 12
-#          stage: test
+        - name: "Linux Node 10"
+          os: linux
+          node_js: 10
+          stage: test
+        - name: "Linux Node 12"
+          os: linux
+          node_js: 12
+          stage: test
 
-#        - name: "OSX Node 8"
-#          os: osx
-#          node_js: 8
-#          stage: test
-#        - name: "OSX Node 10"
-#          os: osx
-#          node_js: 10
-#          stage: test
-#        - name: "OSX Node 12"
-#          os: osx
-#          node_js: 12
-#          stage: test
+        - name: "OSX Node 8"
+          os: osx
+          node_js: 8
+          stage: test
+        - name: "OSX Node 10"
+          os: osx
+          node_js: 10
+          stage: test
+        - name: "OSX Node 12"
+          os: osx
+          node_js: 12
+          stage: test
           
         - name: "MSSQL"
           os: linux
@@ -46,13 +49,13 @@ matrix:
             - docker
           script: yarn build && cd packages/mssql && yarn integrate
           
-        - name: "Kafka"
-          os: linux
-          node_js: 8
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/kafka && yarn integrate
+#        - name: "Kafka"
+#          os: linux
+#          node_js: 8
+#          stage: integrate
+#          services:
+#            - docker
+#          script: yarn build && cd packages/kafka && yarn integrate
           
         - name: "S3"
           os: linux
@@ -62,12 +65,18 @@ matrix:
             - docker
           script: yarn build && cd packages/s3 && yarn integrate
           
-        - name: "Redis"
+#        - name: "Redis"
+#          os: linux
+#          node_js: 8
+#          stage: integrate
+#          services:
+#            - docker
+#          script: yarn build && cd packages/redis && yarn integrate
+
+        - name: "Publish"
           os: linux
           node_js: 8
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/redis && yarn integrate
+          stage: deploy
+          script: echo "deploying"
 
 script: yarn build && yarn test
