@@ -1,29 +1,52 @@
 language: node_js
-node_js:
-    - 8
-    #- 10
-    #- 12
-os:
-    - linux
-    - osx
-    #- windows
-env:
-    - DOCKER_COMPOSE_VERSION=1.4.2
-services:
-    - docker
 stages:
+    - lint
     - test
-    - name: integrate
-      if: os = linux
-      
-jobs:
+    - integrate
+
+matrix:
     include:
-        - stage: test
-          script: yarn build && yarn test
-        - stage: integrate
+        - name: "Lint"
+          os: linux
+          node_js: 10
+          stage: lint
+          script: yarn build && yarn lint
+
+        - name: "Linux Node 8"
+          os: linux
+          node_js: 8
+          stage: test
+        - name: "Linux Node 10"
+          os: linux
+          node_js: 10
+          stage: test
+        - name: "Linux Node 12"
+          os: linux
+          node_js: 12
+          stage: test
+
+        - name: "OSX Node 8"
+          os: osx
+          node_js: 8
+          stage: test
+        - name: "OSX Node 10"
+          os: osx
+          node_js: 10
+          stage: test
+        - name: "OSX Node 12"
+          os: osx
+          node_js: 12
+          stage: test
+          
+        - name: "MSSQL"
+          os: linux
+          node_js: 8
+          stage: integrate
           script: |
                   sudo rm /usr/local/bin/docker-compose
                   curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
                   chmod +x docker-compose
                   sudo mv docker-compose /usr/local/bin
-                  yarn build && yarn integrate
+                  yarn build && cd packages/mssql && yarn integrate
+
+script: yarn build && yarn test
