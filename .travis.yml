@@ -1,16 +1,16 @@
 language: node_js
 stages:
     - lint
-#    - test
+    - test
     - integrate
 
 matrix:
     include:
-#        - name: "Lint"
-#          os: linux
-#          node_js: 10
-#          stage: lint
-#          script: yarn build && yarn lint
+        - name: "Lint"
+          os: linux
+          node_js: 10
+          stage: lint
+          script: yarn build && yarn lint
 
         - name: "Linux Node 8"
           os: linux
@@ -45,6 +45,29 @@ matrix:
           services:
             - docker
           script: yarn build && cd packages/mssql && yarn integrate
+          
+        - name: "Kafka"
+          os: linux
+          node_js: 8
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/kafka && yarn integrate
+          
+        - name: "S3"
+          os: linux
+          node_js: 8
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/s3 && yarn integrate
+          
+        - name: "Redis"
+          os: linux
+          node_js: 8
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/redis && yarn integrate
 
-#script: yarn build && yarn test
-script: echo "test"
+script: yarn build && yarn test
