@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>S3 · Cookie Cutter</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;p&gt;The S3 module allows services to write to any S3 compatible blob storage or retrieve data from there.&lt;/p&gt;
+"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="S3 · Cookie Cutter"/><meta property="og:type" content="website"/><meta property="og:url" content="http://walmartlabs.github.io/cookie-cutter/"/><meta property="og:description" content="&lt;p&gt;The S3 module allows services to write to any S3 compatible blob storage or retrieve data from there.&lt;/p&gt;
+"/><meta property="og:image" content="http://walmartlabs.github.io/cookie-cutter/img/docusaurus.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="http://walmartlabs.github.io/cookie-cutter/img/docusaurus.png"/><link rel="shortcut icon" href="/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/vs.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/cookie.svg" alt="Cookie Cutter"/><h2 class="headerTitleWithLogo">Cookie Cutter</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/docs/intro-getting-started" target="_self">Introduction</a></li><li class="siteNavGroupActive"><a href="/docs/intro-inputs" target="_self">API</a></li><li class=""><a href="/help" target="_self">Help</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Modules</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Introduction</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/intro-getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/docs/intro-inputs">Inputs</a></li><li class="navListItem"><a class="navItem" href="/docs/intro-message-handling">Message Handling</a></li><li class="navListItem"><a class="navItem" href="/docs/intro-outputs">Outputs</a></li><li class="navListItem"><a class="navItem" href="/docs/versioning-contribution">Versioning and Contribution Guide</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Components</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/comp-dispatch-context">Dispatch Context</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-state">State</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-metrics">Metrics</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-tracing">Tracing</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-logging">Logging</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-validation">Validation</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-encoding">Encoding</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-config">Config</a></li><li class="navListItem"><a class="navItem" href="/docs/comp-testing">Testing</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Modules</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/module-kafka">Kafka</a></li><li class="navListItem"><a class="navItem" href="/docs/module-azure">Azure</a></li><li class="navListItem"><a class="navItem" href="/docs/module-grpc">gRPC</a></li><li class="navListItem"><a class="navItem" href="/docs/module-validatejs">ValidateJS</a></li><li class="navListItem"><a class="navItem" href="/docs/module-mssql">MSSQL</a></li><li class="navListItem"><a class="navItem" href="/docs/module-timer">Timer</a></li><li class="navListItem"><a class="navItem" href="/docs/module-statsd">StatsD</a></li><li class="navListItem"><a class="navItem" href="/docs/module-protobuf">Protobuf</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/docs/module-s3">S3</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 class="postHeaderTitle">S3</h1></header><article><div><span><p>The S3 module allows services to write to any S3 compatible blob storage or retrieve data from there.</p>
+<h2><a class="anchor" aria-hidden="true" id="sink"></a><a href="#sink" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Sink</h2>
+<pre><code class="hljs css language-typescript">Application.create()
+    <span class="hljs-comment">// ...</span>
+    .dispatch({
+        onMyInput: <span class="hljs-function">(<span class="hljs-params">msg: IMyInput, ctx: IDispatchContext</span>) =&gt;</span> {
+            <span class="hljs-comment">// this one will work without explicitly specifying a</span>
+            <span class="hljs-comment">// message encoder for s3Sink (we publish a byte array)</span>
+            ctx.publish(Buffer, Buffer.fromArray(msg.rawFileContent), {
+                [S3Metadata.Key]: <span class="hljs-string">"some-key"</span>,
+            });
+
+            <span class="hljs-comment">// for this line to work we need to tell s3Sink how the</span>
+            <span class="hljs-comment">// domain object should be encoded when it's stored</span>
+            ctx.publish(MyOutput, { foo: <span class="hljs-string">"123"</span>, bar: <span class="hljs-number">987</span> }, {
+                [S3Metadata.Key]: <span class="hljs-string">"some-other-key"</span>,
+            });
+
+            <span class="hljs-comment">// additionally we can override the default target </span>
+            <span class="hljs-comment">// bucket as well on a per-message basis</span>
+            ctx.publish(MyOutput, { foo: <span class="hljs-string">"123"</span>, bar: <span class="hljs-number">987</span> }, {
+                [S3Metadata.Key]: <span class="hljs-string">"foo-bar"</span>,
+                [S3Metdata.Bucket]: <span class="hljs-string">"bucket-foo"</span>,
+            });
+        }
+    })
+    .output()
+        .published(s3Sink({
+            endpoint: <span class="hljs-string">"http://my-s3-server:8080"</span>,
+            accessKeyId: <span class="hljs-string">"XXXXX"</span>,
+            secretAccessKey: <span class="hljs-string">"XXXXX"</span>,
+            <span class="hljs-comment">// encoder: new JsonMessageEncoder(),</span>
+        }))
+        .done()
+    .run();
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="client"></a><a href="#client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Client</h2>
+<p>The <code>s3Client</code> can be used to load or store data directly within a message handler function.</p>
+<pre><code class="hljs css language-typescript">Application.create()
+    <span class="hljs-comment">// ...</span>
+    .services()
+        .add(<span class="hljs-string">"s3"</span>, s3Client({ <span class="hljs-comment">/* configuration */</span> }))
+        .done()
+    .dispatch({
+        onMyInput: <span class="hljs-keyword">async</span> (msg: IMyInput, ctx: IDispatchContext): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">void</span>&gt; =&gt; {
+            <span class="hljs-keyword">const</span> s3 = ctx.services.get&lt;IS3Client&gt;(<span class="hljs-string">"s3"</span>);
+
+            <span class="hljs-comment">// retrieve and update and existing document</span>
+            <span class="hljs-keyword">const</span> obj = <span class="hljs-keyword">await</span> s3.getObject&lt;IMyObject&gt;(ctx.trace.context, <span class="hljs-string">"some-key"</span>, <span class="hljs-string">"some-bucket"</span>);
+            obj.foo = <span class="hljs-string">"bar"</span>;
+            <span class="hljs-keyword">await</span> s3.putObject&lt;IMyObject&gt;(ctx.trace.context, MyObject, obj, <span class="hljs-string">"some-key"</span>, <span class="hljs-string">"some-bucket"</span>);
+
+            <span class="hljs-comment">// ... and the same with raw byte arrays</span>
+            <span class="hljs-keyword">const</span> buffer = <span class="hljs-keyword">await</span> s3.getObject&lt;Buffer&gt;(ctx.trace.context, <span class="hljs-string">"foo"</span>, <span class="hljs-string">"bucket"</span>);
+            <span class="hljs-keyword">await</span> s3.putObject&lt;Buffer&gt;(ctx.trace.context, Buffer, obj, <span class="hljs-string">"food"</span>, <span class="hljs-string">"bucket"</span>);
+        }
+    })
+    .run();
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="configuration"></a><a href="#configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration</h2>
+<table>
+<thead>
+<tr><th>Name</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>endpoint</td><td>the HTTP endpoint to connect to</td></tr>
+<tr><td>accessKeyId</td><td>the access key id for authentication</td></tr>
+<tr><td>secretAccessKey</td><td>the secret access key for authentication</td></tr>
+<tr><td><em>encoder</em></td><td>the encoder to use when converting the payload to a byte array. this defaults to the <code>NullMessageEncoder</code> which only supports Buffers (=byte arrays) being published</td></tr>
+<tr><td><em>typeMapper</em></td><td>only required when using <code>s3Client</code> and if correct type information needs to be emitted</td></tr>
+<tr><td><em>sslEnabled</em></td><td>off by default</td></tr>
+<tr><td><em>apiVersion</em></td><td>defaults to &quot;2006-03-01&quot;</td></tr>
+<tr><td><em>defaultBucket</em></td><td>specifies the default bucket to store to</td></tr>
+</tbody>
+</table>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/module-protobuf"><span class="arrow-prev">← </span><span>Protobuf</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#sink">Sink</a></li><li><a href="#client">Client</a></li><li><a href="#configuration">Configuration</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/cookie.svg" alt="Cookie Cutter" width="66" height="58"/></a><div><h5>Docs</h5><a href="/docs/intro-getting-started.html">Introduction</a><a href="/docs/module-kafka.html">Kafka</a></div><div><h5>More</h5><a href="/blog">Blog</a></div></section><section class="copyright">Copyright © 2020 Walmart Inc.</section></footer></div></body></html>
