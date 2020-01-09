@@ -1,45 +1,45 @@
 language: node_js
 cache: yarn
 stages:
-    - lint
+    #- lint
     - test
-    - integrate
+    #- integrate
     - name: deploy
       if: branch = master OR branch = develop
 
 matrix:
     include:
-        - name: "Lint"
-          os: linux
-          node_js: 10
-          stage: lint
-          script: yarn build && yarn lint
+        # - name: "Lint"
+        #   os: linux
+        #   node_js: 10
+        #   stage: lint
+        #   script: yarn build && yarn lint
 
         - name: "Linux Node 8"
           os: linux
           node_js: 8
           stage: test
-        - name: "Linux Node 10"
-          os: linux
-          node_js: 10
-          stage: test
-        - name: "Linux Node 12"
-          os: linux
-          node_js: 12
-          stage: test
+        # - name: "Linux Node 10"
+        #   os: linux
+        #   node_js: 10
+        #   stage: test
+        # - name: "Linux Node 12"
+        #   os: linux
+        #   node_js: 12
+        #   stage: test
 
-        - name: "OSX Node 10"
-          os: osx
-          node_js: 10
-          stage: test
+        # - name: "OSX Node 10"
+        #   os: osx
+        #   node_js: 10
+        #   stage: test
           
-        - name: "MSSQL"
-          os: linux
-          node_js: 8
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/mssql && yarn integrate
+        # - name: "MSSQL"
+        #   os: linux
+        #   node_js: 8
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/mssql && yarn integrate
           
 #        - name: "Kafka"
 #          os: linux
@@ -49,13 +49,13 @@ matrix:
 #            - docker
 #          script: yarn build && cd packages/kafka && yarn integrate
           
-        - name: "S3"
-          os: linux
-          node_js: 8
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/s3 && yarn integrate
+        # - name: "S3"
+        #   os: linux
+        #   node_js: 8
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/s3 && yarn integrate
           
 #        - name: "Redis"
 #          os: linux
