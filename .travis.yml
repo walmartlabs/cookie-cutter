@@ -1,7 +1,7 @@
 language: node_js
 cache: yarn
 stages:
-    #- lint
+    - lint
     - test
     #- integrate
     - name: deploy
@@ -9,11 +9,11 @@ stages:
 
 matrix:
     include:
-        # - name: "Lint"
-        #   os: linux
-        #   node_js: 10
-        #   stage: lint
-        #   script: yarn build && yarn lint
+        - name: "Lint"
+          os: linux
+          node_js: 10
+          stage: lint
+          script: yarn build && yarn lint
 
         - name: "Linux Node 8"
           os: linux
