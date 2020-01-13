@@ -69,9 +69,14 @@ matrix:
           os: linux
           node_js: 8
           stage: deploy
-          script: echo "deploying"
-          
+          env:
+            - secure: "I9AoxsbgskzUeYwGUlwvDkXpVD69mwQbYEKqQCa4SCI5PS+2+mChwTgrQ9wc5UCLF8yoByYeX8vwWpXv9W5zWk311+Palt5ukm7oWzbGQcWVtVwlczpTDiL2fGtNy71B9pLtjTwtQdriPJJgJ1TzHlT4F1Fgi7b+RlBApbPEt6ebOk8Ibet6YzdoXpnh8BAIJ6/FR3gFG403s+KzrXtN9GyW1omMINYTuniBZCtivabXLuCe3gxL3Ui6Km2zoOfv6/A+SNdfv8mEhxBfTPw6ixeKiVTJjqBzWgMScEdPuDQV4ZHh01eYYwW9RLpgIe9X8Yuh+A5m0KsxdTJVXjyaZS9gaeXxaPfoWRHrw0yoAJEO4g5y3N74kZUPcAB43LbwhgPLQmlGjBzG/qfsVA3Shklmx5OC9Wp+L+pVaZXGRIyhWdrKpwsjYOfcpnn0Wx+9yZqvMBgorGNzJsp1qPkvgl+x9bFR2FhfZQHWrHlavRAXEU04wRpJVzNWLywhnVbEwRFu38v8wupItlg9ftT6E6viSo10fpH9KUMsekUPZ6lKaFvMYzfGLtuDGh5M97eBRaDxz/J1+TLg4jBBFGedYDM+XkflYyEJ1e63sbMqG3Xjb8G8E5ZQtppWW2GkyVN5wnXBFa4y9kKYd3QyPWkPVx5C6zv2yOBTnoc/F9gTq94="
+          script: |
+                  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+                  npm whoami
+                  
         - name: "Publish to GitHub Pages"
+          if: branch = master
           os: linux
           node_js: 8
           stage: deploy

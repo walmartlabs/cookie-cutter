@@ -1,5 +1,6 @@
 # Cookie Cutter
 
+[![Build Status](https://travis-ci.org/walmartlabs/cookie-cutter.svg?branch=master)](https://travis-ci.org/walmartlabs/cookie-cutter)
 ![Alt text](/docs/website/static/img/favicon.png?raw=true "Logo")
 
 Cookie Cutter is an opinionated framework for building event-driven micro services. Its main goal is to allow developers to focus on the domain problem and abstract away cross-cutting concerns like APM, logging, caching, state management, etc ...
