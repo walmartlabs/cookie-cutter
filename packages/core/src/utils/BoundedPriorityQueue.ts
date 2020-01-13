@@ -24,6 +24,16 @@ export class BoundedPriorityQueue<T> {
         this.closed = false;
     }
 
+    public update(predicate: (T) => boolean, op: (T) => void): void {
+        for (const queue of this.queues.values()) {
+            for (const item of queue) {
+                if (predicate(item)) {
+                    op(item);
+                }
+            }
+        }
+    }
+
     public async enqueue(item: T, priority = 0): Promise<boolean> {
         let queue = this.queues.get(priority);
         if (queue === undefined) {

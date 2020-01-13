@@ -134,6 +134,7 @@ export enum KafkaMetadata {
     Tombstone = "tombstone",
     ExactlyOnceSemantics = "eos",
     ConsumerGroupId = "consumerGroupId",
+    ConsumerGroupEpoch = "consumerGroupEpoch",
 }
 
 export interface IKafkaMessagePreprocessor {

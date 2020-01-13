@@ -9,6 +9,7 @@ jest.mock("../KafkaConsumer");
 
 import {
     EventSourcedMetadata,
+    IInputSourceContext,
     JsonMessageEncoder,
     MessageRef,
 } from "@walmartlabs/cookie-cutter-core";
@@ -20,6 +21,12 @@ import { IRawKafkaMessage } from "../model";
 class ShoppingCartCreated {
     constructor(public shoppingCartId: string) {}
 }
+
+const MockInputSourceContext: IInputSourceContext = {
+    evict: () => {
+        return Promise.resolve();
+    },
+};
 
 describe("KafkaSource", () => {
     const topicName = "topic";
@@ -68,7 +75,7 @@ describe("KafkaSource", () => {
                 },
             });
 
-            const messages = source.start();
+            const messages = source.start(MockInputSourceContext);
             let received: MessageRef;
 
             for await (const message of messages) {
@@ -102,7 +109,7 @@ describe("KafkaSource", () => {
                 },
             });
 
-            const messages = source.start();
+            const messages = source.start(MockInputSourceContext);
             let received: MessageRef;
 
             for await (const message of messages) {
@@ -141,7 +148,7 @@ describe("KafkaSource", () => {
                 },
             });
 
-            const messages = source.start();
+            const messages = source.start(MockInputSourceContext);
             let received: MessageRef;
 
             for await (const message of messages) {
@@ -192,7 +199,7 @@ describe("KafkaSource", () => {
                 },
             });
 
-            const messages = source.start();
+            const messages = source.start(MockInputSourceContext);
             let received: MessageRef;
 
             for await (const message of messages) {
@@ -264,7 +271,7 @@ describe("KafkaSource", () => {
                 },
             });
 
-            const messages = source.start();
+            const messages = source.start(MockInputSourceContext);
             let received: MessageRef;
 
             for await (const message of messages) {

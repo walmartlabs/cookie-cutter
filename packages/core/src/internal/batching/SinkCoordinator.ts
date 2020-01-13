@@ -25,7 +25,7 @@ import {
     OutputSinkConsistencyLevel,
     StateRef,
 } from "../../model";
-import { iterate, prettyEventName } from "../../utils";
+import { iterate, prettyEventName, RetrierContext } from "../../utils";
 import { BatchHandler } from "./BatchHandler";
 
 export class SinkCoordinator implements IRequireInitialization {
@@ -87,10 +87,10 @@ export class SinkCoordinator implements IRequireInitialization {
 
     public async handle(
         items: IterableIterator<BufferedDispatchContext>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<IBatchResult> {
         const contexts = Array.from(items);
-        const storeResult = await this.storeTarget.handle(contexts, bail);
+        const storeResult = await this.storeTarget.handle(contexts, retry);
         this.emitMetrics(
             this.stored(storeResult.successful),
             this.stored(storeResult.failed),
@@ -101,7 +101,7 @@ export class SinkCoordinator implements IRequireInitialization {
             // processed then we need to make sure the corresponding publishes
             // are processed before we bail with an error for the failed items
             const { successful } = storeResult;
-            const publishResult = await this.publishTarget.handle(successful, bail);
+            const publishResult = await this.publishTarget.handle(successful, retry);
             this.emitMetrics(
                 this.published(publishResult.successful),
                 this.published(publishResult.failed),
@@ -119,7 +119,7 @@ export class SinkCoordinator implements IRequireInitialization {
             return storeResult;
         }
 
-        const publishResult = await this.publishTarget.handle(contexts, bail);
+        const publishResult = await this.publishTarget.handle(contexts, retry);
         this.emitMetrics(
             this.published(publishResult.successful),
             this.published(publishResult.failed),

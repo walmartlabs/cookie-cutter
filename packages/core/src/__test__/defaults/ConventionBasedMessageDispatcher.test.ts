@@ -15,6 +15,7 @@ import {
     NullMetrics,
 } from "../..";
 import { TraceContext } from "../../internal";
+import { createRetrierContext, RetrierContext } from "../../utils";
 
 interface ITrigger {
     readonly name: string;
@@ -49,6 +50,8 @@ class AsyncDispatchTarget {
     }
 }
 
+const retry: RetrierContext = createRetrierContext(10);
+
 function mockContext(): IDispatchContext {
     return {
         logger: {
@@ -70,9 +73,8 @@ function mockContext(): IDispatchContext {
         },
         store: jest.fn(),
         typeName: jest.fn(),
-        bail: (err) => {
-            throw err;
-        },
+        bail: retry.bail,
+        retry,
     };
 }
 

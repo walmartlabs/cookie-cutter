@@ -16,6 +16,7 @@ import {
     IRequireInitialization,
     isEmbeddable,
     OutputSinkConsistencyLevel,
+    RetrierContext,
     SequenceConflictError,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
@@ -28,6 +29,7 @@ import {
     isSequenceConflict,
 } from ".";
 import { ICosmosConfiguration } from "..";
+import { RETRY_AFTER_MS } from "./CosmosClient";
 
 export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable {
     protected readonly client: CosmosClient;
@@ -64,7 +66,7 @@ export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable
     protected async doBulkInsert(
         documents: ICosmosDocument[],
         verifySn: boolean,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
         if (documents.length < 1) {
             return;
@@ -75,11 +77,14 @@ export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable
             return await this.client.bulkInsert(documents, partitionKey, verifySn);
         } catch (e) {
             if (isRetryableError(e)) {
+                if (e.headers && e.headers[RETRY_AFTER_MS]) {
+                    retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+                }
                 throw e;
             } else if (isSequenceConflict(e)) {
-                bail(new SequenceConflictError(getSequenceConflictDetails(e)));
+                retry.bail(new SequenceConflictError(getSequenceConflictDetails(e)));
             } else {
-                bail(e);
+                retry.bail(e);
             }
         }
     }
@@ -96,7 +101,7 @@ export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable
     protected async verifyState(
         stateRef: StateRef,
         spanContext: SpanContext,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
         try {
             const result = await this.client.query(spanContext, {
@@ -115,9 +120,12 @@ export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable
             }
         } catch (e) {
             if (isRetryableError(e)) {
+                if (e.headers && e.headers[RETRY_AFTER_MS]) {
+                    retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+                }
                 throw e;
             } else {
-                bail(e);
+                retry.bail(e);
             }
         }
     }

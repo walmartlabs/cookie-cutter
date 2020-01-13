@@ -30,10 +30,13 @@ export interface IDispatchContext<TState = any> {
     publish<T>(type: IClassType<T>, msg: T, meta?: Readonly<{ [key in string]: any }>): void;
     store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void;
     typeName<T>(type: IClassType<T>): string;
+    bail(err: any): never; // deprecated
+    readonly services: IServiceRegistry;
     readonly state: IDispatchState<TState>;
     readonly metrics: IMetrics;
     readonly logger: ILogger;
     readonly trace: ITracing;
+    readonly retry: RetrierContext;
 }
 ```
 

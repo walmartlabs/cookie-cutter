@@ -10,6 +10,7 @@ import {
     isStoredMessage,
     IStateVerification,
     IStoredMessage,
+    RetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { isNullOrUndefined } from "util";
 import { ICosmosConfiguration } from "../../";
@@ -22,7 +23,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
 
     public async sink(
         output: IterableIterator<IStoredMessage | IStateVerification>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
         const counter = new Map<string, number>();
         const documents: ICosmosDocument[] = [];
@@ -51,12 +52,12 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
             documents.push(doc);
         }
         if (documents.length > 0) {
-            await this.doBulkInsert(documents, true, bail);
+            await this.doBulkInsert(documents, true, retry);
         } else if (verification.length > 0) {
             await this.verifyState(
                 verification[0].state,
                 verification[0].original.spanContext,
-                bail
+                retry
             );
         }
     }

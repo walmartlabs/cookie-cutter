@@ -15,7 +15,7 @@ import {
     IMetricTags,
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
-import { Counter, Gauge, register, Summary } from "prom-client";
+import { Counter, Gauge, Histogram, register } from "prom-client";
 import { isNumber } from "util";
 import { IPrometheusConfiguration, PrometheusConfiguration } from "./config";
 import { HttpServer } from "./HttpServer";
@@ -78,7 +78,7 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
             }
             counter.inc(tags ? tags : {}, val, Date.now());
         } catch (err) {
-            this.logger.error("Prometheus Error", err, { key, value: val, tags });
+            this.logger.error("Prometheus Counter Error", err, { key, value: val, tags });
         }
     }
 
@@ -102,33 +102,34 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
             }
             gauge.set(tags ? tags : {}, value, Date.now());
         } catch (err) {
-            this.logger.error("Prometheus Error", err, { key, value, tags });
+            this.logger.error("Prometheus Gauge Error", err, { key, value, tags });
         }
     }
 
     /**
-     * Timing is implemented as a summary w/ percentiles of .5, .95, and .99
-     * Count and total counters are also added
+     * A Prometheus [Histogram](https://prometheus.io/docs/concepts/metric_types/#histogram) with
+     * buckets defined when this class is instantiated.
+     * @param {string} key The key of the metric
+     * @param {number} value The observation (in seconds) to record
+     * @param {IMetricTags} tags The tag values to associate with this observation
      */
     public timing(key: string, value: number, tags?: IMetricTags): void {
         const prefixedKey = this.getPrefixedKey(key);
 
         try {
-            let summary: Summary = register.getSingleMetric(prefixedKey) as Summary;
-            if (!summary) {
-                summary = new Summary({
+            let histogram: Histogram = register.getSingleMetric(prefixedKey) as Histogram;
+            if (!histogram) {
+                histogram = new Histogram({
                     name: prefixedKey,
                     help: prefixedKey,
                     labelNames: tags ? Object.keys(tags) : [],
-                    percentiles: [0.5, 0.95, 0.99],
+                    // TODO: This should be configurable per-histogram, but would require breaking `IMetrics`
+                    buckets: this.config.histogramBuckets,
                 });
             }
-            summary.observe(tags ? tags : {}, value);
-
-            this.increment(`${key}_total`, value, tags);
-            this.increment(`${key}_count`, tags);
+            histogram.observe(tags ? tags : {}, value);
         } catch (err) {
-            this.logger.error("Prometheus Error", err, { key, value, tags });
+            this.logger.error("Prometheus Histogram Error", err, { key, value, tags });
         }
     }
 
@@ -152,6 +153,7 @@ export function prometheus(prometheusConfig: IPrometheusConfiguration): IMetrics
         port: 3000,
         endpoint: "/metrics",
         prefix: "",
+        histogramBuckets: [0.05, 0.2, 0.5, 1, 5, 30, 100],
     };
     return new PrometheusMetrics(config.parse(PrometheusConfiguration, prometheusConfig, defaults));
 }

@@ -22,9 +22,13 @@ import {
     K8sAdmissionReviewRequest,
 } from "..";
 
-function testApp(handler: any): CancelablePromise<void> {
-    const privateKey = fs.readFileSync(path.join(__dirname, "webhook-server-tls.key"), "utf-8");
-    const cert = fs.readFileSync(path.join(__dirname, "webhook-server-tls.crt"), "utf-8");
+function testApp(handler: any, emptyCreds?: boolean): CancelablePromise<void> {
+    const privateKey = emptyCreds
+        ? ""
+        : fs.readFileSync(path.join(__dirname, "webhook-server-tls.key"), "utf-8");
+    const cert = emptyCreds
+        ? ""
+        : fs.readFileSync(path.join(__dirname, "webhook-server-tls.crt"), "utf-8");
     return Application.create()
         .logger(new ConsoleLogger())
         .input()
@@ -166,5 +170,27 @@ describe("KubernetesAdmissionControllerSource", () => {
             app.cancel();
             await app;
         }
+    });
+
+    it("throws when an empty key or cert is passed to the Https Server", async () => {
+        let error;
+        try {
+            await testApp(
+                {
+                    onK8sAdmissionReviewRequest: async (
+                        _: K8sAdmissionReviewRequest,
+                        __: IDispatchContext
+                    ): Promise<IK8sAdmissionReviewResponse> => {
+                        return { allowed: true };
+                    },
+                },
+                true
+            );
+        } catch (e) {
+            error = e;
+        }
+        expect(error).toMatchObject(
+            new Error("test failed: init: false, run: false, dispose: true")
+        );
     });
 });

@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { IOutputSink, IPublishedMessage } from "@walmartlabs/cookie-cutter-core";
+import { IOutputSink, IPublishedMessage, RetrierContext } from "@walmartlabs/cookie-cutter-core";
 import { isNullOrUndefined } from "util";
 import { ICosmosConfiguration } from "../..";
 import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
@@ -18,7 +18,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase
 
     public async sink(
         output: IterableIterator<IPublishedMessage>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
         const documents: ICosmosDocument[] = [];
         for (const msg of output) {
@@ -38,6 +38,6 @@ export class CosmosOutputSink extends CosmosOutputSinkBase
             };
             documents.push(doc);
         }
-        await this.doBulkInsert(documents, false, bail);
+        await this.doBulkInsert(documents, false, retry);
     }
 }

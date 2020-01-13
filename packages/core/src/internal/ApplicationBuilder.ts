@@ -232,6 +232,17 @@ export class ApplicationBuilder implements IApplicationBuilder {
             validator: this.validator,
         });
 
+        try {
+            await processor.initialize({
+                metrics,
+                logger: this.activeLogger,
+                tracer,
+            });
+        } catch (e) {
+            successfulInit = false;
+            this.activeLogger.error("failed to initialize message processor", e);
+        }
+
         let successfulRun = false;
         if (successfulInit) {
             let signalCounter = 0;

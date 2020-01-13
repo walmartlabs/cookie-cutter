@@ -23,7 +23,7 @@ import {
     MessageRef,
     StateRef,
 } from "../model";
-import { iterate } from "../utils";
+import { iterate, RetrierContext } from "../utils";
 import { BufferedMetrics } from "./BufferedMetrics";
 
 class DispatchState<TState> implements IDispatchState<TState> {
@@ -82,7 +82,7 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
     public readonly logger: ILogger;
     public readonly metrics: BufferedMetrics;
     private _completed: boolean = false;
-    public bail: (err: any) => never;
+    public retry: RetrierContext;
 
     constructor(
         public readonly source: MessageRef,
@@ -100,7 +100,18 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
         this.logger = new MetadataLoggerDecorator(logger, this.source.getAllMetadata());
         this.metrics = new BufferedMetrics(metricsPublisher);
         this._state = new DispatchState(this.stateProvider, this.trace, this.storedItems);
-        this.bail = undefined;
+        this.retry = undefined;
+    }
+
+    /**
+     * @deprecated Deprecated.
+     *
+     * @param {any} err
+     * @returns never
+     */
+    public bail(err: any): never {
+        this.retry.bail(err);
+        throw err;
     }
 
     public get state(): IDispatchState<TState> {

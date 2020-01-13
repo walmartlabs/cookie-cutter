@@ -1,20 +1,30 @@
+/*
+Copyright (c) Walmart Inc.
+
+This source code is licensed under the Apache 2.0 license found in the
+LICENSE file in the root directory of this source tree.
+*/
+
 import * as http from "http";
 import { IPrometheusConfiguration } from "../config";
 import { HttpServer } from "../HttpServer";
 
-export const port: number = 3000;
+let testPort = 3002;
+export const nextPort = () => testPort++;
+
+export const port: number = 3001;
 export const endpoint: string = "/metrics";
-export const prometheusConfiguration: IPrometheusConfiguration = {
+export const prometheusConfiguration = (port: number): IPrometheusConfiguration => ({
     port,
     endpoint,
     prefix: "prefix_",
-};
+});
 
 export function createServer(getMetrics: () => string): HttpServer {
     return HttpServer.create(port, endpoint, getMetrics);
 }
 
-export async function getMetrics() {
+export async function getMetrics(port: number) {
     return await new Promise<string>((resolve, reject) => {
         let data: string = "";
         http.get(`http://localhost:${port}${endpoint}`, (resp) => {

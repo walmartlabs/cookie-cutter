@@ -1,3 +1,10 @@
+/*
+Copyright (c) Walmart Inc.
+
+This source code is licensed under the Apache 2.0 license found in the
+LICENSE file in the root directory of this source tree.
+*/
+
 import { failSpan, IComponentContext } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext, Tracer } from "opentracing";
 import { v4 } from "uuid";

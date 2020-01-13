@@ -27,6 +27,7 @@
             "module-timer",
             "module-statsd",
             "module-protobuf",
+            "module-prometheus",
             "module-redis",
             "module-s3"
         ]

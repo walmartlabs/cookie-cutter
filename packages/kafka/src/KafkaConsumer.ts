@@ -10,6 +10,7 @@ import {
     DefaultComponentContext,
     IComponentContext,
     IDisposable,
+    IInputSourceContext,
     ILogger,
     IMetrics,
     IRequireInitialization,
@@ -32,10 +33,12 @@ import {
 import * as LZ4Codec from "kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
 import Long = require("long");
+import { isNumber } from "util";
 import {
     IKafkaBrokerConfiguration,
     IKafkaSubscriptionConfiguration,
     IKafkaTopic,
+    KafkaMetadata,
     KafkaOffsetResetStrategy,
 } from ".";
 import { IRawKafkaMessage } from "./model";
@@ -75,6 +78,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
     private done = false;
     private offsetCommitIntervalMs: number;
     private timer: NodeJS.Timer;
+    private groupEpoch: number = 0;
 
     constructor(config: KafkaConsumerConfig) {
         this.config = config;
@@ -89,10 +93,14 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
         this.metrics = context.metrics;
     }
 
+    public get epoch(): number {
+        return this.groupEpoch;
+    }
+
     /**
      * Consume messages from configured topics. Expose each message via generator.
      */
-    public async *consume(): AsyncIterableIterator<IRawKafkaMessage> {
+    public async *consume(context: IInputSourceContext): AsyncIterableIterator<IRawKafkaMessage> {
         const topics: IKafkaTopic[] = [];
         for (const t of this.config.topics as IKafkaTopic[]) {
             topics.push({
@@ -164,6 +172,22 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
         this.consumer.on(
             this.consumer.events.GROUP_JOIN,
             ({ payload: { memberAssignment } }: ConsumerGroupJoinEvent) => {
+                this.groupEpoch++;
+
+                // TODO: once https://github.com/tulios/kafkajs/issues/592
+                // is resolved move this code to the callback for
+                // the synchronization barrier
+                const epoch = this.groupEpoch;
+                context
+                    .evict(
+                        (msg) =>
+                            isNumber(msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch)) &&
+                            msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch) < epoch
+                    )
+                    .catch((e) => {
+                        this.logger.error("failed to evict in-flight messages on rebalance", e);
+                    });
+
                 if (!memberAssignment) {
                     throw new Error("Member assignment missing in KafkaJS join event");
                 }

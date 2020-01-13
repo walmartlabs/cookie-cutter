@@ -8,8 +8,54 @@ LICENSE file in the root directory of this source tree.
 import { ErrorHandlingMode, IComponentRuntimeBehavior, RetryMode } from "../model";
 import { sleep } from "../utils";
 
+interface IRetrierContext {
+    readonly currentAttempt: number;
+    readonly maxAttempts: number;
+    readonly hasBailed: boolean;
+    bail: (err: any) => never;
+    isFinalAttempt: () => boolean;
+    setNextRetryInterval: (interval: number) => void;
+}
+
+// Passing a bail function to a sink/dispatch is deprecated.
+// The (err: any) => never) portion of this type is for backwards compatibility.
+// The bail function is being replaced by IRetrierContext
+export type RetrierContext = ((err: any) => never) & IRetrierContext;
+
+function generateRetrierContext(
+    maxAttempts: number
+): RetrierContext & { customInterval: number; incrementAttempt(): void } {
+    const retry = (err: any) => {
+        retry.hasBailed = true;
+        throw err;
+    };
+    retry.customInterval = undefined;
+    retry.currentAttempt = 1;
+    retry.maxAttempts = maxAttempts;
+    retry.hasBailed = false;
+    retry.bail = (err: any) => {
+        retry.hasBailed = true;
+        throw err;
+    };
+    retry.setNextRetryInterval = (interval: number) => {
+        retry.customInterval = interval;
+    };
+    retry.isFinalAttempt = () => {
+        return retry.hasBailed || retry.currentAttempt >= retry.maxAttempts;
+    };
+    retry.incrementAttempt = (): void => {
+        retry.currentAttempt = retry.currentAttempt + 1;
+        retry.customInterval = undefined;
+    };
+    return retry;
+}
+
+export function createRetrierContext(maxAttempts: number): RetrierContext {
+    return generateRetrierContext(maxAttempts);
+}
+
 export interface IRetrier {
-    retry<T>(func: (bail: (err: any) => never) => Promise<T> | T): Promise<T>;
+    retry<T>(func: (retry: RetrierContext) => Promise<T> | T): Promise<T>;
 }
 
 export function createRetrier(behavior: Required<IComponentRuntimeBehavior>): IRetrier {
@@ -29,7 +75,7 @@ class LogAndRetryOrContinueRetrier implements IRetrier {
         this.internalRetrier = new InternalRetrier(this.behavior);
     }
 
-    public async retry<T>(func: (bail: (err: any) => never) => Promise<T> | T): Promise<T> {
+    public async retry<T>(func: (retry: RetrierContext) => Promise<T> | T): Promise<T> {
         try {
             return await this.internalRetrier.retry(func);
         } catch (e) {
@@ -45,7 +91,7 @@ class LogAndRetryOrFailRetrier implements IRetrier {
         this.internalRetrier = new InternalRetrier(this.behavior);
     }
 
-    public async retry<T>(func: (bail: (err: any) => never) => Promise<T> | T): Promise<T> {
+    public async retry<T>(func: (retry: RetrierContext) => Promise<T> | T): Promise<T> {
         try {
             return await this.internalRetrier.retry(func);
         } catch (e) {
@@ -83,30 +129,25 @@ export class InternalRetrier implements IRetrier {
         };
     }
 
-    public async retry<T>(func: (bail: (err: any) => never) => Promise<T> | T): Promise<T> {
-        let keepRetrying = true;
-        let attempt = 1;
-        const maxAttempts = this.behavior.retries + 1;
+    public async retry<T>(func: (retry: RetrierContext) => Promise<T> | T): Promise<T> {
+        const retry = generateRetrierContext(this.behavior.retries + 1);
         do {
             try {
-                let val = func((err: any) => {
-                    keepRetrying = false;
-                    throw err;
-                });
+                let val = func(retry);
                 if (this.isPromise(val)) {
                     val = await (val as Promise<T>);
                 }
                 return val;
             } catch (e) {
-                if (attempt >= maxAttempts) {
+                if (retry.isFinalAttempt()) {
                     throw e;
                 }
-                if (!keepRetrying) {
-                    throw e;
-                }
-                const nextInterval = this.nextRetryInterval(attempt);
+                const nextInterval =
+                    retry.customInterval !== undefined
+                        ? retry.customInterval
+                        : this.nextRetryInterval(retry.currentAttempt);
+                retry.incrementAttempt();
                 await sleep(nextInterval);
-                attempt++;
             }
         } while (true);
     }

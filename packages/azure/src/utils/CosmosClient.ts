@@ -49,6 +49,8 @@ enum CosmosMetricResults {
     ErrorSequenceConflict = "error.sequence_conflict",
 }
 
+export const RETRY_AFTER_MS = Constants.HttpHeaders.RetryAfterInMilliseconds;
+
 export const BULK_INSERT_SPROC_ID = "bulkInsertSproc";
 export const UPSERT_SPROC_ID = "upsertSproc";
 

@@ -195,15 +195,29 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 setTimeout(() => this.startWatch(kubeConfig), this.reconnectTimeout).unref();
             }
         );
+
+        setTimeout(() => {
+            this.logger.warn(`Restarting watch`, {
+                queryPath: this.queryPath,
+                queryParams: this.queryParams,
+                reconnectTimeout: this.reconnectTimeout,
+            });
+            this.closePendingRequest();
+            this.startWatch(kubeConfig);
+        }, this.reconnectTimeout);
     }
 
     private async abort(): Promise<void> {
+        this.closePendingRequest();
+        await this.queue.close();
+    }
+
+    private closePendingRequest(): void {
         if (this.pendingRequest) {
             const pr = this.pendingRequest;
             this.pendingRequest = undefined;
             pr.abort();
         }
-        await this.queue.close();
     }
 
     public async dispose(): Promise<void> {
