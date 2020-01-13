@@ -6,6 +6,7 @@
         "start": "docusaurus-start",
         "build": "docusaurus-build",
         "version": "docusaurus-version",
+        "publish-gh-pages": "docusaurus-publish",
         "rename-version": "docusaurus-rename-version",
         "test": "echo 'N/A'",
         "lint": "echo 'N/A'",

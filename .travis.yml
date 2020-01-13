@@ -1,3 +1,93 @@
 language: node_js
-node_js:
-    - 8
+cache: yarn
+stages:
+    - lint
+    - test
+    #- integrate
+    - name: deploy
+      if: branch = master OR branch = develop
+
+matrix:
+    include:
+        - name: "Lint"
+          os: linux
+          node_js: 10
+          stage: lint
+          script: yarn build && yarn lint
+
+        - name: "Linux Node 8"
+          os: linux
+          node_js: 8
+          stage: test
+        # - name: "Linux Node 10"
+        #   os: linux
+        #   node_js: 10
+        #   stage: test
+        # - name: "Linux Node 12"
+        #   os: linux
+        #   node_js: 12
+        #   stage: test
+
+        # - name: "OSX Node 10"
+        #   os: osx
+        #   node_js: 10
+        #   stage: test
+          
+        # - name: "MSSQL"
+        #   os: linux
+        #   node_js: 8
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/mssql && yarn integrate
+          
+#        - name: "Kafka"
+#          os: linux
+#          node_js: 8
+#          stage: integrate
+#          services:
+#            - docker
+#          script: yarn build && cd packages/kafka && yarn integrate
+          
+        # - name: "S3"
+        #   os: linux
+        #   node_js: 8
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/s3 && yarn integrate
+          
+#        - name: "Redis"
+#          os: linux
+#          node_js: 8
+#          stage: integrate
+#          services:
+#            - docker
+#          script: yarn build && cd packages/redis && yarn integrate
+
+        - name: "Publish to NPM"
+          os: linux
+          node_js: 8
+          stage: deploy
+          env:
+            - secure: "I9AoxsbgskzUeYwGUlwvDkXpVD69mwQbYEKqQCa4SCI5PS+2+mChwTgrQ9wc5UCLF8yoByYeX8vwWpXv9W5zWk311+Palt5ukm7oWzbGQcWVtVwlczpTDiL2fGtNy71B9pLtjTwtQdriPJJgJ1TzHlT4F1Fgi7b+RlBApbPEt6ebOk8Ibet6YzdoXpnh8BAIJ6/FR3gFG403s+KzrXtN9GyW1omMINYTuniBZCtivabXLuCe3gxL3Ui6Km2zoOfv6/A+SNdfv8mEhxBfTPw6ixeKiVTJjqBzWgMScEdPuDQV4ZHh01eYYwW9RLpgIe9X8Yuh+A5m0KsxdTJVXjyaZS9gaeXxaPfoWRHrw0yoAJEO4g5y3N74kZUPcAB43LbwhgPLQmlGjBzG/qfsVA3Shklmx5OC9Wp+L+pVaZXGRIyhWdrKpwsjYOfcpnn0Wx+9yZqvMBgorGNzJsp1qPkvgl+x9bFR2FhfZQHWrHlavRAXEU04wRpJVzNWLywhnVbEwRFu38v8wupItlg9ftT6E6viSo10fpH9KUMsekUPZ6lKaFvMYzfGLtuDGh5M97eBRaDxz/J1+TLg4jBBFGedYDM+XkflYyEJ1e63sbMqG3Xjb8G8E5ZQtppWW2GkyVN5wnXBFa4y9kKYd3QyPWkPVx5C6zv2yOBTnoc/F9gTq94="
+          script: |
+                  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+                  npm whoami
+                  
+        - name: "Publish to GitHub Pages"
+          if: branch = master
+          os: linux
+          node_js: 8
+          stage: deploy
+          env:
+            - GH_NAME=sklose
+            - GH_EMAIL=sebastian.klose@walmart.com
+            - secure: "GlsrfPBNJWOzBL0xGo/B/V9x6Q4FvTt4icFKIneqfpopPEqJZKG6Pc1IcE0bssuiv+FIq+K9I0CAQF7Lz9e5X1BT/Sscnz69qTlbf0f46DBvXE8bNeLrRH7FEQHuiyEosJiB0lF9lgok0PwCsJXyAeevktNmI9udkULk9wYGrA8EiQnrJwApYBhJenHpy51fSFO2rHwE7acgaf6kKZXvIkiaWg35+jM+JJwfw3eSWi+ktfJ3KXsMPk0eb+ji0Py85vL2IMvJt7aDYSf5RIIApZjHuWCdSw42gPX3szlmFJ7Kb6BwKQd5Bo5otIlywg3uZ4G08xnJg6vHIAxDU93bgT0i82qHAkCo8IWsl6XcZFisdjdplI1Aw2w2HiIFtT0APPmUwarQWW7m8Y6s3uTDMXQCl2CFlaL0pK4y1tfz68M3YI4aotueQDJbDxUn/C81K6RnVZPV/oXGfx3WMN6nCdMQwX2xwS6AxCO6X1N7suXmSq6Bew/yP9kO+tD8Qd2BOOnXvFCqlmHgL0MVYEAZVl3bo4aayfoquT/iLG85+XoSRgnbVXEhHiYQQP3g0AorBOamBGkaWd71kJBgwX6JTn49RFK/8A85pNEovz6L72hV9uFFlKDJpOeo5UgZOZ76xQS5TPF7HCeT8IPui5F5boN+NE9OzFG1despJYt8WEo="
+          script: |
+                  git config --global user.name "${GH_NAME}"
+                  git config --global user.email "${GH_EMAIL}"
+                  echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+                  cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
+
+script: yarn build && yarn test
