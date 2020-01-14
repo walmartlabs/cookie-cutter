@@ -51,7 +51,7 @@ function deploy(packagePath) {
         console.log(`publishing ${name}@${version} to ${tag}`);
         copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".yarnignore"))
         try {
-            yarn(`publish --cwd="${fullPath}" --tag=${tag} --non-interactive`, false);
+            yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive`, false);
         } finally {
             unlinkSync(join(fullPath, ".yarnignore"));
         }
