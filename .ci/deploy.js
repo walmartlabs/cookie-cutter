@@ -49,11 +49,12 @@ function deploy(packagePath) {
         console.log(`${name}@${version} is already deployed, skipping`);
     } else {
         console.log(`publishing ${name}@${version} to ${tag}`);
-        copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".yarnignore"))
+        copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".npmignore"))
         try {
-            yarn(`publish --cwd="${fullPath}" --tag=${tag} --non-interactive`, false);
+            //yarn(`publish --cwd="${fullPath}" --tag=${tag} --non-interactive`, false);
+            npm(`publish "${fullPath}" --tag "${tag}" --access public`)
         } finally {
-            unlinkSync(join(fullPath, ".yarnignore"));
+            unlinkSync(join(fullPath, ".npmignore"));
         }
     }
 }
