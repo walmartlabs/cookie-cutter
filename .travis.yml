@@ -7,7 +7,7 @@ stages:
     - name: integrate
       if: type = cron OR (type = pull_request AND head_branch = master)
     - name: deploy
-      if: branch in (master, develop) AND type != cron
+      if: branch in (master, develop) AND type = push
 
 matrix:
     include:
