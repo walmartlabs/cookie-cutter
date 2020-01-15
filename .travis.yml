@@ -7,9 +7,9 @@ branches:
 stages:
     - smoke
     - name: test
-      if: type = cron OR (type = pull_request AND branch = master) OR commit_message =~ /\[full(-| )ci\]/
+      if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
     - name: integrate
-      if: type = cron OR (type = pull_request AND branch = master) OR commit_message =~ /\[full(-| )ci\]/
+      if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
     - name: deploy
       if: branch in (master, develop) AND type = push
 
