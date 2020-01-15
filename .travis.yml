@@ -1,13 +1,17 @@
 language: node_js
 cache: yarn
+branches:
+  only: 
+    - master
+    - develop
 stages:
     - smoke
     - name: test
-      if: type = cron OR (type = pull_request AND head_branch = master)
+      if: type = cron OR (type = pull_request AND branch = master)
     - name: integrate
-      if: type = cron OR (type = pull_request AND head_branch = master)
+      if: type = cron OR (type = pull_request AND branch = master)
     - name: deploy
-      if: branch in (master, develop) AND type != cron
+      if: branch in (master, develop) AND type = push
 
 matrix:
     include:
