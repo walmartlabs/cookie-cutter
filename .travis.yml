@@ -19,7 +19,7 @@ matrix:
           os: linux
           node_js: 10
           stage: smoke
-          script: cd packages/core && yarn build && cd ../.. && yarn lint && yarn test
+          script: yarn build && yarn lint && yarn test
 
         - name: "Linux Node 8"
           os: linux
