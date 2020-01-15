@@ -3,11 +3,11 @@ cache: yarn
 stages:
     - smoke
     - name: test
-      if: branch = master OR type = cron
+      if: type = cron OR (type = pull_request AND head_branch = master)
     - name: integrate
-      if: branch = master OR type = cron
+      if: type = cron OR (type = pull_request AND head_branch = master)
     - name: deploy
-      if: branch in (master, develop) AND type = push
+      if: branch in (master, develop) AND type != cron
 
 matrix:
     include:
