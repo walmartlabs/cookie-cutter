@@ -1,5 +1,9 @@
 language: node_js
 cache: yarn
+branches:
+  only: 
+    - master
+    - develop
 stages:
     - smoke
     - name: test
