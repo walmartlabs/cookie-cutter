@@ -1,7 +1,7 @@
 language: node_js
 cache: yarn
 stages:
-    - smoke_test
+    - name: "smoke test"
     - name: test
       if: branch = master OR type = cron
     - name: integrate
