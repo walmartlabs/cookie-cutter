@@ -40,6 +40,8 @@ matrix:
           os: windows
           node_js: 10
           stage: test
+          env:
+            - YARN_GPG=no # Windows build agent will hang without this
           
         - name: "MSSQL"
           os: linux
