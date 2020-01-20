@@ -23,17 +23,15 @@ export interface IPrometheusConfiguration {
      */
     readonly endpoint?: string;
     /**
-     * Prefix for time series
+     * Prefix for time series (default '')
      *
      * @type {string}
      * @memberof IPrometheusConfiguration
      */
     readonly prefix?: string;
     /**
-     * Controls the resolution of recorded timing data by defining
-     * the amount and width of buckets in the histogram. For example,
-     * a single bucket would only measure whether observations
-     * were greater or less than that bucket value (low resolution).
+     * Defines default histrogram buckets.
+     * Each bucket is defined by it's inclusive upper bound.
      *
      * Defaults to `0.050, 0.200, 0.500, 1, 5, 30, 100` (note that seconds
      * are the base unit for timing data in Prometheus).
@@ -41,7 +39,17 @@ export interface IPrometheusConfiguration {
      * @type {number[]}
      * @memberof IPrometheusConfiguration
      */
-    readonly histogramBuckets?: number[];
+    readonly defaultHistogramBuckets?: number[];
+    /**
+     * Defines a map between keys and histogram buckets to use instead of the default.
+     * All metrics with the same key (regardless of lables) will share the same histogram.
+     *
+     * Defaults to empty map.
+     *
+     * @type {Map<string, number[]>}
+     * @memberof IPrometheusConfiguration
+     */
+    readonly mapOfHistogramBucketsPerKey?: Map<string, number[]>;
 }
 
 @config.section
@@ -71,10 +79,18 @@ export class PrometheusConfiguration implements IPrometheusConfiguration {
     }
 
     @config.field(config.converters.listOf(config.converters.number))
-    public set histogramBuckets(_: number[]) {
+    public set defaultHistogramBuckets(_: number[]) {
         config.noop();
     }
-    public get histogramBuckets(): number[] {
+    public get defaultHistogramBuckets(): number[] {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set mapOfHistogramBucketsPerKey(_: Map<string, number[]>) {
+        config.noop();
+    }
+    public get mapOfHistogramBucketsPerKey(): Map<string, number[]> {
         return config.noop();
     }
 }

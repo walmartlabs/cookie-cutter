@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-prometheus",
-    "version": "1.2.0-alpha.3",
+    "version": "1.2.0-alpha.4",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,10 +21,13 @@
     "scripts": {
         "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "integrate": "docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; docker-compose down",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     },
     "dependencies": {
-        "prom-client": "^11.5.3"
+        "@types/request-promise-native": "1.0.16",
+        "request-promise-native": "1.0.7",
+        "ip": "1.1.5"
     }
 }

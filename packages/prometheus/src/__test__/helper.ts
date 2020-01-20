@@ -14,10 +14,15 @@ export const nextPort = () => testPort++;
 
 export const port: number = 3001;
 export const endpoint: string = "/metrics";
-export const prometheusConfiguration = (port: number): IPrometheusConfiguration => ({
+export const prometheusConfiguration = (
+    port: number,
+    bucketMap?: Map<string, number[]>
+): IPrometheusConfiguration => ({
     port,
     endpoint,
-    prefix: "prefix_",
+    prefix: "test_",
+    defaultHistogramBuckets: [10, 20],
+    mapOfHistogramBucketsPerKey: bucketMap,
 });
 
 export function createServer(getMetrics: () => string): HttpServer {
