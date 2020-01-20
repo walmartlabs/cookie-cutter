@@ -11,6 +11,8 @@ import * as rp from "request-promise-native";
 import { IPrometheusConfiguration } from "../config";
 import { prometheus } from "../index";
 
+jest.setTimeout(10000);
+
 interface IResponse {
     status: string;
     data: IData;
