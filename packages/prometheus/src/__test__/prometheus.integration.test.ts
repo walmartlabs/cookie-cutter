@@ -63,7 +63,7 @@ const defaultConfig: IPrometheusConfiguration = {
 async function checkIfPromScraped(label: string): Promise<boolean> {
     const url = `http://${host}:9090/api/v1/label/${label}/values`;
     const reqOpt = { method: "GET", json: true };
-    const maxAttempts = 120;
+    const maxAttempts = 15;
     let attempt = 1;
     while (attempt <= maxAttempts) {
         try {
@@ -78,7 +78,7 @@ async function checkIfPromScraped(label: string): Promise<boolean> {
             }
         } finally {
             attempt++;
-            await sleep(1000);
+            await sleep(500);
         }
     }
     return false;
@@ -96,6 +96,7 @@ describe("Prometheus", () => {
         prom.increment(`${cc}${key1}`);
         prom.increment(`${cc}${key2}`, 0.1);
         prom.increment(`${cc}${key2}`, 0.1);
+        console.log((prom as any).toPrometheusString());
         await checkIfPromScraped("labelC1");
         try {
             let resp: IResponse;
