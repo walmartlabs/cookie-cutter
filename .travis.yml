@@ -5,9 +5,9 @@ branches:
     - master
     - develop
 stages:
-    - smoke
-    - name: test
-      if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
+    # - smoke
+    # - name: test
+    #   if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
     - name: integrate
       if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
     - name: deploy
@@ -15,17 +15,17 @@ stages:
 
 matrix:
     include:
-        - name: "Linux Node 10 (Lint + Test)"
-          os: linux
-          node_js: 10
-          stage: smoke
-          script: yarn build && yarn lint && yarn test
+        # - name: "Linux Node 10 (Lint + Test)"
+        #   os: linux
+        #   node_js: 10
+        #   stage: smoke
+        #   script: yarn build && yarn lint && yarn test
 
 
-        - name: "Linux Node 8"
-          os: linux
-          node_js: 8
-          stage: test
+        # - name: "Linux Node 8"
+        #   os: linux
+        #   node_js: 8
+        #   stage: test
         # - name: "Linux Node 12"
         #   os: linux
         #   node_js: 12

@@ -63,11 +63,12 @@ const defaultConfig: IPrometheusConfiguration = {
 async function checkIfPromScraped(label: string): Promise<boolean> {
     const url = `http://${host}:9090/api/v1/label/${label}/values`;
     const reqOpt = { method: "GET", json: true };
-    const maxAttempts = 15;
+    const maxAttempts = 12;
     let attempt = 1;
     while (attempt <= maxAttempts) {
         try {
             const resp: { status: string; data: string[] } = await rp(url, reqOpt);
+            console.log(resp);
             if (resp.status === "success" && resp.data.length > 0) {
                 return true;
             }
@@ -77,7 +78,7 @@ async function checkIfPromScraped(label: string): Promise<boolean> {
             }
         } finally {
             attempt++;
-            await sleep(500);
+            await sleep(1000);
         }
     }
     return false;
