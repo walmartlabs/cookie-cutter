@@ -11,7 +11,7 @@ import * as rp from "request-promise-native";
 import { IPrometheusConfiguration } from "../config";
 import { prometheus } from "../index";
 
-jest.setTimeout(10000);
+jest.setTimeout(130000);
 
 interface IResponse {
     status: string;
@@ -63,12 +63,12 @@ const defaultConfig: IPrometheusConfiguration = {
 async function checkIfPromScraped(label: string): Promise<boolean> {
     const url = `http://${host}:9090/api/v1/label/${label}/values`;
     const reqOpt = { method: "GET", json: true };
-    const maxAttempts = 12;
+    const maxAttempts = 120;
     let attempt = 1;
     while (attempt <= maxAttempts) {
         try {
             const resp: { status: string; data: string[] } = await rp(url, reqOpt);
-            console.log(resp);
+            console.log(`attempt ${attempt}: `, resp);
             if (resp.status === "success" && resp.data.length > 0) {
                 return true;
             }
