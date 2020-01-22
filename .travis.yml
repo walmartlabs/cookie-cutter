@@ -63,7 +63,8 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/prometheus && yarn integrate
+        #   script: yarn build && cd packages/prometheus && yarn integrate
+          script: cd packages/prometheus && yarn build && yarn integrate
 
         # - name: "S3"
         #   os: linux
