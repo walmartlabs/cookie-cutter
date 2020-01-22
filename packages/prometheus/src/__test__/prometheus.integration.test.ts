@@ -6,10 +6,30 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { DefaultComponentContext, makeLifecycle, sleep } from "@walmartlabs/cookie-cutter-core";
+import * as fs from "fs";
 import * as ip from "ip";
+import * as path from "path";
 import * as rp from "request-promise-native";
 import { IPrometheusConfiguration } from "../config";
 import { prometheus } from "../index";
+
+// Sets up the file-based service discovery for Prometheus:
+// Writes a targets.json file in the same directory that contains the prometheus.yml file
+// The directory containing the 2 files is mounted as /etc/prometheus/ in the Docker image
+const hostIp = ip.address();
+// console.log(hostIp);
+// console.log(path.resolve(__dirname, "..", "..", "config", "targets.json"));
+const [port1, port2, port3] = [3001, 3002, 3003];
+const jsonData = [
+    {
+        labels: { job: "tester" },
+        targets: [`${hostIp}:${port1}`, `${hostIp}:${port2}`, `${hostIp}:${port3}`],
+    },
+];
+fs.writeFileSync(
+    path.resolve(__dirname, "..", "..", "config", "targets.json"),
+    JSON.stringify(jsonData)
+);
 
 jest.setTimeout(60000);
 
@@ -52,9 +72,8 @@ const hh = "h_";
 const defaultBuckets = [10, 20];
 const bucketMap = new Map<string, number[]>();
 bucketMap.set(`${hh}${key2}`, [10]);
-const endpointPort = 3001;
 const defaultConfig: IPrometheusConfiguration = {
-    port: endpointPort,
+    port: port1,
     endpoint: "/metrics",
     prefix,
     defaultHistogramBuckets: defaultBuckets,
@@ -89,7 +108,7 @@ async function checkIfPromScraped(label: string): Promise<boolean> {
 
 describe("Prometheus", () => {
     it("correctly queries Prometheus for several Counters", async () => {
-        const config = { ...defaultConfig, port: 3001 };
+        const config = { ...defaultConfig, port: port1 };
         const prom = makeLifecycle(prometheus(config));
         await prom.initialize(DefaultComponentContext);
         prom.increment(`${cc}${key1}`);
@@ -146,7 +165,7 @@ describe("Prometheus", () => {
     });
 
     it("correctly queries Prometheus for several Gauges", async () => {
-        const config = { ...defaultConfig, port: 3002 };
+        const config = { ...defaultConfig, port: port2 };
         const prom = makeLifecycle(prometheus(config));
         await prom.initialize(DefaultComponentContext);
         prom.gauge(`${gg}${key1}`, 0.1);
@@ -199,7 +218,7 @@ describe("Prometheus", () => {
     });
 
     it("correctly queries Prometheus for several Histograms", async () => {
-        const config = { ...defaultConfig, port: 3003 };
+        const config = { ...defaultConfig, port: port3 };
         const prom = makeLifecycle(prometheus(config));
         await prom.initialize(DefaultComponentContext);
         prom.timing(`${hh}${key1}`, 5);
