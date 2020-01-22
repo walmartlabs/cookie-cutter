@@ -30,7 +30,7 @@
         "build": "tsc",
         "postbuild": "node postbuild.js",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "docker-compose up -d && echo \"no tests yet\"; docker-compose down",
+        "integrate": "docker-compose up -d && echo \"no tests yet\"; R=$?; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }
