@@ -17,8 +17,6 @@ import { prometheus } from "../index";
 // Writes a targets.json file in the same directory that contains the prometheus.yml file
 // The directory containing the 2 files is mounted as /etc/prometheus/ in the Docker image
 const hostIp = ip.address();
-// console.log(hostIp);
-// console.log(path.resolve(__dirname, "..", "..", "config", "targets.json"));
 const [port1, port2, port3] = [3001, 3002, 3003];
 const jsonData = [
     {
@@ -53,7 +51,6 @@ const host = process.env.HOST_IP || ip.address();
 
 async function queryPrometheus(key: string): Promise<IResponse> {
     const baseUrl = `http://${host}:9090/api/v1/query`;
-    console.log(baseUrl);
     const reqOpt = { method: "GET", json: true };
     return await rp(`${baseUrl}?query=${key}`, reqOpt);
 }
@@ -82,19 +79,16 @@ const defaultConfig: IPrometheusConfiguration = {
 
 async function checkIfPromScraped(label: string): Promise<boolean> {
     const url = `http://${host}:9090/api/v1/label/${label}/values`;
-    console.log(url);
     const reqOpt = { method: "GET", json: true };
     const maxAttempts = 20;
     let attempt = 1;
     while (attempt <= maxAttempts) {
         try {
             const resp: { status: string; data: string[] } = await rp(url, reqOpt);
-            console.log(`attempt ${attempt}: `, resp);
             if (resp.status === "success" && resp.data.length > 0) {
                 return true;
             }
         } catch (e) {
-            console.log(`attempt ${attempt}: `, e);
             if (attempt === maxAttempts) {
                 throw e;
             }
@@ -118,7 +112,6 @@ describe("Prometheus", () => {
         prom.increment(`${cc}${key1}`);
         prom.increment(`${cc}${key2}`, 0.1);
         prom.increment(`${cc}${key2}`, 0.1);
-        console.log((prom as any).toPrometheusString());
         await checkIfPromScraped("labelC1");
         try {
             let resp: IResponse;
