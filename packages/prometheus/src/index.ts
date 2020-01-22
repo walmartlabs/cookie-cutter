@@ -26,9 +26,11 @@ import {
     IGaugeSet,
     IHistogramSet,
     ILabelValues,
+    IPrometheusMetric,
 } from "./models";
 
-class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable {
+class PrometheusMetrics
+    implements IPrometheusMetric, IMetrics, IRequireInitialization, IDisposable {
     private logger: ILogger;
     private httpServer: HttpServer;
     private keyBucketsMap: Map<string, number[]>;
@@ -39,7 +41,7 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
     constructor(private readonly config: PrometheusConfiguration) {
         this.logger = DefaultComponentContext.logger;
         this.httpServer = undefined;
-        this.keyBucketsMap = config.mapOfHistogramBucketsPerKey || new Map<string, number[]>();
+        this.keyBucketsMap = config.histogramBucketsMap || new Map<string, number[]>();
         this.counterSets = new Map<string, ICounterSet>();
         this.gaugeSets = new Map<string, IGaugeSet>();
         this.histogramSets = new Map<string, IHistogramSet>();
@@ -86,20 +88,18 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
      * @memberof PrometheusMetrics
      */
     public increment(key: string, valueOrTags?: any, tags?: IMetricTags): void {
-        let val = 1;
+        let value = 1;
         if (valueOrTags !== undefined) {
             if (isNumber(valueOrTags)) {
-                val = valueOrTags;
+                value = valueOrTags;
             } else {
                 tags = valueOrTags;
             }
         }
-        if (val <= 0) {
-            this.logger.error(
-                "Prometheus Counter Error",
-                new Error("Incrementing a Counter with a non-positive value is not allowed."),
-                { key, value: val, tags }
-            );
+        if (value <= 0) {
+            const str = "Prometheus Counter Error";
+            const err = "Incrementing a Counter with a non-positive value is not allowed.";
+            this.logger.error(str, new Error(err), { key, value, tags });
             return;
         }
 
@@ -108,7 +108,7 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
         if (!counterSet) {
             counterSet = new CounterSet(prefixedKey);
         }
-        counterSet.increment(prefixedKey, val, this.convertToLabels(tags));
+        counterSet.increment(prefixedKey, value, this.convertToLabels(tags));
         this.counterSets.set(prefixedKey, counterSet);
     }
 
@@ -136,20 +136,15 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
      * @param {IMetricTags} tags The tag values to associate with this observation
      */
     public timing(key: string, value: number, tags?: IMetricTags): void {
+        const str = "Prometheus Histogram Error";
         if (value < 0) {
-            this.logger.error(
-                "Prometheus Histogram Error",
-                new Error("Observing a negative value is not allowed for Histograms."),
-                { key, value, tags }
-            );
+            const err = "Observing a negative value is not allowed for Histograms.";
+            this.logger.error(str, new Error(err), { key, value, tags });
             return;
         }
         if (this.containsLeLabel(tags)) {
-            this.logger.error(
-                "Prometheus Histogram Error",
-                new Error("The 'le' label is reserved for system use in histograms."),
-                { key, value, tags }
-            );
+            const err = "The 'le' label is reserved for system use in histograms.";
+            this.logger.error(str, new Error(err), { key, value, tags });
             return;
         }
         const prefixedKey = this.getPrefixedKey(key);
@@ -177,6 +172,7 @@ class PrometheusMetrics implements IMetrics, IRequireInitialization, IDisposable
         return buckets;
     }
 
+    // checks if the "less than or equal to" label ["le"] for histogram buckets is part of the input tags
     private containsLeLabel(tags: IMetricTags): boolean {
         const le = ["le", "Le", "lE", "LE"];
         return tags ? tags[le[0]] || tags[le[1]] || tags[le[2]] || tags[le[3]] : false;

@@ -22,7 +22,7 @@ export const prometheusConfiguration = (
     endpoint,
     prefix: "test_",
     defaultHistogramBuckets: [10, 20],
-    mapOfHistogramBucketsPerKey: bucketMap,
+    histogramBucketsMap: bucketMap,
 });
 
 export function createServer(getMetrics: () => string): HttpServer {

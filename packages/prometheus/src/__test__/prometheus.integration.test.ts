@@ -77,7 +77,7 @@ const defaultConfig: IPrometheusConfiguration = {
     endpoint: "/metrics",
     prefix,
     defaultHistogramBuckets: defaultBuckets,
-    mapOfHistogramBucketsPerKey: bucketMap,
+    histogramBucketsMap: bucketMap,
 };
 
 async function checkIfPromScraped(label: string): Promise<boolean> {

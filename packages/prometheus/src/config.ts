@@ -49,7 +49,7 @@ export interface IPrometheusConfiguration {
      * @type {Map<string, number[]>}
      * @memberof IPrometheusConfiguration
      */
-    readonly mapOfHistogramBucketsPerKey?: Map<string, number[]>;
+    readonly histogramBucketsMap?: Map<string, number[]>;
 }
 
 @config.section
@@ -87,10 +87,10 @@ export class PrometheusConfiguration implements IPrometheusConfiguration {
     }
 
     @config.field(config.converters.none)
-    public set mapOfHistogramBucketsPerKey(_: Map<string, number[]>) {
+    public set histogramBucketsMap(_: Map<string, number[]>) {
         config.noop();
     }
-    public get mapOfHistogramBucketsPerKey(): Map<string, number[]> {
+    public get histogramBucketsMap(): Map<string, number[]> {
         return config.noop();
     }
 }

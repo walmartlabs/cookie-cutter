@@ -9,25 +9,27 @@ export interface ILabelValues {
     [key: string]: string | number;
 }
 
-interface ICounter {
+export interface IPrometheusMetric {
+    toPrometheusString(): string;
+}
+
+interface ICounter extends IPrometheusMetric {
     name: string;
     count: number;
     timestamp: number;
     labelObject: ILabelValues;
     increment(value: number, timestamp: number): void;
-    toPrometheusString(): string;
 }
 
-interface IGauge {
+interface IGauge extends IPrometheusMetric {
     name: string;
     value: number;
     timestamp: number;
     labelObject: ILabelValues;
     set(value: number, timestamp: number): void;
-    toPrometheusString(): string;
 }
 
-interface IHistogram {
+interface IHistogram extends IPrometheusMetric {
     name: string;
     buckets: number[];
     bucketValues: number[];
@@ -35,25 +37,21 @@ interface IHistogram {
     sum: number;
     labelObject: ILabelValues;
     observe(value: number): void;
-    toPrometheusString(): string;
 }
 
-export interface ICounterSet {
+export interface ICounterSet extends IPrometheusMetric {
     name: string;
     increment(prefixedKey: string, value: number, tags: ILabelValues): void;
-    toPrometheusString(): string;
 }
 
-export interface IGaugeSet {
+export interface IGaugeSet extends IPrometheusMetric {
     name: string;
     set(prefixedKey: string, value: number, tags: ILabelValues): void;
-    toPrometheusString(): string;
 }
 
-export interface IHistogramSet {
+export interface IHistogramSet extends IPrometheusMetric {
     name: string;
     observe(prefixedKey: string, value: number, tags: ILabelValues): void;
-    toPrometheusString(): string;
 }
 
 export class CounterSet implements ICounterSet {
