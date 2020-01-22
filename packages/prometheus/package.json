@@ -21,7 +21,7 @@
     "scripts": {
         "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; netstat -an; docker-compose down; bash -c \"exit $R\"",
+        "integrate": "node config/targetScript.js && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; netstat -an; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     },

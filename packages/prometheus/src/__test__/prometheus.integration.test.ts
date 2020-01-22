@@ -11,7 +11,7 @@ import * as rp from "request-promise-native";
 import { IPrometheusConfiguration } from "../config";
 import { prometheus } from "../index";
 
-jest.setTimeout(130000);
+jest.setTimeout(60000);
 
 interface IResponse {
     status: string;
@@ -33,6 +33,7 @@ const host = process.env.HOST_IP || ip.address();
 
 async function queryPrometheus(key: string): Promise<IResponse> {
     const baseUrl = `http://${host}:9090/api/v1/query`;
+    console.log(baseUrl);
     const reqOpt = { method: "GET", json: true };
     return await rp(`${baseUrl}?query=${key}`, reqOpt);
 }
@@ -62,8 +63,9 @@ const defaultConfig: IPrometheusConfiguration = {
 
 async function checkIfPromScraped(label: string): Promise<boolean> {
     const url = `http://${host}:9090/api/v1/label/${label}/values`;
+    console.log(url);
     const reqOpt = { method: "GET", json: true };
-    const maxAttempts = 15;
+    const maxAttempts = 20;
     let attempt = 1;
     while (attempt <= maxAttempts) {
         try {
@@ -73,6 +75,7 @@ async function checkIfPromScraped(label: string): Promise<boolean> {
                 return true;
             }
         } catch (e) {
+            console.log(`attempt ${attempt}: `, e);
             if (attempt === maxAttempts) {
                 throw e;
             }

@@ -1,12 +1,8 @@
 global:
-    scrape_interval:     15s # By default, scrape targets every 15 seconds.
-  
+    scrape_interval:     1s # By default, scrape targets every 15 seconds.
+
 scrape_configs:
-  - job_name: 'tester'
-
-    # Override the global default and scrape targets from this job every 2 seconds.
-    scrape_interval: 1s
-
-    static_configs:
-      - targets: ['host.docker.internal:3001', 'host.docker.internal:3002', 'host.docker.internal:3003', 'localhost:3001', 'localhost:3002', 'localhost:3003']
-  
+- job_name: 'tester'
+  file_sd_configs:
+  - files:
+    - 'targets.json'
