@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-azure",
-    "version": "1.2.0-beta.7",
+    "version": "1.2.0-beta.8",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -30,7 +30,7 @@
         "build": "tsc",
         "postbuild": "node postbuild.js",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "docker-compose up -d && echo \"no tests yet\"; docker-compose down",
+        "integrate": "docker-compose up -d && echo \"no tests yet\"; R=$?; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }
