@@ -663,7 +663,7 @@ describe("Kafka Integration Tests", () => {
             );
 
             let totalProcessedMsgs = 0;
-            const expMinimumTotalProcessedMsgs = 6;
+            const expMinimumTotalProcessedMsgs = 5;
             let secondAppProcessedMsgs = 0;
             let createSecondConsumer = false;
             let appConsumer2;
