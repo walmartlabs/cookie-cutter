@@ -10,14 +10,16 @@ import {
     IMetricTags,
     makeLifecycle,
 } from "@walmartlabs/cookie-cutter-core";
+import { IConfiguredHistogramBuckets } from "../config";
 import { prometheus } from "../index";
 import { getMetrics, nextPort, prometheusConfiguration } from "./helper";
 
 const mockError = jest.fn();
+const mockWarn = jest.fn();
 const mockLogger = {
     info: jest.fn(),
     debug: jest.fn(),
-    warn: jest.fn(),
+    warn: mockWarn,
     error: mockError,
 };
 
@@ -27,22 +29,29 @@ describe("Prometheus", () => {
             const key = "key";
             const port = nextPort();
             const prom = makeLifecycle(prometheus(prometheusConfiguration(port)));
-            await prom.initialize(DefaultComponentContext);
+            await prom.initialize({ ...DefaultComponentContext, logger: mockLogger });
             const tags: IMetricTags = {
                 num: 10,
                 str: "word",
+                emptyStr: "",
                 emptyObj: {},
                 nullTag: null,
                 undefinedTag: undefined,
                 obj: { field: "value" },
             };
             const labels: string =
-                '{num="10",str="word",emptyObj="[object Object]",nullTag="null",undefinedTag="undefined",obj="[object Object]"}';
+                '{num="10",str="word",emptyObj="[object Object]",obj="[object Object]"}';
             prom.increment(key, tags);
+            prom.increment(key, {});
             const dataSplit = (await getMetrics(port)).split("\n");
             await prom.dispose();
             expect(dataSplit[0]).toBe("# TYPE test_key counter");
             expect(dataSplit[1].startsWith(`test_key${labels} 1`)).toBe(true);
+            expect(dataSplit[2].startsWith(`test_key 1`)).toBe(true);
+            expect(mockWarn).toHaveBeenCalledTimes(1);
+            const str = "Prometheus Labels of Type other than string or number passed in";
+            const data = { listOfLabels: ["emptyObj", "obj"] };
+            expect(mockWarn).toHaveBeenNthCalledWith(1, str, data);
         });
     });
 
@@ -284,11 +293,10 @@ describe("Prometheus", () => {
         });
 
         it("outputs a histogram with different label sets", async () => {
-            const bucketMap = new Map<string, number[]>();
             const key = "key";
-            bucketMap.set(key, [20]);
+            const buckets: IConfiguredHistogramBuckets[] = [{ key, buckets: [20] }];
             const port = nextPort();
-            const prom = makeLifecycle(prometheus(prometheusConfiguration(port, bucketMap)));
+            const prom = makeLifecycle(prometheus(prometheusConfiguration(port, buckets)));
             await prom.initialize(DefaultComponentContext);
             prom.timing(key, 10);
             prom.timing(key, 25, { label1: "val1" });

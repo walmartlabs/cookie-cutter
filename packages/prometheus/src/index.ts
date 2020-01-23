@@ -15,8 +15,12 @@ import {
     IMetricTags,
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
-import { isNull, isNumber, isString, isUndefined } from "util";
-import { IPrometheusConfiguration, PrometheusConfiguration } from "./config";
+import { isNullOrUndefined, isNumber, isString } from "util";
+import {
+    IConfiguredHistogramBuckets,
+    IPrometheusConfiguration,
+    PrometheusConfiguration,
+} from "./config";
 import { HttpServer } from "./HttpServer";
 import {
     CounterSet,
@@ -41,7 +45,7 @@ class PrometheusMetrics
     constructor(private readonly config: PrometheusConfiguration) {
         this.logger = DefaultComponentContext.logger;
         this.httpServer = undefined;
-        this.keyBucketsMap = config.histogramBucketsMap || new Map<string, number[]>();
+        this.keyBucketsMap = this.createBucketsMap(config.configuredHistogramBuckets);
         this.counterSets = new Map<string, ICounterSet>();
         this.gaugeSets = new Map<string, IGaugeSet>();
         this.histogramSets = new Map<string, IHistogramSet>();
@@ -164,6 +168,16 @@ class PrometheusMetrics
         return key.replace(/\./g, "_");
     }
 
+    private createBucketsMap(inputBuckets?: IConfiguredHistogramBuckets[]): Map<string, number[]> {
+        const bucketsMap = new Map<string, number[]>();
+        if (inputBuckets && inputBuckets.length > 0) {
+            for (const el of inputBuckets) {
+                bucketsMap.set(el.key, el.buckets);
+            }
+        }
+        return bucketsMap;
+    }
+
     private lookupBuckets(key: string): number[] {
         const buckets = this.keyBucketsMap.get(key);
         if (!buckets) {
@@ -183,16 +197,25 @@ class PrometheusMetrics
             return undefined;
         }
         const labels: ILabelValues = {};
+        const badLabels: string[] = [];
+        // 'key{label=""}' is equivalent to 'key'. Drop labels whose value is "", undefined, null;
+        // This ensures equivalent label sets map to the same internal representation.
+        // See 'stringFromLabelsObject' in models.ts
         for (const key of Object.keys(tags)) {
-            if (isNumber(tags[key]) || isString(tags[key])) {
+            if (isString(tags[key])) {
+                if (tags[key]) {
+                    labels[key] = tags[key];
+                }
+            } else if (isNumber(tags[key])) {
                 labels[key] = tags[key];
-            } else if (isUndefined(tags[key])) {
-                labels[key] = "undefined";
-            } else if (isNull(tags[key])) {
-                labels[key] = "null";
-            } else {
+            } else if (!isNullOrUndefined(tags[key])) {
                 labels[key] = tags[key].toString();
+                badLabels.push(key);
             }
+        }
+        if (badLabels.length > 0) {
+            const str = "Prometheus Labels of Type other than string or number passed in";
+            this.logger.warn(str, { listOfLabels: badLabels });
         }
         return labels;
     }

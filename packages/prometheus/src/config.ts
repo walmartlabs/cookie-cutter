@@ -7,6 +7,11 @@ LICENSE file in the root directory of this source tree.
 
 import { config } from "@walmartlabs/cookie-cutter-core";
 
+export interface IConfiguredHistogramBuckets {
+    key: string;
+    buckets: number[];
+}
+
 export interface IPrometheusConfiguration {
     /**
      * Port where metrics are exposed (default 3000)
@@ -41,15 +46,15 @@ export interface IPrometheusConfiguration {
      */
     readonly defaultHistogramBuckets?: number[];
     /**
-     * Defines a map between keys and histogram buckets to use instead of the default.
-     * All metrics with the same key (regardless of lables) will share the same histogram.
+     * Defines histogram buckets to use for the given keys instead of the default buckets.
+     * All metrics with the same key (regardless of labels) will share the same histogram buckets.
      *
-     * Defaults to empty map.
+     * Defaults to empty.
      *
-     * @type {Map<string, number[]>}
+     * @type {IConfiguredHistogramBuckets[]}
      * @memberof IPrometheusConfiguration
      */
-    readonly histogramBucketsMap?: Map<string, number[]>;
+    readonly configuredHistogramBuckets?: IConfiguredHistogramBuckets[];
 }
 
 @config.section
@@ -87,10 +92,10 @@ export class PrometheusConfiguration implements IPrometheusConfiguration {
     }
 
     @config.field(config.converters.none)
-    public set histogramBucketsMap(_: Map<string, number[]>) {
+    public set configuredHistogramBuckets(_: IConfiguredHistogramBuckets[]) {
         config.noop();
     }
-    public get histogramBucketsMap(): Map<string, number[]> {
+    public get configuredHistogramBuckets(): IConfiguredHistogramBuckets[] {
         return config.noop();
     }
 }

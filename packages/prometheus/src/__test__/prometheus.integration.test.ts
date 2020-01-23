@@ -67,14 +67,13 @@ const cc = "c_";
 const gg = "g_";
 const hh = "h_";
 const defaultBuckets = [10, 20];
-const bucketMap = new Map<string, number[]>();
-bucketMap.set(`${hh}${key2}`, [10]);
+const buckets = [{ key: `${hh}${key2}`, buckets: [10] }];
 const defaultConfig: IPrometheusConfiguration = {
     port: port1,
     endpoint: "/metrics",
     prefix,
     defaultHistogramBuckets: defaultBuckets,
-    histogramBucketsMap: bucketMap,
+    configuredHistogramBuckets: buckets,
 };
 
 async function checkIfPromScraped(label: string): Promise<boolean> {
