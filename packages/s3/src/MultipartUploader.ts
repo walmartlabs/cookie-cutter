@@ -66,7 +66,7 @@ export class MultipartUploader<T> implements IMultipartUploader<T> {
             payload: body,
         };
 
-        const encodedBody = new Buffer(this.encoder.encode(msg));
+        const encodedBody = Buffer.from(this.encoder.encode(msg));
         try {
             const partNumber = this.uploadIdCounter + 1;
             this.uploadIdCounter = partNumber;

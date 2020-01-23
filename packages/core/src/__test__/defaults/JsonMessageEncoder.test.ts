@@ -14,12 +14,12 @@ describe("JsonMessageEncoder", () => {
         const obj = inc(2);
         const buffer = encoder.encode(obj);
 
-        expect(new Buffer(buffer).toString()).toBe(`{"count":2}`);
+        expect(Buffer.from(buffer).toString()).toBe(`{"count":2}`);
     });
 
     it("decodes", () => {
         const encoder = new JsonMessageEncoder();
-        const obj = encoder.decode(new Buffer(`{"count":2}`), "Increment");
+        const obj = encoder.decode(Buffer.from(`{"count":2}`), "Increment");
 
         expect(obj).toMatchObject(inc(2));
     });

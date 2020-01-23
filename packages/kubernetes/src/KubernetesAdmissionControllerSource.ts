@@ -156,7 +156,7 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                             handlerReturnVal.modifiedObject
                         );
                         const jsonString = JSON.stringify(patch);
-                        admissionReviewResp.response.patch = new Buffer(jsonString).toString(
+                        admissionReviewResp.response.patch = Buffer.from(jsonString).toString(
                             "base64"
                         );
                     }

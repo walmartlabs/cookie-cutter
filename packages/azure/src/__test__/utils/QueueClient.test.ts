@@ -145,7 +145,7 @@ describe("QueueClient", () => {
             await expect(client.write(span.context(), payload, headers)).rejects.toEqual(error);
         });
         it("should error if text is to big", async () => {
-            const bigText = new Buffer(65 * 1024);
+            const bigText = Buffer.alloc(65 * 1024);
             const { client, createMessage } = await writeResultsIn();
             const result = client.write(span.context(), bigText, headers);
             expect(createMessage).not.toBeCalled();
@@ -154,7 +154,7 @@ describe("QueueClient", () => {
             );
         });
         it("should error get back 413 from azure", async () => {
-            const bigText = new Buffer(1024);
+            const bigText = Buffer.alloc(1024);
             const e: Error & { statusCode?: number } = new Error(
                 "The request body is too large and exceeds the maximum permissible limit."
             );

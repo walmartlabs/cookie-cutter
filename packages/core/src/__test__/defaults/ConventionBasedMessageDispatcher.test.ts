@@ -82,7 +82,7 @@ describe("ConventionBasedMessageDispatcher", () => {
     it("invokes function with a encoded message as input", async () => {
         const encoder = new JsonMessageEncoder();
         const buffer = encoder.encode({ type: "test.Trigger", payload: { name: "test" } });
-        const msg = new EncodedMessage(encoder, "test.Trigger", new Buffer(buffer));
+        const msg = new EncodedMessage(encoder, "test.Trigger", Buffer.from(buffer));
 
         const dispatcher = new ConventionBasedMessageDispatcher(new DispatchTarget());
         const ctx = mockContext();

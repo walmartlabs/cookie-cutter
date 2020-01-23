@@ -223,7 +223,7 @@ export class KafkaSink
         let payload: Buffer | null = null;
 
         if (!msg.metadata[KafkaMetadata.Tombstone]) {
-            payload = new Buffer(this.config.encoder.encode(msg.message));
+            payload = Buffer.from(this.config.encoder.encode(msg.message));
         }
 
         const headers = {
@@ -249,7 +249,7 @@ export class KafkaSink
 
         return {
             type: msg.message.type,
-            key: possibleKey ? new Buffer(possibleKey) : null,
+            key: possibleKey ? Buffer.from(possibleKey) : null,
             topic,
             timestamp,
             partition: msg.metadata[KafkaMetadata.Partition],

@@ -117,7 +117,7 @@ export class S3Client implements IS3Client, IRequireInitialization {
             payload: body,
         };
 
-        const encodedBody = new Buffer(this.encoder.encode(msg));
+        const encodedBody = Buffer.from(this.encoder.encode(msg));
         let req: PromiseResult<AWS.S3.PutObjectOutput, AWS.AWSError>;
         let errorCode;
         let statusCode;

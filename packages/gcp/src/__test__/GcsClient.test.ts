@@ -33,7 +33,7 @@ describe("GcsClient", () => {
 
     describe("Proceeds with expected failure", () => {
         const err = "A DEFINED VALUE";
-        const content = new Buffer("CONTENTS TO BE WRITTEN");
+        const content = Buffer.from("CONTENTS TO BE WRITTEN");
 
         beforeEach(() => {
             MockStorage.mockImplementation(() => {
@@ -62,7 +62,7 @@ describe("GcsClient", () => {
     });
 
     describe("Proceeds with expected success", () => {
-        const content = new Buffer("CONTENTS TO BE WRITTEN");
+        const content = Buffer.from("CONTENTS TO BE WRITTEN");
         beforeEach(() => {
             // tslint:disable-next-line: no-identical-functions
             MockStorage.mockImplementation(() => {

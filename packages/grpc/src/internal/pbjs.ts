@@ -32,7 +32,7 @@ function createServiceMethodDefinition(method: IGrpcServiceMethod): any {
             if (invalid) {
                 throw new Error(`Invalid request: ${invalid}`);
             }
-            return new Buffer(method.requestType.encode(request).finish());
+            return Buffer.from(method.requestType.encode(request).finish());
         },
         requestDeserialize: (buffer: Buffer): any => {
             const request = method.requestType.decode(buffer);
@@ -47,7 +47,7 @@ function createServiceMethodDefinition(method: IGrpcServiceMethod): any {
             if (invalid) {
                 throw new Error(`Invalid response: ${invalid}`);
             }
-            return new Buffer(method.responseType.encode(response).finish());
+            return Buffer.from(method.responseType.encode(response).finish());
         },
         responseDeserialize: (buffer: Buffer): any => {
             const response = method.responseType.decode(buffer);

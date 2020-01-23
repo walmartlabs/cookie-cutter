@@ -16,8 +16,8 @@ export class DummyMessageEncoder implements IMessageEncoder {
     // { type: "Buffer", data: [...] }
     public encode(msg: IMessage): Uint8Array {
         const s = JSON.stringify(msg.payload);
-        const buffer = new Buffer(s);
-        return new Buffer(JSON.stringify(buffer.toJSON()));
+        const buffer = Buffer.from(s);
+        return Buffer.from(JSON.stringify(buffer.toJSON()));
     }
 
     public decode(data: Uint8Array, typeName: string): IMessage {
