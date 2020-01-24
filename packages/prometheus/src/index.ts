@@ -215,7 +215,7 @@ class PrometheusMetrics
         }
         if (badLabels.length > 0) {
             const str = "Prometheus Labels of Type other than string or number passed in";
-            this.logger.warn(str, { listOfLabels: badLabels });
+            this.logger.warn(str, { badLabels });
         }
         return labels;
     }

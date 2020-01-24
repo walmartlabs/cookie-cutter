@@ -60,22 +60,6 @@ function basicExpects(resp: IResponse) {
     expect(resp.data.resultType).toEqual("vector");
 }
 
-const prefix = "pre_";
-const key1 = "key1";
-const key2 = "key2";
-const cc = "c_";
-const gg = "g_";
-const hh = "h_";
-const defaultBuckets = [10, 20];
-const buckets = [{ key: `${hh}${key2}`, buckets: [10] }];
-const defaultConfig: IPrometheusConfiguration = {
-    port: port1,
-    endpoint: "/metrics",
-    prefix,
-    defaultHistogramBuckets: defaultBuckets,
-    configuredHistogramBuckets: buckets,
-};
-
 async function checkIfPromScraped(label: string): Promise<boolean> {
     const url = `http://${host}:9090/api/v1/label/${label}/values`;
     const reqOpt = { method: "GET", json: true };
@@ -99,10 +83,15 @@ async function checkIfPromScraped(label: string): Promise<boolean> {
     return false;
 }
 
+const prefix = "pre_";
+const key1 = "key1";
+const key2 = "key2";
+const defaultConfig: IPrometheusConfiguration = { endpoint: "/metrics", prefix };
+
 describe("Prometheus", () => {
     it("correctly queries Prometheus for several Counters", async () => {
-        const config = { ...defaultConfig, port: port1 };
-        const prom = makeLifecycle(prometheus(config));
+        const cc = "c_";
+        const prom = makeLifecycle(prometheus({ ...defaultConfig, port: port1 }));
         await prom.initialize(DefaultComponentContext);
         prom.increment(`${cc}${key1}`);
         prom.increment(`${cc}${key1}`, 11, { labelC1: "val1" });
@@ -157,8 +146,8 @@ describe("Prometheus", () => {
     });
 
     it("correctly queries Prometheus for several Gauges", async () => {
-        const config = { ...defaultConfig, port: port2 };
-        const prom = makeLifecycle(prometheus(config));
+        const gg = "g_";
+        const prom = makeLifecycle(prometheus({ ...defaultConfig, port: port2 }));
         await prom.initialize(DefaultComponentContext);
         prom.gauge(`${gg}${key1}`, 0.1);
         prom.gauge(`${gg}${key2}`, 10);
@@ -210,8 +199,15 @@ describe("Prometheus", () => {
     });
 
     it("correctly queries Prometheus for several Histograms", async () => {
-        const config = { ...defaultConfig, port: port3 };
-        const prom = makeLifecycle(prometheus(config));
+        const hh = "h_";
+        const prom = makeLifecycle(
+            prometheus({
+                ...defaultConfig,
+                defaultHistogramBuckets: [10, 20],
+                configuredHistogramBuckets: [{ key: `${hh}${key2}`, buckets: [10] }],
+                port: port3,
+            })
+        );
         await prom.initialize(DefaultComponentContext);
         prom.timing(`${hh}${key1}`, 5);
         prom.timing(`${hh}${key1}`, 15);

@@ -50,7 +50,7 @@ describe("Prometheus", () => {
             expect(dataSplit[2].startsWith(`test_key 1`)).toBe(true);
             expect(mockWarn).toHaveBeenCalledTimes(1);
             const str = "Prometheus Labels of Type other than string or number passed in";
-            const data = { listOfLabels: ["emptyObj", "obj"] };
+            const data = { badLabels: ["emptyObj", "obj"] };
             expect(mockWarn).toHaveBeenNthCalledWith(1, str, data);
         });
     });

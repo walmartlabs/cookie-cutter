@@ -8,8 +8,8 @@ LICENSE file in the root directory of this source tree.
 import { config } from "@walmartlabs/cookie-cutter-core";
 
 export interface IConfiguredHistogramBuckets {
-    key: string;
-    buckets: number[];
+    readonly key: string;
+    readonly buckets: number[];
 }
 
 export interface IPrometheusConfiguration {
