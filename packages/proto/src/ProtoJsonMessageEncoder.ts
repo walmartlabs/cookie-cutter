@@ -22,11 +22,11 @@ export class ProtoJsonMessageEncoder implements IMessageEncoder, IEncodedMessage
     }
 
     public fromJsonEmbedding(embedding: any): Uint8Array {
-        return new Buffer(JSON.stringify(embedding));
+        return Buffer.from(JSON.stringify(embedding));
     }
 
     public encode(msg: IMessage): Uint8Array {
-        return new Buffer(JSON.stringify(msg.payload));
+        return Buffer.from(JSON.stringify(msg.payload));
     }
 
     public decode(data: Uint8Array, typeName: string): IMessage {

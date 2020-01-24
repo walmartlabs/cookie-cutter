@@ -19,13 +19,13 @@ export class JsonMessageEncoder implements IMessageEncoder, IEncodedMessageEmbed
     }
 
     public encode(msg: IMessage): Uint8Array {
-        return new Buffer(JSON.stringify(msg.payload));
+        return Buffer.from(JSON.stringify(msg.payload));
     }
 
     public decode(data: Uint8Array, typeName?: string): IMessage {
         return {
             type: typeName,
-            payload: JSON.parse(new Buffer(data).toString()),
+            payload: JSON.parse(Buffer.from(data).toString()),
         };
     }
 }

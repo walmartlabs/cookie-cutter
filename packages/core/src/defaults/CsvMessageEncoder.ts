@@ -21,11 +21,11 @@ export class CsvMessageEncoder implements IMessageEncoder {
         for (const header of this.headers) {
             s.push(msg.payload[header]);
         }
-        return new Buffer(s.join(this.delimiter));
+        return Buffer.from(s.join(this.delimiter));
     }
 
     public decode(data: Uint8Array, typeName?: string): IMessage {
-        const decodedString = new Buffer(data).toString();
+        const decodedString = Buffer.from(data).toString();
         const values: string[] = decodedString.split(this.delimiter);
         if (this.headers.length < values.length) {
             throw new Error("Not enough header values for the returned csv row");

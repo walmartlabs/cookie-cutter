@@ -49,10 +49,10 @@ describe("KafkaSource", () => {
                 topic: topicName,
                 offset,
                 partition,
-                key: new Buffer("key"),
+                key: Buffer.from("key"),
                 headers: { "X-Message-Type": "application/json" },
                 timestamp: "1554845507549",
-                value: new Buffer(encoder.encode({ type: "test", payload: { foo: "bar" } })),
+                value: Buffer.from(encoder.encode({ type: "test", payload: { foo: "bar" } })),
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
@@ -167,13 +167,13 @@ describe("KafkaSource", () => {
                 topic: topicName,
                 offset,
                 partition,
-                key: new Buffer("key"),
+                key: Buffer.from("key"),
                 headers: {
                     "X-Message-Type": "application/json",
                     [EventSourcedMetadata.EventType]: ShoppingCartCreated.name,
                 },
                 timestamp: "1554845507549",
-                value: new Buffer(
+                value: Buffer.from(
                     encoder.encode({
                         type: ShoppingCartCreated.name,
                         payload: { shoppingCartId: "testId" },
@@ -228,7 +228,7 @@ describe("KafkaSource", () => {
                     { key: "X-Message-Type", value: "application/x-some-envelope" },
                     { key: EventSourcedMetadata.EventType, value: ShoppingCartCreated.name },
                 ],
-                body: new Buffer(
+                body: Buffer.from(
                     encoder.encode({
                         type: ShoppingCartCreated.name,
                         payload: { shoppingCartId: "testId" },
@@ -240,10 +240,10 @@ describe("KafkaSource", () => {
                 topic: topicName,
                 offset,
                 partition,
-                key: new Buffer("key"),
+                key: Buffer.from("key"),
                 headers: {},
                 timestamp: "1554845507549",
-                value: new Buffer(JSON.stringify(envelope)),
+                value: Buffer.from(JSON.stringify(envelope)),
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
@@ -264,7 +264,7 @@ describe("KafkaSource", () => {
                         const envelope = JSON.parse(msg.value.toString());
                         return {
                             ...msg,
-                            value: new Buffer(envelope.body),
+                            value: Buffer.from(envelope.body),
                             headers: envelope.headers,
                         };
                     },

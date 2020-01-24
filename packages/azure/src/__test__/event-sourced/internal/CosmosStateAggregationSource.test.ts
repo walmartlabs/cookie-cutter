@@ -61,8 +61,8 @@ describe("CosmosStateAggregationSource", () => {
     describe("Healthy Streams", () => {
         it("reads entire stream", async () => {
             const { source, querySpy, snapshotSpy } = await createSource([
-                { sn: 1, event_type: "test", encodedData: { data: new Buffer("test") } },
-                { sn: 2, event_type: "test", encodedData: { data: new Buffer("test") } },
+                { sn: 1, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                { sn: 2, event_type: "test", encodedData: { data: Buffer.from("test") } },
             ]);
 
             const actual = await source.load(undefined, "key-1");
@@ -83,8 +83,8 @@ describe("CosmosStateAggregationSource", () => {
         it("reads snapshot plus missing events", async () => {
             const { source, querySpy, snapshotSpy } = await createSource(
                 [
-                    { sn: 3, event_type: "test", encodedData: { data: new Buffer("test") } },
-                    { sn: 4, event_type: "test", encodedData: { data: new Buffer("test") } },
+                    { sn: 3, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                    { sn: 4, event_type: "test", encodedData: { data: Buffer.from("test") } },
                 ],
                 [2, { foo: "bar" }]
             );
@@ -106,9 +106,9 @@ describe("CosmosStateAggregationSource", () => {
 
         it("reads stream without snapshot till atSn", async () => {
             const { source, querySpy, snapshotSpy } = await createSource([
-                { sn: 1, event_type: "test", encodedData: { data: new Buffer("test") } },
-                { sn: 2, event_type: "test", encodedData: { data: new Buffer("test") } },
-                { sn: 3, event_type: "test", encodedData: { data: new Buffer("test") } },
+                { sn: 1, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                { sn: 2, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                { sn: 3, event_type: "test", encodedData: { data: Buffer.from("test") } },
             ]);
 
             const actual = await source.load(undefined, "key-1", 3);
@@ -128,7 +128,7 @@ describe("CosmosStateAggregationSource", () => {
 
         it("reads stream with snapshot till atSn", async () => {
             const { source, querySpy, snapshotSpy } = await createSource(
-                [{ sn: 3, event_type: "test", encodedData: { data: new Buffer("test") } }],
+                [{ sn: 3, event_type: "test", encodedData: { data: Buffer.from("test") } }],
                 [2, { foo: "bar" }]
             );
 
@@ -150,9 +150,9 @@ describe("CosmosStateAggregationSource", () => {
         it("ignores snapshot newer than atSn", async () => {
             const { source, querySpy, snapshotSpy } = await createSource(
                 [
-                    { sn: 1, event_type: "test", encodedData: { data: new Buffer("test") } },
-                    { sn: 2, event_type: "test", encodedData: { data: new Buffer("test") } },
-                    { sn: 3, event_type: "test", encodedData: { data: new Buffer("test") } },
+                    { sn: 1, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                    { sn: 2, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                    { sn: 3, event_type: "test", encodedData: { data: Buffer.from("test") } },
                 ],
                 [5, { foo: "bar" }]
             );
@@ -176,8 +176,8 @@ describe("CosmosStateAggregationSource", () => {
     describe("Broken Streams", () => {
         it("reads entire stream", async () => {
             const { source, querySpy, snapshotSpy, logSpy } = await createSource([
-                { sn: 1, event_type: "test", encodedData: { data: new Buffer("test") } },
-                { sn: 3, event_type: "test", encodedData: { data: new Buffer("test") } },
+                { sn: 1, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                { sn: 3, event_type: "test", encodedData: { data: Buffer.from("test") } },
             ]);
 
             const actual = await source.load(undefined, "key-1");
@@ -199,8 +199,8 @@ describe("CosmosStateAggregationSource", () => {
         it("reads snapshot plus missing events", async () => {
             const { source, querySpy, snapshotSpy, logSpy } = await createSource(
                 [
-                    { sn: 4, event_type: "test", encodedData: { data: new Buffer("test") } },
-                    { sn: 5, event_type: "test", encodedData: { data: new Buffer("test") } },
+                    { sn: 4, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                    { sn: 5, event_type: "test", encodedData: { data: Buffer.from("test") } },
                 ],
                 [2, { foo: "bar" }]
             );
@@ -223,9 +223,9 @@ describe("CosmosStateAggregationSource", () => {
 
         it("reads stream without snapshot till atSn", async () => {
             const { source, querySpy, snapshotSpy, logSpy } = await createSource([
-                { sn: 1, event_type: "test", encodedData: { data: new Buffer("test") } },
-                { sn: 2, event_type: "test", encodedData: { data: new Buffer("test") } },
-                { sn: 4, event_type: "test", encodedData: { data: new Buffer("test") } },
+                { sn: 1, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                { sn: 2, event_type: "test", encodedData: { data: Buffer.from("test") } },
+                { sn: 4, event_type: "test", encodedData: { data: Buffer.from("test") } },
             ]);
 
             const actual = await source.load(undefined, "key-1", 3);
@@ -246,7 +246,7 @@ describe("CosmosStateAggregationSource", () => {
 
         it("reads stream with snapshot till atSn", async () => {
             const { source, querySpy, snapshotSpy, logSpy } = await createSource(
-                [{ sn: 4, event_type: "test", encodedData: { data: new Buffer("test") } }],
+                [{ sn: 4, event_type: "test", encodedData: { data: Buffer.from("test") } }],
                 [2, { foo: "bar" }]
             );
 
