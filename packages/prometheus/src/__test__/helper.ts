@@ -6,7 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import * as http from "http";
-import { IPrometheusConfiguration } from "../config";
+import { IConfiguredHistogramBuckets, IPrometheusConfiguration } from "../config";
 import { HttpServer } from "../HttpServer";
 
 let testPort = 3002;
@@ -14,10 +14,15 @@ export const nextPort = () => testPort++;
 
 export const port: number = 3001;
 export const endpoint: string = "/metrics";
-export const prometheusConfiguration = (port: number): IPrometheusConfiguration => ({
+export const prometheusConfiguration = (
+    port: number,
+    buckets?: IConfiguredHistogramBuckets[]
+): IPrometheusConfiguration => ({
     port,
     endpoint,
-    prefix: "prefix_",
+    prefix: "test_",
+    defaultHistogramBuckets: [10, 20],
+    configuredHistogramBuckets: buckets,
 });
 
 export function createServer(getMetrics: () => string): HttpServer {

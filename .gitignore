@@ -4,6 +4,7 @@
 /**/junit.xml
 /**/.yarnignore
 !/.yarnignore
+/**/prometheus/config/targets.json
 
 /docs/website/build
 /yarn-error.log
