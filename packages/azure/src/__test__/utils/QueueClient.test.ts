@@ -150,7 +150,7 @@ describe("QueueClient", () => {
             const result = client.write(span.context(), bigText, headers);
             expect(createMessage).not.toBeCalled();
             await expect(result).rejects.toEqual(
-                new Error("Queue Message too big, must be less then 64kb. is: 130.0498046875")
+                new Error("Queue Message too big, must be less then 64kb. is: 260.099609375")
             );
         });
         it("should error get back 413 from azure", async () => {

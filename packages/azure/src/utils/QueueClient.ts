@@ -390,7 +390,7 @@ export class QueueClient implements IRequireInitialization {
     private getKB(input: string | Buffer) {
         const kb = (n: number) => n / 1024;
         if (typeof input === "string") {
-            return kb(Buffer.byteLength(input, "utf16"));
+            return kb(Buffer.byteLength(input, "utf16le"));
         }
         return kb(input.byteLength);
     }
