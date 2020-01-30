@@ -390,7 +390,13 @@ export class QueueClient implements IRequireInitialization {
     private getKB(input: string | Buffer) {
         const kb = (n: number) => n / 1024;
         if (typeof input === "string") {
-            return kb(Buffer.byteLength(input, "utf16le"));
+            // QueueClient calculates final kb by creating a buffer from the input and encoding in base64.
+            // Since we don't want to base64 twice to calculate things we can take byte length and multiply
+            // by 8 / 6 to get final number of bytes that would have been output by base64. Every 6 bits of data
+            // is encoded into one base64 character.
+            // https://github.com/Azure/azure-storage-node/blob/0557d02cd2116046db1a2d7fc61a74aa28c8b557/lib/services/queue/queuemessageencoder.js#L76
+            // https://stackoverflow.com/questions/13378815/base64-length-calculation
+            return kb(Math.ceil((Buffer.byteLength(input, "utf8") * 8) / 6));
         }
         return kb(input.byteLength);
     }

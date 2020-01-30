@@ -154,13 +154,10 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                             return;
                         }
 
-                        pendingEnqueue.then(() => {
-                            const msgRef = this.createMsgRef(phase, obj);
-                            if (msgRef) {
-                                // tslint:disable-next-line:no-floating-promises
-                                pendingEnqueue = this.queue.enqueue(msgRef);
-                            }
-                        });
+                        const msgRef = this.createMsgRef(phase, obj);
+                        if (msgRef) {
+                            pendingEnqueue = pendingEnqueue.then(() => this.queue.enqueue(msgRef));
+                        }
                     },
                     (err: any) => {
                         if (err) {
