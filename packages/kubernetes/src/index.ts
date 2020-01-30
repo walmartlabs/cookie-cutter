@@ -29,7 +29,7 @@ export interface IWatchQueryParams {
 export interface IK8sWatchConfiguration {
     readonly queryPath?: string;
     readonly queryParams?: IWatchQueryParams;
-    // the timeout that's used once a watch call disconnects or fails to reconnect.
+    // the timeout that's used to periodically stop the watch and reconnect it.
     readonly reconnectTimeout?: number;
     readonly configFilePath?: string;
     readonly currentContext?: string;
@@ -171,7 +171,7 @@ export function k8sWatchSource(configuration: IK8sWatchConfiguration): IInputSou
         queryParams: {
             timeoutSeconds: 600,
         },
-        reconnectTimeout: 1000,
+        reconnectTimeout: 60000,
     });
     return new KubernetesWatchSource(configuration);
 }
