@@ -140,56 +140,27 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
 
         const watch = new k8s.Watch(kubeConfig);
         const watchPromise = new Promise<string>((resolve, reject) => {
+            let pendingEnqueue: Promise<boolean>;
             watch
                 .watch(
                     this.queryPath,
                     this.queryParams,
-                    async (phase: string, obj: any) => {
-                        let msg: IMessage | undefined;
-                        switch (phase) {
-                            case "ADDED":
-                                msg = {
-                                    payload: new K8sResourceAdded(obj),
-                                    type: K8sResourceAdded.name,
-                                };
-                                break;
-                            case "MODIFIED":
-                                msg = {
-                                    payload: new K8sResourceModified(obj),
-                                    type: K8sResourceModified.name,
-                                };
-                                break;
-                            case "DELETED":
-                                msg = {
-                                    payload: new K8sResourceDeleted(obj),
-                                    type: K8sResourceDeleted.name,
-                                };
-                                break;
-                            default:
-                                this.logger.warn(`unexpected resource phase '${phase}'`);
+                    (phase: string, obj: any) => {
+                        if (!pendingEnqueue) {
+                            const msgRef = this.createMsgRef(phase, obj);
+                            if (msgRef) {
+                                pendingEnqueue = this.queue.enqueue(msgRef);
+                            }
+                            return;
                         }
 
-                        if (msg) {
-                            this.metrics.increment(K8Metrics.MsgReceived, {
-                                event_type: msg.type,
-                            });
-                            const span = this.tracer.startSpan(this.spanOperationName);
-                            this.spanLogAndSetTags(span, phase, msg.type);
-
-                            const msgRef = new MessageRef({}, msg, span.context());
-                            msgRef.once("released", async (_, __, error) => {
-                                this.metrics.increment(K8Metrics.MsgProcessed, {
-                                    event_type: _.payload.type,
-                                    result: error ? K8MetricResult.Error : K8MetricResult.Success,
-                                });
-                                if (error) {
-                                    failSpan(span, error);
-                                }
-                                span.finish();
-                            });
-
-                            await this.queue.enqueue(msgRef);
-                        }
+                        pendingEnqueue.then(() => {
+                            const msgRef = this.createMsgRef(phase, obj);
+                            if (msgRef) {
+                                // tslint:disable-next-line:no-floating-promises
+                                pendingEnqueue = this.queue.enqueue(msgRef);
+                            }
+                        });
                     },
                     (err: any) => {
                         if (err) {
@@ -225,6 +196,54 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 this.startWatch(kubeConfig);
             }
         );
+    }
+
+    private createMsgRef(phase: string, obj: any): MessageRef | undefined {
+        let msg: IMessage | undefined;
+        switch (phase) {
+            case "ADDED":
+                msg = {
+                    payload: new K8sResourceAdded(obj),
+                    type: K8sResourceAdded.name,
+                };
+                break;
+            case "MODIFIED":
+                msg = {
+                    payload: new K8sResourceModified(obj),
+                    type: K8sResourceModified.name,
+                };
+                break;
+            case "DELETED":
+                msg = {
+                    payload: new K8sResourceDeleted(obj),
+                    type: K8sResourceDeleted.name,
+                };
+                break;
+            default:
+                this.logger.warn(`unexpected resource phase '${phase}'`);
+        }
+
+        if (msg) {
+            this.metrics.increment(K8Metrics.MsgReceived, {
+                event_type: msg.type,
+            });
+            const span = this.tracer.startSpan(this.spanOperationName);
+            this.spanLogAndSetTags(span, phase, msg.type);
+
+            const msgRef = new MessageRef({}, msg, span.context());
+            msgRef.once("released", async (_, __, error) => {
+                this.metrics.increment(K8Metrics.MsgProcessed, {
+                    event_type: _.payload.type,
+                    result: error ? K8MetricResult.Error : K8MetricResult.Success,
+                });
+                if (error) {
+                    failSpan(span, error);
+                }
+                span.finish();
+            });
+
+            return msgRef;
+        }
     }
 
     private async abort(): Promise<void> {
