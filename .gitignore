@@ -8,4 +8,10 @@
 
 /docs/website/build
 /yarn-error.log
+/package-lock.json
 .DS_Store
+
+# vim
+*~
+*.swp
+*.swo
