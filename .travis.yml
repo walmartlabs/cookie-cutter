@@ -114,7 +114,7 @@ install:
   # the kubernetes-client package currently doesn't support node 8 so as a workaround
   # create a special package.json that doesn't try to yarn install it. Rely on other stages
   # to build and test it.
-  - if node --version | grep -q v8.17.0; then cp package.v8.json package.json; fi
+  - if node --version | grep -q v8* ; then cp package.v8.json package.json; fi
   - cat package.json
   - yarn install
   - ls -lah node_modules/\@walmartlabs
