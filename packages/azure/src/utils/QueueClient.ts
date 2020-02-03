@@ -85,6 +85,8 @@ export type IQueueMessage = QueueService.QueueMessageResult & {
     payload?: unknown;
 };
 
+const QUEUE_NOT_FOUND_ERROR_CODE = 404;
+
 export class QueueClient implements IRequireInitialization {
     private readonly queueService: QueueService;
     public readonly defaultQueue: string;
@@ -144,7 +146,23 @@ export class QueueClient implements IRequireInitialization {
         span.setTag(QueueOpenTracingTagKeys.QueueName, queueName);
     }
 
-    public async write(
+    private async createQueueIfNotExistsAsync(spanContext: SpanContext, queueName: string) {
+        const spanName = "Create Azure Queue (If Not Exists)";
+        const createQueueSpan = this.tracer.startSpan(spanName, { childOf: spanContext });
+        createQueueSpan.log({ queueName });
+
+        try {
+            const createQueueIfNotExistsAsync = promisify(this.queueService.createQueueIfNotExists);
+            const { created, exists } = await createQueueIfNotExistsAsync(queueName);
+            createQueueSpan.log({ created, exists });
+            createQueueSpan.finish();
+        } catch (err) {
+            failSpan(createQueueSpan, err);
+            throw err;
+        }
+    }
+
+    public write(
         spanContext: SpanContext,
         payload: any,
         headers: Record<string, string>,
@@ -176,64 +194,59 @@ export class QueueClient implements IRequireInitialization {
             throw error;
         }
 
-        if (this.config.createQueueIfNotExists) {
-            const spanName = "Create Azure Queue (If Not Exists)";
-            const createQueueSpan = this.tracer.startSpan(spanName, { childOf: spanContext });
-            const createQueueIfNotExistsAsync = promisify(this.queueService.createQueueIfNotExists);
-            createQueueSpan.log({ queueName });
-            try {
-                const { created, exists } = await createQueueIfNotExistsAsync(queueName);
-                createQueueSpan.log({ created, exists });
-                createQueueSpan.finish();
-            } catch (err) {
-                failSpan(createQueueSpan, err);
-                throw err;
-            }
-        }
+        const attemptWrite = () =>
+            new Promise<IQueueMessage>((resolve, reject) => {
+                this.queueService.createMessage(
+                    queueName,
+                    text,
+                    options,
+                    async (
+                        err: Error & { code?: number },
+                        message: QueueService.QueueMessageResult,
+                        response: ServiceResponse
+                    ) => {
+                        if (err) {
+                            failSpan(span, err);
+                        }
+                        span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+                        span.finish();
+                        if (err) {
+                            err.code = response.statusCode;
+                            this.metrics.increment(
+                                QueueMetrics.Write,
+                                this.generateMetricTags(
+                                    queueName,
+                                    response.statusCode,
+                                    QueueMetricResults.Error
+                                )
+                            );
+                            reject(err);
+                        } else {
+                            this.metrics.increment(
+                                QueueMetrics.Write,
+                                this.generateMetricTags(
+                                    queueName,
+                                    response.statusCode,
+                                    QueueMetricResults.Success
+                                )
+                            );
+                            resolve({
+                                ...message,
+                                headers,
+                                payload,
+                            });
+                        }
+                    }
+                );
+            });
 
-        return new Promise<IQueueMessage>((resolve, reject) => {
-            this.queueService.createMessage(
-                queueName,
-                text,
-                options,
-                (
-                    err: Error & { code?: number },
-                    message: QueueService.QueueMessageResult,
-                    response: ServiceResponse
-                ) => {
-                    if (err) {
-                        failSpan(span, err);
-                    }
-                    span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
-                    span.finish();
-                    if (err) {
-                        err.code = response.statusCode;
-                        this.metrics.increment(
-                            QueueMetrics.Write,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Error
-                            )
-                        );
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            QueueMetrics.Write,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Success
-                            )
-                        );
-                        resolve({
-                            ...message,
-                            headers,
-                            payload,
-                        });
-                    }
-                }
-            );
+        return attemptWrite().catch(async (err) => {
+            const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
+            if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
+                await this.createQueueIfNotExistsAsync(spanContext, queueName);
+                return attemptWrite();
+            }
+            throw err;
         });
     }
 
