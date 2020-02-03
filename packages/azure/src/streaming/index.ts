@@ -34,6 +34,11 @@ export interface IQueueConfiguration {
     readonly encoder: IMessageEncoder;
     /** Defaults to the `queue-large-items` */
     readonly largeItemBlobContainer?: string;
+    /**
+     * If `true` an attempt will be made to create a queue with the
+     * given name if it does not exist prior to every write.
+     */
+    readonly createQueueIfNotExists: boolean;
 }
 
 export interface IQueueSourceConfiguration {
@@ -82,6 +87,7 @@ export function queueSource(
         retryCount: 3,
         retryInterval: 5000,
         largeItemBlobContainer: "queue-large-items",
+        createQueueIfNotExists: false,
     });
     return new QueueInputSource(configuration);
 }
