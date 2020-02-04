@@ -146,7 +146,10 @@ export class QueueClient implements IRequireInitialization {
         span.setTag(QueueOpenTracingTagKeys.QueueName, queueName);
     }
 
-    private async createQueueIfNotExistsAsync(spanContext: SpanContext, queueName: string) {
+    private async createQueueIfNotExistsAsync(
+        spanContext: SpanContext,
+        queueName: string
+    ): Promise<void> {
         const spanName = "Create Azure Queue (If Not Exists)";
         const createQueueSpan = this.tracer.startSpan(spanName, { childOf: spanContext });
         createQueueSpan.log({ queueName });
@@ -156,6 +159,7 @@ export class QueueClient implements IRequireInitialization {
             const { created, exists } = await createQueueIfNotExistsAsync(queueName);
             createQueueSpan.log({ created, exists });
             createQueueSpan.finish();
+            return;
         } catch (err) {
             failSpan(createQueueSpan, err);
             throw err;
@@ -197,7 +201,7 @@ export class QueueClient implements IRequireInitialization {
                             QueueMetricResults.ErrorTooBig
                         )
                     );
-                    reject(error);
+                    return reject(error);
                 }
 
                 this.queueService.createMessage(
@@ -224,7 +228,7 @@ export class QueueClient implements IRequireInitialization {
                                     QueueMetricResults.Error
                                 )
                             );
-                            reject(err);
+                            return reject(err);
                         } else {
                             this.metrics.increment(
                                 QueueMetrics.Write,
@@ -234,7 +238,7 @@ export class QueueClient implements IRequireInitialization {
                                     QueueMetricResults.Success
                                 )
                             );
-                            resolve({
+                            return resolve({
                                 ...message,
                                 headers,
                                 payload,
@@ -244,13 +248,13 @@ export class QueueClient implements IRequireInitialization {
                 );
             });
 
-        return attemptWrite().catch(async (err) => {
+        return attemptWrite().catch((err) => {
             const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
             if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
-                await this.createQueueIfNotExistsAsync(spanContext, queueName);
-                return attemptWrite();
+                return this.createQueueIfNotExistsAsync(spanContext, queueName).then(attemptWrite);
+            } else {
+                return Promise.reject(err);
             }
-            throw err;
         });
     }
 
