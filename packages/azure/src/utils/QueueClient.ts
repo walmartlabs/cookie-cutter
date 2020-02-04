@@ -146,7 +146,7 @@ export class QueueClient implements IRequireInitialization {
         span.setTag(QueueOpenTracingTagKeys.QueueName, queueName);
     }
 
-    private async createQueueIfNotExistsAsync(
+    private async createQueueIfNotExists(
         spanContext: SpanContext,
         queueName: string
     ): Promise<void> {
@@ -251,7 +251,7 @@ export class QueueClient implements IRequireInitialization {
         return attemptWrite().catch((err) => {
             const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
             if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
-                return this.createQueueIfNotExistsAsync(spanContext, queueName).then(attemptWrite);
+                return this.createQueueIfNotExists(spanContext, queueName).then(attemptWrite);
             } else {
                 return Promise.reject(err);
             }
