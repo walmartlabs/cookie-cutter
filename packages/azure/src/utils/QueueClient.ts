@@ -208,7 +208,7 @@ export class QueueClient implements IRequireInitialization {
                     queueName,
                     text,
                     options,
-                    async (
+                    (
                         err: Error & { code?: number },
                         message: QueueService.QueueMessageResult,
                         response: ServiceResponse
