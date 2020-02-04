@@ -178,24 +178,28 @@ export class QueueClient implements IRequireInitialization {
             headers,
         });
 
-        const { sizeKb, isTooBig } = this.isMessageTooBig(text);
-        span.log({ sizeKb });
-        if (isTooBig) {
-            const error: Error & { code?: number } = new Error(
-                "Queue Message too big, must be less then 64kb. is: " + sizeKb
-            );
-            error.code = 413;
-            failSpan(span, error);
-            span.finish();
-            this.metrics.increment(
-                QueueMetrics.Write,
-                this.generateMetricTags(queueName, undefined, QueueMetricResults.ErrorTooBig)
-            );
-            throw error;
-        }
-
         const attemptWrite = () =>
             new Promise<IQueueMessage>((resolve, reject) => {
+                const { sizeKb, isTooBig } = this.isMessageTooBig(text);
+                span.log({ sizeKb });
+                if (isTooBig) {
+                    const error: Error & { code?: number } = new Error(
+                        "Queue Message too big, must be less then 64kb. is: " + sizeKb
+                    );
+                    error.code = 413;
+                    failSpan(span, error);
+                    span.finish();
+                    this.metrics.increment(
+                        QueueMetrics.Write,
+                        this.generateMetricTags(
+                            queueName,
+                            undefined,
+                            QueueMetricResults.ErrorTooBig
+                        )
+                    );
+                    reject(error);
+                }
+
                 this.queueService.createMessage(
                     queueName,
                     text,
