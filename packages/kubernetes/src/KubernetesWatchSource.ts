@@ -188,7 +188,10 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 this.startWatch(kubeConfig);
             },
             (reason) => {
-                this.logger.error(`k8s watch failed`, reason);
+                this.logger.error(`k8s watch failed`, reason, {
+                    queryPath: this.queryPath,
+                    queryParams: this.queryParams,
+                });
                 this.closePendingRequest();
                 this.startWatch(kubeConfig);
             }
