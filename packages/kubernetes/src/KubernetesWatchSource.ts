@@ -138,14 +138,28 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
             reconnectTimeout: this.reconnectTimeout,
         });
 
+        const RESTART_MSG = `watch didn't receive any items for ${this.reconnectTimeout}ms`;
+
         const watch = new k8s.Watch(kubeConfig);
         const watchPromise = new Promise<string>((resolve, reject) => {
             let pendingEnqueue: Promise<boolean>;
+
+            const startTimeout = () => {
+                const timer = setTimeout(() => reject(RESTART_MSG), this.reconnectTimeout);
+                timer.unref();
+                return timer;
+            }
+            let timeout = startTimeout();
+
             watch
                 .watch(
                     this.queryPath,
                     this.queryParams,
                     (phase: string, obj: any) => {
+                        // restart the timeout countdown
+                        clearTimeout(timeout);
+                        timeout = startTimeout();
+
                         if (!pendingEnqueue) {
                             const msgRef = this.createMsgRef(phase, obj);
                             if (msgRef) {
@@ -160,6 +174,7 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                         }
                     },
                     (err: any) => {
+                        clearTimeout(timeout);
                         if (err) {
                             reject(err);
                             return;
@@ -169,11 +184,9 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 )
                 .then((req) => {
                     this.pendingRequest = req;
-                    setTimeout(() => {
-                        reject(`watch didn't finish before reconnectTimeout`);
-                    }, this.reconnectTimeout);
                 })
                 .catch((err) => {
+                    clearTimeout(timeout);
                     reject(err);
                 });
         });
@@ -188,10 +201,17 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 this.startWatch(kubeConfig);
             },
             (reason) => {
-                this.logger.error(`k8s watch failed`, reason, {
-                    queryPath: this.queryPath,
-                    queryParams: this.queryParams,
-                });
+                if (reason === RESTART_MSG) {
+                    this.logger.warn(`k8s watch may have failed, restarting`, {
+                        queryPath: this.queryPath,
+                        queryParams: this.queryParams,
+                    });
+                } else {
+                    this.logger.error(`k8s watch failed`, reason, {
+                        queryPath: this.queryPath,
+                        queryParams: this.queryParams,
+                    });
+                }
                 this.closePendingRequest();
                 this.startWatch(kubeConfig);
             }
