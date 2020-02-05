@@ -148,7 +148,7 @@ export class KubernetesWatchSource implements IInputSource, IRequireInitializati
                 const timer = setTimeout(() => reject(RESTART_MSG), this.reconnectTimeout);
                 timer.unref();
                 return timer;
-            }
+            };
             let timeout = startTimeout();
 
             watch
