@@ -27,14 +27,16 @@ const withFilter = function(this: QueueService) {
 };
 
 describe("QueueClient", () => {
-    const configuration: IQueueConfiguration = config.parse(QueueConfiguration, {
+    const rawConfiguration = {
         queueName: "queue123",
         storageAccount: "myAccount",
         storageAccessKey: "myKey",
         encoder: new JsonMessageEncoder(),
         retryInterval: "5s",
         retryCount: 3,
-    } as any);
+    } as any;
+    const parseConfig = (raw: any): IQueueConfiguration => config.parse(QueueConfiguration, raw);
+    const configuration = parseConfig(rawConfiguration);
     const context = new SpanContext();
     const span: Span = new MockTracer().startSpan("unit-test", { childOf: context });
     const payload = "hello world to queues";
@@ -100,17 +102,27 @@ describe("QueueClient", () => {
 
     describe("write", () => {
         const response = { statusCode: 200 };
-        const writeResultsIn = async (error?: any, result?: any, res = response) => {
+        const writeResultsIn = async (
+            error?: any,
+            result?: any,
+            res = response,
+            config = configuration
+        ) => {
             const createMessage = jest.fn();
-            createMessage.mockImplementation((_q, _t, _o, cb) => {
+            const createQueueIfNotExists = jest.fn();
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
                 cb(error, result, res);
+            });
+            createQueueIfNotExists.mockImplementation((_q, cb) => {
+                cb(undefined, { created: true, exists: true });
             });
             MockCreateQueueService.mockImplementation(() => ({
                 createMessage,
                 withFilter,
+                createQueueIfNotExists,
             }));
-            const client = new QueueClient(configuration);
-            return { createMessage, client };
+            const client = new QueueClient(config);
+            return { createMessage, client, createQueueIfNotExists };
         };
         it("should write message with defaults", async () => {
             const { client, createMessage } = await writeResultsIn(undefined, messageQueueResult);
@@ -164,6 +176,54 @@ describe("QueueClient", () => {
             const result = client.write(span.context(), bigText, headers);
             expect(createMessage).toBeCalled();
             await expect(result).rejects.toMatchObject({ code: 413 });
+        });
+        it("should retry on 404s if configured to", async () => {
+            const serviceResponse = { statusCode: 404 };
+            const { client, createMessage, createQueueIfNotExists } = await writeResultsIn(
+                new Error(),
+                undefined,
+                serviceResponse,
+                parseConfig({ ...rawConfiguration, createQueueIfNotExists: true })
+            );
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(undefined, {}, { statusCode: 200 });
+            });
+            const result = await client.write(span.context(), payload, headers);
+            expect(createMessage).toBeCalledTimes(2);
+            expect(createQueueIfNotExists).toBeCalled();
+            expect(result).toBeDefined();
+        });
+        it("should not retry on 404s if not configured to", async () => {
+            const serviceResponse = { statusCode: 404 };
+            const { client, createMessage, createQueueIfNotExists } = await writeResultsIn(
+                new Error(),
+                undefined,
+                serviceResponse,
+                parseConfig({ ...rawConfiguration, createQueueIfNotExists: false })
+            );
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(undefined, {}, { statusCode: 200 });
+            });
+            const result = client.write(span.context(), payload, headers);
+            await expect(result).rejects.toMatchObject({ code: 404 });
+            expect(createQueueIfNotExists).not.toBeCalled();
+            expect(createMessage).toBeCalledTimes(1);
+        });
+        it("should not retry on other errors (even if configured to)", async () => {
+            const serviceResponse = { statusCode: 401 };
+            const { client, createMessage, createQueueIfNotExists } = await writeResultsIn(
+                new Error(),
+                undefined,
+                serviceResponse,
+                parseConfig({ ...rawConfiguration, createQueueIfNotExists: true })
+            );
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(undefined, {}, { statusCode: 200 });
+            });
+            const result = client.write(span.context(), payload, headers);
+            await expect(result).rejects.toMatchObject({ code: 401 });
+            expect(createQueueIfNotExists).not.toBeCalled();
+            expect(createMessage).toBeCalledTimes(1);
         });
     });
     describe("read", () => {

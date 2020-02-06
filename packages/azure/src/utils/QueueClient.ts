@@ -21,6 +21,7 @@ import {
     ServiceResponse,
 } from "azure-storage";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
+import { promisify } from "util";
 import { IQueueConfiguration } from "../streaming";
 
 interface IQueueRequestOptions {
@@ -84,6 +85,8 @@ export type IQueueMessage = QueueService.QueueMessageResult & {
     payload?: unknown;
 };
 
+const QUEUE_NOT_FOUND_ERROR_CODE = 404;
+
 export class QueueClient implements IRequireInitialization {
     private readonly queueService: QueueService;
     public readonly defaultQueue: string;
@@ -143,6 +146,26 @@ export class QueueClient implements IRequireInitialization {
         span.setTag(QueueOpenTracingTagKeys.QueueName, queueName);
     }
 
+    private async createQueueIfNotExists(
+        spanContext: SpanContext,
+        queueName: string
+    ): Promise<void> {
+        const spanName = "Create Azure Queue (If Not Exists)";
+        const createQueueSpan = this.tracer.startSpan(spanName, { childOf: spanContext });
+        createQueueSpan.log({ queueName });
+
+        try {
+            const createQueueIfNotExistsAsync = promisify(this.queueService.createQueueIfNotExists);
+            const { created, exists } = await createQueueIfNotExistsAsync(queueName);
+            createQueueSpan.log({ created, exists });
+            createQueueSpan.finish();
+            return;
+        } catch (err) {
+            failSpan(createQueueSpan, err);
+            throw err;
+        }
+    }
+
     public write(
         spanContext: SpanContext,
         payload: any,
@@ -159,64 +182,79 @@ export class QueueClient implements IRequireInitialization {
             headers,
         });
 
-        return new Promise<IQueueMessage>((resolve, reject) => {
-            const { sizeKb, isTooBig } = this.isMessageTooBig(text);
-            span.log({ sizeKb });
-            if (isTooBig) {
-                const error: Error & { code?: number } = new Error(
-                    "Queue Message too big, must be less then 64kb. is: " + sizeKb
-                );
-                error.code = 413;
-                failSpan(span, error);
-                span.finish();
-                this.metrics.increment(
-                    QueueMetrics.Write,
-                    this.generateMetricTags(queueName, undefined, QueueMetricResults.ErrorTooBig)
-                );
-                return reject(error);
-            }
-            this.queueService.createMessage(
-                queueName,
-                text,
-                options,
-                (
-                    err: Error & { code?: number },
-                    message: QueueService.QueueMessageResult,
-                    response: ServiceResponse
-                ) => {
-                    if (err) {
-                        failSpan(span, err);
-                    }
-                    span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+        const attemptWrite = () =>
+            new Promise<IQueueMessage>((resolve, reject) => {
+                const { sizeKb, isTooBig } = this.isMessageTooBig(text);
+                span.log({ sizeKb });
+                if (isTooBig) {
+                    const error: Error & { code?: number } = new Error(
+                        "Queue Message too big, must be less then 64kb. is: " + sizeKb
+                    );
+                    error.code = 413;
+                    failSpan(span, error);
                     span.finish();
-                    if (err) {
-                        err.code = response.statusCode;
-                        this.metrics.increment(
-                            QueueMetrics.Write,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Error
-                            )
-                        );
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            QueueMetrics.Write,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Success
-                            )
-                        );
-                        resolve({
-                            ...message,
-                            headers,
-                            payload,
-                        });
-                    }
+                    this.metrics.increment(
+                        QueueMetrics.Write,
+                        this.generateMetricTags(
+                            queueName,
+                            undefined,
+                            QueueMetricResults.ErrorTooBig
+                        )
+                    );
+                    return reject(error);
                 }
-            );
+
+                this.queueService.createMessage(
+                    queueName,
+                    text,
+                    options,
+                    (
+                        err: Error & { code?: number },
+                        message: QueueService.QueueMessageResult,
+                        response: ServiceResponse
+                    ) => {
+                        if (err) {
+                            failSpan(span, err);
+                        }
+                        span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+                        span.finish();
+                        if (err) {
+                            err.code = response.statusCode;
+                            this.metrics.increment(
+                                QueueMetrics.Write,
+                                this.generateMetricTags(
+                                    queueName,
+                                    response.statusCode,
+                                    QueueMetricResults.Error
+                                )
+                            );
+                            return reject(err);
+                        } else {
+                            this.metrics.increment(
+                                QueueMetrics.Write,
+                                this.generateMetricTags(
+                                    queueName,
+                                    response.statusCode,
+                                    QueueMetricResults.Success
+                                )
+                            );
+                            return resolve({
+                                ...message,
+                                headers,
+                                payload,
+                            });
+                        }
+                    }
+                );
+            });
+
+        return attemptWrite().catch((err) => {
+            const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
+            if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
+                return this.createQueueIfNotExists(spanContext, queueName).then(attemptWrite);
+            } else {
+                return Promise.reject(err);
+            }
         });
     }
 

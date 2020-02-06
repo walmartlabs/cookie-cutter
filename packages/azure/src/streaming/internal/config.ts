@@ -65,6 +65,14 @@ export class QueueConfiguration implements IQueueConfiguration {
     public get largeItemBlobContainer(): string {
         return config.noop();
     }
+
+    @config.field(config.converters.boolean)
+    public set createQueueIfNotExists(_: boolean) {
+        config.noop();
+    }
+    public get createQueueIfNotExists(): boolean {
+        return config.noop();
+    }
 }
 
 @config.section
