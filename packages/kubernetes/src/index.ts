@@ -5,10 +5,14 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import k8s = require("@kubernetes/client-node");
+import * as k8s from "@kubernetes/client-node";
 import { config, IInputSource } from "@walmartlabs/cookie-cutter-core";
 import { KubernetesAdmissionControllerSource } from "./KubernetesAdmissionControllerSource";
+import { K8sResourceAdded, K8sResourceDeleted, K8sResourceModified } from "./KubernetesBaseSource";
+import { KubernetesPollSource } from "./KubernetesPollSource";
 import { KubernetesWatchSource } from "./KubernetesWatchSource";
+
+export { K8sResourceAdded, K8sResourceModified, K8sResourceDeleted };
 
 export interface IK8sAdmissionControllerSourceConfiguration {
     readonly privateKey: string;
@@ -154,18 +158,6 @@ export class K8sAdmissionReviewRequest {
     constructor(public readonly request: IAdmissionReviewRequest) {}
 }
 
-export class K8sResourceAdded {
-    constructor(public readonly resource: any) {}
-}
-
-export class K8sResourceModified {
-    constructor(public readonly resource: any) {}
-}
-
-export class K8sResourceDeleted {
-    constructor(public readonly resource: any) {}
-}
-
 export function k8sWatchSource(configuration: IK8sWatchConfiguration): IInputSource {
     configuration = config.parse(K8sWatchConfiguration, configuration, {
         queryParams: {
@@ -174,6 +166,16 @@ export function k8sWatchSource(configuration: IK8sWatchConfiguration): IInputSou
         reconnectTimeout: 60000,
     });
     return new KubernetesWatchSource(configuration);
+}
+
+export function k8sPollSource(configuration: IK8sWatchConfiguration): IInputSource {
+    configuration = config.parse(K8sWatchConfiguration, configuration, {
+        queryParams: {
+            timeoutSeconds: 60,
+        },
+        reconnectTimeout: 60000,
+    });
+    return new KubernetesPollSource(configuration);
 }
 
 export function k8sAdmissionControllerSource(
