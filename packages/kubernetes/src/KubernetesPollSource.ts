@@ -165,11 +165,14 @@ export class KubernetesPollSource extends KubernetesBase
                 reconnectTimeout: this.reconnectTimeout,
                 cachedKeys: this.pollCache.keys(),
             });
-            await sleep(this.reconnectTimeout);
+            const nextPoll = Date.now() + this.reconnectTimeout;
+            while (Date.now() < nextPoll && this.running) {
+                await sleep(100);
+            }
         }
     }
 
-    public async poll(kubeConfig: k8s.KubeConfig, path: string, queryParams: any): Promise<void> {
+    public poll(kubeConfig: k8s.KubeConfig, path: string, queryParams: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             const cluster = kubeConfig.getCurrentCluster();
             if (!cluster) {
