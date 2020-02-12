@@ -155,7 +155,9 @@ export class QueueClient implements IRequireInitialization {
         createQueueSpan.log({ queueName });
 
         try {
-            const createQueueIfNotExistsAsync = promisify(this.queueService.createQueueIfNotExists);
+            const createQueueIfNotExistsAsync = promisify(
+                this.queueService.createQueueIfNotExists
+            ).bind(this.queueService);
             const { created, exists } = await createQueueIfNotExistsAsync(queueName);
             createQueueSpan.log({ created, exists });
             createQueueSpan.finish();
