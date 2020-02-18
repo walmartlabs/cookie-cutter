@@ -13,6 +13,7 @@ import {
     IMetricTags,
     IRequireInitialization,
     OpenTracingTagKeys,
+    EventSourcedMetadata,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     createQueueService,
@@ -101,6 +102,9 @@ export class QueueClient implements IRequireInitialization {
 
         const { retryCount, retryInterval } = config;
         this.queueService = createQueueService(config.storageAccount, config.storageAccessKey);
+        if (config.queueMessageEncoder) {
+            this.queueService.messageEncoder = config.queueMessageEncoder;
+        }
         if (retryCount > 0) {
             const retryOperations = new LinearRetryPolicyFilter(retryCount, retryInterval);
             this.queueService = this.queueService.withFilter(retryOperations);
@@ -317,6 +321,17 @@ export class QueueClient implements IRequireInitialization {
                                     headers: Record<string, string>;
                                     payload: unknown;
                                 };
+
+                                if (!mesageObj.headers && !mesageObj.payload) {
+                                    mesageObj.headers = {
+                                        [EventSourcedMetadata.EventType]: "any",
+                                    };
+                                    mesageObj.payload = {
+                                        type: "Buffer",
+                                        data: Buffer.from(result.messageText),
+                                    };
+                                }
+
                                 return {
                                     ...result,
                                     ...mesageObj,

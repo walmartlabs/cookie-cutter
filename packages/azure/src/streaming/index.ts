@@ -13,6 +13,7 @@ import {
     IOutputSink,
     IPublishedMessage,
 } from "@walmartlabs/cookie-cutter-core";
+import { QueueMessageEncoder } from "azure-storage";
 import { ICosmosConfiguration } from "..";
 import { CosmosConfiguration } from "../config";
 import { CosmosMessageDeduper } from "../event-sourced/internal";
@@ -29,6 +30,7 @@ export interface IQueueConfiguration {
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
+    readonly queueMessageEncoder?: QueueMessageEncoder;
     readonly retryCount?: number;
     readonly retryInterval?: number;
     readonly encoder: IMessageEncoder;

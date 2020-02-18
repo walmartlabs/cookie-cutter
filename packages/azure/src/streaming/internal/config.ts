@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
+import { QueueMessageEncoder } from "azure-storage";
 import { IQueueConfiguration, IQueueSourceConfiguration } from "..";
 
 @config.section
@@ -31,6 +32,14 @@ export class QueueConfiguration implements IQueueConfiguration {
         config.noop();
     }
     public get queueName(): string {
+        return config.noop();
+    }
+    
+    @config.field(config.converters.none)
+    public set queueMessageEncoder(_: QueueMessageEncoder) {
+        config.noop();
+    }
+    public get queueMessageEncoder(): QueueMessageEncoder {
         return config.noop();
     }
 
