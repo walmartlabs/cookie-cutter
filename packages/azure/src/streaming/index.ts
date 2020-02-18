@@ -93,6 +93,9 @@ export function queueSource(
         retryInterval: 5000,
         largeItemBlobContainer: "queue-large-items",
         createQueueIfNotExists: false,
+        preprocessor: {
+            process: (msg) => msg,
+        },
     });
     return new QueueInputSource(configuration);
 }
