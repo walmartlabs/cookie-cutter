@@ -13,11 +13,10 @@ import {
     IOutputSink,
     IPublishedMessage,
 } from "@walmartlabs/cookie-cutter-core";
-import { QueueMessageEncoder } from "azure-storage";
 import { ICosmosConfiguration } from "..";
 import { CosmosConfiguration } from "../config";
 import { CosmosMessageDeduper } from "../event-sourced/internal";
-import { CosmosClient } from "../utils";
+import { CosmosClient, IQueueMessage } from "../utils";
 import {
     CosmosOutputSink,
     QueueConfiguration,
@@ -30,7 +29,7 @@ export interface IQueueConfiguration {
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
-    readonly queueMessageEncoder?: QueueMessageEncoder;
+    readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;
     readonly retryInterval?: number;
     readonly encoder: IMessageEncoder;
@@ -80,6 +79,10 @@ export function queueSink(configuration: IQueueConfiguration): IOutputSink<IPubl
         largeItemBlobContainer: "queue-large-items",
     });
     return new QueueOutputSink(configuration);
+}
+
+export interface IQueueMessagePreprocessor {
+    process(msg: IQueueMessage): IQueueMessage;
 }
 
 export function queueSource(
