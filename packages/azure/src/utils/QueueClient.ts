@@ -320,10 +320,13 @@ export class QueueClient implements IRequireInitialization {
                                     payload: unknown;
                                 };
 
-                                if (!mesageObj.headers && !mesageObj.payload) {
+                                if (!mesageObj.headers) {
                                     mesageObj.headers = {
                                         [EventSourcedMetadata.EventType]: "unknown",
                                     };
+                                }
+
+                                if (!mesageObj.payload) {
                                     mesageObj.payload = {
                                         type: "Buffer",
                                         data: Buffer.from(result.messageText),
