@@ -292,7 +292,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                     const sequence = context.source.metadata<number>(
                         EventProcessingMetadata.Sequence
                     );
-                    if (sequence !== reproContext.atSn) {
+                    if (this.shouldSkip(sequence, reproContext.atSn)) {
                         this.logger.debug(
                             `skipping output message with sequence ${sequence} while waiting for retry`
                         );
@@ -444,5 +444,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 );
             }
         }
+    }
+
+    protected shouldSkip(sequence: number, reproAtSn: number): boolean {
+        return sequence !== reproAtSn;
     }
 }
