@@ -317,9 +317,7 @@ export class QueueClient implements IRequireInitialization {
                         );
                         resolve(
                             results.reduce((messages, result) => {
-                                const mesageObj = this.config.preprocessor.process(
-                                    result
-                                ) as IQueueMessage;
+                                const mesageObj = this.config.preprocessor.process(result);
 
                                 if (
                                     !mesageObj.headers ||
