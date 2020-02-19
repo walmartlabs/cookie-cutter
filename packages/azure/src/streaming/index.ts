@@ -94,7 +94,12 @@ export function queueSource(
         largeItemBlobContainer: "queue-large-items",
         createQueueIfNotExists: false,
         preprocessor: {
-            process: (msg) => msg,
+            process: (msg) => {
+                return JSON.parse(msg.messageText) as {
+                    headers: Record<string, string>;
+                    payload: unknown;
+                };
+            },
         },
     });
     return new QueueInputSource(configuration);
