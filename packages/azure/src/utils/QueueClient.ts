@@ -24,7 +24,7 @@ import {
 } from "azure-storage";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
 import { promisify } from "util";
-import { IQueueConfiguration } from "../streaming";
+import { IQueueConfiguration, IQueueMessagePreprocessor, QueueMetadata } from "../streaming";
 
 interface IQueueRequestOptions {
     /**
@@ -82,12 +82,21 @@ export interface IQueueReadOptions extends IQueueRequestOptions {
     visibilityTimeout?: number;
 }
 
-export type IQueueMessage = QueueService.QueueMessageResult & {
-    headers?: Record<string, string>;
-    payload?: unknown;
-};
+export interface IQueueMessage {
+    headers: Record<string, string>;
+    payload: unknown;
+}
 
 const QUEUE_NOT_FOUND_ERROR_CODE = 404;
+
+export class EnvelopeQueueMessagePreprocessor implements IQueueMessagePreprocessor {
+    public process(payload: string): IQueueMessage {
+        return JSON.parse(payload) as {
+            headers: Record<string, string>;
+            payload: unknown;
+        };
+    }
+}
 
 export class QueueClient implements IRequireInitialization {
     private readonly queueService: QueueService;
@@ -217,7 +226,7 @@ export class QueueClient implements IRequireInitialization {
                     options,
                     (
                         err: Error & { code?: number },
-                        message: QueueService.QueueMessageResult,
+                        _: QueueService.QueueMessageResult,
                         response: ServiceResponse
                     ) => {
                         if (err) {
@@ -246,7 +255,6 @@ export class QueueClient implements IRequireInitialization {
                                 )
                             );
                             return resolve({
-                                ...message,
                                 headers,
                                 payload,
                             });
@@ -320,13 +328,15 @@ export class QueueClient implements IRequireInitialization {
                         );
                         resolve(
                             results.reduce((messages, result) => {
-                                const mesageObj = this.config.preprocessor.process(result);
+                                const mesageObj = this.config.preprocessor.process(
+                                    result.messageText
+                                );
 
                                 if (
                                     !mesageObj.headers ||
                                     !mesageObj.headers[EventSourcedMetadata.EventType]
                                 ) {
-                                    span.log({ messageId: mesageObj.messageId });
+                                    span.log({ messageId: result.messageId });
                                     failSpan(
                                         span,
                                         new Error("Message does not have EventType header value.")
@@ -334,17 +344,24 @@ export class QueueClient implements IRequireInitialization {
                                     this.logger.error(
                                         "Message does not have EventType header value.",
                                         {
-                                            messageId: mesageObj.messageId,
+                                            messageId: result.messageId,
                                         }
                                     );
 
                                     return messages;
                                 }
 
-                                messages.push({
-                                    ...result,
-                                    ...mesageObj,
-                                });
+                                mesageObj.headers[QueueMetadata.DequeueCount] = (
+                                    result.dequeueCount || 1
+                                ).toString();
+                                mesageObj.headers[QueueMetadata.QueueName] = result.queue;
+                                mesageObj.headers[QueueMetadata.TimeToLive] = result.expirationTime;
+                                mesageObj.headers[QueueMetadata.VisibilityTimeout] =
+                                    result.timeNextVisible;
+                                mesageObj.headers[QueueMetadata.MessageId] = result.messageId;
+                                mesageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
+
+                                messages.push(mesageObj);
 
                                 return messages;
                             }, [])

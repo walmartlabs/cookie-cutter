@@ -5,12 +5,12 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { config, JsonMessageEncoder } from "@walmartlabs/cookie-cutter-core";
+import { config, EventSourcedMetadata, JsonMessageEncoder } from "@walmartlabs/cookie-cutter-core";
 import { createQueueService, LinearRetryPolicyFilter, QueueService } from "azure-storage";
 import { MockTracer, Span, SpanContext } from "opentracing";
-import { IQueueConfiguration } from "../../streaming";
+import { IQueueConfiguration, QueueMetadata } from "../../streaming";
 import { QueueConfiguration } from "../../streaming/internal";
-import { QueueClient } from "../../utils";
+import { EnvelopeQueueMessagePreprocessor, QueueClient } from "../../utils";
 
 jest.mock("azure-storage", () => {
     return {
@@ -34,13 +34,16 @@ describe("QueueClient", () => {
         encoder: new JsonMessageEncoder(),
         retryInterval: "5s",
         retryCount: 3,
+        preprocessor: new EnvelopeQueueMessagePreprocessor(),
     } as any;
     const parseConfig = (raw: any): IQueueConfiguration => config.parse(QueueConfiguration, raw);
     const configuration = parseConfig(rawConfiguration);
     const context = new SpanContext();
     const span: Span = new MockTracer().startSpan("unit-test", { childOf: context });
     const payload = "hello world to queues";
-    const headers = {};
+    const headers = {
+        [EventSourcedMetadata.EventType]: "foo",
+    };
     const messageQueueResult = {
         messageId: "message123",
         popReceipt: "pop123",
@@ -128,7 +131,6 @@ describe("QueueClient", () => {
             const { client, createMessage } = await writeResultsIn(undefined, messageQueueResult);
             const result = await client.write(span.context(), payload, headers);
             expect(result).toBeDefined();
-            expect(result.messageId).toBe(messageQueueResult.messageId);
             expect(createMessage).toBeCalledWith(
                 configuration.queueName,
                 JSON.stringify({ payload, headers }),
@@ -162,7 +164,7 @@ describe("QueueClient", () => {
             const result = client.write(span.context(), bigText, headers);
             expect(createMessage).not.toBeCalled();
             await expect(result).rejects.toEqual(
-                new Error("Queue Message too big, must be less then 64kb. is: 173.400390625")
+                new Error("Queue Message too big, must be less then 64kb. is: 173.423828125")
             );
         });
         it("should error get back 413 from azure", async () => {
@@ -244,7 +246,7 @@ describe("QueueClient", () => {
             const { client, getMessages } = await readResultsIn(undefined, [messageQueueResult]);
             const messages = await client.read(span.context());
             expect(messages).toHaveLength(1);
-            expect(messages[0].messageId).toBe(messageQueueResult.messageId);
+            expect(messages[0].headers[QueueMetadata.MessageId]).toBe(messageQueueResult.messageId);
             expect(getMessages).toBeCalledWith(configuration.queueName, {}, expect.anything());
         });
         it("should read messages with options", async () => {
