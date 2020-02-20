@@ -17,6 +17,7 @@ import {
     IRequireInitialization,
     isEmbeddable,
     MessageRef,
+    DefaultComponentContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
 import { isArray } from "util";
@@ -53,6 +54,9 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
         this.client = QueueClientWithLargeItemSupport.create(config);
         this.readOptions = config;
         this.encoder = config.encoder;
+        this.metrics = DefaultComponentContext.metrics;
+        this.tracer = DefaultComponentContext.tracer;
+        this.logger = DefaultComponentContext.logger;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {

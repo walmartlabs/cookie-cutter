@@ -13,6 +13,8 @@ import {
     IMetricTags,
     IRequireInitialization,
     OpenTracingTagKeys,
+    EventSourcedMetadata,
+    ILogger,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     createQueueService,
@@ -92,12 +94,14 @@ export class QueueClient implements IRequireInitialization {
     public readonly defaultQueue: string;
     private tracer: Tracer;
     private metrics: IMetrics;
+    private logger: ILogger;
     private spanOperationName = "Azure Queue Client Call";
 
     constructor(private config: IQueueConfiguration) {
         this.defaultQueue = config.queueName;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
+        this.logger = DefaultComponentContext.logger;
 
         const { retryCount, retryInterval } = config;
         this.queueService = createQueueService(config.storageAccount, config.storageAccessKey);
@@ -110,6 +114,7 @@ export class QueueClient implements IRequireInitialization {
     public async initialize(context: IComponentContext) {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
+        this.logger = context.logger;
     }
 
     private generateMetricTags(
@@ -312,16 +317,35 @@ export class QueueClient implements IRequireInitialization {
                             )
                         );
                         resolve(
-                            results.map<IQueueMessage>((result) => {
-                                const mesageObj = JSON.parse(result.messageText) as {
-                                    headers: Record<string, string>;
-                                    payload: unknown;
-                                };
-                                return {
+                            results.reduce((messages, result) => {
+                                const mesageObj = this.config.preprocessor.process(result);
+
+                                if (
+                                    !mesageObj.headers ||
+                                    !mesageObj.headers[EventSourcedMetadata.EventType]
+                                ) {
+                                    span.log({ messageId: mesageObj.messageId });
+                                    failSpan(
+                                        span,
+                                        new Error("Message does not have EventType header value.")
+                                    );
+                                    this.logger.error(
+                                        "Message does not have EventType header value.",
+                                        {
+                                            messageId: mesageObj.messageId,
+                                        }
+                                    );
+
+                                    return messages;
+                                }
+
+                                messages.push({
                                     ...result,
                                     ...mesageObj,
-                                };
-                            })
+                                });
+
+                                return messages;
+                            }, [])
                         );
                     }
                 }

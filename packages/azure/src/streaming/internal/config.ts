@@ -6,7 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
-import { IQueueConfiguration, IQueueSourceConfiguration } from "..";
+import { IQueueConfiguration, IQueueSourceConfiguration, IQueueMessagePreprocessor } from "..";
 
 @config.section
 export class QueueConfiguration implements IQueueConfiguration {
@@ -31,6 +31,14 @@ export class QueueConfiguration implements IQueueConfiguration {
         config.noop();
     }
     public get queueName(): string {
+        return config.noop();
+    }
+    
+    @config.field(config.converters.none)
+    public set preprocessor(_: IQueueMessagePreprocessor) {
+        config.noop();
+    }
+    public get preprocessor(): IQueueMessagePreprocessor {
         return config.noop();
     }
 

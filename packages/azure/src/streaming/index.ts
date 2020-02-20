@@ -16,7 +16,7 @@ import {
 import { ICosmosConfiguration } from "..";
 import { CosmosConfiguration } from "../config";
 import { CosmosMessageDeduper } from "../event-sourced/internal";
-import { CosmosClient } from "../utils";
+import { CosmosClient, IQueueMessage } from "../utils";
 import {
     CosmosOutputSink,
     QueueConfiguration,
@@ -29,6 +29,7 @@ export interface IQueueConfiguration {
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
+    readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;
     readonly retryInterval?: number;
     readonly encoder: IMessageEncoder;
@@ -80,6 +81,10 @@ export function queueSink(configuration: IQueueConfiguration): IOutputSink<IPubl
     return new QueueOutputSink(configuration);
 }
 
+export interface IQueueMessagePreprocessor {
+    process(msg: IQueueMessage): IQueueMessage;
+}
+
 export function queueSource(
     configuration: IQueueConfiguration & IQueueSourceConfiguration
 ): IInputSource {
@@ -88,6 +93,14 @@ export function queueSource(
         retryInterval: 5000,
         largeItemBlobContainer: "queue-large-items",
         createQueueIfNotExists: false,
+        preprocessor: {
+            process: (msg) => {
+                return JSON.parse(msg.messageText) as {
+                    headers: Record<string, string>;
+                    payload: unknown;
+                };
+            },
+        },
     });
     return new QueueInputSource(configuration);
 }
