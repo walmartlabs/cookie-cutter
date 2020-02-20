@@ -83,8 +83,8 @@ export interface IQueueReadOptions extends IQueueRequestOptions {
 }
 
 export interface IQueueMessage {
-    headers?: Record<string, string>;
-    payload?: unknown;
+    headers: Record<string, string>;
+    payload: unknown;
 }
 
 const QUEUE_NOT_FOUND_ERROR_CODE = 404;
