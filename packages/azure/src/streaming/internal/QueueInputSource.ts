@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import {
+    DefaultComponentContext,
     EventSourcedMetadata,
     failSpan,
     IComponentContext,
@@ -17,7 +18,6 @@ import {
     IRequireInitialization,
     isEmbeddable,
     MessageRef,
-    DefaultComponentContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
 import { isArray } from "util";
