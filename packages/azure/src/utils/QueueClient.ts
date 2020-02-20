@@ -7,14 +7,14 @@ LICENSE file in the root directory of this source tree.
 
 import {
     DefaultComponentContext,
+    EventSourcedMetadata,
     failSpan,
     IComponentContext,
+    ILogger,
     IMetrics,
     IMetricTags,
     IRequireInitialization,
     OpenTracingTagKeys,
-    EventSourcedMetadata,
-    ILogger,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     createQueueService,
