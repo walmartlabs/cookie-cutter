@@ -101,6 +101,7 @@ export class QueueClient implements IRequireInitialization {
         this.defaultQueue = config.queueName;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
+        this.logger = DefaultComponentContext.logger;
 
         const { retryCount, retryInterval } = config;
         this.queueService = createQueueService(config.storageAccount, config.storageAccessKey);
