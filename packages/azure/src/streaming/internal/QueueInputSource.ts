@@ -96,8 +96,15 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                 span.setTag(Tags.SAMPLING_PRIORITY, 1);
                 span.setTag(QueueOpenTracingTagKeys.QueueName, this.readOptions.queueName);
                 const metadata: IMetadata = {
-                    [QueueMetadata.VisibilityTimeout]: message.timeNextVisible,
-                    [QueueMetadata.DequeueCount]: message.dequeueCount,
+                    [QueueMetadata.VisibilityTimeout]:
+                        message.headers[QueueMetadata.VisibilityTimeout],
+                    [QueueMetadata.DequeueCount]: parseInt(
+                        message.headers[QueueMetadata.DequeueCount] || "1",
+                        10
+                    ),
+                    [QueueMetadata.MessageId]: message.headers[QueueMetadata.MessageId],
+                    [QueueMetadata.QueueName]: message.headers[QueueMetadata.QueueName],
+                    [QueueMetadata.PopReceipt]: message.headers[QueueMetadata.PopReceipt],
                 };
 
                 const msgRef = new MessageRef(metadata, msg, span.context());
@@ -106,9 +113,9 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                         if (!error) {
                             await this.client.markAsProcessed(
                                 span.context(),
-                                message.messageId,
-                                message.popReceipt,
-                                message.queue
+                                message.headers[QueueMetadata.MessageId],
+                                message.headers[QueueMetadata.PopReceipt],
+                                message.headers[QueueMetadata.QueueName]
                             );
                         } else {
                             span.log({ reprocess: true });

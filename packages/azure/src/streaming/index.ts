@@ -16,7 +16,7 @@ import {
 import { ICosmosConfiguration } from "..";
 import { CosmosConfiguration } from "../config";
 import { CosmosMessageDeduper } from "../event-sourced/internal";
-import { CosmosClient, IQueueMessage } from "../utils";
+import { CosmosClient, EnvelopeQueueMessagePreprocessor, IQueueMessage } from "../utils";
 import {
     CosmosOutputSink,
     QueueConfiguration,
@@ -24,6 +24,10 @@ import {
     QueueOutputSink,
     QueueSourceConfiguration,
 } from "./internal";
+
+export interface IQueueMessagePreprocessor {
+    process(payload: string): IQueueMessage;
+}
 
 export interface IQueueConfiguration {
     readonly storageAccount: string;
@@ -65,6 +69,8 @@ export enum QueueMetadata {
     TimeToLive = "queue.time_to_live",
     DequeueCount = "queue.dequeue_count",
     TimeToNextVisible = "queue.time_to_next_visible",
+    MessageId = "queue.message_id",
+    PopReceipt = "queue.pop_receipt",
 }
 
 export function cosmosSink(configuration: ICosmosConfiguration): IOutputSink<IPublishedMessage> {
@@ -81,10 +87,6 @@ export function queueSink(configuration: IQueueConfiguration): IOutputSink<IPubl
     return new QueueOutputSink(configuration);
 }
 
-export interface IQueueMessagePreprocessor {
-    process(msg: IQueueMessage): IQueueMessage;
-}
-
 export function queueSource(
     configuration: IQueueConfiguration & IQueueSourceConfiguration
 ): IInputSource {
@@ -93,14 +95,7 @@ export function queueSource(
         retryInterval: 5000,
         largeItemBlobContainer: "queue-large-items",
         createQueueIfNotExists: false,
-        preprocessor: {
-            process: (msg) => {
-                return JSON.parse(msg.messageText) as {
-                    headers: Record<string, string>;
-                    payload: unknown;
-                };
-            },
-        },
+        preprocessor: new EnvelopeQueueMessagePreprocessor(),
     });
     return new QueueInputSource(configuration);
 }
