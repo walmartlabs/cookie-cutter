@@ -8,8 +8,8 @@ LICENSE file in the root directory of this source tree.
 import { config, EventSourcedMetadata, JsonMessageEncoder } from "@walmartlabs/cookie-cutter-core";
 import { createQueueService, LinearRetryPolicyFilter, QueueService } from "azure-storage";
 import { MockTracer, Span, SpanContext } from "opentracing";
-import { IQueueConfiguration, QueueMetadata } from "../../streaming";
-import { QueueConfiguration } from "../../streaming/internal";
+import { IQueueConfiguration, IQueueSourceConfiguration, QueueMetadata } from "../../streaming";
+import { QueueConfiguration, QueueSourceConfiguration } from "../../streaming/internal";
 import { EnvelopeQueueMessagePreprocessor, QueueClient } from "../../utils";
 
 jest.mock("azure-storage", () => {
@@ -247,11 +247,30 @@ describe("QueueClient", () => {
             const messages = await client.read(span.context());
             expect(messages).toHaveLength(1);
             expect(messages[0].headers[QueueMetadata.MessageId]).toBe(messageQueueResult.messageId);
-            expect(getMessages).toBeCalledWith(configuration.queueName, {}, expect.anything());
+            expect(getMessages).toBeCalledWith(
+                configuration.queueName,
+                { numOfMessages: undefined, visibilityTimeout: undefined },
+                expect.anything()
+            );
         });
         it("should read messages with options", async () => {
             const { client, getMessages } = await readResultsIn(undefined, [messageQueueResult]);
-            const options = { queueName: "different", numOfMessages: 20, visibilityTimeout: 312 };
+            let options: IQueueConfiguration & IQueueSourceConfiguration = {
+                storageAccount: "storageAcc",
+                storageAccessKey: "storageKey",
+                queueName: "different",
+                createQueueIfNotExists: false,
+                encoder: new JsonMessageEncoder(),
+                numOfMessages: 20,
+                visibilityTimeout: 60000,
+            };
+            options = config.parse(QueueSourceConfiguration, options, {
+                retryCount: 3,
+                retryInterval: 5000,
+                largeItemBlobContainer: "queue-large-items",
+                createQueueIfNotExists: false,
+                preprocessor: new EnvelopeQueueMessagePreprocessor(),
+            });
             await client.read(span.context(), options);
             expect(getMessages).toBeCalledWith(
                 options.queueName,
@@ -283,7 +302,7 @@ describe("QueueClient", () => {
             const client = new QueueClient(configuration);
             return { deleteMessage, client };
         };
-        it("should read messages with defaults", async () => {
+        it("should delete message when processed with default queue name", async () => {
             const { client, deleteMessage } = await markAsProcessedResultsIn();
             await client.markAsProcessed(
                 span.context(),
@@ -297,7 +316,7 @@ describe("QueueClient", () => {
                 expect.anything()
             );
         });
-        it("should read messages with options", async () => {
+        it("should delete message when processed with different queue name", async () => {
             const { client, deleteMessage } = await markAsProcessedResultsIn();
             const options = { queueName: "different" };
             await client.markAsProcessed(

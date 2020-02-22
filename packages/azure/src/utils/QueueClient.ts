@@ -278,13 +278,18 @@ export class QueueClient implements IRequireInitialization {
         options?: IQueueReadOptions
     ): Promise<IQueueMessage[]> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
-        const { queueName, visibilityTimeout, numOfMessages } = Object.assign(
-            {},
-            {
-                queueName: this.defaultQueue,
-            },
-            options || {}
-        );
+
+        let queueName: string = this.defaultQueue;
+        let visibilityTimeout: number;
+        let numOfMessages: number;
+        if (options) {
+            if (options.queueName) {
+                queueName = options.queueName;
+            }
+            visibilityTimeout = options.visibilityTimeout;
+            numOfMessages = options.numOfMessages;
+        }
+
         const kind = spanContext ? Tags.SPAN_KIND_RPC_CLIENT : undefined;
         this.spanLogAndSetTags(span, kind, this.read.name, queueName, {
             queueName,
