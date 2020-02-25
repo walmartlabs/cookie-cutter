@@ -14,6 +14,7 @@ import {
     makeLifecycle,
     MessageRef,
     sleep,
+    timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import * as _ from "lodash";
 import * as request from "request";
@@ -86,14 +87,13 @@ export class KubernetesPollSource extends KubernetesBase
                 queryPath: this.queryPath,
                 queryParams: this.queryParams,
                 reconnectTimeout: this.reconnectTimeout,
-                cachedKeys: this.pollCache.keys(),
+                cachedKeys: [...this.pollCache.keys()],
             });
             const k8sMsgs: IK8sMessage[] = [];
             try {
-                const pollResponse: any = await this.poll(
-                    kubeConfig,
-                    this.queryPath,
-                    this.queryParams
+                const pollResponse: any = await timeout(
+                    this.poll(kubeConfig, this.queryPath, this.queryParams),
+                    this.reconnectTimeout
                 );
                 const returnedItems = new Set();
                 let items = [];
@@ -144,6 +144,7 @@ export class KubernetesPollSource extends KubernetesBase
                     queryParams: this.queryParams,
                     reconnectTimeout: this.reconnectTimeout,
                 });
+                continue;
             }
 
             for (const msg of k8sMsgs) {
@@ -163,7 +164,7 @@ export class KubernetesPollSource extends KubernetesBase
                 queryPath: this.queryPath,
                 queryParams: this.queryParams,
                 reconnectTimeout: this.reconnectTimeout,
-                cachedKeys: this.pollCache.keys(),
+                cachedKeys: [...this.pollCache.keys()],
             });
             const nextPoll = Date.now() + this.reconnectTimeout;
             while (Date.now() < nextPoll && this.running) {
