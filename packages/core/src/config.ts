@@ -12,6 +12,7 @@ import { IClassType } from "./model";
 export type ValueConvertFn = (val: any) => any;
 
 export function section<T extends new (...args: any[]) => {}>(TConstructor: T) {
+    // https://github.com/microsoft/TypeScript/issues/37157
     const tempClass = class extends TConstructor {
         constructor(...args: any[]) {
             super(args);
@@ -38,6 +39,7 @@ export function section<T extends new (...args: any[]) => {}>(TConstructor: T) {
 }
 
 export function extensible<T extends new (...args: any[]) => {}>(TConstructor: T) {
+    // https://github.com/microsoft/TypeScript/issues/37157
     const tempClass = class extends TConstructor {
         constructor(...args: any[]) {
             super(args);
@@ -292,6 +294,6 @@ function verifyIsSection(obj: any): obj is ISection {
     throw new Error("unexpected type, are you missing the '@section' decorator?");
 }
 
-export function isValueConvertFn(obj: any): obj is ValueConvertFn {
+function isValueConvertFn(obj: any): obj is ValueConvertFn {
     return !(isFunction(obj) && Object.getPrototypeOf(obj).name.length > 0);
 }
