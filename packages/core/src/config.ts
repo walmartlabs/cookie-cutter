@@ -12,7 +12,7 @@ import { IClassType } from "./model";
 export type ValueConvertFn = (val: any) => any;
 
 export function section<T extends new (...args: any[]) => {}>(TConstructor: T) {
-    return class extends TConstructor {
+    const tempClass = class extends TConstructor {
         constructor(...args: any[]) {
             super(args);
 
@@ -33,10 +33,12 @@ export function section<T extends new (...args: any[]) => {}>(TConstructor: T) {
             }
         }
     };
+    Object.defineProperty(tempClass, "name", { value: TConstructor.name });
+    return tempClass;
 }
 
 export function extensible<T extends new (...args: any[]) => {}>(TConstructor: T) {
-    return class extends TConstructor {
+    const tempClass = class extends TConstructor {
         constructor(...args: any[]) {
             super(args);
             if (!Object.getOwnPropertyDescriptor(this, "__extensible")) {
@@ -48,6 +50,8 @@ export function extensible<T extends new (...args: any[]) => {}>(TConstructor: T
             }
         }
     };
+    Object.defineProperty(tempClass, "name", { value: TConstructor.name });
+    return tempClass;
 }
 
 export function parse<T>(TRoot: IClassType<T>, actual: any, base?: Partial<T>): T {
@@ -288,6 +292,6 @@ function verifyIsSection(obj: any): obj is ISection {
     throw new Error("unexpected type, are you missing the '@section' decorator?");
 }
 
-function isValueConvertFn(obj: any): obj is ValueConvertFn {
-    return !(isFunction(obj) && obj.__proto__.name.length > 0);
+export function isValueConvertFn(obj: any): obj is ValueConvertFn {
+    return !(isFunction(obj) && Object.getPrototypeOf(obj).name.length > 0);
 }
