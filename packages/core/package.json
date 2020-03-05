@@ -17,7 +17,7 @@
         "lru-cache": "5.1.1",
         "ms": "2.1.2",
         "opentracing": "0.14.4",
-        "wtfnode": "0.8.0"
+        "wtfnode": "0.8.1"
     },
     "devDependencies": {
         "@types/lru-cache": "5.1.0",
