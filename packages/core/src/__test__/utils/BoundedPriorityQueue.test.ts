@@ -89,4 +89,30 @@ describe("BoundedPriorityQueue", () => {
         queue.close();
         await expect(p).resolves.toBe("done");
     });
+
+    it("supports multiple concurrent writers", async () => {
+        const queue = new BoundedPriorityQueue<number>(1);
+
+        const enqueuePromises: Array<Promise<boolean>> = [];
+        for (let i = 1; i < 11; i++) {
+            if (i === 10) {
+                queue
+                    .enqueue(i)
+                    .then(() => {
+                        queue.close();
+                    })
+                    .catch();
+                continue;
+            }
+            enqueuePromises.push(queue.enqueue(i));
+        }
+
+        const buffer = [];
+        for await (const item of queue.iterate()) {
+            buffer.push(item);
+        }
+
+        await Promise.all(enqueuePromises);
+        expect(buffer).toMatchObject([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    });
 });
