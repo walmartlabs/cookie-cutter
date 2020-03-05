@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import { isNullOrUndefined } from "util";
 import { Future } from ".";
 
 export class BoundedPriorityQueue<T> {
@@ -24,6 +25,16 @@ export class BoundedPriorityQueue<T> {
         this.closed = false;
     }
 
+    public update(predicate: (T) => boolean, op: (T) => void): void {
+        for (const queue of this.queues.values()) {
+            for (const item of queue) {
+                if (predicate(item)) {
+                    op(item);
+                }
+            }
+        }
+    }
+
     public async enqueue(item: T, priority = 0): Promise<boolean> {
         let queue = this.queues.get(priority);
         if (queue === undefined) {
@@ -41,12 +52,16 @@ export class BoundedPriorityQueue<T> {
             return true;
         }
 
-        await this.whenNotFull.promise;
+        if (this.whenNotFull) {
+            await this.whenNotFull.promise;
+        }
         if (this.closed) {
             return false;
         }
 
-        this.whenNotFull = new Future();
+        if (isNullOrUndefined(this.whenNotFull)) {
+            this.whenNotFull = new Future();
+        }
         return this.enqueue(item);
     }
 
@@ -60,7 +75,10 @@ export class BoundedPriorityQueue<T> {
             if (queue.length > 0) {
                 const item = queue.shift();
                 if (this.count-- === this.capacity) {
-                    this.whenNotFull.resolve();
+                    if (this.whenNotFull) {
+                        this.whenNotFull.resolve();
+                        this.whenNotFull = undefined;
+                    }
                 }
                 if (priority > 0 && queue.length === 0) {
                     this.queues.delete(priority);
@@ -84,7 +102,9 @@ export class BoundedPriorityQueue<T> {
 
     public close(): void {
         this.closed = true;
-        this.whenNotEmpty.resolve();
+        if (this.whenNotEmpty) {
+            this.whenNotEmpty.resolve();
+        }
         this.whenNotFull.resolve();
     }
 
