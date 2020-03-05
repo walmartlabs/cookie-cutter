@@ -14,7 +14,7 @@
     },
     "dependencies": {
         "@google-cloud/storage": "3.5.0",
-        "@google-cloud/bigquery": "4.6.1"
+        "@google-cloud/bigquery": "4.7.0"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"

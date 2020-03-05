@@ -20,7 +20,7 @@
         "long": "4.0.0",
         "murmurhash": "0.0.2",
         "opentracing": "0.14.4",
-        "uuid": "3.3.3"
+        "uuid": "3.4.0"
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.2.0-beta",

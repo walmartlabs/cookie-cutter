@@ -8,18 +8,18 @@
   ],
   "devDependencies": {
     "@types/expect": "1.20.4",
-    "@types/jest": "24.0.25",
+    "@types/jest": "24.9.1",
     "@types/long": "4.0.1",
     "@types/node": "8.10.59",
     "jest": "24.9.0",
     "jest-junit": "8.0.0",
-    "prettier": "1.18.2",
+    "prettier": "1.19.1",
     "semver": "6.3.0",
-    "ts-jest": "24.0.2",
-    "tslint": "5.19.0",
+    "ts-jest": "24.3.0",
+    "tslint": "5.20.1",
     "tslint-config-prettier": "1.18.0",
-    "tslint-plugin-prettier": "2.0.1",
-    "typescript": "3.6.5"
+    "tslint-plugin-prettier": "2.1.0",
+    "typescript": "3.8.3"
   },
   "scripts": {
     "build": "yarn workspaces run build",

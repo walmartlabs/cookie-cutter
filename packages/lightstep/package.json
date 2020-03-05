@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "lightstep-tracer": "0.22.3",
+        "lightstep-tracer": "0.24.1",
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
