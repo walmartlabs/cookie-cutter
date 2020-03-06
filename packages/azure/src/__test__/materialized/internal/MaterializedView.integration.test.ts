@@ -61,7 +61,7 @@ describe.skip("Materialized Views", () => {
             const streamId = `existing-stream-${currentTime.getTime()}`;
             const originalPayload = { value: "foo" };
             const updatedPayload = { value: "bar" };
-            const requests: Array<[any, number]> = [
+            const requests: [any, number][] = [
                 [originalPayload, currentSn],
                 [updatedPayload, currentSn + 1],
             ];
@@ -96,7 +96,7 @@ describe.skip("Materialized Views", () => {
             const streamId = `delete-${currentTime.getTime()}`;
             const originalPayload = { value: "foo" };
             const updatedPayload = null;
-            const requests: Array<[any, number]> = [
+            const requests: [any, number][] = [
                 [originalPayload, currentSn],
                 [updatedPayload, currentSn + 1],
             ];
@@ -167,7 +167,7 @@ describe.skip("Materialized Views", () => {
             const streamId = `wrong-originalSn-${currentTime.getTime()}`;
             const originalPayload = { value: "foo" };
             const updatedPayload = { value: "bar" };
-            const requests: Array<[any, number]> = [
+            const requests: [any, number][] = [
                 [originalPayload, currentSn],
                 [updatedPayload, 999],
             ];
@@ -202,7 +202,7 @@ describe.skip("Materialized Views", () => {
             const streamId = `less-than-sn-${currentTime.getTime()}`;
             const originalPayload = { value: "foo" };
             const updatedPayload = { value: "bar" };
-            const requests: Array<[any, number]> = [
+            const requests: [any, number][] = [
                 [originalPayload, currentSn],
                 [updatedPayload, 1],
             ];

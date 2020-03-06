@@ -9,7 +9,7 @@ import { ILogger } from "..";
 import { BoundedPriorityQueue } from "../utils";
 
 export async function* roundRobinIterators<T>(
-    inputs: Array<AsyncIterableIterator<T>>
+    inputs: AsyncIterableIterator<T>[]
 ): AsyncIterableIterator<T> {
     const pipe = new BoundedPriorityQueue<T>(1);
 

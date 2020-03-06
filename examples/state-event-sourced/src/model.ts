@@ -59,10 +59,10 @@ export interface IUserStateSnapshot {
     userId: string;
     activeCart: {
         id: string;
-        items: Array<{
+        items: {
             product: string;
             price: number;
-        }>;
+        }[];
     };
 }
 
@@ -101,7 +101,7 @@ export class UserState {
 
 export class CartState {
     public id: string | undefined;
-    public items: Array<{ product: string; price: number }> = [];
+    public items: { product: string; price: number }[] = [];
 }
 
 // ---------- AGGREGATION ----------

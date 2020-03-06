@@ -62,7 +62,7 @@ class MessageWithSimpleArray {
 }
 
 class MessageWithArrayOfObjects {
-    constructor(public arr: Array<SimpleObject | PartialObject>) {}
+    constructor(public arr: (SimpleObject | PartialObject)[]) {}
 }
 
 class CommandHandler {

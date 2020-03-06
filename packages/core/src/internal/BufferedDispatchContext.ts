@@ -49,7 +49,7 @@ class DispatchState<TState> implements IDispatchState<TState> {
         this._loaded.clear();
     }
 
-    public compute(): Array<StateRef<TState>>;
+    public compute(): StateRef<TState>[];
     public compute(key: string): StateRef<TState>;
     public compute(key?: any) {
         if (key) {

@@ -40,7 +40,7 @@ describe("runIntegrationTest and msg(...)", () => {
         const metadata = {};
         metadata[EventSourcedMetadata.EventType] = overwritingEventType;
 
-        const input: Array<IMessage | MessageRef> = [
+        const input: (IMessage | MessageRef)[] = [
             msg(TestClass, { field: values[0] }),
             msg(TestClass, { field: values[1] }, metadata),
             msg(TestClass, { field: values[2] }),
@@ -68,7 +68,7 @@ describe("runIntegrationTest and msg(...)", () => {
     });
 
     it("truncates output with truncateOutputBeacon", async () => {
-        const input: Array<IMessage | MessageRef> = [
+        const input: (IMessage | MessageRef)[] = [
             msg(TestClass, { field: "A" }),
             truncateOutputBeacon(),
             msg(TestClass, { field: "B" }),

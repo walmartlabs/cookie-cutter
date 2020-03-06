@@ -106,11 +106,11 @@ export function failSpan(span: Span | undefined, e: any) {
 }
 
 export function generateUniqueId(
-    ...values: Array<string | number | boolean | Date | Array<string | number | boolean | Date>>
+    ...values: (string | number | boolean | Date | (string | number | boolean | Date)[])[]
 ): string {
     const md5sum = crypto.createHash("md5");
     const update = (
-        vals: Array<string | number | boolean | Date | Array<string | number | boolean | Date>>
+        vals: (string | number | boolean | Date | (string | number | boolean | Date)[])[]
     ): void => {
         for (const val of vals) {
             switch (typeof val) {
