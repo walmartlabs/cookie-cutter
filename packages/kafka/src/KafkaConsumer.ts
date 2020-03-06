@@ -33,7 +33,7 @@ import {
 import * as LZ4Codec from "kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
 import Long = require("long");
-import { isNumber } from "util";
+import { isNumber, isString } from "util";
 import {
     IKafkaBrokerConfiguration,
     IKafkaSubscriptionConfiguration,
@@ -41,7 +41,7 @@ import {
     KafkaMetadata,
     KafkaOffsetResetStrategy,
 } from ".";
-import { IRawKafkaMessage } from "./model";
+import { IMessageHeaders, IRawKafkaMessage } from "./model";
 import { OffsetManager } from "./OffsetManager";
 import { generateClientId } from "./utils";
 
@@ -291,6 +291,14 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                     partition,
                 });
                 for (const { offset, key, value, timestamp, headers } of messages) {
+                    const iMessageHeaders: IMessageHeaders = {};
+                    for (const key of Object.keys(headers)) {
+                        if (!isString(headers[key])) {
+                            iMessageHeaders[key] = (headers[key] as Buffer).toString();
+                        } else {
+                            iMessageHeaders[key] = headers[key] as string;
+                        }
+                    }
                     if (this.done) {
                         return;
                     }
@@ -302,7 +310,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                             key,
                             value,
                             timestamp,
-                            headers,
+                            headers: iMessageHeaders,
                         });
                     } catch (e) {
                         // pipe was closed, good to exit

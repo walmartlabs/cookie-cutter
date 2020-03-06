@@ -1302,10 +1302,10 @@
     "@types/istanbul-lib-coverage" "*"
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@24.9.0":
-  version "24.9.0"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-24.9.0.tgz#78c6991cd1734cf0d390be24875e310bb0a9fb74"
-  integrity sha512-dXvuABY9nM1xgsXlOtLQXJKdacxZJd7AtvLsKZ/0b57ruMXDKCOXAC/M75GbllQX6o1pcZ5hAG4JzYy7Z/wM2w==
+"@types/jest@24.9.1":
+  version "24.9.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-24.9.1.tgz#02baf9573c78f1b9974a5f36778b366aa77bd534"
+  integrity sha512-Fb38HkXSVA4L8fGKEZ6le5bB8r6MRWlOCZbVuWZcmOMSCd2wCYOwN1ibj8daIoV9naq7aaOZjrLCoCMptKU/4Q==
   dependencies:
     jest-diff "^24.3.0"
 
@@ -6018,10 +6018,10 @@ kafkajs-snappy@1.1.0:
   dependencies:
     snappyjs "^0.6.0"
 
-kafkajs@1.10.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/kafkajs/-/kafkajs-1.10.0.tgz#6576d0b8ccb4417b0f16bbb08dca64bf08b64965"
-  integrity sha512-af1kUKJrM3bIw2olGhjwhqHrVBVP9y79XRO/TAFE71dUzuVRrwoHJX8OQ3ebV0YZugA7J0oKHwW2DBY6A8BV0w==
+kafkajs@1.12.0:
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/kafkajs/-/kafkajs-1.12.0.tgz#50ad336baee95f3324af8ae8df6fadc96e07c613"
+  integrity sha512-Izkd9iFRgeeKaHEgVpGQH08ygzCbHSxTbnu8W3G3uiNaVjGibUTmTwjv1Qf2M8NORXcPfzwVyg6bBlVj4SKr9g==
   dependencies:
     long "^4.0.0"
 
