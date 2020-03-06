@@ -57,7 +57,10 @@ class DispatchState<TState> implements IDispatchState<TState> {
             if (matches.length === 0) {
                 return undefined;
             }
-            return this.stateProvider.compute(matches[0].state, matches.map((m) => m.message));
+            return this.stateProvider.compute(
+                matches[0].state,
+                matches.map((m) => m.message)
+            );
         }
 
         const states = Array<StateRef<TState>>();

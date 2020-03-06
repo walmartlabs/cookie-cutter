@@ -19,7 +19,11 @@ function mockClient(impl: (query: ICosmosQuery) => any[]): ICosmosQueryClient {
 }
 
 describe("CosmosMessageDeduper", () => {
-    for (const item of [[1, true], [2, true], [3, false]]) {
+    for (const item of [
+        [1, true],
+        [2, true],
+        [3, false],
+    ]) {
         it("detects message that have already been processed", async () => {
             const client = mockClient(() => [2]);
             const deduper = new CosmosMessageDeduper(client);
