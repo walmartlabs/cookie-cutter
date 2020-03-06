@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "aws-sdk": "2.633.0",
+        "aws-sdk": "2.635.0",
         "opentracing": "0.14.4"
     },
     "peerDependencies": {

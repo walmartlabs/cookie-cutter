@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "change-case": "3.1.0",
+        "change-case": "4.1.1",
         "grpc": "1.24.2",
         "opentracing": "0.14.4"
     },
