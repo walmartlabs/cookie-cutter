@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-gcp",
-    "version": "1.2.0-alpha.3",
+    "version": "1.2.0-alpha.4",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
