@@ -56,10 +56,10 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
     }
 
     @config.field(topicConverter)
-    public set topics(_: string | Array<string | IKafkaTopic>) {
+    public set topics(_: string | (string | IKafkaTopic)[]) {
         config.noop();
     }
-    public get topics(): string | Array<string | IKafkaTopic> {
+    public get topics(): string | (string | IKafkaTopic)[] {
         return config.noop();
     }
 
@@ -149,7 +149,7 @@ export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
 }
 
 export function topicConverter(
-    topicsConfiguration: string | Array<string | IKafkaTopic>
+    topicsConfiguration: string | (string | IKafkaTopic)[]
 ): IKafkaTopic[] {
     const topics = Array.isArray(topicsConfiguration)
         ? topicsConfiguration

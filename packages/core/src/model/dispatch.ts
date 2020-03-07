@@ -15,7 +15,7 @@ export interface IClassType<T> {
 
 export interface IDispatchState<TState> {
     get(key: string, atSn?: number): Promise<StateRef<TState>>;
-    compute(): Array<StateRef<TState>>;
+    compute(): StateRef<TState>[];
     compute(key: string): StateRef<TState> | undefined;
 }
 

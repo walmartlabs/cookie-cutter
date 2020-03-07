@@ -49,7 +49,7 @@ class DispatchState<TState> implements IDispatchState<TState> {
         this._loaded.clear();
     }
 
-    public compute(): Array<StateRef<TState>>;
+    public compute(): StateRef<TState>[];
     public compute(key: string): StateRef<TState>;
     public compute(key?: any) {
         if (key) {
@@ -57,7 +57,10 @@ class DispatchState<TState> implements IDispatchState<TState> {
             if (matches.length === 0) {
                 return undefined;
             }
-            return this.stateProvider.compute(matches[0].state, matches.map((m) => m.message));
+            return this.stateProvider.compute(
+                matches[0].state,
+                matches.map((m) => m.message)
+            );
         }
 
         const states = Array<StateRef<TState>>();

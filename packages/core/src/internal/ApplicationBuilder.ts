@@ -174,9 +174,9 @@ export class ApplicationBuilder implements IApplicationBuilder {
         const traceBuilder = makeLifecycle(this.traceBuilder);
         const tracingBuilder = makeLifecycle(this.tracingBuilder);
         const metrics = makeLifecycle(this.activeMetrics);
-        const dispatchRetrier = createRetrier(appBehavior.dispatch as Required<
-            IComponentRuntimeBehavior
-        >);
+        const dispatchRetrier = createRetrier(
+            appBehavior.dispatch as Required<IComponentRuntimeBehavior>
+        );
         const sinkRetrier = createRetrier(appBehavior.sink as Required<IComponentRuntimeBehavior>);
         let successfulInit = true;
         try {

@@ -35,7 +35,10 @@ describe.skip("cosmosClient", () => {
     it("validates query returns max number of events when not specifying max events", async () => {
         const result = await client.query(undefined, {
             query: getAllEventsQuery,
-            parameters: [{ name: "@stream_id", value: "journey-88888" }, { name: "@sn", value: 1 }],
+            parameters: [
+                { name: "@stream_id", value: "journey-88888" },
+                { name: "@sn", value: 1 },
+            ],
         });
         expect(result).toHaveLength(708);
     });

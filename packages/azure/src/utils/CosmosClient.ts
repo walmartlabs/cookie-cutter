@@ -119,7 +119,7 @@ export class CosmosClient
     public async initialize(context: IComponentContext) {
         this.metrics = context.metrics;
         this.tracer = context.tracer;
-        const sprocPromises: Array<Promise<void>> = [];
+        const sprocPromises: Promise<void>[] = [];
         for (const sprocID of SPROCS.keys()) {
             sprocPromises.push(this.initializeStoredProcedure(sprocID));
         }

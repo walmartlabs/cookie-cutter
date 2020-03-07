@@ -59,7 +59,7 @@ function capturePublished(target: IPublishedMessage[]): IOutputSink<IPublishedMe
 }
 
 function captureStored(
-    target: Array<IStoredMessage | IStateVerification>
+    target: (IStoredMessage | IStateVerification)[]
 ): IOutputSink<IStoredMessage | IStateVerification> {
     return new CapturingOutputSink(target);
 }

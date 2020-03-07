@@ -12,7 +12,7 @@ import { ICosmosDocument } from "../../../utils";
 import { DummyState } from "../../dummystate";
 
 async function createProvider(
-    ...result: Array<Partial<ICosmosDocument>>
+    ...result: Partial<ICosmosDocument>[]
 ): Promise<CosmosStateProvider<any, any>> {
     const client: ICosmosQueryClient = {
         query: jest.fn(() => Promise.resolve(result)),

@@ -69,7 +69,10 @@ describe("SinkCoordinator", () => {
 
             await runTestApp(
                 { store },
-                [{ type: "Test", payload: {} }, { type: "Test", payload: {} }],
+                [
+                    { type: "Test", payload: {} },
+                    { type: "Test", payload: {} },
+                ],
                 {
                     onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                         const state1 = await ctx.state.get("some-key");
@@ -97,7 +100,10 @@ describe("SinkCoordinator", () => {
 
             await runTestApp(
                 { store },
-                [{ type: "Test", payload: {} }, { type: "Test", payload: {} }],
+                [
+                    { type: "Test", payload: {} },
+                    { type: "Test", payload: {} },
+                ],
                 {
                     onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                         const state = await ctx.state.get("some-key");
@@ -123,7 +129,10 @@ describe("SinkCoordinator", () => {
 
             await runTestApp(
                 { store },
-                [{ type: "Test", payload: {} }, { type: "Test", payload: {} }],
+                [
+                    { type: "Test", payload: {} },
+                    { type: "Test", payload: {} },
+                ],
                 {
                     onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                         const state1 = await ctx.state.get("some-key");
@@ -151,7 +160,10 @@ describe("SinkCoordinator", () => {
 
             await runTestApp(
                 { store },
-                [{ type: "Test", payload: {} }, { type: "Test", payload: {} }],
+                [
+                    { type: "Test", payload: {} },
+                    { type: "Test", payload: {} },
+                ],
                 {
                     onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                         const state = await ctx.state.get("some-key");
@@ -242,7 +254,10 @@ describe("SinkCoordinator", () => {
 
             await runTestApp(
                 { store },
-                [{ type: "Test", payload: {} }, { type: "Test", payload: {} }],
+                [
+                    { type: "Test", payload: {} },
+                    { type: "Test", payload: {} },
+                ],
                 {
                     onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                         const state1 = await ctx.state.get("some-key");
@@ -270,7 +285,10 @@ describe("SinkCoordinator", () => {
             try {
                 await runTestApp(
                     { store },
-                    [{ type: "Test", payload: {} }, { type: "Test", payload: {} }],
+                    [
+                        { type: "Test", payload: {} },
+                        { type: "Test", payload: {} },
+                    ],
                     {
                         onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                             const state1 = await ctx.state.get("some-key");

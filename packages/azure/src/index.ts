@@ -34,10 +34,10 @@ export interface IBlobStorageConfiguration {
 
 export interface ICosmosQuery {
     query: string;
-    parameters?: Array<{
+    parameters?: {
         name: string;
         value: string | number | boolean;
-    }>;
+    }[];
 }
 
 export interface ICosmosQueryClient {

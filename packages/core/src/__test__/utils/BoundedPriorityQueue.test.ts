@@ -93,7 +93,7 @@ describe("BoundedPriorityQueue", () => {
     it("supports multiple concurrent writers", async () => {
         const queue = new BoundedPriorityQueue<number>(1);
 
-        const enqueuePromises: Array<Promise<boolean>> = [];
+        const enqueuePromises: Promise<boolean>[] = [];
         for (let i = 1; i < 11; i++) {
             if (i === 10) {
                 queue

@@ -431,9 +431,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         }
     }
 
-    protected async releaseSourceMessages(
-        batch: Array<BufferedDispatchContext<any>>
-    ): Promise<void> {
+    protected async releaseSourceMessages(batch: BufferedDispatchContext<any>[]): Promise<void> {
         for (const item of batch) {
             try {
                 await item.source.release(item.handlerResult.value, item.handlerResult.error);

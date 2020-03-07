@@ -59,7 +59,7 @@ export interface IKafkaSubscriptionConfiguration {
     /**
      * Topics to consume
      */
-    readonly topics: string | Array<string | IKafkaTopic>;
+    readonly topics: string | (string | IKafkaTopic)[];
     /**
      * Whether message consumption should be enable Exactly once Semantics (EoS).
      *

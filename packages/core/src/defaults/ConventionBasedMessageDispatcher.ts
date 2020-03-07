@@ -20,7 +20,7 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
 
     public async dispatch(msg: IMessage, ctx: IDispatchContext): Promise<void> {
         const type = prettyEventName(msg.type);
-        const calls: Array<[string, any, boolean]> = [
+        const calls: [string, any, boolean][] = [
             ["before", msg, false],
             [`on${type}`, msg.payload, true],
             ["after", msg, false],
