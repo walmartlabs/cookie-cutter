@@ -24,6 +24,8 @@ import {
     MessageProcessingResults,
     OutputSinkConsistencyLevel,
     StateRef,
+    EventProcessingMetadata,
+    SequenceConflictError,
 } from "../../model";
 import { iterate, prettyEventName, RetrierContext } from "../../utils";
 import { BatchHandler } from "./BatchHandler";
@@ -85,12 +87,76 @@ export class SinkCoordinator implements IRequireInitialization {
         this.logger = context.logger;
     }
 
+    private checkSequence(contexts: BufferedDispatchContext<any>[]): IBatchResult {
+        const successful: BufferedDispatchContext<any>[] = [];
+        const failed: BufferedDispatchContext<any>[] = [];
+        const tuples = new Map<string, number[]>();
+        let shouldBreak = false;
+        let error;
+        let ii = 0;
+        for (ii = 0; ii < contexts.length; ii++) {
+            const items = Array.from(this.storeTargetItems(contexts[ii]));
+            for (const message of items) {
+                const currentState = message.state;
+                if (tuples.has(currentState.key)) {
+                    const tuple = tuples.get(currentState.key);
+                    const seq = message.original.metadata<number>(EventProcessingMetadata.Sequence);
+                    if (tuple[0] !== seq) {
+                        if (tuple[1] !== currentState.seqNum) {
+                            error = {
+                                error: new SequenceConflictError({
+                                    key: currentState.key,
+                                    actualSn: tuple[1],
+                                    expectedSn: currentState.seqNum,
+                                    newSn: currentState.seqNum + 1,
+                                }),
+                                retryable: true,
+                            };
+                            shouldBreak = true;
+                            break;
+                        } else {
+                            tuple[0] = seq;
+                            tuple[1]++;
+                        }
+                    } else {
+                        tuple[1]++;
+                    }
+                    tuples.set(currentState.key, tuple);
+                } else {
+                    const seq = message.original.metadata<number>(EventProcessingMetadata.Sequence);
+                    tuples.set(currentState.key, [seq, currentState.seqNum + 1]);
+                }
+            }
+            if (shouldBreak) {
+                break;
+            }
+            successful.push(contexts[ii]);
+        }
+        for (; ii < contexts.length; ii++) {
+            failed.push(contexts[ii]);
+        }
+        return {
+            successful,
+            failed,
+            error,
+        };
+    }
+
     public async handle(
         items: IterableIterator<BufferedDispatchContext>,
         retry: RetrierContext
     ): Promise<IBatchResult> {
         const contexts = Array.from(items);
-        const storeResult = await this.storeTarget.handle(contexts, retry);
+        const sequenceCheckResults = this.checkSequence(contexts);
+        const storeHandleResult = await this.storeTarget.handle(
+            sequenceCheckResults.successful,
+            retry
+        );
+        const storeResult = {
+            successful: storeHandleResult.successful,
+            failed: storeHandleResult.failed.concat(sequenceCheckResults.failed),
+            error: storeHandleResult.error || sequenceCheckResults.error,
+        };
         this.emitMetrics(
             this.stored(storeResult.successful),
             this.stored(storeResult.failed),
