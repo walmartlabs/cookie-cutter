@@ -482,6 +482,95 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     });
 }
 
+const details = { key: "k", actualSn: 0, expectedSn: 1, newSn: 2 };
+const throwAtCount = 4;
+for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
+    describe(`Application in ${ParallelismMode[mode]} mode`, () => {
+        const appBehavior = {
+            dispatch: {
+                mode: ErrorHandlingMode.LogAndFail,
+            },
+            sink: {
+                mode: ErrorHandlingMode.LogAndFail,
+            },
+            parallelism: {
+                mode,
+                concurrencyConfiguration: {
+                    maximumBatchSize: 5,
+                    minimumBatchSize: 5,
+                },
+            },
+        };
+        class CapturingOutputSink implements IOutputSink<IPublishedMessage> {
+            private thrown: boolean;
+            constructor(private readonly target: number[]) {
+                this.thrown = false;
+            }
+            public sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
+                const candidates: number[] = [];
+                for (const item of output) {
+                    if (item.message.payload.count === throwAtCount && !this.thrown) {
+                        this.thrown = true;
+                        throw new SequenceConflictError(details);
+                    }
+                    candidates.push(item.message.payload.count);
+                }
+                this.target.push(...candidates);
+                return Promise.resolve();
+            }
+            public get guarantees() {
+                return {
+                    consistency: OutputSinkConsistencyLevel.None,
+                    idempotent: false,
+                };
+            }
+        }
+        const input: IMessage[] = [];
+        for (let ii = 1; ii <= 10; ii++) {
+            input.push({ type: Increment.name, payload: new Increment(ii) });
+        }
+
+        if (mode === ParallelismMode.Concurrent) {
+            it("writes messages in the same order it received them", async () => {
+                const capture: number[] = [];
+                await Application.create()
+                    .input()
+                    .add(new StaticInputSource(input))
+                    .done()
+                    .dispatch({
+                        onIncrement: async (msg: Increment, ctx: IDispatchContext<Increment>) => {
+                            ctx.publish(Increment, msg);
+                        },
+                    })
+                    .output()
+                    .published(new CapturingOutputSink(capture))
+                    .done()
+                    .run(appBehavior);
+                expect(capture).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            });
+        }
+        if (mode === ParallelismMode.Rpc) {
+            it("does not write messages in the same order it received them", async () => {
+                const capture: number[] = [];
+                await Application.create()
+                    .input()
+                    .add(new StaticInputSource(input))
+                    .done()
+                    .dispatch({
+                        onIncrement: async (msg: Increment, ctx: IDispatchContext<Increment>) => {
+                            ctx.publish(Increment, msg);
+                        },
+                    })
+                    .output()
+                    .published(new CapturingOutputSink(capture))
+                    .done()
+                    .run(appBehavior);
+                expect(capture).toEqual([6, 7, 8, 9, 10, 1, 2, 3, 4, 5]);
+            });
+        }
+    });
+}
+
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
         it("aggregates and persists correct state", async () => {
