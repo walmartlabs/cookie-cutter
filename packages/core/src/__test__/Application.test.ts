@@ -16,7 +16,12 @@ import {
     StaticInputSource,
     waitForPendingIO,
 } from "..";
-import { CapturingOutputSink } from "../defaults";
+import {
+    CapturingOutputSink,
+    EventSourcedStateProvider,
+    InMemoryStateAggregationSource,
+    InMemoryStateOutputSink,
+} from "../defaults";
 import {
     IApplicationRuntimeBehavior,
     IInputSource,
@@ -715,6 +720,96 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent]) {
                 inc(96), // (4 + 2 + 42) * 2 = 96
                 inc(144), // (4 + 2 + 42 + 96) * 1 = 144
             ]);
+        });
+    });
+}
+
+for (const mode of [ParallelismMode.Serial, ParallelismMode.Rpc]) {
+    describe(`Application in ${ParallelismMode[mode]} mode`, () => {
+        // using this aggregator and dispatch allows the final result to be independent of the sequence in which messages are received
+        class LatestTallyAggregator {
+            public onIncrement(msg: Increment, state: TallyState): void {
+                state.total = msg.count;
+            }
+        }
+        const appBehavior = {
+            dispatch: {
+                mode: ErrorHandlingMode.LogAndContinue,
+            },
+            sink: {
+                mode: ErrorHandlingMode.LogAndContinue,
+            },
+            parallelism: {
+                mode,
+                concurrencyConfiguration: {
+                    maximumBatchSize: 5,
+                    minimumBatchSize: 5,
+                },
+            },
+        };
+        it("uses sequenceCheck to sum a sequence of messages. Rpc and Serial reesults must match", async () => {
+            const num = 10;
+            const streams = new Map<string, IMessage[]>();
+            const capture: IPublishedMessage[] = [];
+            const input: IMessage[] = [];
+            for (let ii = 1; ii <= num; ii++) {
+                input.push({ type: Increment.name, payload: new Increment(ii) });
+            }
+            await Application.create()
+                .input()
+                .add(new StaticInputSource(input))
+                .done()
+                .dispatch({
+                    onIncrement: async (
+                        msg: Increment,
+                        ctx: IDispatchContext<TallyState>
+                    ): Promise<void> => {
+                        ctx.publish(Increment, msg);
+                        const stateRef = await ctx.state.get("tally-1");
+                        if (stateRef.state.total === 0) {
+                            ctx.store(Increment, stateRef, new Increment(msg.count));
+                        } else {
+                            // a calculation dependent on the previous state
+                            ctx.store(
+                                Increment,
+                                stateRef,
+                                new Increment(msg.count + stateRef.state.total)
+                            );
+                        }
+                    },
+                })
+                .state(
+                    new EventSourcedStateProvider(
+                        TallyState,
+                        new LatestTallyAggregator(),
+                        new InMemoryStateAggregationSource(streams)
+                    )
+                )
+                .output()
+                .published(new CapturingOutputSink(capture))
+                .stored(new InMemoryStateOutputSink(streams))
+                .done()
+                .run(appBehavior);
+
+            const stream = streams.get("tally-1");
+            const storedValues: number[] = [];
+            for (const msg of stream) {
+                storedValues.push((msg.payload as Increment).count);
+            }
+
+            const publishedValues: number[] = [];
+            for (const msg of capture) {
+                publishedValues.push((msg.message.payload as Increment).count);
+            }
+
+            const expectedStoredValues: number[] = [];
+            expectedStoredValues.push(publishedValues[0]);
+            for (let ii = 1; ii < num; ii++) {
+                expectedStoredValues[ii] = expectedStoredValues[ii - 1] + publishedValues[ii];
+            }
+
+            // each stored result is the sum of all previous counts + current count
+            expect(storedValues).toEqual(expectedStoredValues);
         });
     });
 }
