@@ -38,9 +38,10 @@ export class CompositeOutputSink
         annotators: IMessageMetricAnnotator[],
         private readonly publishSink: Lifecycle<IOutputSink<IPublishedMessage>>,
         private readonly storeSink: Lifecycle<IOutputSink<IStoredMessage | IStateVerification>>,
-        public readonly guarantees: IOutputSinkGuarantees
+        public readonly guarantees: IOutputSinkGuarantees,
+        isCachingRpc?: boolean
     ) {
-        this.coordinator = new SinkCoordinator(storeSink, publishSink, annotators);
+        this.coordinator = new SinkCoordinator(storeSink, publishSink, annotators, isCachingRpc);
     }
 
     public async initialize(context: IComponentContext): Promise<void> {

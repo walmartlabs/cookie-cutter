@@ -216,7 +216,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                         onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                             ctx.store(
                                 Increment,
-                                new StateRef(new TallyState(), "key1", 1),
+                                new StateRef(new TallyState(), "key1", 1, -1),
                                 new Increment(1)
                             );
                         },
@@ -1025,7 +1025,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
                     ctx.store(
                         Increment,
-                        new StateRef(new TallyState(), "key1", 1),
+                        new StateRef(new TallyState(), "key1", 1, -1),
                         new Increment(1)
                     );
                     ctx.publish(Increment, new Increment(1));

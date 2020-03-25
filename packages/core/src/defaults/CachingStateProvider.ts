@@ -31,6 +31,8 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IDisposable {
     private readonly cache: LRU<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
+    public epochCache: Map<string, number>;
+    private useEpochs: boolean;
 
     constructor(
         private TState: IClassType<TState>,
@@ -42,6 +44,8 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
             maxAge: options.maxTTL,
         });
         this.underlying = makeLifecycle(underlying);
+        this.epochCache = new Map<string, number>();
+        this.useEpochs = false;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -58,20 +62,55 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         atSn?: number
     ): Promise<StateRef<TState>> {
         let stateRef = this.cache.get(key);
+        let cachedEpoch = this.useEpochs ? this.epochCache.get(key) : -1;
+        if (this.useEpochs) {
+            if (cachedEpoch === undefined) {
+                this.epochCache.set(key, 0);
+                cachedEpoch = 0;
+            }
+        }
         if (!stateRef || (atSn !== undefined && stateRef.seqNum !== atSn)) {
             stateRef = await this.underlying.get(spanContext, key, atSn);
-            this.cache.set(key, stateRef);
+            const cached = this.cache.get(key);
+            if (cached && cached.seqNum > stateRef.seqNum) {
+                stateRef = cached;
+            } else {
+                if (this.useEpochs) {
+                    cachedEpoch++;
+                    this.epochCache.set(key, cachedEpoch);
+                    stateRef.epoch = cachedEpoch;
+                }
+                this.cache.set(key, stateRef);
+            }
         }
 
-        const clone = new this.TState(stateRef.state.snap());
-        return new StateRef(clone, key, stateRef.seqNum);
+        const clone = new this.TState((stateRef.state as any).snap());
+        return new StateRef(clone, key, stateRef.seqNum, stateRef.epoch);
     }
 
-    public invalidate(keys: IterableIterator<string> | string): void {
+    public invalidate(keys: IterableIterator<string> | string, epochs?: Map<string, number>): void {
         if (isString(keys)) {
+            if (this.useEpochs) {
+                const cached = this.cache.get(keys);
+                if (cached) {
+                    const epoch = epochs ? epochs.get(keys) : -1;
+                    if (cached.epoch > epoch) {
+                        return;
+                    }
+                }
+            }
             this.cache.del(keys);
         } else {
             for (const key of keys) {
+                if (this.useEpochs) {
+                    const cached = this.cache.get(key);
+                    if (cached) {
+                        const epoch = epochs ? epochs.get(key) : -1;
+                        if (cached.epoch > epoch) {
+                            continue;
+                        }
+                    }
+                }
                 this.cache.del(key);
             }
         }
@@ -79,12 +118,23 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
 
     public set(stateRef: StateRef<TState>): void {
         const cached = this.cache.get(stateRef.key);
-        if (!cached || cached.seqNum < stateRef.seqNum) {
+        if (!cached) {
             this.cache.set(stateRef.key, stateRef);
+        } else {
+            if (
+                cached.seqNum < stateRef.seqNum &&
+                (!this.useEpochs || cached.epoch === stateRef.epoch)
+            ) {
+                this.cache.set(stateRef.key, stateRef);
+            }
         }
     }
 
     public compute(stateRef: StateRef<TState>, events: IMessage[]): StateRef<TState> {
         return this.underlying.compute(stateRef, events);
+    }
+
+    public enableEpochs() {
+        this.useEpochs = true;
     }
 }

@@ -105,7 +105,7 @@ describe("materialized CosmosOutputSink", () => {
         await sink.sink(
             iterate([
                 {
-                    state: new StateRef({}, "key1", currentSn),
+                    state: new StateRef({}, "key1", currentSn, -1),
                     message: {
                         type: DummyState.name,
                         payload: { value: "test" },
@@ -157,7 +157,7 @@ describe("materialized CosmosOutputSink", () => {
         await sink.sink(
             iterate([
                 {
-                    state: new StateRef({}, streamId, currentSn),
+                    state: new StateRef({}, streamId, currentSn, -1),
                     message: {
                         type: DummyState.name,
                         payload: { value: "foo" },
@@ -166,7 +166,7 @@ describe("materialized CosmosOutputSink", () => {
                     original: new MessageRef({}, null),
                 },
                 {
-                    state: new StateRef({}, streamId, currentSn),
+                    state: new StateRef({}, streamId, currentSn, -1),
                     message: {
                         type: DummyState.name,
                         payload: { value: "bar" },
@@ -195,7 +195,7 @@ describe("materialized CosmosOutputSink", () => {
         await sink.sink(
             iterate([
                 {
-                    state: new StateRef({}, streamId, currentSn),
+                    state: new StateRef({}, streamId, currentSn, -1),
                     message: {
                         type: DummyState.name,
                         payload: { value: "foo" },
@@ -204,7 +204,7 @@ describe("materialized CosmosOutputSink", () => {
                     original: new MessageRef({}, null),
                 },
                 {
-                    state: new StateRef({}, streamId, currentSn),
+                    state: new StateRef({}, streamId, currentSn, -1),
                     message: {
                         type: DummyState.name,
                         payload: null,
@@ -233,7 +233,7 @@ describe("materialized CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, not400ErrorKey, currentSn),
+                        state: new StateRef({}, not400ErrorKey, currentSn, -1),
                         message: {
                             type: DummyState.name,
                             payload: { value: "test" },
@@ -266,7 +266,7 @@ describe("materialized CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, optimisticConcurrencyKey, currentSn),
+                        state: new StateRef({}, optimisticConcurrencyKey, currentSn, -1),
                         message: {
                             type: DummyState.name,
                             payload: { value: "test" },
@@ -304,7 +304,7 @@ describe("materialized CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, dbQueryTimeout, currentSn),
+                        state: new StateRef({}, dbQueryTimeout, currentSn, -1),
                         message: {
                             type: DummyState.name,
                             payload: { value: "test" },
@@ -351,7 +351,7 @@ describe("materialized CosmosOutputSink", () => {
                     await sink.sink(
                         iterate([
                             {
-                                state: new StateRef({}, dbQueryTimeout, currentSn),
+                                state: new StateRef({}, dbQueryTimeout, currentSn, -1),
                                 message: {
                                     type: DummyState.name,
                                     payload: { value: "test" },
@@ -393,7 +393,7 @@ describe("materialized CosmosOutputSink", () => {
         await sink.sink(
             iterate([
                 {
-                    state: new StateRef({}, "key1", currentSn),
+                    state: new StateRef({}, "key1", currentSn, -1),
                     message: {
                         type: DummyState.name,
                         payload: { value: "test" },

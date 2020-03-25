@@ -178,7 +178,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 EventProcessingMetadata.ReprocessingContext
             );
             if (reproContext) {
-                this.stateProvider.invalidate(reproContext.evictions());
+                this.stateProvider.invalidate(reproContext.evictions(), reproContext.epochs);
             }
 
             handlingInputSpan = super.createDispatchSpan(msg.spanContext, eventType);

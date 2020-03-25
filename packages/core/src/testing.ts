@@ -183,7 +183,7 @@ class MockedMaterializedState<TSnapshot> extends MaterializedViewStateProvider<
         atSn?: number
     ): Promise<StateRef<IState<TSnapshot>>> {
         const test = this.snapshots.get(key);
-        return test ? new StateRef(test, key, atSn) : new StateRef(new this.TState(), key, 0);
+        return test ? new StateRef(test, key, atSn, -1) : new StateRef(new this.TState(), key, 0, -1);
     }
 }
 

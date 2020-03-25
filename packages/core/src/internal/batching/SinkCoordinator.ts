@@ -36,12 +36,17 @@ export class SinkCoordinator implements IRequireInitialization {
     private readonly publishTarget: BatchHandler<IPublishedMessage>;
     private metrics: IMetrics;
     private logger: ILogger;
+    private epochCache: Map<string, number>;
+    private isCachingRpc: boolean;
 
     constructor(
         storeSink: IOutputSink<IStoredMessage | IStateVerification>,
         publishSink: IOutputSink<IPublishedMessage>,
-        private readonly annotators: IMessageMetricAnnotator[]
+        private readonly annotators: IMessageMetricAnnotator[],
+        isCachingRpc?: boolean
     ) {
+        this.isCachingRpc = isCachingRpc;
+        this.epochCache = new Map<string, number>();
         this.metrics = DefaultComponentContext.metrics;
         this.logger = DefaultComponentContext.logger;
         this.storeIsIdempotent = storeSink.guarantees.idempotent;
@@ -142,21 +147,86 @@ export class SinkCoordinator implements IRequireInitialization {
         };
     }
 
+    private checkEpochs(contexts: BufferedDispatchContext<any>[]): IBatchResult {
+        if (!this.isCachingRpc) {
+            return {
+                successful: contexts,
+                failed: [],
+                error: undefined,
+            };
+        }
+        const successful: BufferedDispatchContext<any>[] = [];
+        const failed: BufferedDispatchContext<any>[] = [];
+        let shouldBreak = false;
+        let error;
+        let ii = 0;
+        for (ii = 0; ii < contexts.length; ii++) {
+            const items = Array.from(this.storeTargetItems(contexts[ii]));
+            for (const message of items) {
+                const currentState = message.state;
+                let epoch = this.epochCache.get(currentState.key);
+                if (epoch === undefined) {
+                    this.epochCache.set(currentState.key, 0);
+                    epoch = 0;
+                }
+                const stateEpoch = currentState.epoch;
+                if (stateEpoch !== -1 && stateEpoch < epoch) {
+                    error = {
+                        error: new SequenceConflictError({
+                            key: currentState.key,
+                            actualSn: -2,
+                            expectedSn: -2,
+                            newSn: -2,
+                        }),
+                        retryable: true,
+                    };
+                    shouldBreak = true;
+                    break;
+                }
+            }
+            if (shouldBreak) {
+                break;
+            }
+            successful.push(contexts[ii]);
+        }
+        for (; ii < contexts.length; ii++) {
+            failed.push(contexts[ii]);
+        }
+        return {
+            successful,
+            failed,
+            error,
+        };
+    }
+
     public async handle(
         items: IterableIterator<BufferedDispatchContext>,
         retry: RetrierContext
     ): Promise<IBatchResult> {
         const contexts = Array.from(items);
         const sequenceCheckResults = this.checkSequence(contexts);
-        const storeHandleResult = await this.storeTarget.handle(
-            sequenceCheckResults.successful,
-            retry
+        const epochCheckResults = this.checkEpochs(sequenceCheckResults.successful);
+        const storeHandledResult = await this.storeTarget.handle(
+            epochCheckResults.successful,
+            retry,
+            undefined
         );
         const storeResult = {
-            successful: storeHandleResult.successful,
-            failed: storeHandleResult.failed.concat(sequenceCheckResults.failed),
-            error: storeHandleResult.error || sequenceCheckResults.error,
+            successful: storeHandledResult.successful,
+            failed: storeHandledResult.failed
+                .concat(epochCheckResults.failed)
+                .concat(sequenceCheckResults.failed),
+            error:
+                storeHandledResult.error || epochCheckResults.error || sequenceCheckResults.error,
         };
+        if (
+            storeHandledResult.error &&
+            (storeHandledResult.error.error as SequenceConflictError).details
+        ) {
+            const key = (storeHandledResult.error.error as SequenceConflictError).details.key;
+            const cache = this.epochCache.get(key) + 1;
+            this.epochCache.set(key, cache);
+        }
         this.emitMetrics(
             this.stored(storeResult.successful),
             this.stored(storeResult.failed),

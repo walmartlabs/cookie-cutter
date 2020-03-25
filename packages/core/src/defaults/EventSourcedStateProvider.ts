@@ -51,7 +51,7 @@ export class EventSourcedStateProvider<TState extends IState<TSnapshot>, TSnapsh
     ): Promise<StateRef<TState>> {
         const data = await this.source.load(spanContext, key, atSn);
         const state = this.aggregator.aggregate(data);
-        return new StateRef<TState>(state, key, data.lastSn);
+        return new StateRef<TState>(state, key, data.lastSn, -1);
     }
 
     public compute(stateRef: StateRef<TState>, events: IMessage[]): StateRef<TState> {
@@ -61,6 +61,11 @@ export class EventSourcedStateProvider<TState extends IState<TSnapshot>, TSnapsh
             snapshot: stateRef.state.snap(),
         });
 
-        return new StateRef<TState>(newState, stateRef.key, stateRef.seqNum + events.length);
+        return new StateRef<TState>(
+            newState,
+            stateRef.key,
+            stateRef.seqNum + events.length,
+            stateRef.epoch
+        );
     }
 }

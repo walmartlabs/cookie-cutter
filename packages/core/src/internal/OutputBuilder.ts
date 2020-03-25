@@ -57,13 +57,16 @@ export class OutputBuilder
         return this;
     }
 
-    public build(): Lifecycle<IOutputSink<BufferedDispatchContext>> & IMessageEnricher {
+    public build(
+        isCachingRpc?: boolean
+    ): Lifecycle<IOutputSink<BufferedDispatchContext>> & IMessageEnricher {
         return new CompositeOutputSink(
             this.enrichers,
             this.annotators,
             this.publishSink,
             this.storeSink,
-            this.guarantees
+            this.guarantees,
+            isCachingRpc
         );
     }
 

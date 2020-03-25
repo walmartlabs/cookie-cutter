@@ -138,7 +138,7 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, not400ErrorKey, expSeqNum),
+                        state: new StateRef({}, not400ErrorKey, expSeqNum, -1),
                         ...payload,
                     },
                 ]),
@@ -173,7 +173,7 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, unknown400ErrorKey, expSeqNum),
+                        state: new StateRef({}, unknown400ErrorKey, expSeqNum, -1),
                         ...payload,
                     },
                 ]),
@@ -218,11 +218,11 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, regularKey1, expSeqNumKey1),
+                        state: new StateRef({}, regularKey1, expSeqNumKey1, -1),
                         ...payload,
                     },
                     {
-                        state: new StateRef({}, regularKey1, expSeqNumKey2),
+                        state: new StateRef({}, regularKey1, expSeqNumKey2, -1),
                         ...payload,
                     },
                 ]),
@@ -260,7 +260,7 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, seqNumAlreadyUsedErrorKey, expSeqNum),
+                        state: new StateRef({}, seqNumAlreadyUsedErrorKey, expSeqNum, -1),
                         ...payload,
                     },
                 ]),
@@ -300,7 +300,7 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, tooManyRequestsErrorKey, expSeqNum),
+                        state: new StateRef({}, tooManyRequestsErrorKey, expSeqNum, -1),
                         ...payload,
                     },
                 ]),
@@ -349,7 +349,7 @@ describe("event-sourced CosmosOutputSink", () => {
                     await sink.sink(
                         iterate([
                             {
-                                state: new StateRef({}, tooManyRequestsErrorKey, expSeqNum),
+                                state: new StateRef({}, tooManyRequestsErrorKey, expSeqNum, -1),
                                 ...payload,
                             },
                         ]),
@@ -385,11 +385,11 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, regularKey1, expSeqNum),
+                        state: new StateRef({}, regularKey1, expSeqNum, -1),
                         ...payload,
                     },
                     {
-                        state: new StateRef({}, regularKey1, expSeqNum),
+                        state: new StateRef({}, regularKey1, expSeqNum, -1),
                         ...payload,
                     },
                 ]),
@@ -450,7 +450,7 @@ describe("event-sourced CosmosOutputSink", () => {
             sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, regularKey1, expSeqNumKey1),
+                        state: new StateRef({}, regularKey1, expSeqNumKey1, -1),
                         ...payload,
                     },
                 ]),

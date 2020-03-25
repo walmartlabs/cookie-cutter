@@ -35,7 +35,7 @@ describe.skip("Materialized Views", () => {
             await sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, streamId, currentSn),
+                        state: new StateRef({}, streamId, currentSn, -1),
                         message: {
                             type: DummyState.name,
                             payload,
@@ -69,7 +69,7 @@ describe.skip("Materialized Views", () => {
                 await sink.sink(
                     iterate([
                         {
-                            state: new StateRef({}, streamId, sn),
+                            state: new StateRef({}, streamId, sn, -1),
                             message: {
                                 type: DummyState.name,
                                 payload,
@@ -104,7 +104,7 @@ describe.skip("Materialized Views", () => {
                 await sink.sink(
                     iterate([
                         {
-                            state: new StateRef({}, streamId, sn),
+                            state: new StateRef({}, streamId, sn, -1),
                             message: {
                                 type: DummyState.name,
                                 payload,
@@ -147,7 +147,7 @@ describe.skip("Materialized Views", () => {
                 sink.sink(
                     iterate([
                         {
-                            state: new StateRef({}, streamId, currentSn),
+                            state: new StateRef({}, streamId, currentSn, -1),
                             message: {
                                 type: DummyState.name,
                                 payload: null,
@@ -177,7 +177,7 @@ describe.skip("Materialized Views", () => {
                     await sink.sink(
                         iterate([
                             {
-                                state: new StateRef({}, streamId, sn),
+                                state: new StateRef({}, streamId, sn, -1),
                                 message: {
                                     type: DummyState.name,
                                     payload,
@@ -212,7 +212,7 @@ describe.skip("Materialized Views", () => {
                     await sink.sink(
                         iterate([
                             {
-                                state: new StateRef({}, streamId, sn),
+                                state: new StateRef({}, streamId, sn, -1),
                                 message: {
                                     type: DummyState.name,
                                     payload,
@@ -240,7 +240,7 @@ describe.skip("Materialized Views", () => {
             await sink.sink(
                 iterate([
                     {
-                        state: new StateRef({}, streamId, currentSn),
+                        state: new StateRef({}, streamId, currentSn, -1),
                         message: {
                             type: DummyState.name,
                             payload,
@@ -258,7 +258,7 @@ describe.skip("Materialized Views", () => {
                     sink.sink(
                         iterate([
                             {
-                                state: new StateRef({}, streamId, originalSn),
+                                state: new StateRef({}, streamId, originalSn, -1),
                                 message: {
                                     type: DummyState.name,
                                     payload: { value: "bar1" },
@@ -272,7 +272,7 @@ describe.skip("Materialized Views", () => {
                     sink.sink(
                         iterate([
                             {
-                                state: new StateRef({}, streamId, originalSn),
+                                state: new StateRef({}, streamId, originalSn, -1),
                                 message: {
                                     type: DummyState.name,
                                     payload: { value: "bar2" },

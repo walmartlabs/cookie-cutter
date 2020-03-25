@@ -46,7 +46,7 @@ export function createEventStreamHandler<TState extends IState<TSnapshot>, TSnap
                     }`
                 );
                 aggregator[prop](msg, cloned);
-                cache.set(stateRef.key, new StateRef(cloned, stateRef.key, sn));
+                cache.set(stateRef.key, new StateRef(cloned, stateRef.key, sn, -1));
 
                 await stateHandler(ctx, stateRef, cloned);
             }.bind(handler);

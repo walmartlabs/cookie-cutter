@@ -11,10 +11,12 @@ import { BufferedDispatchContext } from "../BufferedDispatchContext";
 export class ReprocessingContext {
     private readonly seenKeys: Set<string>;
     private readonly toEvict: string[];
+    public readonly epochs: Map<string, number>;
 
     constructor(public readonly atSn: number) {
         this.seenKeys = new Set();
         this.toEvict = [];
+        this.epochs = new Map<string, number>();
     }
 
     private evict(key: string): void {
@@ -26,6 +28,7 @@ export class ReprocessingContext {
 
     public wrap(context: BufferedDispatchContext): MessageRef {
         for (const stateRef of context.loadedStates) {
+            this.epochs.set(stateRef.key, stateRef.epoch);
             this.evict(stateRef.key);
         }
 

@@ -124,12 +124,18 @@ export class ApplicationBuilder implements IApplicationBuilder {
             serviceVersion: rootPackageInfo.version,
         });
 
-        const sink = this.outputBuilder.build();
         const serviceRegistry = this.serviceRegistryBuilder.build();
         const appBehavior = this.determineRuntimeBehavior(behaviorOrErrorHandling, parallelism);
+        const sink = this.outputBuilder.build(
+            this.isStateCacheLifecycle(this.stateProvider) &&
+                appBehavior.parallelism.mode === ParallelismMode.Rpc
+        );
         let state: Lifecycle<IStateProvider<any> & IStateCacheLifecycle<any>>;
         if (this.isStateCacheLifecycle(this.stateProvider)) {
             state = makeLifecycle(this.stateProvider);
+            if (appBehavior.parallelism.mode === ParallelismMode.Rpc) {
+                state.enableEpochs();
+            }
         } else {
             if (
                 this.outputBuilder.hasStoreSink &&

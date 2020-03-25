@@ -21,4 +21,7 @@ export class NullStateProvider implements IStateProvider<any>, IStateCacheLifecy
     public set(): void {
         // do nothing
     }
+    public enableEpochs(): void {
+        // do nothing
+    }
 }

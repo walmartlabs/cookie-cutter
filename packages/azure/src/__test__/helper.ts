@@ -39,7 +39,7 @@ export function makeIterableIterator(
     const someIMessage: IMessage = { type: "Buffer", payload: inputPayload };
     const someMessage: IStoredMessage = {
         message: someIMessage,
-        state: new StateRef({}, key, sequenceNumber),
+        state: new StateRef({}, key, sequenceNumber, -1),
         original: new MessageRef({}, someIMessage),
         spanContext: new SpanContext(),
     };

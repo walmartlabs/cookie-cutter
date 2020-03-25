@@ -56,12 +56,12 @@ export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         if (result.length > 1) {
             throw new Error(`found multiple documents for key '${key}', this is not expected`);
         } else if (result.length === 0) {
-            return new StateRef(new this.TState(), key, 0);
+            return new StateRef(new this.TState(), key, 0, -1);
         }
 
         const record: ICosmosDocument = result[0];
         if (isNullOrUndefined(record.data)) {
-            return new StateRef(new this.TState(), key, record.sn);
+            return new StateRef(new this.TState(), key, record.sn, -1);
         }
 
         let msg: IMessage;
@@ -79,6 +79,6 @@ export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
             );
         }
 
-        return new StateRef(new this.TState(msg.payload as TSnapshot), key, record.sn);
+        return new StateRef(new this.TState(msg.payload as TSnapshot), key, record.sn, -1);
     }
 }

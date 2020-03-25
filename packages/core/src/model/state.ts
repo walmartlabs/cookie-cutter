@@ -29,7 +29,8 @@ export interface IStateProvider<TState> {
 
 export interface IStateCacheLifecycle<TState> {
     set(stateRef: StateRef<TState>): void;
-    invalidate(keys: IterableIterator<string> | string): void;
+    invalidate(keys: IterableIterator<string> | string, epochs?: Map<string, number>): void;
+    enableEpochs(): void;
 }
 
 export interface IStateAggregator<TState, TSnapshot> {
@@ -48,7 +49,8 @@ export class StateRef<TState = any> {
     constructor(
         public readonly state: TState,
         public readonly key: string,
-        public readonly seqNum: number
+        public readonly seqNum: number,
+        public epoch: number
     ) {}
 
     public get uniqueId(): string {

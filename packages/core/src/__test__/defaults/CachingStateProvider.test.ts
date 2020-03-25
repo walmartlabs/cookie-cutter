@@ -24,7 +24,7 @@ describe("CachingStateProvider", () => {
     it("caches by key", async () => {
         const underlying: IStateProvider<TestState> = {
             get: jest.fn().mockImplementation((key) => {
-                return new StateRef(new TestState(), key, 1);
+                return new StateRef(new TestState(), key, 1, -1);
             }),
             compute: jest.fn(),
         };
@@ -42,23 +42,26 @@ describe("CachingStateProvider", () => {
     it("updates state and caches new state", async () => {
         const underlying: IStateProvider<TestState> & IStateCacheLifecycle<TestState> = {
             get: jest.fn().mockImplementationOnce((key) => {
-                return new StateRef(new TestState(), key, 1);
+                return new StateRef(new TestState(), key, 1, -1);
             }),
             compute: jest.fn((stateRef: StateRef<TestState>) => {
                 return new StateRef<TestState>(
                     new TestState({ total: 1 }),
                     stateRef.key,
-                    stateRef.seqNum + 1
+                    stateRef.seqNum + 1,
+                    -1
                 );
             }),
             set: jest.fn((stateRef: StateRef<TestState>) => {
                 return new StateRef<TestState>(
                     new TestState({ total: stateRef.state.total }),
                     stateRef.key,
-                    stateRef.seqNum
+                    stateRef.seqNum,
+                    -1
                 );
             }),
             invalidate: jest.fn(),
+            enableEpochs: jest.fn(),
         };
 
         const cache = cached(TestState, underlying);
@@ -76,7 +79,7 @@ describe("CachingStateProvider", () => {
         let counter = 0;
         const underlying: IStateProvider<TestState> = {
             get: jest.fn().mockImplementation((key: string) => {
-                return new StateRef(new TestState({ total: ++counter }), key, counter);
+                return new StateRef(new TestState({ total: ++counter }), key, counter, -1);
             }),
             compute: jest.fn(),
         };
