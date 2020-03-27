@@ -62,14 +62,15 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         atSn?: number
     ): Promise<StateRef<TState>> {
         let stateRef = this.cache.get(key);
-        let cachedEpoch = this.useEpochs ? this.epochCache.get(key) : -1;
+        let cachedEpoch = -1;
         if (this.useEpochs) {
+            cachedEpoch = this.epochCache.get(key);
             if (cachedEpoch === undefined) {
                 this.epochCache.set(key, 0);
                 cachedEpoch = 0;
             }
         }
-        if (!stateRef || (atSn !== undefined && stateRef.seqNum !== atSn)) {
+        if (!stateRef) {
             stateRef = await this.underlying.get(spanContext, key, atSn);
             const cached = this.cache.get(key);
             if (cached && cached.seqNum > stateRef.seqNum) {
@@ -82,6 +83,14 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
                 }
                 this.cache.set(key, stateRef);
             }
+        } else if (stateRef && atSn !== undefined && stateRef.seqNum !== atSn) {
+            stateRef = await this.underlying.get(spanContext, key, atSn);
+            if (this.useEpochs) {
+                cachedEpoch++;
+                this.epochCache.set(key, cachedEpoch);
+                stateRef.epoch = cachedEpoch;
+            }
+            this.cache.set(key, stateRef);
         }
 
         const clone = new this.TState((stateRef.state as any).snap());
