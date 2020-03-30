@@ -66,8 +66,7 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         if (this.useEpochs) {
             cachedEpoch = this.epochCache.get(key);
             if (cachedEpoch === undefined) {
-                this.epochCache.set(key, 0);
-                cachedEpoch = 0;
+                cachedEpoch = -1;
             }
         }
         if (!stateRef) {
