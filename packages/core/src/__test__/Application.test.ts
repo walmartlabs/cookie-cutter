@@ -900,7 +900,6 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
-                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(1);
                 expect(err).toBe(undefined);
             });
@@ -946,7 +945,6 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
-                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(1);
                 expect(err).toBe(undefined);
             });

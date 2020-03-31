@@ -24,9 +24,12 @@ import {
     MessageProcessingResults,
     OutputSinkConsistencyLevel,
     StateRef,
+    EventProcessingMetadata,
+    SequenceConflictError,
 } from "../../model";
 import { iterate, prettyEventName, RetrierContext } from "../../utils";
 import { BatchHandler } from "./BatchHandler";
+import { EpochManager } from "../EpochManager";
 
 export class SinkCoordinator implements IRequireInitialization {
     private readonly storeTarget: BatchHandler<IStoredMessage | IStateVerification>;
@@ -38,7 +41,8 @@ export class SinkCoordinator implements IRequireInitialization {
     constructor(
         storeSink: IOutputSink<IStoredMessage | IStateVerification>,
         publishSink: IOutputSink<IPublishedMessage>,
-        private readonly annotators: IMessageMetricAnnotator[]
+        private readonly annotators: IMessageMetricAnnotator[],
+        private readonly epochs: EpochManager
     ) {
         this.metrics = DefaultComponentContext.metrics;
         this.logger = DefaultComponentContext.logger;
@@ -85,17 +89,106 @@ export class SinkCoordinator implements IRequireInitialization {
         this.logger = context.logger;
     }
 
+    private filterByEpoch(items: BufferedDispatchContext[]): IBatchResult {
+        for (let i = 0; i < items.length; i++) {
+            const bad = items[i].loadedStates.filter(
+                (s) => s.epoch !== undefined && s.epoch < this.epochs.get(s.key)
+            );
+            if (bad.length > 0) {
+                return {
+                    successful: items.slice(0, i),
+                    failed: items.slice(i),
+                    error: {
+                        error: new SequenceConflictError({
+                            actualSn: bad[0].seqNum,
+                            key: bad[0].key,
+                            expectedSn: bad[0].seqNum + 1,
+                            newSn: bad[0].seqNum + 1,
+                            actualEpoch: bad[0].epoch,
+                            expectedEpoch: this.epochs.get(bad[0].key),
+                        }),
+                        retryable: false,
+                    },
+                };
+            }
+        }
+
+        return {
+            successful: items,
+            failed: [],
+        };
+    }
+
+    private filterNonLinearStateChanges(items: BufferedDispatchContext[]): IBatchResult {
+        const lookup = new Map<string, { sn: number; seq: number }>();
+        for (let i = 0; i < items.length; i++) {
+            const seq = items[i].source.metadata<number>(EventProcessingMetadata.Sequence);
+            for (const msg of items[i].stored) {
+                const l = lookup.get(msg.state.key);
+                if (!l) {
+                    lookup.set(msg.state.key, { sn: msg.state.seqNum + 1, seq });
+                } else if (l.seq === seq || l.sn === msg.state.seqNum) {
+                    lookup.set(msg.state.key, { sn: l.sn + 1, seq });
+                } else {
+                    return {
+                        successful: items.slice(0, i),
+                        failed: items.slice(i),
+                        error: {
+                            error: new SequenceConflictError({
+                                actualSn: -1,
+                                key: msg.state.key,
+                                expectedSn: l.sn + 1,
+                                newSn: msg.state.seqNum + 1,
+                            }),
+                            retryable: false,
+                        },
+                    };
+                }
+            }
+        }
+
+        return {
+            successful: items,
+            failed: [],
+        };
+    }
+
     public async handle(
         items: IterableIterator<BufferedDispatchContext>,
         retry: RetrierContext
     ): Promise<IBatchResult> {
         const contexts = Array.from(items);
-        const storeResult = await this.storeTarget.handle(contexts, retry);
+
+        const byEpoch = this.filterByEpoch(contexts);
+        const bySequenceNumber = this.filterNonLinearStateChanges(byEpoch.successful);
+
+        const good = bySequenceNumber.successful;
+        const bad = byEpoch.failed.concat(bySequenceNumber.failed);
+
+        const storeResult = await this.storeTarget.handle(good, retry);
         this.emitMetrics(
             this.stored(storeResult.successful),
             this.stored(storeResult.failed),
             MessageProcessingMetrics.Store
         );
+
+        const badKeys = new Set(
+            bySequenceNumber.failed
+                .map((i) => Array.from(i.stored))
+                .reduce((p, c) => p.concat(c), [])
+                .map((s) => s.state.key)
+        );
+        if (storeResult.error instanceof SequenceConflictError) {
+            good.map((i) => Array.from(i.stored))
+                .reduce((p, c) => p.concat(c), [])
+                .map((s) => s.state.key)
+                .forEach((key) => badKeys.add(key));
+        }
+
+        for (const key of badKeys.values()) {
+            this.epochs.invalidate(key);
+        }
+
         if (storeResult.error) {
             // if any of the BufferedDispatchContexts were successfully
             // processed then we need to make sure the corresponding publishes
@@ -116,7 +209,17 @@ export class SinkCoordinator implements IRequireInitialization {
                 );
             }
 
-            return storeResult;
+            return {
+                successful: storeResult.successful,
+                failed: storeResult.failed.concat(bad),
+                error: storeResult.error,
+            };
+        } else if (bad.length > 0) {
+            return {
+                successful: good,
+                failed: bad,
+                error: byEpoch.error || bySequenceNumber.error,
+            };
         }
 
         const publishResult = await this.publishTarget.handle(contexts, retry);

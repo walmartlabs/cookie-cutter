@@ -292,7 +292,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                     const sequence = context.source.metadata<number>(
                         EventProcessingMetadata.Sequence
                     );
-                    if (sequence !== reproContext.atSn) {
+                    if (this.shouldSkip(sequence, reproContext.atSn)) {
                         this.logger.debug(
                             `skipping output message with sequence ${sequence} while waiting for retry`
                         );
@@ -390,23 +390,24 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                                 i < batch.items.length;
                                 i++
                             ) {
-                                const { item, signal } = batch.items[i];
-                                try {
-                                    if (
-                                        !(await this.inputQueue.enqueue(
-                                            reproContext.wrap(item),
-                                            HIGH_PRIORITY
-                                        ))
-                                    ) {
-                                        await context.source.release(
-                                            undefined,
-                                            new Error("unable to reprocess")
-                                        );
-                                    }
-                                } finally {
-                                    signal.resolve();
+                                const { item } = batch.items[i];
+                                if (
+                                    !(await this.inputQueue.enqueue(
+                                        reproContext.wrap(item),
+                                        HIGH_PRIORITY
+                                    ))
+                                ) {
+                                    await context.source.release(
+                                        undefined,
+                                        new Error("unable to reprocess")
+                                    );
                                 }
                             }
+
+                            for (const { signal } of batch.items) {
+                                signal.resolve();
+                            }
+
                             this.logger.warn("sequence number conflict, retrying", {
                                 key: sinkError.details.key,
                                 newSn: sinkError.details.newSn,
@@ -444,5 +445,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 );
             }
         }
+    }
+
+    protected shouldSkip(sequence: number, reproAtSn: number): boolean {
+        return sequence !== reproAtSn;
     }
 }

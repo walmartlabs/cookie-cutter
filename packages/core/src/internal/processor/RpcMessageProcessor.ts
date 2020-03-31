@@ -75,4 +75,8 @@ export class RpcMessageProcessor extends ConcurrentMessageProcessor {
             throw error;
         }
     }
+
+    protected shouldSkip(): boolean {
+        return false;
+    }
 }

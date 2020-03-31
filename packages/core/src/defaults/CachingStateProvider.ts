@@ -31,15 +31,27 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IDisposable {
     private readonly cache: LRU<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
+    private readonly callbacks: Set<(item: StateRef<TState>) => void>;
+    private callbacksEnabled: boolean;
 
     constructor(
         private TState: IClassType<TState>,
         underlying: IStateProvider<TState>,
         options: ICacheOptions
     ) {
+        this.callbacks = new Set();
+        this.callbacksEnabled = true;
         this.cache = new LRU({
             max: options.maxSize || 1000,
             maxAge: options.maxTTL,
+            noDisposeOnSet: true,
+            dispose: (_, val) => {
+                if (this.callbacksEnabled) {
+                    for (const cb of this.callbacks.values()) {
+                        cb(val);
+                    }
+                }
+            },
         });
         this.underlying = makeLifecycle(underlying);
     }
@@ -68,12 +80,17 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public invalidate(keys: IterableIterator<string> | string): void {
-        if (isString(keys)) {
-            this.cache.del(keys);
-        } else {
-            for (const key of keys) {
-                this.cache.del(key);
+        this.callbacksEnabled = false;
+        try {
+            if (isString(keys)) {
+                this.cache.del(keys);
+            } else {
+                for (const key of keys) {
+                    this.cache.del(key);
+                }
             }
+        } finally {
+            this.callbacksEnabled = true;
         }
     }
 
@@ -86,5 +103,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
 
     public compute(stateRef: StateRef<TState>, events: IMessage[]): StateRef<TState> {
         return this.underlying.compute(stateRef, events);
+    }
+
+    public on(_: "evicted", cb: (item: StateRef<TState>) => void) {
+        this.callbacks.add(cb);
     }
 }
