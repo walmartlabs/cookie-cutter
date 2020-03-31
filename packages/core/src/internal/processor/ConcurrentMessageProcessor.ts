@@ -217,9 +217,11 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                         );
                     }
                 } else {
-                    this.logger.error("received invalid message", result.message, {
-                        type: msg.payload.type,
-                    });
+                    if (!(await this.dispatcher.invalid(msg.payload, context))) {
+                        this.logger.error("received invalid message", result.message, {
+                            type: msg.payload.type,
+                        });
+                    }
                     failSpan(handlingInputSpan, "message failed validation");
                     super.incrementProcessedMsg(
                         baseMetricTags,

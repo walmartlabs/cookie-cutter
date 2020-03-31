@@ -44,6 +44,19 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
         return result;
     }
 
+    public async invalid(msg: IMessage, ctx: IDispatchContext): Promise<boolean> {
+        const invalid = "invalid";
+        const func = this.target[invalid];
+        if (func) {
+            let val = func.apply(this.target, [msg, ctx]);
+            if (this.isPromise(val)) {
+                val = await val;
+            }
+            return true;
+        }
+        return false;
+    }
+
     private isPromise(val: any): val is Promise<void> {
         return val && val.then && val.catch;
     }

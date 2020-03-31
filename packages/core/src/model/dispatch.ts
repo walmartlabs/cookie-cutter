@@ -36,6 +36,7 @@ export interface IDispatchContext<TState = any> {
 export interface IMessageDispatcher {
     canDispatch(msg: IMessage): boolean;
     dispatch(msg: IMessage, ctx: IDispatchContext): Promise<any>;
+    invalid(msg: IMessage, ctx: IDispatchContext): Promise<boolean>;
 }
 
 export interface IServiceRegistry {
