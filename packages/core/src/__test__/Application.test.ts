@@ -36,7 +36,7 @@ import {
 } from "../model";
 import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
-import { runStatefulApp, runStatelessApp } from "./util";
+import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
@@ -672,6 +672,38 @@ for (const mode of [ParallelismMode.Rpc]) {
 
             const unique = new Set<number>(published.map((p) => p.payload.count));
             expect(unique.size).toBe(input.length);
+        });
+
+        it("computes correct state when conflicting messages are handled in parallel", async () => {
+            const input: IMessage[] = [];
+            for (let i = 1; i < 25; i++) {
+                input.push(inc(i));
+            }
+
+            const expected = input.reduce((p, c) => p + c.payload.count, 0);
+
+            const streams = new Map();
+            await runMaterializedStatefulApp(
+                TallyState,
+                streams,
+                input,
+                {
+                    onIncrement: async (msg: Increment, ctx: IDispatchContext<TallyState>) => {
+                        const stateRef = await ctx.state.get("state-1");
+                        stateRef.state.total += msg.count;
+                        ctx.store(TallyState, stateRef, stateRef.state.snap());
+
+                        // sleep for a few messages to provoke an epoch conflict
+                        if (msg.count % 7 === 0) {
+                            await sleep(msg.count * 2 + 100);
+                        }
+                    },
+                },
+                mode,
+                ErrorHandlingMode.LogAndFail
+            );
+
+            expect(streams.get("state-1").data.total).toBe(expected);
         });
 
         it("correctly calls the gauge metric for number of items InFlight in RPC mode", async () => {

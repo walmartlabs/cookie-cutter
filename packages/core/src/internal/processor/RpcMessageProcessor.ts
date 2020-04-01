@@ -68,8 +68,6 @@ export class RpcMessageProcessor extends ConcurrentMessageProcessor {
             }
         }
 
-        await Promise.all(super.currentlyInflight.map((s) => s.promise));
-
         this.outputQueue.close();
         if (error) {
             throw error;

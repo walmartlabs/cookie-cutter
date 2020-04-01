@@ -19,6 +19,8 @@ import {
     IState,
     ParallelismMode,
     StaticInputSource,
+    InMemoryMaterializedViewStateProvider,
+    InMemoryMaterializedViewStateOutputSink,
 } from "..";
 
 export async function runStatefulApp<TState extends IState<TSnapshot>, TSnapshot>(
@@ -50,6 +52,31 @@ export async function runStatefulApp<TState extends IState<TSnapshot>, TSnapshot
         .output()
         .published(new CapturingOutputSink(capture))
         .stored(new InMemoryStateOutputSink(streams))
+        .done()
+        .run(errorMode, mode);
+
+    return capture.map((m) => m.message);
+}
+
+export async function runMaterializedStatefulApp<TState extends IState<TSnapshot>, TSnapshot>(
+    TState: IClassType<TState>,
+    streams: Map<string, { seqNum: number; data: TSnapshot }>,
+    input: IMessage[],
+    dispatchTarget: any,
+    mode: ParallelismMode,
+    errorMode: ErrorHandlingMode = ErrorHandlingMode.LogAndFail
+): Promise<IMessage[]> {
+    const capture: IPublishedMessage[] = [];
+
+    await Application.create()
+        .input()
+        .add(new StaticInputSource(input))
+        .done()
+        .dispatch(dispatchTarget)
+        .state(cached(TState, new InMemoryMaterializedViewStateProvider(TState, streams)))
+        .output()
+        .published(new CapturingOutputSink(capture))
+        .stored(new InMemoryMaterializedViewStateOutputSink(streams))
         .done()
         .run(errorMode, mode);
 

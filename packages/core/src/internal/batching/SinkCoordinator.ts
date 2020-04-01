@@ -163,7 +163,7 @@ export class SinkCoordinator implements IRequireInitialization {
         const bySequenceNumber = this.filterNonLinearStateChanges(byEpoch.successful);
 
         const good = bySequenceNumber.successful;
-        const bad = byEpoch.failed.concat(bySequenceNumber.failed);
+        const bad = bySequenceNumber.failed.concat(byEpoch.failed);
 
         const storeResult = await this.storeTarget.handle(good, retry);
         this.emitMetrics(

@@ -119,6 +119,8 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 await msg.release(undefined, new Error("unavailable"));
             }
         }
+
+        await Promise.all(super.currentlyInflight.map((s) => s.promise));
         this.inputQueue.close();
     }
 
@@ -352,7 +354,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                             event_type: prettyEventName(item.item.source.payload.type),
                         });
                     }
-                    item.signal.resolve();
                 }
             } catch (e) {
                 sinkError = e;
@@ -362,6 +363,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             } finally {
                 if (continueTriggered) {
                     continueTriggered = false;
+                    for (const { signal } of batch.items) {
+                        signal.resolve();
+                    }
                 } else {
                     if (sinkError) {
                         if (handlingOutputSpan) {
@@ -404,16 +408,24 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                                 }
                             }
 
-                            for (const { signal } of batch.items) {
-                                signal.resolve();
-                            }
-
-                            this.logger.warn("sequence number conflict, retrying", {
+                            let errorTags: any = {
                                 key: sinkError.details.key,
                                 newSn: sinkError.details.newSn,
                                 expectedSn: sinkError.details.expectedSn,
                                 actualSn: sinkError.details.actualSn,
-                            });
+                            };
+                            if (
+                                sinkError.details.actualEpoch !== undefined ||
+                                sinkError.details.expectedEpoch !== undefined
+                            ) {
+                                errorTags = {
+                                    ...errorTags,
+                                    expectedEpoch: sinkError.details.expectedEpoch,
+                                    actualEpoch: sinkError.details.actualEpoch,
+                                };
+                            }
+                            this.logger.warn("sequence number conflict, retrying", errorTags);
+
                             super.incrementProcessedMsg(
                                 baseMetricTags,
                                 eventType,
@@ -422,6 +434,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                         }
                     } else {
                         await this.releaseSourceMessages(batch.items.map((i) => i.item));
+                    }
+
+                    for (const { signal } of batch.items) {
+                        signal.resolve();
                     }
                     batch.reset();
                 }
