@@ -263,7 +263,14 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
         });
 
         it("correctly routes appropriate message through the invalid message handler", async () => {
-            const mockInvalid = jest.fn();
+            const mockInvalid = jest.fn((msg: IMessage, ctx: IDispatchContext) => {
+                const count = (msg.payload as Increment).count;
+                if ((msg.payload as Increment).count === 3) {
+                    ctx.publish(Increment, new Increment(10 * count));
+                } else {
+                    ctx.publish(Increment, new Increment(10 * count + 1));
+                }
+            });
             class MyMessageValidator implements IMessageValidator {
                 public validate(msg: IMessage): IValidateResult {
                     if (msg.payload.count % 2 === 0) {
@@ -281,9 +288,10 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 .add(
                     new StaticInputSource([
                         { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(3) }, // fails input validation
+                        { type: Increment.name, payload: new Increment(3) }, // fails input validation, passes output validation
                         { type: Increment.name, payload: new Increment(4) },
-                        { type: Increment.name, payload: new Increment(6) }, // fails output validation
+                        { type: Increment.name, payload: new Increment(6) }, // passes input validation, fails output validation
+                        { type: Increment.name, payload: new Increment(9) }, // fails input validatin and fails output validation
                     ])
                 )
                 .done()
@@ -303,10 +311,10 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 .run(ErrorHandlingMode.LogAndFail, mode);
 
             capture = capture.map((m) => m.message);
-            expect(capture.length).toEqual(2);
-            expect(capture).toEqual([inc(2), inc(4)]);
-            expect(mockInvalid).toHaveBeenCalledTimes(1);
-            expect(mockInvalid).toHaveBeenLastCalledWith(inc(3), expect.any(Object));
+            expect(capture).toEqual([inc(2), inc(30), inc(4)]);
+            expect(mockInvalid).toHaveBeenCalledTimes(2);
+            expect(mockInvalid).toHaveBeenNthCalledWith(1, inc(3), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(2, inc(9), expect.any(Object));
         });
 
         it("successfully proceeds after an invalid input and invalid output messages", async () => {
