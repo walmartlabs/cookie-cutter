@@ -64,7 +64,7 @@ Please mind that `before` and `after`'s first argument is of type `IMessage`. Bo
 
 ## Invalid Message Handler
 
-Another handler that can be added is the `invalid` function which will get invoked if a message does not pass input validation. This handler will be invoked for any message that does not pass validation. For invalid messages, this functions allows logging the payload of the message or any other relevant metadata. It can also be used to throw an Error and force the application to terminate if in `LogAndFail` or `LogAndRetryOrFail` mode (if that's appropriate for the use case).
+Another handler that can be added is the `invalid` function which will get invoked if a message does not pass input validation. This handler will be invoked for any message that does not pass validation. For invalid messages, this function allows logging the payload of the message or any other relevant metadata. It can also be used to throw an Error and force the application to terminate if in `LogAndFail` or `LogAndRetryOrFail` mode (if that's appropriate for the use case).
 
  Defining this function disables the built-in log for `received invalid message`.
 
