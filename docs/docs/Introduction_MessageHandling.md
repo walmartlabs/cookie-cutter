@@ -62,6 +62,20 @@ export function after(msg: IMessage, ctx: IDispatchContext): void {
 
 Please mind that `before` and `after`'s first argument is of type `IMessage`. Both functions have access to the same dispatch context that the actual message handler receives and therefore they can emit additional outputs via `store` or `publish`.
 
+## Invalid Message Handler
+
+Another handler that can be added is the `invalid` function which will get invoked if a message does not pass input validation. This handler will be invoked for any message that does not pass validation. For invalid messages, this functions allows logging the payload of the message or any other relevant metadata. It can also be used to throw an Error and force the application to terminate if in `LogAndFail` or `LogAndRetryOrFail` mode (if that's appropriate for the use case).
+
+ Defining this function disables the built-in log for `received invalid message`.
+
+```typescript
+export function invalid(msg: IMessage, ctx: IDispatchContext): void {
+    // do something
+}
+```
+
+As with the other handlers, this function also has access to the dispatch context and can emit additional outputs via `store` or `publish`. These outputs will be passed through output validation.
+
 ## Implementation Strategies
 
 ### Dispatch Target Class
