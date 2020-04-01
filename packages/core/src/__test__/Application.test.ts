@@ -286,11 +286,6 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                         { type: Increment.name, payload: new Increment(6) }, // fails output validation
                     ])
                 )
-                .annotate({
-                    annotate: (input: IMessage): IMetricTags => {
-                        return { tag: input.payload.count };
-                    },
-                })
                 .done()
                 .dispatch({
                     onIncrement: (msg: Increment, ctx: IDispatchContext) => {
