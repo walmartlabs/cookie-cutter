@@ -101,6 +101,13 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
 
             const result = this.validator.validate(msg.payload);
             if (!result.success) {
+                handlingInputSpan = super.createDispatchSpan(msg.spanContext, eventType);
+                context = super.createDispatchContext(
+                    msg,
+                    handlingInputSpan,
+                    outputMessageEnricher,
+                    serviceDiscovery
+                );
                 if (!(await this.dispatcher.invalid(msg.payload, context))) {
                     this.logger.error("received invalid message", result.message, {
                         type: msg.payload.type,

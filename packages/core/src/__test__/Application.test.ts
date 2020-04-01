@@ -262,6 +262,58 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             expect(tally).toBe(-3);
         });
 
+        it("correctly routes appropriate message through the invalid message handler", async () => {
+            const mockInvalid = jest.fn();
+            class MyMessageValidator implements IMessageValidator {
+                public validate(msg: IMessage): IValidateResult {
+                    if (msg.payload.count % 2 === 0) {
+                        return { success: true };
+                    } else {
+                        return { success: false, message: "failed validate" };
+                    }
+                }
+            }
+
+            let capture: any[] = [];
+            await Application.create()
+                .validate(new MyMessageValidator())
+                .input()
+                .add(
+                    new StaticInputSource([
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(3) }, // fails input validation
+                        { type: Increment.name, payload: new Increment(4) },
+                        { type: Increment.name, payload: new Increment(6) }, // fails output validation
+                    ])
+                )
+                .annotate({
+                    annotate: (input: IMessage): IMetricTags => {
+                        return { tag: input.payload.count };
+                    },
+                })
+                .done()
+                .dispatch({
+                    onIncrement: (msg: Increment, ctx: IDispatchContext) => {
+                        if (msg.count === 6) {
+                            ctx.publish(Increment, new Increment(7));
+                        } else {
+                            ctx.publish(Increment, msg);
+                        }
+                    },
+                    invalid: mockInvalid,
+                })
+                .output()
+                .published(new CapturingOutputSink(capture))
+                .done()
+                .run(ErrorHandlingMode.LogAndFail, mode);
+
+            capture = capture.map((m) => m.message);
+            expect(capture.length).toEqual(2);
+            expect(capture).toEqual([inc(2), inc(4)]);
+            expect(mockInvalid).toHaveBeenCalledTimes(1);
+            expect(mockInvalid).toHaveBeenLastCalledWith(inc(3), expect.any(Object));
+        });
+
         it("successfully proceeds after an invalid input and invalid output messages", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {
