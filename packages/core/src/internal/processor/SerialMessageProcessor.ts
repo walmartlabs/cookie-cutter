@@ -121,6 +121,7 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                         this.logger.error("received invalid message", result.message, {
                             type: msg.payload.type,
                         });
+                        failSpan(handlingInputSpan, "message failed validation");
                         super.incrementProcessedMsg(
                             baseMetricTags,
                             eventType,
