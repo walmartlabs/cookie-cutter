@@ -16,3 +16,4 @@ export * from "./CompositeOutputSink";
 export * from "./CompositeInputSource";
 export * from "./MetadataLoggerDecorator";
 export * from "./ServiceRegistry";
+export * from "./EpochManager";

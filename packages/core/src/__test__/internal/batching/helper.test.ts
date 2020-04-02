@@ -5,8 +5,10 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { batch } from "../../../internal/batching/helper";
+import { batch, filterByEpoch } from "../../../internal/batching/helper";
 import { iterate } from "../../../utils";
+import { StateRef, SequenceConflictError } from "../../../model";
+import { EpochManager } from "../../../internal";
 
 describe("batch", () => {
     it("creates one big batch if allowed", () => {
@@ -118,5 +120,38 @@ describe("batch", () => {
             { completed: [], batch: [3, 3] },
             { completed: [input[2]], batch: [3] },
         ]);
+    });
+});
+
+describe("epoch mismatches", () => {
+    interface IOutput {
+        state: StateRef;
+    }
+
+    it("splits batch at first mismatch", () => {
+        const outputs: IOutput[] = [
+            { state: new StateRef(undefined, "key-1", 1, 3) },
+            { state: new StateRef(undefined, "key-1", 2, 3) },
+            { state: new StateRef(undefined, "key-1", 3, 2) },
+            { state: new StateRef(undefined, "key-1", 3, 3) },
+        ];
+
+        const epochs = new EpochManager();
+        epochs.invalidate("key-1"); // epoch is 2 now
+        epochs.invalidate("key-1"); // epoch is 3 now
+
+        const result = filterByEpoch(outputs, (o) => [o.state], epochs);
+        expect(result.successful).toMatchObject(outputs.slice(0, 2));
+        expect(result.failed).toMatchObject(outputs.slice(2));
+        expect(result.error.error).toMatchObject(
+            new SequenceConflictError({
+                key: "key-1",
+                actualSn: 3,
+                expectedSn: 3,
+                newSn: 3,
+                actualEpoch: 2,
+                expectedEpoch: 3,
+            })
+        );
     });
 });

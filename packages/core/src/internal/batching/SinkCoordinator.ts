@@ -24,12 +24,13 @@ import {
     MessageProcessingResults,
     OutputSinkConsistencyLevel,
     StateRef,
-    EventProcessingMetadata,
     SequenceConflictError,
+    EventProcessingMetadata,
 } from "../../model";
 import { iterate, prettyEventName, RetrierContext } from "../../utils";
 import { BatchHandler } from "./BatchHandler";
 import { EpochManager } from "../EpochManager";
+import { filterByEpoch, filterNonLinearStateChanges } from "./helper";
 
 export class SinkCoordinator implements IRequireInitialization {
     private readonly storeTarget: BatchHandler<IStoredMessage | IStateVerification>;
@@ -89,78 +90,17 @@ export class SinkCoordinator implements IRequireInitialization {
         this.logger = context.logger;
     }
 
-    private filterByEpoch(items: BufferedDispatchContext[]): IBatchResult {
-        for (let i = 0; i < items.length; i++) {
-            const bad = items[i].loadedStates.filter(
-                (s) => s.epoch !== undefined && s.epoch < this.epochs.get(s.key)
-            );
-            if (bad.length > 0) {
-                return {
-                    successful: items.slice(0, i),
-                    failed: items.slice(i),
-                    error: {
-                        error: new SequenceConflictError({
-                            actualSn: bad[0].seqNum,
-                            key: bad[0].key,
-                            expectedSn: bad[0].seqNum + 1,
-                            newSn: bad[0].seqNum + 1,
-                            actualEpoch: bad[0].epoch,
-                            expectedEpoch: this.epochs.get(bad[0].key),
-                        }),
-                        retryable: false,
-                    },
-                };
-            }
-        }
-
-        return {
-            successful: items,
-            failed: [],
-        };
-    }
-
-    private filterNonLinearStateChanges(items: BufferedDispatchContext[]): IBatchResult {
-        const lookup = new Map<string, { sn: number; seq: number }>();
-        for (let i = 0; i < items.length; i++) {
-            const seq = items[i].source.metadata<number>(EventProcessingMetadata.Sequence);
-            for (const msg of items[i].stored) {
-                const l = lookup.get(msg.state.key);
-                if (!l) {
-                    lookup.set(msg.state.key, { sn: msg.state.seqNum + 1, seq });
-                } else if (l.seq === seq || l.sn === msg.state.seqNum) {
-                    lookup.set(msg.state.key, { sn: l.sn + 1, seq });
-                } else {
-                    return {
-                        successful: items.slice(0, i),
-                        failed: items.slice(i),
-                        error: {
-                            error: new SequenceConflictError({
-                                actualSn: -1,
-                                key: msg.state.key,
-                                expectedSn: l.sn + 1,
-                                newSn: msg.state.seqNum + 1,
-                            }),
-                            retryable: false,
-                        },
-                    };
-                }
-            }
-        }
-
-        return {
-            successful: items,
-            failed: [],
-        };
-    }
-
     public async handle(
         items: IterableIterator<BufferedDispatchContext>,
         retry: RetrierContext
     ): Promise<IBatchResult> {
         const contexts = Array.from(items);
 
-        const byEpoch = this.filterByEpoch(contexts);
-        const bySequenceNumber = this.filterNonLinearStateChanges(byEpoch.successful);
+        const byEpoch = filterByEpoch(contexts, (ctx) => ctx.loadedStates, this.epochs);
+        const bySequenceNumber = filterNonLinearStateChanges(byEpoch.successful, (ctx) => [
+            ctx.source.metadata<number>(EventProcessingMetadata.Sequence),
+            Array.from(ctx.stored).map((m) => m.state),
+        ]);
 
         const good = bySequenceNumber.successful;
         const bad = bySequenceNumber.failed.concat(byEpoch.failed);
