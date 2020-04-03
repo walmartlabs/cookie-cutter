@@ -32,7 +32,7 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     private readonly cache: LRU<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
     private readonly callbacks: Set<(item: StateRef<TState>) => void>;
-    private callbacksEnabled: boolean;
+    private callbacksDisabledFor: Set<string>;
 
     constructor(
         private TState: IClassType<TState>,
@@ -40,13 +40,13 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         options: ICacheOptions
     ) {
         this.callbacks = new Set();
-        this.callbacksEnabled = true;
+        this.callbacksDisabledFor = new Set();
         this.cache = new LRU({
             max: options.maxSize || 1000,
             maxAge: options.maxTTL,
             noDisposeOnSet: true,
             dispose: (_, val) => {
-                if (this.callbacksEnabled) {
+                if (!this.callbacksDisabledFor.has(val.key)) {
                     for (const cb of this.callbacks.values()) {
                         cb(val);
                     }
@@ -80,17 +80,22 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public invalidate(keys: IterableIterator<string> | string): void {
-        this.callbacksEnabled = false;
-        try {
-            if (isString(keys)) {
+        if (isString(keys)) {
+            try {
+                this.callbacksDisabledFor.add(keys);
                 this.cache.del(keys);
-            } else {
-                for (const key of keys) {
+            } finally {
+                this.callbacksDisabledFor.delete(keys);
+            }
+        } else {
+            for (const key of keys) {
+                this.callbacksDisabledFor.add(key);
+                try {
                     this.cache.del(key);
+                } finally {
+                    this.callbacksDisabledFor.delete(key);
                 }
             }
-        } finally {
-            this.callbacksEnabled = true;
         }
     }
 

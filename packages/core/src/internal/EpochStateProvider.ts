@@ -18,7 +18,6 @@ import {
 import { SpanContext } from "opentracing";
 import { Lifecycle, makeLifecycle } from "../model";
 import { EpochManager } from "./EpochManager";
-import { isString } from "util";
 
 export class EpochStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     implements
@@ -62,9 +61,6 @@ export class EpochStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public invalidate(keys: string | IterableIterator<string>): void {
-        for (const key of isString(keys) ? [keys] : Array.from(keys)) {
-            this.manager.invalidate(key);
-        }
         this.underlying.invalidate(keys);
     }
 
