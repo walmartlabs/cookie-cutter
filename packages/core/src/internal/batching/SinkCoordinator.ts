@@ -112,20 +112,25 @@ export class SinkCoordinator implements IRequireInitialization {
             MessageProcessingMetrics.Store
         );
 
-        const badKeys = new Set(
-            bySequenceNumber.failed
-                .map((i) => Array.from(i.stored))
-                .reduce((p, c) => p.concat(c), [])
-                .map((s) => s.state.key)
-        );
+        const badKeys = new Set<string>();
+        for (const item of bad) {
+            for (const state of item.loadedStates) {
+                console.log("bad key=" + state.key);
+                badKeys.add(state.key);
+            }
+        }
+
         if (storeResult.error instanceof SequenceConflictError) {
-            good.map((i) => Array.from(i.stored))
-                .reduce((p, c) => p.concat(c), [])
-                .map((s) => s.state.key)
-                .forEach((key) => badKeys.add(key));
+            for (const item of good) {
+                for (const state of item.loadedStates) {
+                    console.log("bad key=" + state.key);
+                    badKeys.add(state.key);
+                }
+            }
         }
 
         for (const key of badKeys.values()) {
+            console.log("invalidating epoch for key=" + key);
             this.epochs.invalidate(key);
         }
 

@@ -45,12 +45,16 @@ export class EpochStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         key: string,
         atSn?: number
     ): Promise<StateRef<TState>> {
+        const epoch = this.manager.get(key);
         const stateRef = await this.underlying.get(spanContext, key, atSn);
-        return new StateRef(stateRef.state, stateRef.key, stateRef.seqNum, this.manager.get(key));
+        return new StateRef(stateRef.state, stateRef.key, stateRef.seqNum, stateRef.epoch ?? epoch);
     }
 
     public compute(stateRef: StateRef<TState>, events: IMessage[]): StateRef<TState> {
         const computed = this.underlying.compute(stateRef, events);
+        if (stateRef.epoch === undefined) {
+            console.log(new Error().stack);
+        }
         return new StateRef(computed.state, computed.key, computed.seqNum, stateRef.epoch);
     }
 

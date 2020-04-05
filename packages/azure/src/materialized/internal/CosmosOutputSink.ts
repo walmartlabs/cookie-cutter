@@ -67,6 +67,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
 
             try {
                 await this.client.upsert(record, state.key, state.seqNum);
+                this.logger.info("COSMOS sn=" + record.sn + " epoch=" + state.epoch + " content=" + JSON.stringify(record.data));
             } catch (e) {
                 if (isRetryableError(e)) {
                     if (e.headers && e.headers[RETRY_AFTER_MS]) {

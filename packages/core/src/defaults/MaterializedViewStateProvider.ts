@@ -23,7 +23,7 @@ export abstract class MaterializedViewStateProvider<TState extends IState<TSnaps
             return new StateRef(
                 new this.TState(stateRef.state.snap()),
                 stateRef.key,
-                stateRef.seqNum
+                stateRef.seqNum,
             );
         }
 
