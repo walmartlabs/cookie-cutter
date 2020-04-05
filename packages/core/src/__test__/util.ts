@@ -53,7 +53,20 @@ export async function runStatefulApp<TState extends IState<TSnapshot>, TSnapshot
         .published(new CapturingOutputSink(capture))
         .stored(new InMemoryStateOutputSink(streams))
         .done()
-        .run(errorMode, mode);
+        .run({
+            parallelism: {
+                mode,
+                concurrencyConfiguration: {
+                    batchLingerIntervalMs: 5,
+                },
+            },
+            dispatch: {
+                mode: errorMode,
+            },
+            sink: {
+                mode: errorMode,
+            },
+        });
 
     return capture.map((m) => m.message);
 }
@@ -78,7 +91,20 @@ export async function runMaterializedStatefulApp<TState extends IState<TSnapshot
         .published(new CapturingOutputSink(capture))
         .stored(new InMemoryMaterializedViewStateOutputSink(streams))
         .done()
-        .run(errorMode, mode);
+        .run({
+            parallelism: {
+                mode,
+                concurrencyConfiguration: {
+                    batchLingerIntervalMs: 5,
+                },
+            },
+            dispatch: {
+                mode: errorMode,
+            },
+            sink: {
+                mode: errorMode,
+            },
+        });
 
     return capture.map((m) => m.message);
 }
@@ -98,7 +124,20 @@ export async function runStatelessApp(
         .output()
         .published(new CapturingOutputSink(capture))
         .done()
-        .run(ErrorHandlingMode.LogAndFail, mode);
+        .run({
+            parallelism: {
+                mode,
+                concurrencyConfiguration: {
+                    batchLingerIntervalMs: 5,
+                },
+            },
+            dispatch: {
+                mode: ErrorHandlingMode.LogAndFail,
+            },
+            sink: {
+                mode: ErrorHandlingMode.LogAndFail,
+            },
+        });
 
     return capture.map((m) => m.message);
 }

@@ -676,7 +676,7 @@ for (const mode of [ParallelismMode.Rpc]) {
 
         it("computes correct state when conflicting messages are handled in parallel", async () => {
             const input: IMessage[] = [];
-            for (let i = 1; i < 25; i++) {
+            for (let i = 1; i < 15; i++) {
                 input.push(inc(i));
             }
 

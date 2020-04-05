@@ -52,9 +52,6 @@ export class EpochStateProvider<TState extends IState<TSnapshot>, TSnapshot>
 
     public compute(stateRef: StateRef<TState>, events: IMessage[]): StateRef<TState> {
         const computed = this.underlying.compute(stateRef, events);
-        if (stateRef.epoch === undefined) {
-            console.log(new Error().stack);
-        }
         return new StateRef(computed.state, computed.key, computed.seqNum, stateRef.epoch);
     }
 

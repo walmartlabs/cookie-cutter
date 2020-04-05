@@ -11,10 +11,12 @@ import {
     IMessageMetricAnnotator,
     IServiceRegistry,
     MessageProcessingMetrics,
+    MessageRef,
 } from "../../model";
-import { IRetrier } from "../../utils";
+import { IRetrier, sleep } from "../../utils";
 import { ConcurrentMessageProcessor } from "./ConcurrentMessageProcessor";
 import { IMessageProcessorConfiguration } from "./IMessageProcessor";
+import { EpochStateProvider } from "../EpochStateProvider";
 
 export class RpcMessageProcessor extends ConcurrentMessageProcessor {
     constructor(
@@ -76,5 +78,23 @@ export class RpcMessageProcessor extends ConcurrentMessageProcessor {
 
     protected shouldSkip(): boolean {
         return false;
+    }
+
+    protected async handleReprocessingContext(msg: MessageRef): Promise<void> {
+        if (this.stateProvider instanceof EpochStateProvider) {
+            const rnd = Math.random();
+            const m = this.config.batchLingerIntervalMs ?? 1;
+            if (rnd < 0.25) {
+                await sleep(m * 2);
+            } else if (rnd < 0.5) {
+                await sleep(m * 4);
+            } else if (rnd < 0.75) {
+                await sleep(m * 8);
+            } else {
+                await sleep(m * 16);
+            }
+        } else {
+            await super.handleReprocessingContext(msg);
+        }
     }
 }

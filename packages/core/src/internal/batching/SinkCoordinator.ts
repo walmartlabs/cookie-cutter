@@ -115,7 +115,6 @@ export class SinkCoordinator implements IRequireInitialization {
         const badKeys = new Set<string>();
         for (const item of bad) {
             for (const state of item.loadedStates) {
-                console.log("bad key=" + state.key);
                 badKeys.add(state.key);
             }
         }
@@ -123,14 +122,12 @@ export class SinkCoordinator implements IRequireInitialization {
         if (storeResult.error instanceof SequenceConflictError) {
             for (const item of good) {
                 for (const state of item.loadedStates) {
-                    console.log("bad key=" + state.key);
                     badKeys.add(state.key);
                 }
             }
         }
 
         for (const key of badKeys.values()) {
-            console.log("invalidating epoch for key=" + key);
             this.epochs.invalidate(key);
         }
 

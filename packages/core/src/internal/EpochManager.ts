@@ -20,14 +20,12 @@ export class EpochManager {
 
     public invalidate(key: string): void {
         this.epochs.set(key, this.get(key) + 1);
-        console.log("new expected epoch=" + this.epochs.get(key));
         for (const cb of this.callbacks.values()) {
             cb(key);
         }
     }
 
     public evict(key: string): void {
-        console.log("evicting epoch");
         this.epochs.delete(key);
     }
 

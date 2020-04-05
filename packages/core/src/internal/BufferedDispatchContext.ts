@@ -71,7 +71,6 @@ class DispatchState<TState> implements IDispatchState<TState> {
                 matches[0].state,
                 matches.map((m) => m.message)
             );
-            console.log("computed state=" + JSON.stringify(newState));
             states.push(newState);
         }
         return states;

@@ -72,7 +72,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         let stateRef = this.cache.get(key);
         if (!stateRef || (atSn !== undefined && stateRef.seqNum !== atSn)) {
             stateRef = await this.underlying.get(spanContext, key, atSn);
-            // this.cache.set(key, stateRef);
+            if (!this.cache.has(key)) {
+                this.cache.set(key, stateRef);
+            }
         }
 
         const clone = new this.TState(stateRef.state.snap());
@@ -80,14 +82,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public invalidate(keys: IterableIterator<string> | string): void {
-        console.log("cache invalidating key=" + keys);
         const fn = (key: string) => {
             this.callbacksDisabledFor.add(key);
             try {
-                const item = this.cache.get(key);
-                if (item) {
-                    console.log("removing sn=" + item.seqNum + " epoch=" + item.epoch + " content=" + JSON.stringify(item.state));
-                }
                 this.cache.del(key);
             } finally {
                 this.callbacksDisabledFor.delete(key);
@@ -105,12 +102,6 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     public set(stateRef: StateRef<TState>): void {
         const cached = this.cache.get(stateRef.key);
         if (!cached || cached.seqNum < stateRef.seqNum) {
-            console.log("setting cache to sn=" + stateRef.seqNum + " epoch=" + stateRef.epoch + " content=" + JSON.stringify(stateRef.state));
-            if (cached) {
-                console.log("prev cache entry sn=" + cached.seqNum + " epoch=" + cached.epoch + " content=" + JSON.stringify(cached.state));
-            } else {
-                console.log("prev not in cache");
-            }
             this.cache.set(stateRef.key, stateRef);
         }
     }

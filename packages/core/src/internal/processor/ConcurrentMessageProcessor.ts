@@ -157,6 +157,16 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         this.outputQueue.close();
     }
 
+    protected async handleReprocessingContext(msg: MessageRef): Promise<void> {
+        // if we are reprocessing this message then undo all state changes first
+        const reproContext = msg.metadata<ReprocessingContext>(
+            EventProcessingMetadata.ReprocessingContext
+        );
+        if (reproContext) {
+            this.stateProvider.invalidate(reproContext.evictions());
+        }
+    }
+
     protected async handleInput(
         msg: MessageRef,
         signal: IInflightSignal,
@@ -175,14 +185,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 return;
             }
 
-            // if we are reprocessing this message then undo all state changes first
-            const reproContext = msg.metadata<ReprocessingContext>(
-                EventProcessingMetadata.ReprocessingContext
-            );
-            if (reproContext) {
-                await sleep(Math.random() * 100);
-                // this.stateProvider.invalidate(reproContext.evictions());
-            }
+            await this.handleReprocessingContext(msg);
 
             handlingInputSpan = super.createDispatchSpan(msg.spanContext, eventType);
             const context = super.createDispatchContext(
@@ -226,11 +229,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 }
             }
 
-            console.log("enqueueing sn="+context.loadedStates[0].seqNum+" epoch="+context.loadedStates[0].epoch + " content=" + JSON.stringify(context.loadedStates[0]));
             if (await this.outputQueue.enqueue({ item: context, signal })) {
                 handled = true;
             }
-            console.log("enqueued sn="+context.loadedStates[0].seqNum+" epoch="+context.loadedStates[0].epoch);
 
             // yield some CPU cycles to I/O that might have
             // completed in the mean time to avoid timeouts
@@ -343,8 +344,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                     this.metrics.gauge(MessageProcessingMetrics.OutputBatch, batch.items.length);
                 }
 
-                console.log("sending to sink\n", batch.items.map((i) => `${JSON.stringify(Array.from(i.item.stored)[0].message.payload)} -- ${JSON.stringify(i.item.loadedStates[0])}`).reduce((p, c) => p + "\n\t" + c, ""));
-
                 sinkError = await super.dispatchToSink(
                     batch.items.map((i) => i.item),
                     sink,
@@ -386,7 +385,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                                 EventProcessingMetadata.Sequence
                             );
                             reproContext = new ReprocessingContext(sequence);
-                            console.log("seq conflict at index " + batch.items.map((i) => i.item).indexOf(sinkError.context));
                             await this.releaseSourceMessages(
                                 batch.items
                                     .slice(
