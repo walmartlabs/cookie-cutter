@@ -119,8 +119,8 @@ export class SinkCoordinator implements IRequireInitialization {
             }
         }
 
-        if (storeResult.error instanceof SequenceConflictError) {
-            for (const item of good) {
+        if (storeResult.error?.error instanceof SequenceConflictError) {
+            for (const item of storeResult.failed) {
                 for (const state of item.loadedStates) {
                     badKeys.add(state.key);
                 }
