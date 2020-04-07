@@ -186,7 +186,7 @@ export function filterNonLinearStateChanges<T>(
                             actualSn: l.sn,
                             key: state.key,
                             expectedSn: state.seqNum,
-                            newSn: l.sn + 1,
+                            newSn: state.seqNum + 1,
                         }),
                         retryable: false,
                     },
