@@ -9,9 +9,9 @@ import { BufferedDispatchContext } from "..";
 
 export * from "./SinkCoordinator";
 
-export interface IBatchResult {
-    readonly successful: BufferedDispatchContext[];
-    readonly failed: BufferedDispatchContext[];
+export interface IBatchResult<T = BufferedDispatchContext> {
+    readonly successful: T[];
+    readonly failed: T[];
     readonly error?: {
         readonly error: Error;
         readonly retryable: boolean;

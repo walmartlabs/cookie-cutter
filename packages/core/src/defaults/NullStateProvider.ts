@@ -9,6 +9,9 @@ import { IStateCacheLifecycle, IStateProvider, StateRef } from "../model";
 
 /* istanbul ignore next */
 export class NullStateProvider implements IStateProvider<any>, IStateCacheLifecycle<any> {
+    public on() {
+        // do nothing
+    }
     public compute(stateRef: StateRef<any>) {
         return stateRef;
     }

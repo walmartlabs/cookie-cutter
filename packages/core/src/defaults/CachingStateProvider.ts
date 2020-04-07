@@ -31,15 +31,27 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IDisposable {
     private readonly cache: LRU<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
+    private readonly callbacks: Set<(item: StateRef<TState>) => void>;
+    private callbacksDisabledFor: Set<string>;
 
     constructor(
         private TState: IClassType<TState>,
         underlying: IStateProvider<TState>,
         options: ICacheOptions
     ) {
+        this.callbacks = new Set();
+        this.callbacksDisabledFor = new Set();
         this.cache = new LRU({
             max: options.maxSize || 1000,
             maxAge: options.maxTTL,
+            noDisposeOnSet: true,
+            dispose: (_, val) => {
+                if (!this.callbacksDisabledFor.has(val.key)) {
+                    for (const cb of this.callbacks.values()) {
+                        cb(val);
+                    }
+                }
+            },
         });
         this.underlying = makeLifecycle(underlying);
     }
@@ -60,7 +72,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         let stateRef = this.cache.get(key);
         if (!stateRef || (atSn !== undefined && stateRef.seqNum !== atSn)) {
             stateRef = await this.underlying.get(spanContext, key, atSn);
-            this.cache.set(key, stateRef);
+            if (!this.cache.has(key)) {
+                this.cache.set(key, stateRef);
+            }
         }
 
         const clone = new this.TState(stateRef.state.snap());
@@ -68,11 +82,19 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public invalidate(keys: IterableIterator<string> | string): void {
+        const fn = (key: string) => {
+            this.callbacksDisabledFor.add(key);
+            try {
+                this.cache.del(key);
+            } finally {
+                this.callbacksDisabledFor.delete(key);
+            }
+        };
         if (isString(keys)) {
-            this.cache.del(keys);
+            fn(keys);
         } else {
             for (const key of keys) {
-                this.cache.del(key);
+                fn(key);
             }
         }
     }
@@ -86,5 +108,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
 
     public compute(stateRef: StateRef<TState>, events: IMessage[]): StateRef<TState> {
         return this.underlying.compute(stateRef, events);
+    }
+
+    public on(_: "evicted", cb: (item: StateRef<TState>) => void) {
+        this.callbacks.add(cb);
     }
 }

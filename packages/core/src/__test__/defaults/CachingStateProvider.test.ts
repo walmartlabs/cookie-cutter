@@ -59,6 +59,7 @@ describe("CachingStateProvider", () => {
                 );
             }),
             invalidate: jest.fn(),
+            on: jest.fn(),
         };
 
         const cache = cached(TestState, underlying);

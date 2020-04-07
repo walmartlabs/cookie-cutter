@@ -42,6 +42,8 @@ export interface ISequenceConflictDetails {
     readonly newSn: number;
     readonly expectedSn: number;
     readonly actualSn: number;
+    readonly expectedEpoch?: number;
+    readonly actualEpoch?: number;
 }
 
 export class SequenceConflictError extends Error {

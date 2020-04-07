@@ -56,6 +56,7 @@ import {
 } from "./processor";
 import { ServiceRegistryBuilder } from "./ServiceRegistryBuilder";
 import { TracingBuilder } from "./TracingBuilder";
+import { EpochStateProvider } from "./EpochStateProvider";
 
 export class ApplicationBuilder implements IApplicationBuilder {
     private inputBuilder: InputBuilder;
@@ -127,9 +128,17 @@ export class ApplicationBuilder implements IApplicationBuilder {
         const sink = this.outputBuilder.build();
         const serviceRegistry = this.serviceRegistryBuilder.build();
         const appBehavior = this.determineRuntimeBehavior(behaviorOrErrorHandling, parallelism);
+
         let state: Lifecycle<IStateProvider<any> & IStateCacheLifecycle<any>>;
         if (this.isStateCacheLifecycle(this.stateProvider)) {
-            state = makeLifecycle(this.stateProvider);
+            if (
+                this.outputBuilder.hasStoreSink &&
+                appBehavior.parallelism.mode === ParallelismMode.Rpc
+            ) {
+                state = new EpochStateProvider(this.outputBuilder.epochs, this.stateProvider);
+            } else {
+                state = makeLifecycle(this.stateProvider);
+            }
         } else {
             if (
                 this.outputBuilder.hasStoreSink &&

@@ -119,6 +119,8 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 await msg.release(undefined, new Error("unavailable"));
             }
         }
+
+        await Promise.all(super.currentlyInflight.map((s) => s.promise));
         this.inputQueue.close();
     }
 
@@ -155,6 +157,16 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         this.outputQueue.close();
     }
 
+    protected async handleReprocessingContext(msg: MessageRef): Promise<void> {
+        // if we are reprocessing this message then undo all state changes first
+        const reproContext = msg.metadata<ReprocessingContext>(
+            EventProcessingMetadata.ReprocessingContext
+        );
+        if (reproContext) {
+            this.stateProvider.invalidate(reproContext.evictions());
+        }
+    }
+
     protected async handleInput(
         msg: MessageRef,
         signal: IInflightSignal,
@@ -173,13 +185,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 return;
             }
 
-            // if we are reprocessing this message then undo all state changes first
-            const reproContext = msg.metadata<ReprocessingContext>(
-                EventProcessingMetadata.ReprocessingContext
-            );
-            if (reproContext) {
-                this.stateProvider.invalidate(reproContext.evictions());
-            }
+            await this.handleReprocessingContext(msg);
 
             handlingInputSpan = super.createDispatchSpan(msg.spanContext, eventType);
             const context = super.createDispatchContext(
@@ -292,7 +298,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                     const sequence = context.source.metadata<number>(
                         EventProcessingMetadata.Sequence
                     );
-                    if (sequence !== reproContext.atSn) {
+                    if (this.shouldSkip(sequence, reproContext.atSn)) {
                         this.logger.debug(
                             `skipping output message with sequence ${sequence} while waiting for retry`
                         );
@@ -352,7 +358,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                             event_type: prettyEventName(item.item.source.payload.type),
                         });
                     }
-                    item.signal.resolve();
                 }
             } catch (e) {
                 sinkError = e;
@@ -362,6 +367,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             } finally {
                 if (continueTriggered) {
                     continueTriggered = false;
+                    for (const { signal } of batch.items) {
+                        signal.resolve();
+                    }
                 } else {
                     if (sinkError) {
                         if (handlingOutputSpan) {
@@ -390,29 +398,38 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                                 i < batch.items.length;
                                 i++
                             ) {
-                                const { item, signal } = batch.items[i];
-                                try {
-                                    if (
-                                        !(await this.inputQueue.enqueue(
-                                            reproContext.wrap(item),
-                                            HIGH_PRIORITY
-                                        ))
-                                    ) {
-                                        await context.source.release(
-                                            undefined,
-                                            new Error("unable to reprocess")
-                                        );
-                                    }
-                                } finally {
-                                    signal.resolve();
+                                const { item } = batch.items[i];
+                                if (
+                                    !(await this.inputQueue.enqueue(
+                                        reproContext.wrap(item),
+                                        HIGH_PRIORITY
+                                    ))
+                                ) {
+                                    await context.source.release(
+                                        undefined,
+                                        new Error("unable to reprocess")
+                                    );
                                 }
                             }
-                            this.logger.warn("sequence number conflict, retrying", {
+
+                            let errorTags: any = {
                                 key: sinkError.details.key,
                                 newSn: sinkError.details.newSn,
                                 expectedSn: sinkError.details.expectedSn,
                                 actualSn: sinkError.details.actualSn,
-                            });
+                            };
+                            if (
+                                sinkError.details.actualEpoch !== undefined ||
+                                sinkError.details.expectedEpoch !== undefined
+                            ) {
+                                errorTags = {
+                                    ...errorTags,
+                                    expectedEpoch: sinkError.details.expectedEpoch,
+                                    actualEpoch: sinkError.details.actualEpoch,
+                                };
+                            }
+                            this.logger.warn("sequence number conflict, retrying", errorTags);
+
                             super.incrementProcessedMsg(
                                 baseMetricTags,
                                 eventType,
@@ -421,6 +438,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                         }
                     } else {
                         await this.releaseSourceMessages(batch.items.map((i) => i.item));
+                    }
+
+                    for (const { signal } of batch.items) {
+                        signal.resolve();
                     }
                     batch.reset();
                 }
@@ -444,5 +465,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 );
             }
         }
+    }
+
+    protected shouldSkip(sequence: number, reproAtSn: number): boolean {
+        return sequence !== reproAtSn;
     }
 }

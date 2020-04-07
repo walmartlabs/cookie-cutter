@@ -195,7 +195,6 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
                 };
                 sinkError = e;
                 if (e instanceof SequenceConflictError) {
-                    this.logger.error(logMsg, e, { ...tags });
                     retry.bail(e);
                 } else {
                     tags.finalAttempt = retry.isFinalAttempt();

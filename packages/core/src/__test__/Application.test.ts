@@ -36,7 +36,7 @@ import {
 } from "../model";
 import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
-import { runStatefulApp, runStatelessApp } from "./util";
+import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
@@ -674,6 +674,39 @@ for (const mode of [ParallelismMode.Rpc]) {
             expect(unique.size).toBe(input.length);
         });
 
+        it("computes correct state when conflicting messages are handled in parallel", async () => {
+            const input: IMessage[] = [];
+            for (let i = 1; i < 15; i++) {
+                input.push(inc(i));
+            }
+
+            const expected = input.reduce((p, c) => p + c.payload.count, 0);
+
+            const streams = new Map();
+            await runMaterializedStatefulApp(
+                TallyState,
+                streams,
+                input,
+                {
+                    onIncrement: async (msg: Increment, ctx: IDispatchContext<TallyState>) => {
+                        const stateRef = await ctx.state.get("state-1");
+                        stateRef.state.total += msg.count;
+                        ctx.store(TallyState, stateRef, stateRef.state.snap());
+
+                        // sleep for a few messages to provoke an epoch conflict
+                        if (msg.count % 7 === 0) {
+                            await sleep(msg.count * 2 + 100);
+                        }
+                    },
+                },
+                mode,
+                ErrorHandlingMode.LogAndFail
+            );
+
+            expect(streams.get("state-1").data.total).toBe(expected);
+            expect(streams.get("state-1").seqNum).toBe(input.length);
+        });
+
         it("correctly calls the gauge metric for number of items InFlight in RPC mode", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {
@@ -900,7 +933,6 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
-                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(1);
                 expect(err).toBe(undefined);
             });
@@ -946,7 +978,6 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
-                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(1);
                 expect(err).toBe(undefined);
             });
