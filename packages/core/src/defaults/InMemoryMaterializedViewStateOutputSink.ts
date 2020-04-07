@@ -49,7 +49,7 @@ export class InMemoryMaterializedViewStateOutputSink<TSnapshot>
 
         for (const entry of updates.entries()) {
             const existing = this.storage.get(entry[0]);
-            existing.seqNum++;
+            existing.seqNum += entry[1].length;
             existing.data = entry[1][entry[1].length - 1];
         }
 

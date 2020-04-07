@@ -704,6 +704,7 @@ for (const mode of [ParallelismMode.Rpc]) {
             );
 
             expect(streams.get("state-1").data.total).toBe(expected);
+            expect(streams.get("state-1").seqNum).toBe(input.length);
         });
 
         it("correctly calls the gauge metric for number of items InFlight in RPC mode", async () => {

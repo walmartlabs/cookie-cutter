@@ -108,7 +108,7 @@ export class SinkCoordinator implements IRequireInitialization {
         const storeResult = await this.storeTarget.handle(good, retry);
         this.emitMetrics(
             this.stored(storeResult.successful),
-            this.stored(storeResult.failed),
+            this.stored(storeResult.failed.concat(bad)),
             MessageProcessingMetrics.Store
         );
 
