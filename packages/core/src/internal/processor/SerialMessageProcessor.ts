@@ -23,6 +23,7 @@ import {
     MessageProcessingResults,
     MessageRef,
     SequenceConflictError,
+    NoInvalidHandlerError,
 } from "../../model";
 import { BaseMessageProcessor } from "./BaseMessageProcessor";
 import { IMessageProcessor, IMessageProcessorConfiguration } from "./IMessageProcessor";
@@ -113,22 +114,17 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                 );
 
                 const result = this.validator.validate(msg.payload);
-                if (result.success) {
-                    await super.dispatchToHandler(msg, context, dispatchRetrier);
+                try {
+                    await super.dispatchToHandler(msg, context, dispatchRetrier, {
+                        validation: result,
+                    });
                     dispatchError = context.handlerResult.error;
-                } else {
-                    if (!(await this.dispatcher.invalid(msg.payload, context))) {
-                        this.logger.error("received invalid message", result.message, {
-                            type: msg.payload.type,
-                        });
-                        failSpan(handlingInputSpan, "message failed validation");
-                        super.incrementProcessedMsg(
-                            baseMetricTags,
-                            eventType,
-                            MessageProcessingResults.ErrInvalidMsg
-                        );
+                    if (dispatchError) {
                         break;
                     }
+                } catch (e) {
+                    dispatchError = e;
+                    throw e;
                 }
 
                 handlingInputSpan.finish();
@@ -185,17 +181,31 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                 }
             } while (!success);
         } catch (e) {
-            throw e;
+            if (!(e instanceof NoInvalidHandlerError)) {
+                throw e;
+            }
         } finally {
             if (dispatchError || sinkError) {
-                super.incrementProcessedMsg(
-                    baseMetricTags,
-                    eventType,
-                    MessageProcessingResults.ErrFailedMsgProcessing
-                );
+                if (dispatchError instanceof NoInvalidHandlerError) {
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrInvalidMsg
+                    );
+                } else {
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrFailedMsgProcessing
+                    );
+                }
             }
             if (dispatchError && handlingInputSpan) {
-                failSpan(handlingInputSpan, dispatchError);
+                if (dispatchError instanceof NoInvalidHandlerError) {
+                    failSpan(handlingInputSpan, "message failed validation");
+                } else {
+                    failSpan(handlingInputSpan, dispatchError);
+                }
             }
             if (handlingInputSpan && haveUnfinishedSpan) {
                 handlingInputSpan.finish();

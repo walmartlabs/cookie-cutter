@@ -7,6 +7,13 @@ LICENSE file in the root directory of this source tree.
 
 import { ILogger, IMessage, IMetrics, ITracing, StateRef } from ".";
 import { RetrierContext } from "../utils";
+import { IValidateResult } from "./message";
+
+export class NoInvalidHandlerError extends Error {
+    constructor() {
+        super("NoInvalidHandlerError");
+    }
+}
 
 export interface IClassType<T> {
     new (...args): T;
@@ -35,8 +42,11 @@ export interface IDispatchContext<TState = any> {
 
 export interface IMessageDispatcher {
     canDispatch(msg: IMessage): boolean;
-    dispatch(msg: IMessage, ctx: IDispatchContext): Promise<any>;
-    invalid(msg: IMessage, ctx: IDispatchContext): Promise<boolean>;
+    dispatch(
+        msg: IMessage,
+        ctx: IDispatchContext,
+        metadata: { validation: IValidateResult }
+    ): Promise<any>;
 }
 
 export interface IServiceRegistry {

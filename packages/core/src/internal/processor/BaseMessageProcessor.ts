@@ -28,6 +28,8 @@ import {
     OpenTracingOperations,
     OpenTracingTagKeys,
     SequenceConflictError,
+    IValidateResult,
+    NoInvalidHandlerError,
 } from "../../model";
 import { Future, IRetrier, iterate } from "../../utils";
 import { BufferedDispatchContext } from "../BufferedDispatchContext";
@@ -153,24 +155,33 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
     protected async dispatchToHandler(
         msg: MessageRef,
         context: BufferedDispatchContext,
-        retrier: IRetrier
+        retrier: IRetrier,
+        metadata: { validation: IValidateResult }
     ): Promise<void> {
         context.handlerResult.value = await retrier.retry(async (retry) => {
             context.retry = retry;
             try {
-                const val = await this.dispatcher.dispatch(msg.payload, context);
+                const val = await this.dispatcher.dispatch(msg.payload, context, metadata);
                 context.handlerResult.error = undefined;
                 return val;
             } catch (e) {
-                this.logger.error("failed to dispatch message", e, {
+                const logMsg = "failed to dispatch message";
+                const tags = {
                     type: msg.payload.type,
                     currentAttempt: retry.currentAttempt,
                     maxAttempts: retry.maxAttempts,
-                    finalAttempt: retry.isFinalAttempt(),
-                });
+                    finalAttempt: true,
+                };
                 context.handlerResult.error = e;
                 context.clear();
-                throw e;
+                if (e instanceof NoInvalidHandlerError) {
+                    this.logger.error(logMsg, e, { ...tags });
+                    retry.bail(e);
+                } else {
+                    tags.finalAttempt = retry.isFinalAttempt();
+                    this.logger.error(logMsg, e, { ...tags });
+                    throw e;
+                }
             }
         });
     }

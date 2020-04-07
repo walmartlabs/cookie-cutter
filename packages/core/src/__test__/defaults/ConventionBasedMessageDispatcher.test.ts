@@ -87,7 +87,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const dispatcher = new ConventionBasedMessageDispatcher(new DispatchTarget());
         const ctx = mockContext();
 
-        await dispatcher.dispatch(msg, ctx);
+        await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
         expect(ctx.logger.info).toBeCalledWith("test");
     });
 
@@ -102,7 +102,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const dispatcher = new ConventionBasedMessageDispatcher(new DispatchTarget());
         const ctx = mockContext();
 
-        await dispatcher.dispatch(msg, ctx);
+        await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
         expect(ctx.logger.info).toBeCalledWith("test");
     });
 
@@ -117,7 +117,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const dispatcher = new ConventionBasedMessageDispatcher(new DispatchTarget());
         const ctx = mockContext();
 
-        const actual = await dispatcher.dispatch(msg, ctx);
+        const actual = await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
         expect(actual).toBe(msg.payload.name);
     });
 
@@ -132,7 +132,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const dispatcher = new ConventionBasedMessageDispatcher(new AsyncDispatchTarget());
         const ctx = mockContext();
 
-        const actual = await dispatcher.dispatch(msg, ctx);
+        const actual = await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
         expect(actual).toBe(msg.payload.name);
     });
 
@@ -147,7 +147,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const dispatcher = new ConventionBasedMessageDispatcher(new AsyncDispatchTarget());
         const ctx = mockContext();
 
-        await dispatcher.dispatch(msg, ctx);
+        await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
         expect(ctx.logger.info).toBeCalledWith("test");
     });
 
