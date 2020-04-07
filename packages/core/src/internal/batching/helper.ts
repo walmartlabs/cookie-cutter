@@ -183,10 +183,10 @@ export function filterNonLinearStateChanges<T>(
                     failed: items.slice(i),
                     error: {
                         error: new SequenceConflictError({
-                            actualSn: -1,
+                            actualSn: l.sn,
                             key: state.key,
-                            expectedSn: l.sn + 1,
-                            newSn: state.seqNum + 1,
+                            expectedSn: state.seqNum,
+                            newSn: l.sn + 1,
                         }),
                         retryable: false,
                     },
