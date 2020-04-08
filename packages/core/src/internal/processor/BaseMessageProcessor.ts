@@ -165,23 +165,18 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
                 context.handlerResult.error = undefined;
                 return val;
             } catch (e) {
-                const logMsg = "failed to dispatch message";
-                const tags = {
+                context.handlerResult.error = e;
+                if (e instanceof NoInvalidHandlerError) {
+                    retry.bail(e);
+                }
+                this.logger.error("failed to dispatch message", e, {
                     type: msg.payload.type,
                     currentAttempt: retry.currentAttempt,
                     maxAttempts: retry.maxAttempts,
-                    finalAttempt: true,
-                };
-                context.handlerResult.error = e;
+                    finalAttempt: retry.isFinalAttempt(),
+                });
                 context.clear();
-                if (e instanceof NoInvalidHandlerError) {
-                    this.logger.error(logMsg, e, { ...tags });
-                    retry.bail(e);
-                } else {
-                    tags.finalAttempt = retry.isFinalAttempt();
-                    this.logger.error(logMsg, e, { ...tags });
-                    throw e;
-                }
+                throw e;
             }
         });
     }

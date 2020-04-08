@@ -223,6 +223,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                                 MessageProcessingResults.ErrInvalidMsg
                             );
                         }
+                    } else {
+                        if (dispatchError instanceof NoInvalidHandlerError) {
+                            context.handlerResult.error = undefined;
+                        }
                     }
                 }
             }

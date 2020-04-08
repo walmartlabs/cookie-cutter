@@ -120,7 +120,7 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                     });
                     dispatchError = context.handlerResult.error;
                     if (dispatchError) {
-                        break;
+                        return;
                     }
                 } catch (e) {
                     dispatchError = e;
@@ -187,6 +187,7 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
         } finally {
             if (dispatchError || sinkError) {
                 if (dispatchError instanceof NoInvalidHandlerError) {
+                    context.handlerResult.error = undefined;
                     super.incrementProcessedMsg(
                         baseMetricTags,
                         eventType,
