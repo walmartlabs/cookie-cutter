@@ -113,7 +113,7 @@ export class QueueClient implements IRequireInitialization {
         this.logger = DefaultComponentContext.logger;
 
         const { retryCount, retryInterval } = config;
-        this.queueService = createQueueService(config.storageAccount, config.storageAccessKey);
+        this.queueService = createQueueService(config.storageAccount, config.storageAccessKey, config.url);
         if (retryCount > 0) {
             const retryOperations = new LinearRetryPolicyFilter(retryCount, retryInterval);
             this.queueService = this.queueService.withFilter(retryOperations);
