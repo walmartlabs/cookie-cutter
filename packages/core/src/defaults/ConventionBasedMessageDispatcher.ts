@@ -5,13 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import {
-    IDispatchContext,
-    IMessage,
-    IMessageDispatcher,
-    IValidateResult,
-    NoInvalidHandlerError,
-} from "../model";
+import { IDispatchContext, IMessage, IMessageDispatcher, IValidateResult } from "../model";
 import { prettyEventName } from "../utils";
 
 export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
@@ -21,6 +15,12 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
         const type = prettyEventName(msg.type);
         const name = `on${type}`;
         const func = this.target[name];
+        return func !== undefined;
+    }
+
+    public hasInvalid(): boolean {
+        const invalid = "invalid";
+        const func = this.target[invalid];
         return func !== undefined;
     }
 
@@ -58,11 +58,6 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
             const func = this.target[invalid];
             if (func) {
                 await func.apply(this.target, [msg, ctx]);
-            } else {
-                ctx.logger.error("received invalid message", metadata.validation.message, {
-                    type: msg.payload.type,
-                });
-                throw new NoInvalidHandlerError();
             }
         }
     }

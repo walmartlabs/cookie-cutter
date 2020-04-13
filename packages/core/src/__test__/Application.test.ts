@@ -403,6 +403,73 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             );
         });
 
+        for (const errorHandlingMode of [
+            ErrorHandlingMode.LogAndContinue,
+            ErrorHandlingMode.LogAndFail,
+        ]) {
+            const modeStr =
+                errorHandlingMode === ErrorHandlingMode.LogAndFail
+                    ? "LogAndFail"
+                    : "LogAndContinue";
+            it(`successfully increments ErrFailedMsgProcessing on error from dispatch handler in ${modeStr}`, async () => {
+                const metrics = jest.fn().mockImplementationOnce(() => {
+                    return {
+                        increment: jest.fn(),
+                        gauge: jest.fn(),
+                        timing: jest.fn(),
+                    };
+                })();
+
+                let capture: any[] = [];
+                let err;
+                try {
+                    await Application.create()
+                        .metrics(metrics)
+                        .input()
+                        .add(
+                            new StaticInputSource([
+                                { type: Increment.name, payload: new Increment(4) },
+                            ])
+                        )
+                        .annotate({
+                            annotate: (input: IMessage): IMetricTags => {
+                                return { tag: input.payload.count };
+                            },
+                        })
+                        .done()
+                        .dispatch({
+                            onIncrement: (msg: Increment, ctx: IDispatchContext) => {
+                                if (msg.count === 4) {
+                                    throw new Error("Throws from dispatch");
+                                }
+                                ctx.publish(Increment, msg);
+                            },
+                        })
+                        .output()
+                        .published(new CapturingOutputSink(capture))
+                        .done()
+                        .run(errorHandlingMode, mode);
+                } catch (e) {
+                    err = e;
+                }
+                if (errorHandlingMode === ErrorHandlingMode.LogAndFail) {
+                    expect(err).toMatchObject(
+                        new Error(`test failed: init: true, run: false, dispose: true`)
+                    );
+                }
+
+                capture = capture.map((m) => m.message);
+                expect(capture).toMatchObject([]);
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag: 4,
+                        result: MessageProcessingResults.ErrFailedMsgProcessing,
+                    })
+                );
+            });
+        }
+
         it("doesn't record metrics for handlers that throw an error", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {

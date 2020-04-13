@@ -29,7 +29,6 @@ import {
     OpenTracingTagKeys,
     SequenceConflictError,
     IValidateResult,
-    NoInvalidHandlerError,
 } from "../../model";
 import { Future, IRetrier, iterate } from "../../utils";
 import { BufferedDispatchContext } from "../BufferedDispatchContext";
@@ -165,16 +164,13 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
                 context.handlerResult.error = undefined;
                 return val;
             } catch (e) {
-                context.handlerResult.error = e;
-                if (e instanceof NoInvalidHandlerError) {
-                    retry.bail(e);
-                }
                 this.logger.error("failed to dispatch message", e, {
                     type: msg.payload.type,
                     currentAttempt: retry.currentAttempt,
                     maxAttempts: retry.maxAttempts,
                     finalAttempt: retry.isFinalAttempt(),
                 });
+                context.handlerResult.error = e;
                 context.clear();
                 throw e;
             }

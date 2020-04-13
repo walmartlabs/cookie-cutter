@@ -9,12 +9,6 @@ import { ILogger, IMessage, IMetrics, ITracing, StateRef } from ".";
 import { RetrierContext } from "../utils";
 import { IValidateResult } from "./message";
 
-export class NoInvalidHandlerError extends Error {
-    constructor() {
-        super("NoInvalidHandlerError");
-    }
-}
-
 export interface IClassType<T> {
     new (...args): T;
     readonly name: string;
@@ -42,6 +36,7 @@ export interface IDispatchContext<TState = any> {
 
 export interface IMessageDispatcher {
     canDispatch(msg: IMessage): boolean;
+    hasInvalid(): boolean;
     dispatch(
         msg: IMessage,
         ctx: IDispatchContext,

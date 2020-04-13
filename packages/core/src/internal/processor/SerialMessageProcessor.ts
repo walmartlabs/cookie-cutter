@@ -23,7 +23,6 @@ import {
     MessageProcessingResults,
     MessageRef,
     SequenceConflictError,
-    NoInvalidHandlerError,
 } from "../../model";
 import { BaseMessageProcessor } from "./BaseMessageProcessor";
 import { IMessageProcessor, IMessageProcessorConfiguration } from "./IMessageProcessor";
@@ -91,6 +90,7 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
         let baseMetricTags: IMetricTags = {};
         let dispatchError;
         let sinkError;
+        let msgInvalid = false;
         try {
             if (!this.dispatcher.canDispatch(msg.payload)) {
                 super.incrementProcessedMsg({}, eventType, MessageProcessingResults.Unhandled);
@@ -114,6 +114,20 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                 );
 
                 const result = this.validator.validate(msg.payload);
+                if (!result.success) {
+                    context.logger.error("received invalid message", result.message, {
+                        type: msg.payload.type,
+                    });
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrInvalidMsg
+                    );
+                    msgInvalid = true;
+                    if (!this.dispatcher.hasInvalid()) {
+                        return;
+                    }
+                }
                 try {
                     await super.dispatchToHandler(msg, context, dispatchRetrier, {
                         validation: result,
@@ -173,39 +187,31 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                         }
                     }
                 } else {
-                    super.incrementProcessedMsg(
-                        baseMetricTags,
-                        eventType,
-                        MessageProcessingResults.ErrInvalidMsg
-                    );
+                    if (!msgInvalid) {
+                        msgInvalid = true;
+                        super.incrementProcessedMsg(
+                            baseMetricTags,
+                            eventType,
+                            MessageProcessingResults.ErrInvalidMsg
+                        );
+                    }
                 }
             } while (!success);
         } catch (e) {
-            if (!(e instanceof NoInvalidHandlerError)) {
-                throw e;
-            }
+            throw e;
         } finally {
             if (dispatchError || sinkError) {
-                if (dispatchError instanceof NoInvalidHandlerError) {
-                    context.handlerResult.error = undefined;
-                    super.incrementProcessedMsg(
-                        baseMetricTags,
-                        eventType,
-                        MessageProcessingResults.ErrInvalidMsg
-                    );
-                } else {
-                    super.incrementProcessedMsg(
-                        baseMetricTags,
-                        eventType,
-                        MessageProcessingResults.ErrFailedMsgProcessing
-                    );
-                }
+                super.incrementProcessedMsg(
+                    baseMetricTags,
+                    eventType,
+                    MessageProcessingResults.ErrFailedMsgProcessing
+                );
             }
-            if (dispatchError && handlingInputSpan) {
-                if (dispatchError instanceof NoInvalidHandlerError) {
-                    failSpan(handlingInputSpan, "message failed validation");
-                } else {
+            if (handlingInputSpan) {
+                if (dispatchError) {
                     failSpan(handlingInputSpan, dispatchError);
+                } else if (msgInvalid) {
+                    failSpan(handlingInputSpan, "message failed validation");
                 }
             }
             if (handlingInputSpan && haveUnfinishedSpan) {

@@ -33,7 +33,6 @@ import { BaseMessageProcessor, IInflightSignal } from "./BaseMessageProcessor";
 import { Batch } from "./Batch";
 import { ReprocessingContext } from "./ReprocessingContext";
 import { annotator, validate } from "./utils";
-import { NoInvalidHandlerError } from "../../model";
 
 export interface IQueueItem<T> {
     item: T;
@@ -181,6 +180,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         let handlingInputSpan: Span | undefined;
         let handled: boolean = false;
         let dispatchError;
+        let msgInvalid = false;
         try {
             if (msg.isEvicted) {
                 return;
@@ -203,6 +203,20 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 super.incrementReceived(baseMetricTags, eventType);
 
                 const result = this.validator.validate(msg.payload);
+                if (!result.success) {
+                    this.logger.error("received invalid message", result.message, {
+                        type: msg.payload.type,
+                    });
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrInvalidMsg
+                    );
+                    msgInvalid = true;
+                    if (!this.dispatcher.hasInvalid()) {
+                        return;
+                    }
+                }
                 try {
                     await super.dispatchToHandler(msg, context, dispatchRetrier, {
                         validation: result,
@@ -217,15 +231,14 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                             context.complete();
                         } else {
                             context.clear();
-                            super.incrementProcessedMsg(
-                                baseMetricTags,
-                                eventType,
-                                MessageProcessingResults.ErrInvalidMsg
-                            );
-                        }
-                    } else {
-                        if (dispatchError instanceof NoInvalidHandlerError) {
-                            context.handlerResult.error = undefined;
+                            if (!msgInvalid) {
+                                msgInvalid = true;
+                                super.incrementProcessedMsg(
+                                    baseMetricTags,
+                                    eventType,
+                                    MessageProcessingResults.ErrInvalidMsg
+                                );
+                            }
                         }
                     }
                 }
@@ -243,31 +256,21 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 await waitForPendingIO();
             }
         } catch (e) {
-            if (!(e instanceof NoInvalidHandlerError)) {
-                throw new Error("failed to process message");
-            }
+            throw new Error("failed to process message");
         } finally {
+            if (handlingInputSpan) {
+                if (dispatchError) {
+                    failSpan(handlingInputSpan, dispatchError);
+                } else if (msgInvalid) {
+                    failSpan(handlingInputSpan, "message failed validation");
+                }
+            }
             if (dispatchError) {
-                if (handlingInputSpan) {
-                    if (dispatchError instanceof NoInvalidHandlerError) {
-                        failSpan(handlingInputSpan, "message failed validation");
-                    } else {
-                        failSpan(handlingInputSpan, dispatchError);
-                    }
-                }
-                if (dispatchError instanceof NoInvalidHandlerError) {
-                    super.incrementProcessedMsg(
-                        baseMetricTags,
-                        eventType,
-                        MessageProcessingResults.ErrInvalidMsg
-                    );
-                } else {
-                    super.incrementProcessedMsg(
-                        baseMetricTags,
-                        eventType,
-                        MessageProcessingResults.ErrFailedMsgProcessing
-                    );
-                }
+                super.incrementProcessedMsg(
+                    baseMetricTags,
+                    eventType,
+                    MessageProcessingResults.ErrFailedMsgProcessing
+                );
             }
             if (!handled) {
                 try {
