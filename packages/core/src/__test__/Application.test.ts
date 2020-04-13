@@ -263,10 +263,19 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
         });
 
         it("correctly routes appropriate message through the invalid message handler", async () => {
+            const metrics = jest.fn().mockImplementationOnce(() => {
+                return {
+                    increment: jest.fn(),
+                    gauge: jest.fn(),
+                    timing: jest.fn(),
+                };
+            })();
             const mockInvalid = jest.fn((msg: IMessage, ctx: IDispatchContext) => {
                 const count = (msg.payload as Increment).count;
-                if ((msg.payload as Increment).count === 3) {
+                if (count === 3) {
                     ctx.publish(Increment, new Increment(10 * count));
+                } else if (count === 11) {
+                    // do nothing
                 } else {
                     ctx.publish(Increment, new Increment(10 * count + 1));
                 }
@@ -283,6 +292,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
 
             let capture: any[] = [];
             await Application.create()
+                .metrics(metrics)
                 .validate(new MyMessageValidator())
                 .input()
                 .add(
@@ -291,7 +301,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                         { type: Increment.name, payload: new Increment(3) }, // fails input validation, passes output validation
                         { type: Increment.name, payload: new Increment(4) },
                         { type: Increment.name, payload: new Increment(6) }, // passes input validation, fails output validation
-                        { type: Increment.name, payload: new Increment(9) }, // fails input validatin and fails output validation
+                        { type: Increment.name, payload: new Increment(9) }, // fails input validation and fails output validation after getting modified
+                        { type: Increment.name, payload: new Increment(11) }, // fails input validation and fails output validation
                     ])
                 )
                 .done()
@@ -312,9 +323,10 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
 
             capture = capture.map((m) => m.message);
             expect(capture).toEqual([inc(2), inc(30), inc(4)]);
-            expect(mockInvalid).toHaveBeenCalledTimes(2);
+            expect(mockInvalid).toHaveBeenCalledTimes(3);
             expect(mockInvalid).toHaveBeenNthCalledWith(1, inc(3), expect.any(Object));
             expect(mockInvalid).toHaveBeenNthCalledWith(2, inc(9), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(3, inc(11), expect.any(Object));
         });
 
         it("successfully proceeds after an invalid input and invalid output messages", async () => {
