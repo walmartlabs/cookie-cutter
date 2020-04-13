@@ -48,6 +48,15 @@ class AsyncDispatchTarget {
             }, 100);
         });
     }
+
+    public invalid(msg: IMessage, ctx: IDispatchContext): Promise<string> {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                ctx.logger.info(msg.payload.name);
+                resolve(msg.payload.name);
+            }, 100);
+        });
+    }
 }
 
 const retry: RetrierContext = createRetrierContext(10);
@@ -168,5 +177,32 @@ describe("ConventionBasedMessageDispatcher", () => {
         const dispatcher = new ConventionBasedMessageDispatcher(new DispatchTarget());
         expect(dispatcher.canDispatch(msg1)).toBeTruthy();
         expect(dispatcher.canDispatch(msg2)).toBeFalsy();
+    });
+
+    it("indicates if it has invalid message handler", () => {
+        class DispatchTarget {
+            public invalid(): void {
+                // do nothing
+            }
+        }
+        const dispatcherWith = new ConventionBasedMessageDispatcher(new DispatchTarget());
+        const dispatcherWithout = new ConventionBasedMessageDispatcher({});
+        expect(dispatcherWith.hasInvalid()).toBeTruthy();
+        expect(dispatcherWithout.hasInvalid()).toBeFalsy();
+    });
+
+    it("awaits async invalid message handler", async () => {
+        const msg: IMessage = {
+            type: "test.Trigger",
+            payload: {
+                name: "test",
+            },
+        };
+
+        const dispatcher = new ConventionBasedMessageDispatcher(new AsyncDispatchTarget());
+        const ctx = mockContext();
+
+        await dispatcher.dispatch(msg, ctx, { validation: { success: false } });
+        expect(ctx.logger.info).toBeCalledWith("test");
     });
 });
