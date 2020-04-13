@@ -60,7 +60,7 @@ export class BlobStorageConfiguration implements IBlobStorageConfiguration {
     public get url(): string {
         return config.noop();
     }
-    
+
     @config.field(config.converters.string)
     public set storageAccount(_: string) {
         config.noop();
