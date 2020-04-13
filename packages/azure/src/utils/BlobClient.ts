@@ -45,7 +45,11 @@ export class BlobClient implements IRequireInitialization {
     constructor(config: IBlobStorageConfiguration) {
         this.containerName = config.container;
         this.storageAccount = config.storageAccount;
-        this.blobService = createBlobService(config.storageAccount, config.storageAccessKey);
+        this.blobService = createBlobService(
+            config.storageAccount,
+            config.storageAccessKey,
+            config.url
+        );
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
         // explicitly setting options as undefined to avoid setting it to null which causes issues.

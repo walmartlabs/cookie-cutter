@@ -30,6 +30,7 @@ export interface IQueueMessagePreprocessor {
 }
 
 export interface IQueueConfiguration {
+    readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;

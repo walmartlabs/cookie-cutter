@@ -26,6 +26,7 @@ export interface ICosmosConfiguration {
 }
 
 export interface IBlobStorageConfiguration {
+    readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly container: string;
