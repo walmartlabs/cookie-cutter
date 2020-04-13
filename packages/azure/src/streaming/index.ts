@@ -26,6 +26,7 @@ import {
 } from "./internal";
 
 export interface IQueueConfiguration {
+    readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;

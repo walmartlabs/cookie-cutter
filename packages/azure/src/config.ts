@@ -54,6 +54,14 @@ export class CosmosConfiguration implements ICosmosConfiguration {
 @config.section
 export class BlobStorageConfiguration implements IBlobStorageConfiguration {
     @config.field(config.converters.string)
+    public set url(_: string) {
+        config.noop();
+    }
+    public get url(): string {
+        return config.noop();
+    }
+    
+    @config.field(config.converters.string)
     public set storageAccount(_: string) {
         config.noop();
     }
