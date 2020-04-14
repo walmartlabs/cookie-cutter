@@ -202,7 +202,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 super.incrementReceived(baseMetricTags, eventType);
 
                 const result = this.validator.validate(msg.payload);
-                if (result.success || this.dispatcher.canHandleInvalid()) {
+                if (
+                    result.success ||
+                    (this.dispatcher.canHandleInvalid && this.dispatcher.canHandleInvalid())
+                ) {
                     try {
                         await super.dispatchToHandler(msg, context, dispatchRetrier, {
                             validation: result,

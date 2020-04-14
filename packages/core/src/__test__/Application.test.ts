@@ -461,11 +461,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             ErrorHandlingMode.LogAndContinue,
             ErrorHandlingMode.LogAndFail,
         ]) {
-            const modeStr =
-                errorHandlingMode === ErrorHandlingMode.LogAndFail
-                    ? "LogAndFail"
-                    : "LogAndContinue";
-            it(`successfully increments ErrFailedMsgProcessing on error from dispatch handler in ${modeStr}`, async () => {
+            it(`successfully increments ErrFailedMsgProcessing on error from dispatch handler in ${ErrorHandlingMode[errorHandlingMode]}`, async () => {
                 const metrics = jest.fn().mockImplementationOnce(() => {
                     return {
                         increment: jest.fn(),
