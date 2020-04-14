@@ -66,7 +66,7 @@ Please mind that `before` and `after`'s first argument is of type `IMessage`. Bo
 
 You can also add an `invalid` function which will get invoked if a message does not pass input validation. This handler will be invoked for any message that does not pass validation. This function allows full control over logging the payload of the message or any other relevant metadata. It can also be used to throw an Error and force the application to terminate if in `LogAndFail` or `LogAndRetryOrFail` mode (if that's appropriate for the use case).
 
-Defining this function disables the built-in logging for `received invalid message`.
+Defining this function disables the built-in error log for `received invalid message`, does not fail the input handling span and does not increment the `error.invalid_msg` metric.
 
 ```typescript
 export function invalid(msg: IMessage, ctx: IDispatchContext): void {

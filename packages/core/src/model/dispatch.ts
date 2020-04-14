@@ -36,7 +36,7 @@ export interface IDispatchContext<TState = any> {
 
 export interface IMessageDispatcher {
     canDispatch(msg: IMessage): boolean;
-    hasInvalid(): boolean;
+    canHandleInvalid?: () => boolean;
     dispatch(
         msg: IMessage,
         ctx: IDispatchContext,

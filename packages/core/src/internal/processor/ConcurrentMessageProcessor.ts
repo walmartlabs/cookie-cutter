@@ -180,7 +180,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         let handlingInputSpan: Span | undefined;
         let handled: boolean = false;
         let dispatchError;
-        let msgInvalid = false;
         try {
             if (msg.isEvicted) {
                 return;
@@ -203,36 +202,18 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 super.incrementReceived(baseMetricTags, eventType);
 
                 const result = this.validator.validate(msg.payload);
-                if (!result.success) {
-                    this.logger.error("received invalid message", result.message, {
-                        type: msg.payload.type,
-                    });
-                    super.incrementProcessedMsg(
-                        baseMetricTags,
-                        eventType,
-                        MessageProcessingResults.ErrInvalidMsg
-                    );
-                    msgInvalid = true;
-                    if (!this.dispatcher.hasInvalid()) {
-                        return;
-                    }
-                }
-                try {
-                    await super.dispatchToHandler(msg, context, dispatchRetrier, {
-                        validation: result,
-                    });
-                    dispatchError = context.handlerResult.error;
-                } catch (e) {
-                    dispatchError = e;
-                    throw e;
-                } finally {
-                    if (!dispatchError) {
-                        if (validate(context, this.validator, this.logger)) {
-                            context.complete();
-                        } else {
-                            context.clear();
-                            if (!msgInvalid) {
-                                msgInvalid = true;
+                if (result.success || this.dispatcher.canHandleInvalid()) {
+                    try {
+                        await super.dispatchToHandler(msg, context, dispatchRetrier, {
+                            validation: result,
+                        });
+                        dispatchError = context.handlerResult.error;
+
+                        if (!dispatchError) {
+                            if (validate(context, this.validator, this.logger)) {
+                                context.complete();
+                            } else {
+                                context.clear();
                                 super.incrementProcessedMsg(
                                     baseMetricTags,
                                     eventType,
@@ -240,7 +221,20 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                                 );
                             }
                         }
+                    } catch (e) {
+                        dispatchError = e;
+                        throw e;
                     }
+                } else {
+                    this.logger.error("received invalid message", result.message, {
+                        type: msg.payload.type,
+                    });
+                    failSpan(handlingInputSpan, "message failed validation");
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrInvalidMsg
+                    );
                 }
             }
 
@@ -258,14 +252,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         } catch (e) {
             throw new Error("failed to process message");
         } finally {
-            if (handlingInputSpan) {
-                if (dispatchError) {
-                    failSpan(handlingInputSpan, dispatchError);
-                } else if (msgInvalid) {
-                    failSpan(handlingInputSpan, "message failed validation");
-                }
-            }
             if (dispatchError) {
+                if (handlingInputSpan) {
+                    failSpan(handlingInputSpan, dispatchError);
+                }
                 super.incrementProcessedMsg(
                     baseMetricTags,
                     eventType,

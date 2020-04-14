@@ -29,6 +29,10 @@ class DispatchTarget {
     public onRpcHandler(msg: ITrigger): string {
         return msg.name;
     }
+
+    public invalid(): void {
+        // do nothing
+    }
 }
 
 class AsyncDispatchTarget {
@@ -50,12 +54,21 @@ class AsyncDispatchTarget {
     }
 
     public invalid(msg: IMessage, ctx: IDispatchContext): Promise<string> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                ctx.logger.info(msg.payload.name);
-                resolve(msg.payload.name);
-            }, 100);
-        });
+        if (msg.type === "test.Trigger") {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    ctx.logger.info(msg.payload.name);
+                    resolve(msg.payload.name);
+                }, 100);
+            });
+        }
+        if (msg.type === "test.RpcHandler") {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(msg.payload.name);
+                }, 100);
+            });
+        }
     }
 }
 
@@ -179,16 +192,11 @@ describe("ConventionBasedMessageDispatcher", () => {
         expect(dispatcher.canDispatch(msg2)).toBeFalsy();
     });
 
-    it("indicates if it has invalid message handler", () => {
-        class DispatchTarget {
-            public invalid(): void {
-                // do nothing
-            }
-        }
+    it("indicates if it can handle invalid messages", () => {
         const dispatcherWith = new ConventionBasedMessageDispatcher(new DispatchTarget());
         const dispatcherWithout = new ConventionBasedMessageDispatcher({});
-        expect(dispatcherWith.hasInvalid()).toBeTruthy();
-        expect(dispatcherWithout.hasInvalid()).toBeFalsy();
+        expect(dispatcherWith.canHandleInvalid()).toBeTruthy();
+        expect(dispatcherWithout.canHandleInvalid()).toBeFalsy();
     });
 
     it("awaits async invalid message handler", async () => {
@@ -204,5 +212,20 @@ describe("ConventionBasedMessageDispatcher", () => {
 
         await dispatcher.dispatch(msg, ctx, { validation: { success: false } });
         expect(ctx.logger.info).toBeCalledWith("test");
+    });
+
+    it("returns async invalid message handler's return value", async () => {
+        const msg: IMessage = {
+            type: "test.RpcHandler",
+            payload: {
+                name: "test",
+            },
+        };
+
+        const dispatcher = new ConventionBasedMessageDispatcher(new AsyncDispatchTarget());
+        const ctx = mockContext();
+
+        const actual = await dispatcher.dispatch(msg, ctx, { validation: { success: false } });
+        expect(actual).toBe(msg.payload.name);
     });
 });

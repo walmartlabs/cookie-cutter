@@ -18,10 +18,9 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
         return func !== undefined;
     }
 
-    public hasInvalid(): boolean {
+    public canHandleInvalid(): boolean {
         const invalid = "invalid";
-        const func = this.target[invalid];
-        return func !== undefined;
+        return this.target[invalid] !== undefined;
     }
 
     public async dispatch(
@@ -29,37 +28,31 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
         ctx: IDispatchContext,
         metadata: { validation: IValidateResult }
     ): Promise<any> {
-        if (metadata.validation.success) {
-            const type = prettyEventName(msg.type);
-            const calls: [string, any, boolean][] = [
-                ["before", msg, false],
-                [`on${type}`, msg.payload, true],
-                ["after", msg, false],
-            ];
+        const type = prettyEventName(msg.type);
+        const calls: [string, any, boolean][] = metadata.validation.success
+            ? [
+                  ["before", msg, false],
+                  [`on${type}`, msg.payload, true],
+                  ["after", msg, false],
+              ]
+            : [["invalid", msg, true]];
 
-            let result: any | undefined;
-            for (const [name, msg, store] of calls) {
-                const func = this.target[name];
-                if (func) {
-                    let val = func.apply(this.target, [msg, ctx]);
-                    if (this.isPromise(val)) {
-                        val = await val;
-                    }
+        let result: any | undefined;
+        for (const [name, msg, store] of calls) {
+            const func = this.target[name];
+            if (func) {
+                let val = func.apply(this.target, [msg, ctx]);
+                if (this.isPromise(val)) {
+                    val = await val;
+                }
 
-                    if (store) {
-                        result = val;
-                    }
+                if (store) {
+                    result = val;
                 }
             }
-
-            return result;
-        } else {
-            const invalid = "invalid";
-            const func = this.target[invalid];
-            if (func) {
-                await func.apply(this.target, [msg, ctx]);
-            }
         }
+
+        return result;
     }
 
     private isPromise(val: any): val is Promise<void> {
