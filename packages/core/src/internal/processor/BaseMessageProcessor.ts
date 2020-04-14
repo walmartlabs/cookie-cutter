@@ -165,6 +165,7 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
                 return val;
             } catch (e) {
                 this.logger.error("failed to dispatch message", e, {
+                    ...msg.getAllMetadata(),
                     type: msg.payload.type,
                     currentAttempt: retry.currentAttempt,
                     maxAttempts: retry.maxAttempts,
