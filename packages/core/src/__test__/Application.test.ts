@@ -262,6 +262,115 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             expect(tally).toBe(-3);
         });
 
+        it("correctly routes appropriate message through the invalid message handler", async () => {
+            const metrics = jest.fn().mockImplementationOnce(() => {
+                return {
+                    increment: jest.fn(),
+                    gauge: jest.fn(),
+                    timing: jest.fn(),
+                };
+            })();
+            const mockInvalid = jest.fn(async (msg: IMessage, ctx: IDispatchContext) => {
+                const count = (msg.payload as Increment).count;
+                if (count === 3) {
+                    ctx.publish(Increment, new Increment(10 * count));
+                } else if (count === 11) {
+                    // do nothing
+                } else if (count === 13) {
+                    // sleep so concurrent app does not crash too early
+                    await sleep(200);
+                    throw new Error("Error from invalid message handler");
+                } else {
+                    ctx.publish(Increment, new Increment(10 * count + 1));
+                }
+            });
+            class MyMessageValidator implements IMessageValidator {
+                public validate(msg: IMessage): IValidateResult {
+                    if (msg.payload.count % 2 === 0) {
+                        return { success: true };
+                    } else {
+                        return { success: false, message: "failed validate" };
+                    }
+                }
+            }
+
+            let capture: any[] = [];
+            try {
+                await Application.create()
+                    .metrics(metrics)
+                    .validate(new MyMessageValidator())
+                    .input()
+                    .add(
+                        new StaticInputSource([
+                            { type: Increment.name, payload: new Increment(2) },
+                            { type: Increment.name, payload: new Increment(3) }, // fails input validation, passes output validation
+                            { type: Increment.name, payload: new Increment(4) },
+                            { type: Increment.name, payload: new Increment(6) }, // passes input validation, fails output validation
+                            { type: Increment.name, payload: new Increment(9) }, // fails input validation and fails output validation after getting modified
+                            { type: Increment.name, payload: new Increment(11) }, // fails input validation and passes outout validation with zero output messages
+                            { type: Increment.name, payload: new Increment(13) }, // fails input validation and throws from invalid handler
+                        ])
+                    )
+                    .annotate({
+                        annotate: (input: IMessage): IMetricTags => {
+                            return { tag: input.payload.count };
+                        },
+                    })
+                    .done()
+                    .dispatch({
+                        onIncrement: (msg: Increment, ctx: IDispatchContext) => {
+                            if (msg.count === 6) {
+                                ctx.publish(Increment, new Increment(7));
+                            } else {
+                                ctx.publish(Increment, msg);
+                            }
+                        },
+                        invalid: mockInvalid,
+                    })
+                    .output()
+                    .published(new CapturingOutputSink(capture))
+                    .done()
+                    .run(ErrorHandlingMode.LogAndFail, mode);
+            } catch (e) {
+                expect(e).toMatchObject(
+                    new Error(`test failed: init: true, run: false, dispose: true`)
+                );
+            }
+
+            capture = capture.map((m) => m.message);
+            expect(capture).toEqual([inc(2), inc(30), inc(4)]);
+            expect(mockInvalid).toHaveBeenCalledTimes(4);
+            expect(mockInvalid).toHaveBeenNthCalledWith(1, inc(3), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(2, inc(9), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(3, inc(11), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(4, inc(13), expect.any(Object));
+            for (const tag of [2, 3, 4, 11]) {
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag,
+                        result: MessageProcessingResults.Success,
+                    })
+                );
+            }
+            for (const tag of [6, 9]) {
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag,
+                        result: MessageProcessingResults.ErrInvalidMsg,
+                    })
+                );
+            }
+            expect(metrics.increment).toHaveBeenCalledWith(
+                MessageProcessingMetrics.Processed,
+                expect.objectContaining({
+                    tag: 13,
+                    result: MessageProcessingResults.ErrFailedMsgProcessing,
+                })
+            );
+        });
+
         it("successfully proceeds after an invalid input and invalid output messages", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {
@@ -347,6 +456,69 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 })
             );
         });
+
+        for (const errorHandlingMode of [
+            ErrorHandlingMode.LogAndContinue,
+            ErrorHandlingMode.LogAndFail,
+        ]) {
+            it(`successfully increments ErrFailedMsgProcessing on error from dispatch handler in ${ErrorHandlingMode[errorHandlingMode]}`, async () => {
+                const metrics = jest.fn().mockImplementationOnce(() => {
+                    return {
+                        increment: jest.fn(),
+                        gauge: jest.fn(),
+                        timing: jest.fn(),
+                    };
+                })();
+
+                let capture: any[] = [];
+                let err;
+                try {
+                    await Application.create()
+                        .metrics(metrics)
+                        .input()
+                        .add(
+                            new StaticInputSource([
+                                { type: Increment.name, payload: new Increment(4) },
+                            ])
+                        )
+                        .annotate({
+                            annotate: (input: IMessage): IMetricTags => {
+                                return { tag: input.payload.count };
+                            },
+                        })
+                        .done()
+                        .dispatch({
+                            onIncrement: (msg: Increment, ctx: IDispatchContext) => {
+                                if (msg.count === 4) {
+                                    throw new Error("Throws from dispatch");
+                                }
+                                ctx.publish(Increment, msg);
+                            },
+                        })
+                        .output()
+                        .published(new CapturingOutputSink(capture))
+                        .done()
+                        .run(errorHandlingMode, mode);
+                } catch (e) {
+                    err = e;
+                }
+                if (errorHandlingMode === ErrorHandlingMode.LogAndFail) {
+                    expect(err).toMatchObject(
+                        new Error(`test failed: init: true, run: false, dispose: true`)
+                    );
+                }
+
+                capture = capture.map((m) => m.message);
+                expect(capture).toMatchObject([]);
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag: 4,
+                        result: MessageProcessingResults.ErrFailedMsgProcessing,
+                    })
+                );
+            });
+        }
 
         it("doesn't record metrics for handlers that throw an error", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {

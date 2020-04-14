@@ -28,6 +28,7 @@ import {
     OpenTracingOperations,
     OpenTracingTagKeys,
     SequenceConflictError,
+    IValidateResult,
 } from "../../model";
 import { Future, IRetrier, iterate } from "../../utils";
 import { BufferedDispatchContext } from "../BufferedDispatchContext";
@@ -153,12 +154,13 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
     protected async dispatchToHandler(
         msg: MessageRef,
         context: BufferedDispatchContext,
-        retrier: IRetrier
+        retrier: IRetrier,
+        metadata: { validation: IValidateResult }
     ): Promise<void> {
         context.handlerResult.value = await retrier.retry(async (retry) => {
             context.retry = retry;
             try {
-                const val = await this.dispatcher.dispatch(msg.payload, context);
+                const val = await this.dispatcher.dispatch(msg.payload, context, metadata);
                 context.handlerResult.error = undefined;
                 return val;
             } catch (e) {

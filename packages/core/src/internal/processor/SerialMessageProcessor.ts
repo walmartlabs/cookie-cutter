@@ -99,19 +99,6 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
             baseMetricTags = annotator(msg.payload, inputMessageMetricAnnotator);
             super.incrementReceived(baseMetricTags, eventType);
 
-            const result = this.validator.validate(msg.payload);
-            if (!result.success) {
-                this.logger.error("received invalid message", result.message, {
-                    type: msg.payload.type,
-                });
-                super.incrementProcessedMsg(
-                    baseMetricTags,
-                    eventType,
-                    MessageProcessingResults.ErrInvalidMsg
-                );
-                return;
-            }
-
             let success: boolean;
             do {
                 success = true;
@@ -125,8 +112,35 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
                     serviceDiscovery
                 );
 
-                await super.dispatchToHandler(msg, context, dispatchRetrier);
-                dispatchError = context.handlerResult.error;
+                const result = this.validator.validate(msg.payload);
+                if (
+                    result.success ||
+                    (this.dispatcher.canHandleInvalid && this.dispatcher.canHandleInvalid())
+                ) {
+                    try {
+                        await super.dispatchToHandler(msg, context, dispatchRetrier, {
+                            validation: result,
+                        });
+                        dispatchError = context.handlerResult.error;
+                        if (dispatchError) {
+                            return;
+                        }
+                    } catch (e) {
+                        dispatchError = e;
+                        throw e;
+                    }
+                } else {
+                    this.logger.error("received invalid message", result.message, {
+                        type: msg.payload.type,
+                    });
+                    failSpan(handlingInputSpan, "message failed validation");
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrInvalidMsg
+                    );
+                    return;
+                }
 
                 handlingInputSpan.finish();
                 handlingInputSpan = undefined;

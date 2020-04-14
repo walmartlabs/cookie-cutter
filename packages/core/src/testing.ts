@@ -94,7 +94,7 @@ export async function runIntegrationTest(
                     result2.length = 0;
                     source.responses.length = 0;
                 } else {
-                    return await dispatcher.dispatch(msg, ctx);
+                    return await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
                 }
             },
         })

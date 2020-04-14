@@ -202,19 +202,31 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 super.incrementReceived(baseMetricTags, eventType);
 
                 const result = this.validator.validate(msg.payload);
-                if (result.success) {
-                    await super.dispatchToHandler(msg, context, dispatchRetrier);
-                    dispatchError = context.handlerResult.error;
+                if (
+                    result.success ||
+                    (this.dispatcher.canHandleInvalid && this.dispatcher.canHandleInvalid())
+                ) {
+                    try {
+                        await super.dispatchToHandler(msg, context, dispatchRetrier, {
+                            validation: result,
+                        });
+                        dispatchError = context.handlerResult.error;
 
-                    if (validate(context, this.validator, this.logger)) {
-                        context.complete();
-                    } else {
-                        context.clear();
-                        super.incrementProcessedMsg(
-                            baseMetricTags,
-                            eventType,
-                            MessageProcessingResults.ErrInvalidMsg
-                        );
+                        if (!dispatchError) {
+                            if (validate(context, this.validator, this.logger)) {
+                                context.complete();
+                            } else {
+                                context.clear();
+                                super.incrementProcessedMsg(
+                                    baseMetricTags,
+                                    eventType,
+                                    MessageProcessingResults.ErrInvalidMsg
+                                );
+                            }
+                        }
+                    } catch (e) {
+                        dispatchError = e;
+                        throw e;
                     }
                 } else {
                     this.logger.error("received invalid message", result.message, {
