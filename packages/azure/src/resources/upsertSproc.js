@@ -38,7 +38,7 @@ function upsertSproc(doc, originalSn) {
 
     function tryReplace(docToReplace, docContent, callback) {
         if (docToReplace.sn != originalSn || docContent.sn <= docToReplace.sn) {
-            throw new Error(`Sequence Conflict for document: stream_id: ${doc.stream_id}, new sn: ${doc.sn}, expected sn: ${doc.sn - 1}, actual sn: ${docToReplace.sn}.`);
+            throw new Error(`Sequence Conflict for document: stream_id: ${doc.stream_id}, new sn: ${doc.sn}, expected sn: ${originalSn}, actual sn: ${docToReplace.sn}.`);
         }
         var isAccepted = collection.replaceDocument(docToReplace._self, docContent, callback);
         if (!isAccepted) throw new Error(`DB Query returned FALSE: Failed to replace document: stream_id: ${stream_id}, sn: ${doc.sn}`);
