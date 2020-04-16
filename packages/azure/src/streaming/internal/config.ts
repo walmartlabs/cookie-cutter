@@ -42,6 +42,22 @@ export class QueueConfiguration implements IQueueConfiguration {
         return config.noop();
     }
 
+    @config.field(config.converters.string)
+    public set deadLetterQueueName(_: string) {
+        config.noop();
+    }
+    public get deadLetterQueueName(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set dequeueCount(_: number) {
+        config.noop();
+    }
+    public get dequeueCount(): number {
+        return config.noop();
+    }
+
     @config.field(config.converters.none)
     public set preprocessor(_: IQueueMessagePreprocessor) {
         config.noop();

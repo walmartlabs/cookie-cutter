@@ -40,6 +40,7 @@ interface IBufferToJSON {
 
 export class QueueInputSource implements IInputSource, IRequireInitialization {
     private readonly client: QueueClient & IRequireInitialization;
+    private readonly deadLetterClient: (QueueClient & IRequireInitialization) | undefined;
     private readonly readOptions: IQueueReadOptions;
     private readonly encoder: IMessageEncoder;
     private metrics: IMetrics;
@@ -52,6 +53,9 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
     constructor(config: IQueueConfiguration & IQueueReadOptions) {
         this.config = config;
         this.client = QueueClientWithLargeItemSupport.create(config);
+        this.deadLetterClient = config.deadLetterQueueName
+            ? QueueClientWithLargeItemSupport.create(config)
+            : undefined;
         this.readOptions = config;
         this.encoder = config.encoder;
         this.metrics = DefaultComponentContext.metrics;
@@ -64,6 +68,9 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
         this.logger = context.logger;
         this.tracer = context.tracer;
         await this.client.initialize(context);
+        if (this.deadLetterClient) {
+            await this.deadLetterClient.initialize(context);
+        }
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
@@ -106,6 +113,32 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                     [QueueMetadata.QueueName]: message.headers[QueueMetadata.QueueName],
                     [QueueMetadata.PopReceipt]: message.headers[QueueMetadata.PopReceipt],
                 };
+
+                if (
+                    this.deadLetterClient &&
+                    this.config.dequeueCount &&
+                    metadata[QueueMetadata.DequeueCount] > this.config.dequeueCount
+                ) {
+                    try {
+                        await this.deadLetterClient.write(spanContext, payload, headers, {
+                            queueName: this.config.deadLetterQueueName,
+                            visibilityTimeout: this.config.visibilityTimeout,
+                            messageTimeToLive: undefined,
+                        });
+                        await this.client.markAsProcessed(
+                            spanContext,
+                            message.headers[QueueMetadata.MessageId],
+                            message.headers[QueueMetadata.PopReceipt],
+                            message.headers[QueueMetadata.QueueName]
+                        );
+                    } catch (e) {
+                        span.log({ reprocess: true });
+                        failSpan(span, e);
+                    } finally {
+                        span.finish();
+                    }
+                    continue;
+                }
 
                 const msgRef = new MessageRef(metadata, msg, span.context());
                 msgRef.once("released", async (_msg: MessageRef, _value?: any, error?: Error) => {

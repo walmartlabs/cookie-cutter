@@ -34,6 +34,8 @@ export interface IQueueConfiguration {
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
+    readonly deadLetterQueueName?: string;
+    readonly dequeueCount?: number;
     readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;
     readonly retryInterval?: number;
