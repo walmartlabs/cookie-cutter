@@ -68,8 +68,8 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                 deadLetterQueue: undefined,
                 largeItemBlobContainer: config.largeItemBlobContainer,
                 preprocessor: config.preprocessor,
-                retryCount: config.deadLetterQueue.retryCount,
-                retryInterval: config.deadLetterQueue.retryInterval,
+                retryCount: config.deadLetterQueue.retryCount || config.retryCount,
+                retryInterval: config.deadLetterQueue.retryInterval || config.retryInterval,
                 url: config.url,
             };
             this.deadLetterClient = QueueClientWithLargeItemSupport.create(deadLetterConfig);
