@@ -6,7 +6,47 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
-import { IQueueConfiguration, IQueueMessagePreprocessor, IQueueSourceConfiguration } from "..";
+import {
+    IQueueConfiguration,
+    IQueueMessagePreprocessor,
+    IQueueSourceConfiguration,
+    IDeadLetterQueueConfiguration,
+} from "..";
+
+@config.section
+export class DeadLetterQueueConfiguration implements IDeadLetterQueueConfiguration {
+    @config.field(config.converters.string)
+    public set queueName(_: string) {
+        config.noop();
+    }
+    public get queueName(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set maxDequeueCount(_: number) {
+        config.noop();
+    }
+    public get maxDequeueCount(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespanOf(config.TimeSpanTargetUnit.Seconds))
+    public set visibilityTimeout(_: number) {
+        config.noop();
+    }
+    public get visibilityTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespanOf(config.TimeSpanTargetUnit.Seconds))
+    public set messageTimeToLive(_: number) {
+        config.noop();
+    }
+    public get messageTimeToLive(): number {
+        return config.noop();
+    }
+}
 
 @config.section
 export class QueueConfiguration implements IQueueConfiguration {
@@ -42,19 +82,11 @@ export class QueueConfiguration implements IQueueConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.string)
-    public set deadLetterQueueName(_: string) {
+    @config.field<IDeadLetterQueueConfiguration>(DeadLetterQueueConfiguration)
+    public set deadLetterQueue(_: IDeadLetterQueueConfiguration) {
         config.noop();
     }
-    public get deadLetterQueueName(): string {
-        return config.noop();
-    }
-
-    @config.field(config.converters.number)
-    public set dequeueCount(_: number) {
-        config.noop();
-    }
-    public get dequeueCount(): number {
+    public get deadLetterQueue(): IDeadLetterQueueConfiguration {
         return config.noop();
     }
 

@@ -29,13 +29,19 @@ export interface IQueueMessagePreprocessor {
     process(payload: string): IQueueMessage;
 }
 
+export interface IDeadLetterQueueConfiguration {
+    readonly queueName: string;
+    readonly maxDequeueCount: number;
+    readonly visibilityTimeout?: number;
+    readonly messageTimeToLive?: number;
+}
+
 export interface IQueueConfiguration {
     readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
-    readonly deadLetterQueueName?: string;
-    readonly dequeueCount?: number;
+    readonly deadLetterQueue?: IDeadLetterQueueConfiguration;
     readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;
     readonly retryInterval?: number;

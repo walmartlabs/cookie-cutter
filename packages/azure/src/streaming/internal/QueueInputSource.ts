@@ -53,7 +53,7 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
     constructor(config: IQueueConfiguration & IQueueReadOptions) {
         this.config = config;
         this.client = QueueClientWithLargeItemSupport.create(config);
-        this.deadLetterClient = config.deadLetterQueueName
+        this.deadLetterClient = config.deadLetterQueue
             ? QueueClientWithLargeItemSupport.create(config)
             : undefined;
         this.readOptions = config;
@@ -116,15 +116,20 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
 
                 if (
                     this.deadLetterClient &&
-                    this.config.dequeueCount &&
-                    metadata[QueueMetadata.DequeueCount] > this.config.dequeueCount
+                    metadata[QueueMetadata.DequeueCount] >
+                        this.config.deadLetterQueue.maxDequeueCount
                 ) {
                     try {
-                        await this.deadLetterClient.write(spanContext, payload, headers, {
-                            queueName: this.config.deadLetterQueueName,
-                            visibilityTimeout: this.config.visibilityTimeout,
-                            messageTimeToLive: undefined,
-                        });
+                        await this.deadLetterClient.write(
+                            spanContext,
+                            payload,
+                            { [EventSourcedMetadata.EventType]: event_type },
+                            {
+                                queueName: this.config.deadLetterQueue.queueName,
+                                visibilityTimeout: this.config.deadLetterQueue.visibilityTimeout,
+                                messageTimeToLive: this.config.deadLetterQueue.messageTimeToLive,
+                            }
+                        );
                         await this.client.markAsProcessed(
                             spanContext,
                             message.headers[QueueMetadata.MessageId],
