@@ -34,6 +34,8 @@ export interface IDeadLetterQueueConfiguration {
     readonly maxDequeueCount: number;
     readonly visibilityTimeout?: number;
     readonly messageTimeToLive?: number;
+    readonly retryCount?: number;
+    readonly retryInterval?: number;
 }
 
 export interface IQueueConfiguration {

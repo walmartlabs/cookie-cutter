@@ -46,6 +46,22 @@ export class DeadLetterQueueConfiguration implements IDeadLetterQueueConfigurati
     public get messageTimeToLive(): number {
         return config.noop();
     }
+
+    @config.field(config.converters.number)
+    public set retryCount(_: number) {
+        config.noop();
+    }
+    public get retryCount(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set retryInterval(_: number) {
+        config.noop();
+    }
+    public get retryInterval(): number {
+        return config.noop();
+    }
 }
 
 @config.section

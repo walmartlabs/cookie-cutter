@@ -53,14 +53,27 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
     constructor(config: IQueueConfiguration & IQueueReadOptions) {
         this.config = config;
         this.client = QueueClientWithLargeItemSupport.create(config);
-        this.deadLetterClient = config.deadLetterQueue
-            ? QueueClientWithLargeItemSupport.create(config)
-            : undefined;
         this.readOptions = config;
         this.encoder = config.encoder;
         this.metrics = DefaultComponentContext.metrics;
         this.tracer = DefaultComponentContext.tracer;
         this.logger = DefaultComponentContext.logger;
+        if (config.deadLetterQueue) {
+            const deadLetterConfig: IQueueConfiguration = {
+                createQueueIfNotExists: config.createQueueIfNotExists,
+                encoder: config.encoder,
+                queueName: config.deadLetterQueue.queueName,
+                storageAccessKey: config.storageAccessKey,
+                storageAccount: config.storageAccount,
+                deadLetterQueue: undefined,
+                largeItemBlobContainer: config.largeItemBlobContainer,
+                preprocessor: config.preprocessor,
+                retryCount: config.deadLetterQueue.retryCount,
+                retryInterval: config.deadLetterQueue.retryInterval,
+                url: config.url,
+            };
+            this.deadLetterClient = QueueClientWithLargeItemSupport.create(deadLetterConfig);
+        }
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -125,7 +138,6 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                             payload,
                             { [EventSourcedMetadata.EventType]: event_type },
                             {
-                                queueName: this.config.deadLetterQueue.queueName,
                                 visibilityTimeout: this.config.deadLetterQueue.visibilityTimeout,
                                 messageTimeToLive: this.config.deadLetterQueue.messageTimeToLive,
                             }
