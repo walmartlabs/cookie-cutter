@@ -87,6 +87,7 @@ export enum QueueMetadata {
     VisibilityTimeout = "queue.visibility_timeout",
     VisibilityTimeoutMs = "queue.visibility_timeout_ms",
     TimeToLive = "queue.time_to_live",
+    TimeToLiveMs = "queue.time_to_live_ms",
     DequeueCount = "queue.dequeue_count",
     TimeToNextVisible = "queue.time_to_next_visible",
     MessageId = "queue.message_id",

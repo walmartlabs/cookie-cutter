@@ -44,7 +44,7 @@ export class QueueOutputSink implements IOutputSink<IPublishedMessage>, IRequire
             const visibilityTimeoutSeconds = msg.metadata[QueueMetadata.VisibilityTimeout];
             const messageTimeToLiveSeconds = msg.metadata[QueueMetadata.TimeToLive];
             const visibilityTimeoutMs = msg.metadata[QueueMetadata.VisibilityTimeoutMs];
-            const messageTimeToLiveMs = msg.metadata[QueueMetadata.TimeToLive];
+            const messageTimeToLiveMs = msg.metadata[QueueMetadata.TimeToLiveMs];
             const visibilityTimeout = visibilityTimeoutMs
                 ? Math.floor(visibilityTimeoutMs / 1000)
                 : visibilityTimeoutSeconds;

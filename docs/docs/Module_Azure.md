@@ -287,7 +287,7 @@ Application.create()
           storageAccessKey: "[SOME_KEY]",
           queueName: "[QUEUE_NAME]",
           encoder: new JsonMessageEncoder(),
-          visibilityTimeout: 30, // default 30 seconds
+          visibilityTimeout: 30000, // default 30 seconds
           numOfMessages: 32, // default 32
         }))
         .done()
@@ -305,3 +305,22 @@ Application.create()
 It is recommended to run the service in Serial mode with `queueSource` because once the message is received from Azure Queues its visibility timeout window starts and running the service in serial mode will decrease the chance of hitting the window timeout as messages are queued up internally in Cookie Cutter in Concurrent mode.
 
 Queues items will be reprocessed if you throw an error in the message handler function. The `DequeueCount` metadata can be used to detect reprocessed messages and skip over those if appropriate.
+
+### Metadata
+
+The following metadata is available
+
+| Name | Description |
+|------|-------------|
+| GrpcMetadata.Peer | the host and port of the client sending the request |
+| QueueMetadata.QueueName | Queue name |
+| QueueMetadata.VisibilityTimeout | When passed into msg metadata via `publish`/`store`: Specifies the new visibility timeout value, in seconds, relative to server time |
+| QueueMetadata.VisibilityTimeoutMs | When passed into msg metadata via `publish`/`store`: Specifies the new visibility timeout value, in milliseconds, relative to server time |
+| QueueMetadata.VisibilityTimeout | When read from the MessageRef metadata: Returns the date when the message will next be visible in string format: "Tue, 21 Apr 2020 16:33:23 GMT" |
+| QueueMetadata.TimeToLive | When passed into msg metadata via `publish`/`store`: The time-to-live interval for the message, in seconds. |
+| QueueMetadata.TimeToLiveMs | When passed into msg metadata via `publish`/`store`: The time-to-live interval for the message, in milliseconds. |
+| QueueMetadata.TimeToLive | When read from the MessageRef metadata: Returns the date when the message will expire in string format: "Tue, 21 Apr 2020 16:33:23 GMT" |
+| QueueMetadata.DequeueCount | Number of times a message has been dequeued  |
+| QueueMetadata.TimeToNextVisible | not used |
+| QueueMetadata.MessageId | The message identifier of the message |
+| QueueMetadata.PopReceipt | A valid pop receipt value returned from an earlier call to the Get Messages or Update Message operation |
