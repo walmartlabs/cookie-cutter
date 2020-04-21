@@ -49,6 +49,12 @@ export enum QueueOpenTracingTagKeys {
     QueueName = "queue.name",
 }
 
+export interface IDeadLetterQueueOptions extends IQueueCreateMessageOptions {
+    readonly maxDequeueCount: number;
+    readonly retryCount?: number;
+    readonly retryInterval?: number;
+}
+
 export interface IQueueCreateMessageOptions extends IQueueRequestOptions {
     /**
      * (FROM AZURE DOCS)
@@ -80,6 +86,7 @@ export interface IQueueReadOptions extends IQueueRequestOptions {
      * The visibility timeout of a message can be set to a value later than the expiry time.
      */
     visibilityTimeout?: number;
+    readonly deadLetterQueue?: IDeadLetterQueueOptions;
 }
 
 export interface IQueueMessage {
@@ -337,13 +344,13 @@ export class QueueClient implements IRequireInitialization {
                         );
                         resolve(
                             results.reduce((messages, result) => {
-                                const mesageObj = this.config.preprocessor.process(
+                                const messageObj = this.config.preprocessor.process(
                                     result.messageText
                                 );
 
                                 if (
-                                    !mesageObj.headers ||
-                                    !mesageObj.headers[EventSourcedMetadata.EventType]
+                                    !messageObj.headers ||
+                                    !messageObj.headers[EventSourcedMetadata.EventType]
                                 ) {
                                     span.log({ messageId: result.messageId });
                                     failSpan(
@@ -360,17 +367,18 @@ export class QueueClient implements IRequireInitialization {
                                     return messages;
                                 }
 
-                                mesageObj.headers[QueueMetadata.DequeueCount] = (
+                                messageObj.headers[QueueMetadata.DequeueCount] = (
                                     result.dequeueCount || 1
                                 ).toString();
-                                mesageObj.headers[QueueMetadata.QueueName] = result.queue;
-                                mesageObj.headers[QueueMetadata.TimeToLive] = result.expirationTime;
-                                mesageObj.headers[QueueMetadata.VisibilityTimeout] =
+                                messageObj.headers[QueueMetadata.QueueName] = result.queue;
+                                messageObj.headers[QueueMetadata.TimeToLive] =
+                                    result.expirationTime;
+                                messageObj.headers[QueueMetadata.VisibilityTimeout] =
                                     result.timeNextVisible;
-                                mesageObj.headers[QueueMetadata.MessageId] = result.messageId;
-                                mesageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
+                                messageObj.headers[QueueMetadata.MessageId] = result.messageId;
+                                messageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
 
-                                messages.push(mesageObj);
+                                messages.push(messageObj);
 
                                 return messages;
                             }, [])

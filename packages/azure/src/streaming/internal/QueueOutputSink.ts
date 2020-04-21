@@ -41,8 +41,16 @@ export class QueueOutputSink implements IOutputSink<IPublishedMessage>, IRequire
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         for (const msg of output) {
             const queueName = msg.metadata[QueueMetadata.QueueName];
-            const visibilityTimeout = msg.metadata[QueueMetadata.VisibilityTimeout];
-            const messageTimeToLive = msg.metadata[QueueMetadata.TimeToLive];
+            const visibilityTimeoutSeconds = msg.metadata[QueueMetadata.VisibilityTimeout];
+            const messageTimeToLiveSeconds = msg.metadata[QueueMetadata.TimeToLive];
+            const visibilityTimeoutMs = msg.metadata[QueueMetadata.VisibilityTimeoutMs];
+            const messageTimeToLiveMs = msg.metadata[QueueMetadata.TimeToLive];
+            const visibilityTimeout = visibilityTimeoutMs
+                ? Math.floor(visibilityTimeoutMs / 1000)
+                : visibilityTimeoutSeconds;
+            const messageTimeToLive = messageTimeToLiveMs
+                ? Math.floor(messageTimeToLiveMs / 1000)
+                : messageTimeToLiveSeconds;
             const headers = {
                 [EventSourcedMetadata.EventType]: msg.message.type,
             };

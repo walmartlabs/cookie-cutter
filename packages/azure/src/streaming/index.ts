@@ -32,8 +32,17 @@ export interface IQueueMessagePreprocessor {
 export interface IDeadLetterQueueConfiguration {
     readonly queueName: string;
     readonly maxDequeueCount: number;
-    readonly visibilityTimeout?: number;
-    readonly messageTimeToLive?: number;
+    /**
+     * The time-to-live interval for the message, in milliseconds. The maximum time-to-live allowed is 7 days. If this parameter
+     * is omitted, the default time-to-live is 7 days (604800000 milliseconds)
+     */
+    messageTimeToLive?: number;
+    /**
+     * Specifies the new visibility timeout value, in milliseconds, relative to server time. The new value must be larger than or
+     * equal to 0, and cannot be larger than 7 days (604800000 milliseconds). The visibility timeout of a message cannot be set to a value later than
+     * the expiry time (calculated based on time-to-live when updating message). visibilitytimeout should be set to a value smaller than the time-to-live value.
+     */
+    visibilityTimeout?: number;
     readonly retryCount?: number;
     readonly retryInterval?: number;
 }
@@ -43,7 +52,6 @@ export interface IQueueConfiguration {
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
-    readonly deadLetterQueue?: IDeadLetterQueueConfiguration;
     readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;
     readonly retryInterval?: number;
@@ -71,11 +79,13 @@ export interface IQueueSourceConfiguration {
      * The visibility timeout of a message can be set to a value later than the expiry time.
      */
     visibilityTimeout?: number;
+    readonly deadLetterQueue?: IDeadLetterQueueConfiguration;
 }
 
 export enum QueueMetadata {
     QueueName = "queue.name",
     VisibilityTimeout = "queue.visibility_timeout",
+    VisibilityTimeoutMs = "queue.visibility_timeout_ms",
     TimeToLive = "queue.time_to_live",
     DequeueCount = "queue.dequeue_count",
     TimeToNextVisible = "queue.time_to_next_visible",

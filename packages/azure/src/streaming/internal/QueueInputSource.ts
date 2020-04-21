@@ -65,7 +65,6 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                 queueName: config.deadLetterQueue.queueName,
                 storageAccessKey: config.storageAccessKey,
                 storageAccount: config.storageAccount,
-                deadLetterQueue: undefined,
                 largeItemBlobContainer: config.largeItemBlobContainer,
                 preprocessor: config.preprocessor,
                 retryCount: config.deadLetterQueue.retryCount || config.retryCount,

@@ -98,14 +98,6 @@ export class QueueConfiguration implements IQueueConfiguration {
         return config.noop();
     }
 
-    @config.field<IDeadLetterQueueConfiguration>(DeadLetterQueueConfiguration)
-    public set deadLetterQueue(_: IDeadLetterQueueConfiguration) {
-        config.noop();
-    }
-    public get deadLetterQueue(): IDeadLetterQueueConfiguration {
-        return config.noop();
-    }
-
     @config.field(config.converters.none)
     public set preprocessor(_: IQueueMessagePreprocessor) {
         config.noop();
@@ -171,6 +163,14 @@ export class QueueSourceConfiguration extends QueueConfiguration
         config.noop();
     }
     public get visibilityTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field<IDeadLetterQueueConfiguration>(DeadLetterQueueConfiguration)
+    public set deadLetterQueue(_: IDeadLetterQueueConfiguration) {
+        config.noop();
+    }
+    public get deadLetterQueue(): IDeadLetterQueueConfiguration {
         return config.noop();
     }
 }
