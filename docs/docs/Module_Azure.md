@@ -306,6 +306,34 @@ It is recommended to run the service in Serial mode with `queueSource` because o
 
 Queues items will be reprocessed if you throw an error in the message handler function. The `DequeueCount` metadata can be used to detect reprocessed messages and skip over those if appropriate.
 
+### Dead Letter Queue
+
+It is now possible to designate a queue to serve as a dead letter queue. `maxDequeueCount` specifies how many times a message can be dequeued before it is sent to the dead letter queue. The visibility timeout and message time to live can also be specified.
+
+```typescript
+Application.create()
+    .input()
+        .add(Streaming.queueSource({
+          storageAccount: "[SOME_ACCOUNT]",
+          storageAccessKey: "[SOME_KEY]",
+          queueName: "[QUEUE_NAME]",
+          encoder: new JsonMessageEncoder(),
+          deadLetterQueue: {
+              queueName: "[OTHER_QUEUE_NAME]",
+              maxDequeueCount: 10,
+              visibilityTimeout: 30000,
+              messageTimeToLive: 120000,
+          }
+        }))
+        .done()
+    .dispatch({
+        onSomeTask: (_msg: ISomeTask, _ctx: IDispatchContext) => {
+            // ...
+        },
+    })
+    .run(ErrorHandlingMode.LogAndContinue, ParallelismMode.Serial);
+```
+
 ### Metadata
 
 The following metadata is available
