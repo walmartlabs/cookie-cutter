@@ -3,6 +3,7 @@ branches:
   only: 
     - master
     - develop
+    - release/*
 stages:
     - smoke
     - name: test
@@ -10,7 +11,7 @@ stages:
     - name: integrate
       if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
     - name: deploy
-      if: branch in (master, develop) AND type = push
+      if: (branch in (master, develop) OR branch =~ ^release/.*$) AND type = push
 
 matrix:
     include:

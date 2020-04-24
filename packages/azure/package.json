@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-azure",
-    "version": "1.2.0-beta.15",
+    "version": "1.2.0-rc.1",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,10 +21,10 @@
         "uuid": "7.0.2"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
     },
     "scripts": {
         "build": "tsc",
