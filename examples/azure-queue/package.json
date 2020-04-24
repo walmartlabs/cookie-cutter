@@ -1,19 +1,19 @@
 {
-  "name": "@examples/azure-queue",
-  "private": true,
-  "version": "0.0.0",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.2.0-beta",
-    "@walmartlabs/cookie-cutter-azure": "^1.2.0-beta",
-    "@walmartlabs/cookie-cutter-timer": "^1.2.0-beta",
-    "config": "3.2.2"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index",
-    "test": "echo 'NO TESTS'",
-    "lint": "tslint --project tsconfig.json",
-    "lint:fix": "yarn run lint --fix"
-  }
+    "name": "@examples/azure-queue",
+    "private": true,
+    "version": "0.0.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
+        "@walmartlabs/cookie-cutter-azure": "^1.3.0-beta",
+        "@walmartlabs/cookie-cutter-timer": "^1.3.0-beta",
+        "config": "3.2.2"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index",
+        "test": "echo 'NO TESTS'",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
 }

@@ -1,23 +1,23 @@
 {
-  "name": "@examples/grpc-echo-service",
-  "private": true,
-  "version": "0.0.0",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.2.0-beta",
-    "@walmartlabs/cookie-cutter-grpc": "^1.2.0-beta",
-    "inquirer": "7.0.0"
-  },
-  "devDependencies": {
-    "protobufjs": "6.8.8"
-  },
-  "scripts": {
-    "prebuild": "pbjs -t static-module -w commonjs -o ./src/rpc.js rpc.proto && pbts -o ./src/rpc.d.ts ./src/rpc.js",
-    "build": "tsc",
-    "postbuild": "pbjs -t static-module -w commonjs -o ./dist/rpc.js rpc.proto",
-    "start": "node dist/index",
-    "test": "echo '- no tests -'",
-    "lint": "tslint --project tsconfig.json",
-    "lint:fix": "yarn run lint --fix"
-  }
+    "name": "@examples/grpc-echo-service",
+    "private": true,
+    "version": "0.0.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
+        "@walmartlabs/cookie-cutter-grpc": "^1.3.0-beta",
+        "inquirer": "7.0.0"
+    },
+    "devDependencies": {
+        "protobufjs": "6.8.8"
+    },
+    "scripts": {
+        "prebuild": "pbjs -t static-module -w commonjs -o ./src/rpc.js rpc.proto && pbts -o ./src/rpc.d.ts ./src/rpc.js",
+        "build": "tsc",
+        "postbuild": "pbjs -t static-module -w commonjs -o ./dist/rpc.js rpc.proto",
+        "start": "node dist/index",
+        "test": "echo '- no tests -'",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
 }
