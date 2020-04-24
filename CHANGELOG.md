@@ -83,13 +83,13 @@ function createTestApp(): IApplicationBuilder {
 
 ### Better Throughout in RPC Mode
 
-When a Cookie Cutter Applications runs in RPC mode and encounters a Sequence Conflict, it will no longer retry all messages that follow the one that triggered the Sequence Conflict. However, Cookie Cutter still guarantees that the output state is correct, even when competeting events are handled in parallel.
+When a Cookie Cutter Applications runs in RPC mode and encounters a Sequence Conflict, it will no longer retry all messages that follow the one that triggered the Sequence Conflict. However, Cookie Cutter still guarantees that the output state is correct, even when competing events are handled in parallel.
 
 | Mode | Guarantees | Notes |
 |------|------------|-------|
 | Serial | * Ordering<br/>* Correctness of State | Inefficient due to serial nature of I/O, this mode should generally not be used |
 | Concurrent | * Ordering<br/>* Correctness of State | Efficient I/O with guaranteed ordering, good for stream processing
-| RPC | * Correctness of State | Efficient I/O, handling mulitple requests in paralle while guaranteeing correctness of state -> good for gRPC services |
+| RPC | * Correctness of State | Efficient I/O, handling multiple requests in parallel while guaranteeing correctness of state -> good for gRPC services |
 
 ### Custom Handling of Invalid Messages
 
@@ -98,7 +98,7 @@ It is now possible to customize how invalid messages are handled. The example be
 ```typescript
 Application.Create()
     .input()
-        //.add(new SomeInput())
+        .add(new SomeInput())
         .done()
     .validate(withValidateJs(...))
     .dispatch({
