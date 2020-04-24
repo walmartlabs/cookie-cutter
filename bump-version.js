@@ -2,15 +2,15 @@ const glob = require("glob");
 const fs = require("fs");
 
 const newVersion = process.argv[2];
+if (!newVersion) {
+    console.log("please specify the new version as an argument, e.g. '1.3.0-rc.0'");
+    process.exit(1);
+}
+
 let peerDepVersion = `^${newVersion}`;
 if (newVersion.indexOf("-") > 0) {
     const idx = newVersion.lastIndexOf(".");
     peerDepVersion = `^${newVersion.substr(0, idx)}`;
-}
-
-if (!newVersion) {
-    console.log("please specify the new version as an argument, e.g. '1.3.0-rc.0'");
-    process.exit(1);
 }
 
 console.log(`bumping to version ${newVersion}, peer dependency = ${peerDepVersion}`);
