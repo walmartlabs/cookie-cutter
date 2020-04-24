@@ -43,6 +43,8 @@ export class MySink implements IOutputSink<IPublishedMessage> {
 
 Kafka's rebalance protocol dictates that every consumer must complete processing all in-flight messages and commit its offsets _before_ acknowledging a rebalance back to the broker. In order to be compliant with this requirement we added a new feature for input sources that allows them to evict pending messages from the input queue and wait for all messages, that are currently being processed, to complete.
 
+Full compliance for the Kafka input source is currently still blocked by an open ticket in the `kafkajs` side. There is currently a race condition where evicted items may still be around after the synchronization barrier for the rebalance was crossed.
+
 ```typescript
 export class MyInputSource implements IInputSource {
     public async *start(ctx: IInputSourceContext): AsyncIterableIterator<MessageRef> {
@@ -79,10 +81,41 @@ function createTestApp(): IApplicationBuilder {
 }
 ```
 
+### Better Throughout in RPC Mode
+
+When a Cookie Cutter Applications runs in RPC mode and encounters a Sequence Conflict, it will no longer retry all messages that follow the one that triggered the Sequence Conflict. However, Cookie Cutter still guarantees that the output state is correct, even when competing events are handled in parallel.
+
+| Mode | Guarantees | Notes |
+|------|------------|-------|
+| Serial | * Ordering<br/>* Correctness of State | Inefficient due to serial nature of I/O, this mode should generally not be used |
+| Concurrent | * Ordering<br/>* Correctness of State | Efficient I/O with guaranteed ordering, good for stream processing
+| RPC | * Correctness of State | Efficient I/O, handling multiple requests in parallel while guaranteeing correctness of state -> good for gRPC services |
+
+### Custom Handling of Invalid Messages
+
+It is now possible to customize how invalid messages are handled. The example below reroutes all invalid messages to a dedicated Kafka queue.
+
+```typescript
+Application.Create()
+    .input()
+        .add(new SomeInput())
+        .done()
+    .validate(withValidateJs(...))
+    .dispatch({
+        invalid: async (msg: IMessage, ctx: IDispatchContext) {
+            ctx.publish(msg.payload, { [KafkaMetadata.Topic]: "invalid-messages" });
+        }
+    })
+    .run()
+```
+
 ## azure
 
 -   use the new retry API (see above) to overwrite the next retry interval when reaching RU limits with Microsoft's suggested retry interval from the HTTP header of the response
 -   upgrade to @cosmos/azure version 3.0
+-   expose `url` as configuration for Blob Storage (useful for testing with Microsoft's Emulator Docker image)
+-   support for message pre-processing for Azure Queue data (similar to the pre-processor in the Kafka module)
+-   Allow opt-in to creating Azure queues dynamically on write
 
 ## kafka
 
