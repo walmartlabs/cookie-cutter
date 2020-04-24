@@ -3,7 +3,7 @@ branches:
   only: 
     - master
     - develop
-    - release/*
+    - /^release/.*$/
 stages:
     - smoke
     - name: test
