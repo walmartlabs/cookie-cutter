@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "@types/request-promise-native": "1.0.17",
-        "request-promise-native": "1.0.8",
-        "ip": "1.1.5"
+        "ip": "1.1.5",
+        "request-promise-native": "1.0.8"
     }
 }
