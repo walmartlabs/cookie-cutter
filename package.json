@@ -23,10 +23,10 @@
     "typescript": "3.8.3"
   },
   "scripts": {
-    "build": "yarn workspaces run build",
-    "test": "yarn workspaces run test",
-    "lint": "yarn workspaces run lint",
-    "lint:fix": "yarn workspaces run lint:fix",
+    "build": "yarn workspaces foreach run build",
+    "test": "yarn workspaces foreach run test",
+    "lint": "yarn workspaces foreach run lint",
+    "lint:fix": "yarn workspaces foreach run lint:fix",
     "license-headers": "node fix-headers.js",
     "bump-version": "node bump-version.js"
   }
