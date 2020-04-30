@@ -17,10 +17,12 @@
         "request": "^2.34"
     },
     "devDependencies": {
+        "@types/jest": "25.1.3",
+        "@types/node": "13.13.4",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "yarn pnpify tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "integrate": "docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",
@@ -28,6 +30,7 @@
     },
     "dependencies": {
         "@types/request-promise-native": "1.0.17",
+        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "ip": "1.1.5",
         "request-promise-native": "1.0.8"
     }

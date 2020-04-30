@@ -13,6 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
+        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "change-case": "4.1.1",
         "grpc": "1.24.2",
         "opentracing": "0.14.4"
@@ -21,11 +22,13 @@
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta"
     },
     "devDependencies": {
+        "@types/jest": "25.1.3",
+        "@types/node": "13.13.4",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
         "protobufjs": "6.8.8"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "yarn pnpify tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"

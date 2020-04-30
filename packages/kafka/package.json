@@ -13,6 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
+        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "change-case": "4.1.1",
         "kafkajs": "1.12.0",
         "kafkajs-lz4": "1.2.1",
@@ -23,11 +24,13 @@
         "uuid": "7.0.2"
     },
     "devDependencies": {
+        "@types/jest": "25.1.3",
+        "@types/node": "13.13.4",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
         "ip": "1.1.5"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "yarn pnpify tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "integrate": "export HOST_IP=$(node -e \"console.log(require('ip').address())\") && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",
