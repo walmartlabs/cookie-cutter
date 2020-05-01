@@ -2087,16 +2087,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/body-parser@npm:*":
-  version: 1.19.0
-  resolution: "@types/body-parser@npm:1.19.0"
-  dependencies:
-    "@types/connect": "*"
-    "@types/node": "*"
-  checksum: 2/4576f3fde5980c1219cadbc7c523bdb1cefc3713300e18bf47ff37bb9b8176342a1dc7519008311fd8fc11413cf188a83931b9b59051aa1c2f095c1e10459369
-  languageName: node
-  linkType: hard
-
 "@types/bytebuffer@npm:^5.0.40":
   version: 5.0.40
   resolution: "@types/bytebuffer@npm:5.0.40"
@@ -2142,15 +2132,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/connect@npm:*":
-  version: 3.4.33
-  resolution: "@types/connect@npm:3.4.33"
-  dependencies:
-    "@types/node": "*"
-  checksum: 2/6414495b5995fcb8274feb8b1f113c0685160ea7781e75c638325c6e7a0c226d0c554fa622fe3d278470358c99f68a5994fe49e1b104736f76f3fb3b509e375f
-  languageName: node
-  linkType: hard
-
 "@types/debug@npm:^4.1.4":
   version: 4.1.5
   resolution: "@types/debug@npm:4.1.5"
@@ -2179,24 +2160,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:4.16.8":
+"@types/express-serve-static-core@npm:4.16.8":
   version: 4.16.8
   resolution: "@types/express-serve-static-core@npm:4.16.8"
   dependencies:
     "@types/node": "*"
     "@types/range-parser": "*"
   checksum: 2/060555e9e722b4f6a04081eefc160efe5d172d22b09d732e49abb0e13ac9e861fec7ae1d54856917d39220364f110ff4072d6b5399cc92bf0fe8b4637c768a5d
-  languageName: node
-  linkType: hard
-
-"@types/express@npm:4.17.3":
-  version: 4.17.3
-  resolution: "@types/express@npm:4.17.3"
-  dependencies:
-    "@types/body-parser": "*"
-    "@types/express-serve-static-core": "*"
-    "@types/serve-static": "*"
-  checksum: 2/aeb57af48f97f334e8611b9b2f87a993e3de267b7836b15774575fc75ff6be424b61435076927ed34007c713792d632625b83a3b556e4b2d928f990d2a77f3fe
   languageName: node
   linkType: hard
 
@@ -2290,13 +2260,6 @@ __metadata:
   version: 5.1.0
   resolution: "@types/lru-cache@npm:5.1.0"
   checksum: 2/55bffcbc9589163e5c02896fbd658a9e7878527c12197576e1e9b8db5b27744cfabd3dd522939835740eccd9bf348064f0e32a13b9b3019a81c8f69666499590
-  languageName: node
-  linkType: hard
-
-"@types/mime@npm:*":
-  version: 2.0.1
-  resolution: "@types/mime@npm:2.0.1"
-  checksum: 2/61a328979fb59648d4bcd557050f6270f3afd50602829e9fd182d70129cbd2ff057f36dd6db4be9b01e0f1c6463784efc854ed4bbe99075017483680865d1977
   languageName: node
   linkType: hard
 
@@ -2433,16 +2396,6 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 2/e6e6613c800aeda63e2331e753e8d21df1a2c9aa7a4bc71ed792a848e4811fc96e609759089355314a2318c76eff1f161499cd242044838ab1e6f56e463ebb9c
-  languageName: node
-  linkType: hard
-
-"@types/serve-static@npm:*":
-  version: 1.13.3
-  resolution: "@types/serve-static@npm:1.13.3"
-  dependencies:
-    "@types/express-serve-static-core": "*"
-    "@types/mime": "*"
-  checksum: 2/6c72a59db53424302e8720e5ec11174a5fe9bff9d788ca9b3455935947362c5e2bac90ab0e4ed662159aa69791109fdd980451d3e7dae43c0af1369aaa21d817
   languageName: node
   linkType: hard
 
@@ -2642,7 +2595,6 @@ __metadata:
   resolution: "@walmartlabs/cookie-cutter-kubernetes@workspace:packages/kubernetes"
   dependencies:
     "@kubernetes/client-node": 0.11.1
-    "@types/express": 4.17.3
     "@types/express-serve-static-core": 4.16.8
     "@types/jest": 25.1.3
     "@types/node": 13.13.4
