@@ -13,7 +13,6 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "lodash": "4.17.15",
         "lru-cache": "5.1.1",
         "ms": "2.1.2",
@@ -26,6 +25,7 @@
         "@types/ms": "0.7.31",
         "@types/node": "13.13.4",
         "@types/wtfnode": "0.7.0",
+        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "typescript": "^3.8.3"
     },
     "scripts": {
