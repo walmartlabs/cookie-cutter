@@ -9,11 +9,12 @@
         "inquirer": "7.0.0"
     },
     "devDependencies": {
+        "@yarnpkg/pnpify": "^2.0.0-rc.22",
         "protobufjs": "6.8.8"
     },
     "scripts": {
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/rpc.js rpc.proto && pbts -o ./src/rpc.d.ts ./src/rpc.js",
-        "build": "tsc",
+        "build": "yarn prebuild && yarn pnpify tsc && yarn postbuild",
         "postbuild": "pbjs -t static-module -w commonjs -o ./dist/rpc.js rpc.proto",
         "start": "node dist/index",
         "test": "echo '- no tests -'",

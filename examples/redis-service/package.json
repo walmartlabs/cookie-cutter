@@ -9,10 +9,14 @@
         "config": "3.2.2"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "yarn pnpify tsc",
         "start": "node dist/index",
         "test": "echo 'NO TESTS'",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
+    },
+    "devDependencies": {
+        "@yarnpkg/pnpify": "^2.0.0-rc.22",
+        "typescript": "^3.8.3"
     }
 }
