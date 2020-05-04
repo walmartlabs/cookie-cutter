@@ -308,7 +308,7 @@ Queues items will be reprocessed if you throw an error in the message handler fu
 
 ### Dead Letter Queue
 
-It is now possible to designate a queue to serve as a dead letter queue. `maxDequeueCount` specifies how many times a message can be dequeued before it is sent to the dead letter queue. The visibility timeout and message time to live can also be specified.
+It is possible to designate a queue to serve as a dead letter queue. `maxDequeueCount` specifies how many times a message can be dequeued before it is sent to the dead letter queue. The visibility timeout and message time to live will default to the values of the main queue unless the values are explicitly overwritten.
 
 ```typescript
 Application.create()
