@@ -13,7 +13,7 @@
     },
     "scripts": {
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/tally.js tally.proto && pbts -o ./src/tally.d.ts ./src/tally.js",
-        "build": "tsc",
+        "build": "yarn prebuild && tsc && yarn postbuild",
         "postbuild": "pbjs -t static-module -w commonjs -o ./dist/tally.js tally.proto",
         "start": "node dist/index",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
