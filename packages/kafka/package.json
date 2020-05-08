@@ -23,8 +23,6 @@
         "uuid": "7.0.2"
     },
     "devDependencies": {
-        "@types/jest": "25.1.3",
-        "@types/node": "13.13.4",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
         "ip": "1.1.5",
         "typescript": "^3.8.3"
