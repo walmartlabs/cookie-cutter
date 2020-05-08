@@ -8,11 +8,10 @@
         "@walmartlabs/cookie-cutter-kafka": "^1.3.0-beta"
     },
     "devDependencies": {
-        "@yarnpkg/pnpify": "^2.0.0-rc.22",
         "typescript": "^3.8.3"
     },
     "scripts": {
-        "build": "yarn pnpify tsc",
+        "build": "tsc",
         "start:publisher": "node dist/publisher",
         "start:consumer": "node dist/consumer",
         "test": "echo '- no tests -'",

@@ -25,11 +25,10 @@
         "@types/ms": "0.7.31",
         "@types/node": "13.13.4",
         "@types/wtfnode": "0.7.0",
-        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "typescript": "^3.8.3"
     },
     "scripts": {
-        "build": "yarn pnpify tsc",
+        "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=. ",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"

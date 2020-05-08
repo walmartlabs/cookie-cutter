@@ -26,11 +26,11 @@
     "devDependencies": {
         "@types/node": "^13.13.4",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta.1",
-        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "typescript": "3.8.3"
     },
     "scripts": {
-        "build": "yarn pnpify tsc && node postbuild.js",
+        "postbuild": "node postbuild.js",
+        "build": "tsc && yarn postbuild",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "integrate": "docker-compose up -d && echo \"no tests yet\"; R=$?; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",

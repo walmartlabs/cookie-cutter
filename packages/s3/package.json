@@ -24,12 +24,11 @@
         "@types/node": "13.13.4",
         "@types/node-fetch": "2.5.5",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
-        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "node-fetch": "2.6.0",
         "typescript": "^3.8.3"
     },
     "scripts": {
-        "build": "yarn pnpify tsc",
+        "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "integrate": "export MINIO_ACCESS_KEY=\"$(openssl rand -base64 32)\" MINIO_SECRET_KEY=\"$(openssl rand -base64 32)\" && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
         "lint": "tslint --project tsconfig.json",

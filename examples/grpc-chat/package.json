@@ -9,12 +9,11 @@
         "inquirer": "7.0.0"
     },
     "devDependencies": {
-        "@yarnpkg/pnpify": "^2.0.0-rc.22",
         "protobufjs": "6.8.8"
     },
     "scripts": {
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/chat.js chat.proto && pbts -o ./src/chat.d.ts ./src/chat.js",
-        "build": "yarn prebuild && yarn pnpify tsc && yarn postbuild",
+        "build": "yarn prebuild && tsc && yarn postbuild",
         "postbuild": "pbjs -t static-module -w commonjs -o ./dist/chat.js chat.proto",
         "start:server": "node dist/server",
         "start:client": "node dist/client",

@@ -32,11 +32,10 @@
         "@types/node": "13.13.4",
         "@types/request-promise-native": "1.0.17",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
-        "@yarnpkg/pnpify": "^2.0.0-rc.21",
         "typescript": "^3.8.3"
     },
     "scripts": {
-        "build": "yarn pnpify tsc",
+        "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"

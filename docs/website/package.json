@@ -3,17 +3,16 @@
     "version": "1.3.0-beta.1",
     "private": true,
     "scripts": {
-        "start": "yarn pnpify docusaurus-start",
-        "build": "yarn pnpify docusaurus-build",
-        "version": "yarn pnpify docusaurus-version",
-        "publish-gh-pages": "yarn pnpify docusaurus-publish",
-        "rename-version": "yarn pnpify docusaurus-rename-version",
+        "start": "yarn docusaurus-start",
+        "build": "yarn docusaurus-build",
+        "version": "yarn docusaurus-version",
+        "publish-gh-pages": "yarn docusaurus-publish",
+        "rename-version": "yarn docusaurus-rename-version",
         "test": "echo 'N/A'",
         "lint": "echo 'N/A'",
         "lint:fix": "echo 'N/A'"
     },
     "devDependencies": {
-        "@yarnpkg/pnpify": "^2.0.0-rc.22",
         "docusaurus": "1.12.0"
     }
 }
