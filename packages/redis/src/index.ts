@@ -21,6 +21,24 @@ export interface IRedisOptions {
     readonly db: number;
     readonly encoder: IMessageEncoder;
     readonly typeMapper: IMessageTypeMapper;
+    readonly writeStream?: string;
+    readonly readStreams?: string[];
+}
+
+export type IRedisInputStreamOptions = IRedisOptions & {
+    readStreams: string[];
+};
+
+export type IRedisOutputStreamOptions = IRedisOptions & {
+    writeStream: string;
+};
+
+export enum RedisMetadata {
+    OutputSinkStreamKey = "redis.stream.key",
+}
+
+export enum RedisStreamID {
+    AutoGenerate = "*",
 }
 
 export interface IRedisClient {
@@ -35,6 +53,14 @@ export interface IRedisClient {
         type: string | IClassType<T>,
         key: string
     ): Promise<T | undefined>;
+    xAddObject<T>(
+        context: SpanContext,
+        type: string | IClassType<T>,
+        streamName: string,
+        key: string,
+        body: T,
+        id?: string
+    ): Promise<string>;
 }
 
 export function redisClient(configuration: IRedisOptions): IRedisClient {

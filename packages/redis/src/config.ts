@@ -49,4 +49,20 @@ export class RedisOptions implements IRedisOptions {
     public get typeMapper(): IMessageTypeMapper {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set writeStream(_: string) {
+        config.noop();
+    }
+    public get writeStream(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.listOf(config.converters.string))
+    public set readStreams(_: string[]) {
+        config.noop();
+    }
+    public get readStreams(): string[] {
+        return config.noop();
+    }
 }
