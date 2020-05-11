@@ -25,7 +25,7 @@
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
         "ip": "1.1.5",
-        "typescript": "^3.8.3"
+        "typescript": "workspace:*"
     },
     "scripts": {
         "build": "tsc",

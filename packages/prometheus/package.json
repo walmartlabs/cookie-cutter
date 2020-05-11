@@ -17,7 +17,7 @@
         "request": "^2.34"
     },
     "devDependencies": {
-        "typescript": "^3.8.3"
+        "typescript": "workspace:*"
     },
     "scripts": {
         "build": "tsc",

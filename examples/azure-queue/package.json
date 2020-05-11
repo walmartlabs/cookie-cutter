@@ -10,7 +10,7 @@
         "config": "3.2.2"
     },
     "devDependencies": {
-        "typescript": "3.8.3"
+        "typescript": "workspace:*"
     },
     "scripts": {
         "build": "tsc",

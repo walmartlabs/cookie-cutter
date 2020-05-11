@@ -9,7 +9,7 @@
     },
     "devDependencies": {
         "protobufjs": "6.8.8",
-        "typescript": "^3.8.3"
+        "typescript": "workspace:*"
     },
     "scripts": {
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/tally.js tally.proto && pbts -o ./src/tally.d.ts ./src/tally.js",

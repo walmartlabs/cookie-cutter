@@ -23,7 +23,7 @@
         "@types/lru-cache": "5.1.0",
         "@types/ms": "0.7.31",
         "@types/wtfnode": "0.7.0",
-        "typescript": "^3.8.3"
+        "typescript": "workspace:*"
     },
     "scripts": {
         "build": "tsc",

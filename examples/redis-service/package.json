@@ -16,6 +16,6 @@
         "lint:fix": "yarn run lint --fix"
     },
     "devDependencies": {
-        "typescript": "^3.8.3"
+        "typescript": "workspace:*"
     }
 }

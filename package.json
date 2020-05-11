@@ -9,9 +9,6 @@
   "engines": {
     "node": ">=10.0.0"
   },
-  "resolutions": {
-    "typescript": "3.8.3"
-  },
   "devDependencies": {
     "@types/expect": "1.20.4",
     "@types/jest": "25.1.3",

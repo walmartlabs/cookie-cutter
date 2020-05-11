@@ -108,6 +108,6 @@ before_install:
   - yarn set version berry
 
 install:
-  - yarn install
+  - yarn install --immutable
 
 script: yarn build && yarn test
