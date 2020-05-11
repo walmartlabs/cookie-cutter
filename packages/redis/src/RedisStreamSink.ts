@@ -14,7 +14,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
-import { IRedisInputStreamOptions, redisClient, IRedisClient, RedisMetadata } from ".";
+import { redisClient, IRedisClient, RedisMetadata, IRedisOutputStreamOptions } from ".";
 import { RedisOpenTracingTagKeys, RedisMetrics, RedisMetricResults } from "./RedisClient";
 
 export class RedisStreamSink
@@ -25,7 +25,7 @@ export class RedisStreamSink
     private metrics: IMetrics;
     private spanOperationName: string = "Redis Output Sink Client Call";
 
-    constructor(private readonly config: IRedisInputStreamOptions) {
+    constructor(private readonly config: IRedisOutputStreamOptions) {
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
         this.guarantees = {
@@ -47,7 +47,7 @@ export class RedisStreamSink
                 this.spanLogAndSetTags(span, this.config.db, this.config.writeStream);
 
                 await this.client.xAddObject(
-                    span,
+                    span.context(),
                     msg.message.type,
                     this.config.writeStream,
                     RedisMetadata.OutputSinkStreamKey,
