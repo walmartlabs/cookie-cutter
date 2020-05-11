@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@google-cloud/storage": "4.4.0",
+        "@google-cloud/storage": "4.7.0",
         "@google-cloud/bigquery": "4.7.0"
     },
     "peerDependencies": {

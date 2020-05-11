@@ -18,9 +18,9 @@
         "kafkajs-snappy": "1.1.0",
         "kafkajs-lz4": "1.2.1",
         "long": "4.0.0",
-        "murmurhash": "0.0.2",
+        "murmurhash": "1.0.0",
         "opentracing": "0.14.4",
-        "uuid": "7.0.2"
+        "uuid": "8.0.0"
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
