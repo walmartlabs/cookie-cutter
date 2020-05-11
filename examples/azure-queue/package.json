@@ -7,7 +7,7 @@
         "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
         "@walmartlabs/cookie-cutter-azure": "^1.2.0-rc",
         "@walmartlabs/cookie-cutter-timer": "^1.2.0-rc",
-        "config": "3.2.2"
+        "config": "3.3.1"
     },
     "scripts": {
         "build": "tsc",
