@@ -52,9 +52,9 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
             db,
         };
         // Redis ^2.8.0 includes all of the stream operations available on the the client.
-        // However, @types/redis@^2.8.13 does not currently include typings of the stream operations.
-        // As proof, we can see redis@2.8.0 lists redis-commands@^1.2.0 as a dependency (https://www.runpkg.com/?redis@2.8.0/package.json)
-        // If we then look at redis-commands@1.2.0, we can see the available commands (including all stream commands) in the commands.json file (https://www.runpkg.com/?redis-commands@1.5.0/commands.json)
+        // However, @types/redis@3.0.2 does not currently include typings of the stream operations.
+        // As proof, we can see redis@2.8.0 lists redis-commands@^1.5.0 as a dependency (https://www.runpkg.com/?redis@3.0.2/package.json)
+        // If we then look at redis-commands@1.5.0, we can see the available commands (including all stream commands) in the commands.json file (https://www.runpkg.com/?redis-commands@1.5.0/commands.json)
         this.client = new RedisClient(opts) as RedisClientWithStreamOperations;
         this.client.on(RedisEvents.Connected, () => {
             this.logger.info(RedisLogMessages.Connected);
