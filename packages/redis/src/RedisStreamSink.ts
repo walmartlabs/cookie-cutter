@@ -34,10 +34,7 @@ export class RedisStreamSink
         };
     }
 
-    async sink(
-        output: IterableIterator<IPublishedMessage>,
-        bail: (err: any) => never
-    ): Promise<void> {
+    async sink(output: IterableIterator<IPublishedMessage>, retry): Promise<void> {
         let span: Span;
         try {
             for (const msg of output) {
@@ -55,24 +52,12 @@ export class RedisStreamSink
                     msg.message.payload
                 );
 
-                this.metrics.increment(RedisMetrics.XAdd, {
-                    bucket: this.config.db,
-                    streamName: this.config.writeStream,
-                    result: RedisMetricResults.Success,
-                });
-
                 span.finish();
             }
         } catch (err) {
-            this.metrics.increment(RedisMetrics.XAdd, {
-                bucket: this.config.db,
-                streamName: this.config.writeStream,
-                result: RedisMetricResults.Error,
-            });
-
             failSpan(span, err);
             span.finish();
-            bail(err);
+            // bail(err);
         }
     }
 
