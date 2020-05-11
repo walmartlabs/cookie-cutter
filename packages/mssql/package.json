@@ -14,7 +14,7 @@
     },
     "dependencies": {
         "mssql": "4.3.7",
-        "opentracing": "0.14.4"
+        "opentracing": "workspace:*"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta"
