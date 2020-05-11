@@ -19,6 +19,9 @@
     "docs/website",
     "examples/*"
   ],
+  "resolutions": {
+    "marked": "^0.7.0"
+  },
   "devDependencies": {
     "@types/expect": "24.3.0",
     "@types/jest": "25.2.1",
