@@ -33,6 +33,7 @@ export class RedisStreamSink
             idempotent: false,
         };
     }
+
     async sink(
         output: IterableIterator<IPublishedMessage>,
         bail: (err: any) => never
@@ -74,6 +75,7 @@ export class RedisStreamSink
             bail(err);
         }
     }
+
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
@@ -81,6 +83,7 @@ export class RedisStreamSink
         this.client = makeLifecycle(redisClient(this.config));
         await this.client.initialize(context);
     }
+
     public async dispose(): Promise<void> {
         await this.client.dispose();
     }
