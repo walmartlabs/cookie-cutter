@@ -2126,6 +2126,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/redis@npm:2.8.16":
+  version: 2.8.16
+  resolution: "@types/redis@npm:2.8.16"
+  dependencies:
+    "@types/node": "*"
+  checksum: 3/ad80e58f96016b5c4d190c71035aa8634da6933d97acb8a4bcd6c051e8fc9892a2a7a674a5431aaefccbae2bfe898573acc9ac31ed6ac7606ec9f0cc77e0ead4
+  languageName: node
+  linkType: hard
+
 "@types/request-promise-native@npm:1.0.17":
   version: 1.0.17
   resolution: "@types/request-promise-native@npm:1.0.17"
@@ -2289,6 +2298,7 @@ __metadata:
     change-case: 4.1.1
     grpc: 1.24.2
     opentracing: "workspace:*"
+    protobufjs: 6.8.8
     typescript: "workspace:*"
   peerDependencies:
     "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
@@ -2352,6 +2362,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@walmartlabs/cookie-cutter-lightstep@workspace:packages/lightstep"
   dependencies:
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     lightstep-tracer: 0.24.1
     opentracing: "workspace:*"
     typescript: "workspace:*"
@@ -2365,6 +2376,7 @@ __metadata:
   resolution: "@walmartlabs/cookie-cutter-mssql@workspace:packages/mssql"
   dependencies:
     "@types/mssql": 4.3.1
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     mssql: 4.3.7
     opentracing: "workspace:*"
     typescript: "workspace:*"
@@ -2378,6 +2390,7 @@ __metadata:
   resolution: "@walmartlabs/cookie-cutter-prometheus@workspace:packages/prometheus"
   dependencies:
     "@types/request-promise-native": 1.0.17
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     ip: 1.1.5
     request-promise-native: 1.0.8
     typescript: "workspace:*"
@@ -2392,7 +2405,7 @@ __metadata:
   resolution: "@walmartlabs/cookie-cutter-proto@workspace:packages/proto"
   dependencies:
     "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
-    eval: ^0.1.4
+    eval: 0.1.4
     long: 4.0.0
     protobufjs: 6.8.8
     typescript: "workspace:*"
@@ -2405,6 +2418,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@walmartlabs/cookie-cutter-redis@workspace:packages/redis"
   dependencies:
+    "@types/redis": 2.8.16
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     redis: 3.0.2
     typescript: "workspace:*"
   peerDependencies:
@@ -2417,7 +2432,9 @@ __metadata:
   resolution: "@walmartlabs/cookie-cutter-s3@workspace:packages/s3"
   dependencies:
     "@types/node-fetch": 2.5.5
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     aws-sdk: 2.635.0
+    node-fetch: 2.6.0
     opentracing: "workspace:*"
     typescript: "workspace:*"
   peerDependencies:
@@ -2441,6 +2458,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@walmartlabs/cookie-cutter-timer@workspace:packages/timer"
   dependencies:
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     opentracing: "workspace:*"
     typescript: "workspace:*"
   peerDependencies:
@@ -2452,6 +2470,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@walmartlabs/cookie-cutter-validatejs@workspace:packages/validatejs"
   dependencies:
+    "@walmartlabs/cookie-cutter-core": ^1.3.0-beta
     typescript: "workspace:*"
     validate.js: 0.13.1
   peerDependencies:
@@ -5360,7 +5379,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eval@npm:^0.1.4":
+"eval@npm:0.1.4":
   version: 0.1.4
   resolution: "eval@npm:0.1.4"
   dependencies:
@@ -9521,7 +9540,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.2.0, node-fetch@npm:^2.3.0, node-fetch@npm:^2.6.0":
+"node-fetch@npm:2.6.0, node-fetch@npm:^2.2.0, node-fetch@npm:^2.3.0, node-fetch@npm:^2.6.0":
   version: 2.6.0
   resolution: "node-fetch@npm:2.6.0"
   checksum: 3/dd9f586a9f7ddb7dd94d2aba9cb693d32f5001e9850098512fbc8a4cbdd56838afa08ed0a6725b9fce9b01ec12b713e622cbfc16d92762d8b937b238330a632a

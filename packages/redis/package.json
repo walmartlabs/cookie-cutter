@@ -19,6 +19,8 @@
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta"
     },
     "devDependencies": {
+        "@types/redis": "2.8.16",
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
         "typescript": "workspace:*"
     },
     "scripts": {

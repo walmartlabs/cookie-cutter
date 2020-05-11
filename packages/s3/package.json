@@ -21,6 +21,8 @@
     },
     "devDependencies": {
         "@types/node-fetch": "2.5.5",
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
+        "node-fetch": "2.6.0",
         "typescript": "workspace:*"
     },
     "scripts": {

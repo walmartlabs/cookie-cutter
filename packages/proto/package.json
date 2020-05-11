@@ -21,7 +21,7 @@
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
-        "eval": "^0.1.4",
+        "eval": "0.1.4",
         "typescript": "workspace:*"
     },
     "scripts": {
