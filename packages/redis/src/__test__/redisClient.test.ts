@@ -19,6 +19,7 @@ const mockOn = jest.fn();
 const mockGet = jest.fn();
 const mockSet = jest.fn();
 const mockQuit = jest.fn();
+const mockXAdd = jest.fn();
 
 jest.mock("redis", () => {
     const mockRedisClient = jest.fn(() => ({
@@ -26,6 +27,7 @@ jest.mock("redis", () => {
         get: mockGet,
         set: mockSet,
         quit: mockQuit,
+        xadd: mockXAdd,
     }));
     return { RedisClient: mockRedisClient };
 });
@@ -49,13 +51,16 @@ describe("Unit test the redis client", () => {
             map: (v: any) => v,
         },
     };
+
     beforeEach(() => {
         mockClient.mockClear();
         mockOn.mockClear();
         mockGet.mockClear();
         mockSet.mockClear();
         mockQuit.mockClear();
+        mockXAdd.mockClear();
     });
+
     it("Instantiates the client", async () => {
         expect(1).toBe(1);
         const infoLogger = jest.fn();
@@ -68,6 +73,7 @@ describe("Unit test the redis client", () => {
         // Check that we instantiate the client
         expect(mockClient.mock.calls.length).toEqual(1);
     });
+
     it("Disposes of underlying client", async () => {
         const infoLogger = jest.fn();
         const redisClient = new CCRedisClient(config);
@@ -79,6 +85,7 @@ describe("Unit test the redis client", () => {
         await redisClient.dispose();
         expect(mockQuit.mock.calls.length).toEqual(1);
     });
+
     it("Puts obj into storage successfully", async () => {
         const infoLogger = jest.fn();
         const redisClient = new CCRedisClient({ ...config, encoder });
@@ -94,6 +101,7 @@ describe("Unit test the redis client", () => {
         await redisClient.putObject(span, type, value, key);
         expect(mockSet.mock.calls.length).toEqual(1);
     });
+
     it("Fails to put object in storage", async () => {
         const infoLogger = jest.fn();
         const redisClient = new CCRedisClient({
@@ -120,6 +128,7 @@ describe("Unit test the redis client", () => {
             testError
         );
     });
+
     it("Fails during retrieval", async () => {
         const infoLogger = jest.fn();
         const redisClient = new CCRedisClient({
@@ -143,6 +152,7 @@ describe("Unit test the redis client", () => {
         });
         await expect(redisClient.getObject(span, type as any, key)).rejects.toThrow(testError);
     });
+
     it("Gets obj from storage successfully", async () => {
         const infoLogger = jest.fn();
         const redisClient = new CCRedisClient({
@@ -167,5 +177,46 @@ describe("Unit test the redis client", () => {
         const getVal = await redisClient.getObject(span, type, key);
         expect(mockGet.mock.calls.length).toEqual(1);
         expect(getVal).toEqual(value);
+    });
+
+    it("xadds an object into a stream succesfully", async () => {
+        const infoLogger = jest.fn();
+        const redisClient = new CCRedisClient({ ...config, encoder });
+        const ctx: IComponentContext = {
+            ...DefaultComponentContext,
+            logger: { info: infoLogger } as any,
+        };
+        await redisClient.initialize(ctx);
+        const span = new SpanContext();
+        const key = "testKey";
+        const value = "testValue";
+        const type = "testType";
+
+        await redisClient.xAddObject(span, type, "test-stream", key, value);
+
+        expect(mockXAdd.mock.calls.length).toEqual(1);
+    });
+
+    it("xadds fails to an object into a stream succesfully", async () => {
+        const infoLogger = jest.fn();
+        const redisClient = new CCRedisClient({ ...config, encoder });
+        const ctx: IComponentContext = {
+            ...DefaultComponentContext,
+            logger: { info: infoLogger } as any,
+        };
+        await redisClient.initialize(ctx);
+        const span = new SpanContext();
+        const key = "testKey";
+        const value = "testValue";
+        const type = "testType";
+        const testError = new Error("test error");
+
+        mockXAdd.mockImplementation(async () => {
+            throw testError;
+        });
+
+        await expect(redisClient.xAddObject(span, type, "test-stream", key, value)).rejects.toThrow(
+            testError
+        );
     });
 });

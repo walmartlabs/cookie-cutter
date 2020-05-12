@@ -44,6 +44,7 @@ describe("redis integration test", () => {
         const aKey = "key1";
         expect(await client.getObject(new SpanContext(), Uint8Array, aKey)).toBeUndefined();
     });
+
     it("successfully sets and gets a value for a given key", async () => {
         const span = new SpanContext();
         const aKey = "key2";
@@ -54,5 +55,18 @@ describe("redis integration test", () => {
         expect(await client.putObject(span, TestClass, msg.payload, aKey)).toBeUndefined();
         const outputPayload = await client.getObject(span, TestClass, aKey);
         expect(outputPayload).toMatchObject(msg.payload);
+    });
+
+    it("successfully xadds a value into a stream and returns the id", async () => {
+        const span = new SpanContext();
+        const key = "test";
+        const value: IMessage = {
+            type: TestClass.name,
+            payload: new TestClass("test"),
+        };
+
+        const id = await client.xAddObject(span, TestClass.name, "test-stream", key, value);
+
+        expect(id).not.toBeFalsy();
     });
 });
