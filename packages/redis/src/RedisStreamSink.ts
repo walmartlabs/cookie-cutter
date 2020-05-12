@@ -7,7 +7,6 @@ import {
     IComponentContext,
     makeLifecycle,
     Lifecycle,
-    IMetrics,
     failSpan,
     DefaultComponentContext,
     OutputSinkConsistencyLevel,
@@ -15,19 +14,17 @@ import {
 import { Span, Tags, Tracer } from "opentracing";
 
 import { redisClient, IRedisClient, RedisMetadata, IRedisOutputStreamOptions } from ".";
-import { RedisOpenTracingTagKeys, RedisMetrics, RedisMetricResults } from "./RedisClient";
+import { RedisOpenTracingTagKeys } from "./RedisClient";
 
 export class RedisStreamSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
     public guarantees: IOutputSinkGuarantees;
     private client: Lifecycle<IRedisClient>;
     private tracer: Tracer;
-    private metrics: IMetrics;
     private spanOperationName: string = "Redis Output Sink Client Call";
 
     constructor(private readonly config: IRedisOutputStreamOptions) {
         this.tracer = DefaultComponentContext.tracer;
-        this.metrics = DefaultComponentContext.metrics;
         this.guarantees = {
             consistency: OutputSinkConsistencyLevel.None,
             idempotent: false,
@@ -63,7 +60,6 @@ export class RedisStreamSink
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
-        this.metrics = context.metrics;
 
         this.client = makeLifecycle(redisClient(this.config));
         await this.client.initialize(context);
