@@ -10,11 +10,13 @@ import {
     failSpan,
     DefaultComponentContext,
     OutputSinkConsistencyLevel,
+    RetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
 import { redisClient, IRedisClient, RedisMetadata, IRedisOutputStreamOptions } from ".";
 import { RedisOpenTracingTagKeys } from "./RedisClient";
+import { ParserError, AggregateError } from "redis";
 
 export class RedisStreamSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
@@ -31,7 +33,7 @@ export class RedisStreamSink
         };
     }
 
-    async sink(output: IterableIterator<IPublishedMessage>, retry): Promise<void> {
+    async sink(output: IterableIterator<IPublishedMessage>, retry: RetrierContext): Promise<void> {
         let span: Span;
         try {
             for (const msg of output) {
@@ -54,7 +56,12 @@ export class RedisStreamSink
         } catch (err) {
             failSpan(span, err);
             span.finish();
-            // bail(err);
+
+            if (err instanceof ParserError || err instanceof AggregateError) {
+                retry.bail(err);
+            } else {
+                throw err;
+            }
         }
     }
 
