@@ -13,14 +13,14 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "aws-sdk": "2.635.0",
+        "aws-sdk":  "2.673.0",
         "opentracing": "workspace:*"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta"
     },
     "devDependencies": {
-        "@types/node-fetch": "2.5.5",
+        "@types/node-fetch": "2.5.7",
         "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
         "node-fetch": "2.6.0",
         "typescript": "workspace:*"

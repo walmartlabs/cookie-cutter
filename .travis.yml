@@ -21,6 +21,13 @@ matrix:
           stage: smoke
           script: yarn build && yarn lint && yarn test
 
+        - name: "Audit Dependencies"
+          os: linux
+          node_js: 10
+          stage: smoke
+          if: type = cron
+          script: yarn audit
+
         - name: "Linux Node 12"
           os: linux
           node_js: 12
