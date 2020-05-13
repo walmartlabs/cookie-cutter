@@ -28,10 +28,6 @@ matrix:
           if: type = cron
           script: yarn audit
 
-        - name: "Linux Node 8"
-          os: linux
-          node_js: 8
-          stage: test
         - name: "Linux Node 12"
           os: linux
           node_js: 12
@@ -49,7 +45,7 @@ matrix:
           
         - name: "MSSQL"
           os: linux
-          node_js: 8
+          node_js: 10
           stage: integrate
           services:
             - docker
@@ -57,7 +53,7 @@ matrix:
 
         - name: "Kafka"
           os: linux
-          node_js: 8
+          node_js: 10
           stage: integrate
           services:
             - docker
@@ -65,7 +61,7 @@ matrix:
 
         - name: "Prometheus"
           os: linux
-          node_js: 8
+          node_js: 10
           stage: integrate
           services:
             - docker
@@ -73,7 +69,7 @@ matrix:
 
         - name: "S3"
           os: linux
-          node_js: 8
+          node_js: 10
           stage: integrate
           services:
             - docker
@@ -81,7 +77,7 @@ matrix:
 
         - name: "Redis"
           os: linux
-          node_js: 8
+          node_js: 10
           stage: integrate
           services:
             - docker
@@ -100,7 +96,7 @@ matrix:
         - name: "Publish to GitHub Pages"
           if: branch = master
           os: linux
-          node_js: 8
+          node_js: 10
           stage: deploy
           env:
             - GH_NAME=sklose
@@ -118,11 +114,6 @@ before_install:
   - export PATH="$HOME/.yarn/bin:$PATH"
 
 install:
-  # https://github.com/walmartlabs/cookie-cutter/pull/51
-  # the kubernetes-client package currently doesn't support node 8 so as a workaround
-  # create a special package.json that doesn't try to yarn install it. Rely on other stages
-  # to build and test it.
-  - if node --version | grep -q v8\.* ; then cp package.v8.json package.json && echo copied package.v8.json into package.json ; fi
-  - yarn install
+  - yarn install --frozen-lockfile
 
 script: yarn build && yarn test
