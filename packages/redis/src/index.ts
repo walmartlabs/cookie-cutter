@@ -10,10 +10,13 @@ import {
     IClassType,
     IMessageEncoder,
     IMessageTypeMapper,
+    IOutputSink,
+    IPublishedMessage,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { RedisOptions } from "./config";
 import { RedisClient } from "./RedisClient";
+import { RedisStreamSink } from "./RedisStreamSink";
 
 export interface IRedisOptions {
     readonly host: string;
@@ -64,4 +67,8 @@ export interface IRedisClient {
 export function redisClient(configuration: IRedisOptions): IRedisClient {
     configuration = config.parse(RedisOptions, configuration);
     return new RedisClient(configuration);
+}
+
+export function redisStreamSink(config: IRedisOutputStreamOptions): IOutputSink<IPublishedMessage> {
+    return new RedisStreamSink(config);
 }
