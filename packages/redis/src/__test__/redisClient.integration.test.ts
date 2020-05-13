@@ -91,7 +91,7 @@ describe("redis integration test", () => {
         const client = createClient(6379, "localhost") as RedisClientWithStreamOperations;
 
         // tslint:disable-next-line
-        client.asyncXRead = promisify(client.xread).bind(client);
+        const asyncXRead = promisify(client.xread).bind(client);
 
         const app = Application.create()
             .logger(new ConsoleLogger())
