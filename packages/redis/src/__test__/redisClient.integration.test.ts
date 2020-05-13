@@ -57,7 +57,7 @@ describe("redis integration test", () => {
         expect(outputPayload).toMatchObject(msg.payload);
     });
 
-    it("successfully xadds a value into a stream and returns the id", async () => {
+    it("RedisClient successfully xadds a value into a stream and returns the id", async () => {
         const span = new SpanContext();
         const key = "test";
         const value: IMessage = {
