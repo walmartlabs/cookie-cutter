@@ -23,18 +23,18 @@ import { isString } from "util";
 import { IRedisOptions, IRedisClient, RedisStreamID } from ".";
 import { RedisProxy } from "./RedisProxy";
 
-export enum RedisMetrics {
+enum RedisMetrics {
     Get = "cookie_cutter.redis_client.get",
     Set = "cookie_cutter.redis_client.set",
     XAdd = "cookie_cutter.redis_client.xadd",
 }
 
-export enum RedisMetricResults {
+enum RedisMetricResults {
     Success = "success",
     Error = "error",
 }
 
-export enum RedisOpenTracingTagKeys {
+enum RedisOpenTracingTagKeys {
     BucketName = "redis.bucket",
 }
 
