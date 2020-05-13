@@ -20,8 +20,7 @@
     },
     "devDependencies": {
         "@types/redis": "2.8.16",
-        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
-        "jest": "^26.0.1"
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta"
     },
     "scripts": {
         "build": "tsc",
