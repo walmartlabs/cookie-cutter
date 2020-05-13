@@ -33,6 +33,7 @@ export enum RedisEvents {
 
 interface IRedisStreamOperations {
     xadd: (key: string, id: string, ...args: string[] | Callback<string>[]) => boolean;
+    xread: (args: string[], cb: Callback<any>) => boolean;
 }
 
 export type RedisClientWithStreamOperations = RedisClient & IRedisStreamOperations;
