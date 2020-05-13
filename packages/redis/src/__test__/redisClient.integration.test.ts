@@ -12,11 +12,28 @@ import {
     Lifecycle,
     makeLifecycle,
     ObjectNameMessageTypeMapper,
+    Application,
+    StaticInputSource,
+    IDispatchContext,
+    ConsoleLogger,
+    ErrorHandlingMode,
+    timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
+import { createClient } from "redis";
 
 import { IRedisClient, IRedisOptions, redisClient } from "../index";
+import { RedisStreamSink } from "../RedisStreamSink";
+import { promisify } from "util";
+import { RedisClientWithStreamOperations } from "../RedisProxy";
 
+class Foo {
+    constructor(public text: string) {}
+}
+
+class Bar {
+    constructor(public text: string) {}
+}
 class TestClass {
     constructor(public contents: string) {}
 }
@@ -68,5 +85,43 @@ describe("redis integration test", () => {
         const id = await client.xAddObject(span, TestClass.name, "test-stream", key, value);
 
         expect(id).not.toBeFalsy();
+    });
+
+    it("successfully adds a value to a redis stream through the output sink", async () => {
+        const client = createClient(6379, "localhost") as RedisClientWithStreamOperations;
+
+        // tslint:disable-next-line
+        client.asyncXRead = promisify(client.xread).bind(client);
+
+        const app = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(new StaticInputSource([{ type: Foo.name, payload: new Foo("test") }]))
+            .done()
+            .dispatch({
+                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
+                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
+                },
+            })
+            .output()
+            .published(
+                new RedisStreamSink({
+                    host: "localhost",
+                    port: 6379,
+                    db: 0,
+                    encoder: new JsonMessageEncoder(),
+                    typeMapper: new ObjectNameMessageTypeMapper(),
+                    writeStream: "test-stream",
+                })
+            )
+            .done()
+            .run(ErrorHandlingMode.LogAndContinue);
+
+        try {
+            await timeout(app, 10000);
+        } catch (error) {
+            app.cancel();
+        } finally {
+        }
     });
 });
