@@ -22,7 +22,7 @@ import {
 import { SpanContext } from "opentracing";
 import { createClient } from "redis";
 
-import { IRedisClient, IRedisOptions, redisClient } from "../index";
+import { IRedisClient, IRedisOptions, redisClient, IRedisOutputStreamOptions } from "../index";
 import { RedisStreamSink } from "../RedisStreamSink";
 import { promisify } from "util";
 import { RedisClientWithStreamOperations } from "../RedisProxy";
@@ -88,7 +88,18 @@ describe("redis integration test", () => {
     });
 
     it("successfully adds a value to a redis stream through the output sink", async () => {
-        const client = createClient(6379, "localhost") as RedisClientWithStreamOperations;
+        const redisOpts: IRedisOutputStreamOptions = {
+            host: "localhost",
+            port: 6379,
+            db: 0,
+            encoder: new JsonMessageEncoder(),
+            typeMapper: new ObjectNameMessageTypeMapper(),
+            writeStream: "test-stream",
+        };
+        const client = createClient(
+            redisOpts.port,
+            redisOpts.host
+        ) as RedisClientWithStreamOperations;
 
         // tslint:disable-next-line
         const asyncXRead = promisify(client.xread).bind(client);
@@ -104,16 +115,7 @@ describe("redis integration test", () => {
                 },
             })
             .output()
-            .published(
-                new RedisStreamSink({
-                    host: "localhost",
-                    port: 6379,
-                    db: 0,
-                    encoder: new JsonMessageEncoder(),
-                    typeMapper: new ObjectNameMessageTypeMapper(),
-                    writeStream: "test-stream",
-                })
-            )
+            .published(new RedisStreamSink(redisOpts))
             .done()
             .run(ErrorHandlingMode.LogAndContinue);
 
@@ -122,6 +124,7 @@ describe("redis integration test", () => {
         } catch (error) {
             app.cancel();
         } finally {
+            const results = await asyncXRead(["streams", "test-stream", "$"]);
         }
     });
 });
