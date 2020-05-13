@@ -12,7 +12,7 @@ import {
     ILogger,
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
-import { ClientOpts, RedisClient } from "redis";
+import { ClientOpts, RedisClient, Callback } from "redis";
 import { promisify } from "util";
 
 export enum RedisLogMessages {
@@ -32,7 +32,7 @@ export enum RedisEvents {
 }
 
 interface IRedisStreamOperations {
-    xadd: (key: string, id: string, ...args: string[]) => Promise<string>;
+    xadd: (key: string, id: string, ...args: string[] | Callback<string>[]) => boolean;
 }
 
 export type RedisClientWithStreamOperations = RedisClient & IRedisStreamOperations;
