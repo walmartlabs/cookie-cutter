@@ -115,4 +115,13 @@ describe("BoundedPriorityQueue", () => {
         await Promise.all(enqueuePromises);
         expect(buffer).toMatchObject([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     });
+
+    it("closes queue immediately after it becomes empty", async () => {
+        const queue = new BoundedPriorityQueue<number>(1);
+        const enqueuePromise = queue.enqueue(1);
+        const dequeuePromise = queue.dequeue();
+        expect(() => queue.close()).not.toThrowError();
+        await enqueuePromise;
+        await dequeuePromise;
+    });
 });
