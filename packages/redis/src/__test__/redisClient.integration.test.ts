@@ -22,7 +22,7 @@ import {
 import { SpanContext } from "opentracing";
 import { createClient } from "redis";
 
-import { IRedisClient, IRedisOptions, redisClient, IRedisOutputStreamOptions } from "../index";
+import { IRedisClient, redisClient, IRedisOutputStreamOptions } from "../index";
 import { RedisStreamSink } from "../RedisStreamSink";
 import { promisify } from "util";
 import { RedisClientWithStreamOperations } from "../RedisProxy";
@@ -39,27 +39,41 @@ class TestClass {
 }
 
 describe("redis integration test", () => {
-    const config: IRedisOptions = {
+    const config: IRedisOutputStreamOptions = {
         host: "localhost",
         port: 6379,
         db: 0,
         encoder: new JsonMessageEncoder(),
         typeMapper: new ObjectNameMessageTypeMapper(),
+        writeStream: "test-stream",
     };
-    let client: Lifecycle<IRedisClient>;
+    let ccClient: Lifecycle<IRedisClient>;
+    let client: RedisClientWithStreamOperations;
+    let asyncXRead;
+    let asyncFlushAll;
+    let asyncQuit;
 
     beforeAll(async () => {
-        client = makeLifecycle(redisClient(config));
-        await client.initialize(DefaultComponentContext);
+        ccClient = makeLifecycle(redisClient(config));
+        await ccClient.initialize(DefaultComponentContext);
+
+        client = createClient(config.port, config.host) as RedisClientWithStreamOperations;
+        asyncXRead = promisify(client.xread).bind(client);
+        asyncFlushAll = promisify(client.flushall).bind(client);
+        asyncQuit = promisify(client.quit).bind(client);
+    });
+
+    afterEach(async () => {
+        return await asyncFlushAll();
     });
 
     afterAll(async () => {
-        await client.dispose();
+        await Promise.all([ccClient.dispose(), asyncQuit()]);
     });
 
     it("does not get a value for an non-existing key", async () => {
         const aKey = "key1";
-        expect(await client.getObject(new SpanContext(), Uint8Array, aKey)).toBeUndefined();
+        expect(await ccClient.getObject(new SpanContext(), Uint8Array, aKey)).toBeUndefined();
     });
 
     it("successfully sets and gets a value for a given key", async () => {
@@ -69,8 +83,8 @@ describe("redis integration test", () => {
             type: TestClass.name,
             payload: new TestClass("test contents"),
         };
-        expect(await client.putObject(span, TestClass, msg.payload, aKey)).toBeUndefined();
-        const outputPayload = await client.getObject(span, TestClass, aKey);
+        expect(await ccClient.putObject(span, TestClass, msg.payload, aKey)).toBeUndefined();
+        const outputPayload = await ccClient.getObject(span, TestClass, aKey);
         expect(outputPayload).toMatchObject(msg.payload);
     });
 
@@ -82,28 +96,12 @@ describe("redis integration test", () => {
             payload: new TestClass("test"),
         };
 
-        const id = await client.xAddObject(span, TestClass.name, "test-stream", key, value);
+        const id = await ccClient.xAddObject(span, TestClass.name, "test-stream", key, value);
 
         expect(id).not.toBeFalsy();
     });
 
     it("successfully adds a value to a redis stream through the output sink", async () => {
-        const redisOpts: IRedisOutputStreamOptions = {
-            host: "localhost",
-            port: 6379,
-            db: 0,
-            encoder: new JsonMessageEncoder(),
-            typeMapper: new ObjectNameMessageTypeMapper(),
-            writeStream: "test-stream",
-        };
-        const client = createClient(
-            redisOpts.port,
-            redisOpts.host
-        ) as RedisClientWithStreamOperations;
-
-        // tslint:disable-next-line
-        const asyncXRead = promisify(client.xread).bind(client);
-
         const app = Application.create()
             .logger(new ConsoleLogger())
             .input()
@@ -115,16 +113,17 @@ describe("redis integration test", () => {
                 },
             })
             .output()
-            .published(new RedisStreamSink(redisOpts))
+            .published(new RedisStreamSink(config))
             .done()
             .run(ErrorHandlingMode.LogAndContinue);
 
         try {
-            await timeout(app, 10000);
+            await timeout(app, 5000);
         } catch (error) {
             app.cancel();
         } finally {
-            const results = await asyncXRead(["streams", "test-stream", "$"]);
+            const results = await asyncXRead(["streams", "test-stream", "0"]);
+            expect(results).not.toBeFalsy();
         }
     });
 });

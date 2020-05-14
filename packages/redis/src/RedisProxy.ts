@@ -31,7 +31,7 @@ export enum RedisEvents {
     End = "end",
 }
 
-//[[streamName, [[streamId, [key, value, key, value ...]]]]]
+// [[streamName, [[streamId, [key, value, key, value ...]]]]]
 export type XReadResult = [[string, [[string, string[]]]]];
 
 interface IRedisStreamOperations {
