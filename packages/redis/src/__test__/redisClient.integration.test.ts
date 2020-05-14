@@ -25,7 +25,7 @@ import { createClient } from "redis";
 import { IRedisClient, redisClient, IRedisOutputStreamOptions } from "../index";
 import { RedisStreamSink } from "../RedisStreamSink";
 import { promisify } from "util";
-import { RedisClientWithStreamOperations } from "../RedisProxy";
+import { RedisClientWithStreamOperations, XReadResult } from "../RedisProxy";
 
 class Foo {
     constructor(public text: string) {}
@@ -102,10 +102,11 @@ describe("redis integration test", () => {
     });
 
     it("successfully adds a value to a redis stream through the output sink", async () => {
+        const inputMsg = new Foo("test");
         const app = Application.create()
             .logger(new ConsoleLogger())
             .input()
-            .add(new StaticInputSource([{ type: Foo.name, payload: new Foo("test") }]))
+            .add(new StaticInputSource([{ type: Foo.name, payload: inputMsg }]))
             .done()
             .dispatch({
                 onFoo: async (msg: Foo, ctx: IDispatchContext) => {
@@ -124,6 +125,28 @@ describe("redis integration test", () => {
         } finally {
             const results = await asyncXRead(["streams", "test-stream", "0"]);
             expect(results).not.toBeFalsy();
+
+            // This IIFE will be moved into a utility function in the PR for the Stream Source
+            // and refactored/used here in that PR.
+            const storedValue = ((results: XReadResult): Uint8Array => {
+                // Since our initial implementation on pulls 1 value from 1 stream at a time
+                // there should only 1 item in results
+
+                // [streamName, [streamValue]]
+                const [, [streamValue]] = results[0];
+
+                // [streamId, keyValues]
+                const [, keyValues] = streamValue;
+
+                // [RedisMetadata.OutputSinkStreamKey, data]
+                const [, data] = keyValues;
+
+                return new Uint8Array(Buffer.from(data, "base64"));
+            })(results);
+
+            const msg = config.encoder.decode(storedValue, Bar.name);
+
+            expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
         }
     });
 });
