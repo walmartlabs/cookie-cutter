@@ -105,7 +105,9 @@ export class BoundedPriorityQueue<T> {
         if (this.whenNotEmpty) {
             this.whenNotEmpty.resolve();
         }
-        this.whenNotFull.resolve();
+        if (this.whenNotFull) {
+            this.whenNotFull.resolve();
+        }
     }
 
     public async *iterate(): AsyncIterableIterator<T> {
