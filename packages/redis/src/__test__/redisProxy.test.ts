@@ -93,7 +93,7 @@ describe("Unit test the redis Proxy", () => {
         const key = "testKey";
         const value = new Uint8Array(Buffer.from("TestValue"));
         const base64Value = Buffer.from(value).toString("base64");
-        await redisProxy.set(key, value);
+        await redisProxy.set(key, base64Value);
         expect(mockSet.mock.calls.length).toEqual(1);
         expect(mockSet.mock.calls[0][0]).toEqual(key);
         expect(mockSet.mock.calls[0][1]).toEqual(base64Value);
@@ -109,7 +109,7 @@ describe("Unit test the redis Proxy", () => {
         const retValue = await redisProxy.get(key);
         expect(mockGet.mock.calls.length).toEqual(1);
         expect(mockGet.mock.calls[0][0]).toEqual(key);
-        expect(retValue).toEqual(value);
+        expect(retValue).toEqual(base64Value);
     });
 
     it("Returns undefined when no value is returned from the client", async () => {

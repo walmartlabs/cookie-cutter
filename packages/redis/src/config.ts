@@ -65,4 +65,13 @@ export class RedisOptions implements IRedisOptions {
     public get readStream(): string[] {
         return config.noop();
     }
+
+    @config.field(config.converters.boolean)
+    public set base64Encode(_: boolean) {
+        config.noop();
+    }
+
+    public get base64Encode(): boolean {
+        return config.noop();
+    }
 }

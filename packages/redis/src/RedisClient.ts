@@ -104,8 +104,9 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             payload: body,
         };
         const encodedBody = this.encoder.encode(msg);
+        const storableValue = Buffer.from(encodedBody).toString("base64");
         try {
-            await this.client.set(key, encodedBody);
+            await this.client.set(key, storableValue);
             this.metrics.increment(RedisMetrics.Set, {
                 type,
                 db,
@@ -136,9 +137,14 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         try {
             const typeName = this.getTypeName(type);
             const response = await this.client.get(key);
+
             let data;
+
             if (response) {
-                const msg = this.encoder.decode(response, typeName);
+                const msg = this.encoder.decode(
+                    new Uint8Array(Buffer.from(response, "base64")),
+                    typeName
+                );
                 data = msg.payload;
             }
 

@@ -24,6 +24,7 @@ export interface IRedisOptions {
     readonly db: number;
     readonly encoder: IMessageEncoder;
     readonly typeMapper: IMessageTypeMapper;
+    readonly base64Encode: boolean;
 }
 
 export type IRedisInputStreamOptions = IRedisOptions & {

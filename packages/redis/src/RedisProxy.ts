@@ -90,19 +90,12 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         return this.asyncQuit();
     }
 
-    public async set(key: string, value: Uint8Array) {
-        // Base 64 encoding is used due to library constraints, and time constraints.
-        // It should ultimately be updated to support direct set of byte arrays.
-        const storableValue = Buffer.from(value).toString("base64");
-        return await this.asyncSet(key, storableValue);
+    public async set(key: string, value: string) {
+        return this.asyncSet(key, value);
     }
 
-    public async get(key: string): Promise<Uint8Array | undefined> {
-        const val = await this.asyncGet(key);
-        if (val) {
-            return new Uint8Array(Buffer.from(val, "base64"));
-        }
-        return undefined;
+    public async get(key: string): Promise<string | undefined> {
+        return this.asyncGet(key);
     }
 
     public async xadd(streamName: string, id: string, ...args: string[]): Promise<string> {
