@@ -45,7 +45,7 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     private client: RedisClientWithStreamOperations;
     private logger: ILogger;
     private asyncGet: (key: string) => Promise<string>;
-    private asyncSet: (key: string, value: string) => Promise<{}>;
+    private asyncSet: (key: string, value: string | Buffer) => Promise<{}>;
     private asyncQuit: () => Promise<any>;
     private asyncXAdd: (streamName: string, id: string, ...keyValues: string[]) => Promise<string>;
     constructor(host: string, port: number, db: number) {
@@ -90,7 +90,7 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         return this.asyncQuit();
     }
 
-    public async set(key: string, value: string) {
+    public async set(key: string, value: string | Buffer) {
         return this.asyncSet(key, value);
     }
 
