@@ -35,7 +35,7 @@ export enum RedisEvents {
 export type XReadResult = [[string, [[string, string[]]]]];
 
 interface IRedisStreamOperations {
-    xadd: (key: string, id: string, ...args: string[] | Callback<string>[]) => boolean;
+    xadd: (key: string, id: string, ...args: (string | Buffer)[] | Callback<string>[]) => boolean;
     xread: (args: string[], cb: Callback<XReadResult>) => boolean;
 }
 
@@ -47,7 +47,11 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     private asyncGet: (key: string) => Promise<string>;
     private asyncSet: (key: string, value: string | Buffer) => Promise<{}>;
     private asyncQuit: () => Promise<any>;
-    private asyncXAdd: (streamName: string, id: string, ...keyValues: string[]) => Promise<string>;
+    private asyncXAdd: (
+        streamName: string,
+        id: string,
+        ...keyValues: (string | Buffer)[]
+    ) => Promise<string>;
     constructor(host: string, port: number, db: number) {
         this.logger = DefaultComponentContext.logger;
         const opts: ClientOpts = {
@@ -98,7 +102,11 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         return this.asyncGet(key);
     }
 
-    public async xadd(streamName: string, id: string, ...args: string[]): Promise<string> {
+    public async xadd(
+        streamName: string,
+        id: string,
+        ...args: (string | Buffer)[]
+    ): Promise<string> {
         return this.asyncXAdd(streamName, id, ...args);
     }
 }
