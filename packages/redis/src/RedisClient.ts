@@ -142,10 +142,10 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             let data;
 
             if (response) {
-                const msg = this.encoder.decode(
-                    new Uint8Array(Buffer.from(response, "base64")),
-                    typeName
-                );
+                const buf = this.config.base64Encode
+                    ? Buffer.from(response, "base64")
+                    : Buffer.from(response);
+                const msg = this.encoder.decode(new Uint8Array(buf), typeName);
                 data = msg.payload;
             }
 

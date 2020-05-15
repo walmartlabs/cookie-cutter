@@ -50,6 +50,7 @@ describe("Unit test the redis client", () => {
         typeMapper: {
             map: (v: any) => v,
         },
+        base64Encode: true,
     };
 
     beforeEach(() => {
