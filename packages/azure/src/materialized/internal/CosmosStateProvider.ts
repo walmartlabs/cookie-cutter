@@ -24,6 +24,7 @@ import { SpanContext } from "opentracing";
 import { isNullOrUndefined } from "util";
 import { ICosmosQueryClient } from "../..";
 import { ICosmosDocument } from "../../utils";
+import { getCollectionId } from "../../utils/helpers";
 
 export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     extends MaterializedViewStateProvider<TState, TSnapshot>
@@ -47,9 +48,6 @@ export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public async get(spanContext: SpanContext, key: string): Promise<StateRef<TState>> {
-        const collectionInfo: string[] = key.split("/");
-        const collectionId = collectionInfo.length > 1 ? collectionInfo[0] : undefined;
-
         const result = await this.client.query(
             spanContext,
             {
@@ -57,7 +55,7 @@ export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
                         WHERE c.stream_id=@stream_id`,
                 parameters: [{ name: "@stream_id", value: key }],
             },
-            collectionId
+            getCollectionId(key)
         );
 
         if (result.length > 1) {
