@@ -133,10 +133,10 @@ export class CosmosClient
         }
     }
 
-    private async container(): Promise<Container> {
+    private async container(collectionId?: string): Promise<Container> {
         return await this.client
             .database(this.config.databaseId)
-            .container(this.config.collectionId);
+            .container(collectionId ?? this.config.collectionId);
     }
 
     private async initializeStoredProcedure(sprocID: string): Promise<void> {
@@ -296,12 +296,16 @@ export class CosmosClient
         }
     }
 
-    public async query(spanContext: SpanContext, query: ICosmosQuery): Promise<any[]> {
+    public async query(
+        spanContext: SpanContext,
+        query: ICosmosQuery,
+        collectionId?: string
+    ): Promise<any[]> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
         this.spanLogAndSetTags(span, this.query.name, undefined, query.query);
         let requestCharge = 0;
         try {
-            const container = await this.container();
+            const container = await this.container(collectionId);
             const iterator = container.items.query(query, {
                 populateQueryMetrics: true,
             });

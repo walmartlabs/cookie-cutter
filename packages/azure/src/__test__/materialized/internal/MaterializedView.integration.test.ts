@@ -20,9 +20,17 @@ const url = "https://carrot.documents.azure.com:443/";
 const key = process.env.COSMOS_SECRET_KEY;
 const databaseId = "tanvir-test-occ";
 const collectionId = "occ";
+const newCollectedId = "occ2";
 const encoder = new JsonMessageEncoder();
 const sink = new CosmosOutputSink({ url, key, databaseId, collectionId, encoder });
 const client = new CosmosClient({ url, key, databaseId, collectionId, encoder });
+const newSink = new CosmosOutputSink({
+    url,
+    key,
+    databaseId,
+    collectionId: newCollectedId,
+    encoder,
+});
 
 describe.skip("Materialized Views", () => {
     const spanContext = {};
@@ -135,6 +143,93 @@ describe.skip("Materialized Views", () => {
                 state: new DummyState(),
                 key: streamId,
                 seqNum: 0,
+            });
+        });
+
+        it("retrieves a document in the default collection", async () => {
+            const currentTime = new Date();
+            const currentSn = 0;
+            const streamId = `default-collection-stream-${currentTime.getTime()}`;
+            const payload = { value: "foo" };
+            await sink.sink(
+                iterate([
+                    {
+                        state: new StateRef({}, streamId, currentSn),
+                        message: {
+                            type: DummyState.name,
+                            payload,
+                        },
+                        spanContext,
+                        original: new MessageRef({}, null),
+                    },
+                ]),
+                undefined
+            );
+
+            const state = new CosmosStateProvider(DummyState, client, new JsonMessageEncoder());
+            const stateRef = await state.get(undefined, streamId);
+            expect(stateRef).toMatchObject({
+                state: new DummyState({ value: "foo" }),
+                key: streamId,
+                seqNum: currentSn + 1,
+            });
+        });
+
+        it("retrieves a document in an unknown collection", async () => {
+            const currentTime = new Date();
+            const currentSn = 0;
+            const streamId = `non-default-collection-stream-${currentTime.getTime()}`;
+            const payload = { value: "foo" };
+            await newSink.sink(
+                iterate([
+                    {
+                        state: new StateRef({}, streamId, currentSn),
+                        message: {
+                            type: DummyState.name,
+                            payload,
+                        },
+                        spanContext,
+                        original: new MessageRef({}, null),
+                    },
+                ]),
+                undefined
+            );
+
+            const state = new CosmosStateProvider(DummyState, client, new JsonMessageEncoder());
+            const stateRef = await state.get(undefined, `unknown/${streamId}`);
+            expect(stateRef).toMatchObject({
+                state: new DummyState(),
+                key: streamId,
+                seqNum: 0,
+            });
+        });
+
+        it("retrieves a document in a given collection", async () => {
+            const currentTime = new Date();
+            const currentSn = 0;
+            const streamId = `non-default-collection-stream-${currentTime.getTime()}`;
+            const payload = { value: "foo" };
+            await newSink.sink(
+                iterate([
+                    {
+                        state: new StateRef({}, streamId, currentSn),
+                        message: {
+                            type: DummyState.name,
+                            payload,
+                        },
+                        spanContext,
+                        original: new MessageRef({}, null),
+                    },
+                ]),
+                undefined
+            );
+
+            const state = new CosmosStateProvider(DummyState, client, new JsonMessageEncoder());
+            const stateRef = await state.get(undefined, `occ2/${streamId}`);
+            expect(stateRef).toMatchObject({
+                state: new DummyState({ value: "foo" }),
+                key: streamId,
+                seqNum: currentSn + 1,
             });
         });
     });
