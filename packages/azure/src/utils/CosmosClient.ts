@@ -310,13 +310,17 @@ export class CosmosClient
         partitionKey: string,
         validateSn: boolean
     ): Promise<void> {
+        const collectionInfo: [string, string] = getCollectionInfo(partitionKey);
+        const collectionId = collectionInfo[0];
+        const key = collectionInfo[1];
+
         if (documents && documents.length >= 1) {
             await this.executeSproc(
                 BULK_INSERT_SPROC_ID,
-                partitionKey,
+                key,
                 documents,
                 [documents, validateSn],
-                getCollectionInfo(partitionKey)
+                collectionId
             );
         }
     }
