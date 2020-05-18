@@ -48,10 +48,10 @@
     "uglify-js": "^3.9.1"
   },
   "scripts": {
-    "build": "yarn workspaces foreach run build",
-    "test": "yarn workspaces foreach run test",
-    "lint": "yarn workspaces foreach run lint",
-    "lint:fix": "yarn workspaces foreach run lint:fix",
+    "build": "yarn workspaces foreach --topological run build",
+    "test": "yarn workspaces foreach --topological run test",
+    "lint": "yarn workspaces foreach --topological run lint",
+    "lint:fix": "yarn workspaces foreach --topological run lint:fix",
     "license-headers": "node fix-headers.js",
     "bump-version": "node bump-version.js"
   }
