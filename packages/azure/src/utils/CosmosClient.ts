@@ -31,7 +31,7 @@ import * as url from "url";
 import * as uuid from "uuid";
 import { isSequenceConflict } from ".";
 import { ICosmosConfiguration, ICosmosQuery, ICosmosQueryClient } from "..";
-import { getCollectionId } from "./helpers";
+import { getCollectionInfo } from "./helpers";
 
 export interface ICosmosWriteClient {
     upsert(
@@ -292,12 +292,16 @@ export class CosmosClient
     }
 
     public async upsert(document: any, partitionKey: string, currentSn: number): Promise<void> {
+        const collectionInfo: [string, string] = getCollectionInfo(partitionKey);
+        const collectionId = collectionInfo[0];
+        const key = collectionInfo[1];
+
         await this.executeSproc(
             UPSERT_SPROC_ID,
-            partitionKey,
+            key,
             [document],
             [document, currentSn],
-            getCollectionId(partitionKey)
+            collectionId
         );
     }
 
@@ -312,7 +316,7 @@ export class CosmosClient
                 partitionKey,
                 documents,
                 [documents, validateSn],
-                getCollectionId(partitionKey)
+                getCollectionInfo(partitionKey)
             );
         }
     }

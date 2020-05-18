@@ -3,7 +3,9 @@
  * undefined is returned
  * @param key A key in the format @collection/partitionKey
  */
-export function getCollectionId(key: string): string | undefined {
+export function getCollectionInfo(key: string): [string, string] {
     const collectionInfo: string[] = key.split("/");
-    return collectionInfo.length === 1 ? collectionInfo[0].replace("@", "") : undefined;
+    return collectionInfo.length === 2
+        ? [collectionInfo[0].replace("@", ""), collectionInfo[1]]
+        : [undefined, key];
 }
