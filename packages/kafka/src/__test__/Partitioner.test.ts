@@ -42,7 +42,7 @@ describe("partitioner", () => {
 
         it("should work with key values that are buffers", () => {
             const partitioner = createPartitioner();
-            const options = { partitionMetadata: [{}, {}], message: { key: new Buffer("test") } };
+            const options = { partitionMetadata: [{}, {}], message: { key: Buffer.from("test") } };
 
             expect(partitioner(options)).toEqual(0);
         });

@@ -66,7 +66,7 @@ export class BigQuerySink
             }
         }
 
-        const requests: Array<Promise<void>> = [];
+        const requests: Promise<void>[] = [];
         groupedMessages.forEach((values: IRequest[], table: string) => {
             for (let i = 0, j = values.length; i < j; i += this.maxBatchSize) {
                 const insertMessages = values.slice(i, i + this.maxBatchSize);

@@ -25,7 +25,7 @@ describe("CsvMessageEncoder", () => {
             type: Increment.name,
             payload,
         });
-        expect(new Buffer(buffer).toString()).toBe("val1|val2|val3");
+        expect(Buffer.from(buffer).toString()).toBe("val1|val2|val3");
 
         // encodes with a single missing header value
         const missingHeaderBuffer = encoder.encode({
@@ -35,21 +35,21 @@ describe("CsvMessageEncoder", () => {
                 col3: "val3",
             },
         });
-        expect(new Buffer(missingHeaderBuffer).toString()).toBe("val1||val3");
+        expect(Buffer.from(missingHeaderBuffer).toString()).toBe("val1||val3");
 
         // encodes with a single header value
         const singleHeaderVal = encoder.encode({
             type: Increment.name,
             payload: { col2: "val2" },
         });
-        expect(new Buffer(singleHeaderVal).toString()).toBe("|val2|");
+        expect(Buffer.from(singleHeaderVal).toString()).toBe("|val2|");
 
         // encodes with a no header value found
         const noHeaderVal = encoder.encode({
             type: Increment.name,
             payload: { col4: "val4" },
         });
-        expect(new Buffer(noHeaderVal).toString()).toBe("||");
+        expect(Buffer.from(noHeaderVal).toString()).toBe("||");
 
         // encodes with a header val containing empty columns
         const altEncoder = new CsvMessageEncoder(["col1", "", "col3"], delimiter, typeName);
@@ -57,7 +57,7 @@ describe("CsvMessageEncoder", () => {
             type: Increment.name,
             payload,
         });
-        expect(new Buffer(altBuffer).toString()).toBe("val1||val3");
+        expect(Buffer.from(altBuffer).toString()).toBe("val1||val3");
     });
 
     it("decodes", () => {

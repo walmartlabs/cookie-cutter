@@ -6,6 +6,8 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { ILogger, IMessage, IMetrics, ITracing, StateRef } from ".";
+import { RetrierContext } from "../utils";
+import { IValidateResult } from "./message";
 
 export interface IClassType<T> {
     new (...args): T;
@@ -14,7 +16,7 @@ export interface IClassType<T> {
 
 export interface IDispatchState<TState> {
     get(key: string, atSn?: number): Promise<StateRef<TState>>;
-    compute(): Array<StateRef<TState>>;
+    compute(): StateRef<TState>[];
     compute(key: string): StateRef<TState> | undefined;
 }
 
@@ -23,17 +25,23 @@ export interface IDispatchContext<TState = any> {
     publish<T>(type: IClassType<T>, msg: T, meta?: Readonly<{ [key in string]: any }>): void;
     store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void;
     typeName<T>(type: IClassType<T>): string;
+    bail(err: any): never;
     readonly services: IServiceRegistry;
     readonly state: IDispatchState<TState>;
     readonly metrics: IMetrics;
     readonly logger: ILogger;
     readonly trace: ITracing;
-    bail: (err: any) => never;
+    readonly retry: RetrierContext;
 }
 
 export interface IMessageDispatcher {
     canDispatch(msg: IMessage): boolean;
-    dispatch(msg: IMessage, ctx: IDispatchContext): Promise<any>;
+    canHandleInvalid?: () => boolean;
+    dispatch(
+        msg: IMessage,
+        ctx: IDispatchContext,
+        metadata: { validation: IValidateResult }
+    ): Promise<any>;
 }
 
 export interface IServiceRegistry {

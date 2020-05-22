@@ -156,7 +156,7 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                             handlerReturnVal.modifiedObject
                         );
                         const jsonString = JSON.stringify(patch);
-                        admissionReviewResp.response.patch = new Buffer(jsonString).toString(
+                        admissionReviewResp.response.patch = Buffer.from(jsonString).toString(
                             "base64"
                         );
                     }
@@ -179,6 +179,11 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
         }
 
         try {
+            if (!this.config.privateKey || !this.config.cert) {
+                throw new Error(
+                    "Creating an Https Server with an empty key or empty cert is not allowed!"
+                );
+            }
             this.server = https.createServer(
                 { key: this.config.privateKey, cert: this.config.cert },
                 app

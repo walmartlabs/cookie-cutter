@@ -8,7 +8,7 @@ LICENSE file in the root directory of this source tree.
 import { IBatchResult } from ".";
 import { BufferedDispatchContext } from "..";
 import { IOutputSink, OutputSinkConsistencyLevel, SequenceConflictError } from "../../model";
-import { iterate } from "../../utils";
+import { iterate, RetrierContext } from "../../utils";
 import { batch, BelongsToSameGroupFunc, count } from "./helper";
 
 export class BatchHandler<T> {
@@ -20,7 +20,7 @@ export class BatchHandler<T> {
 
     public async handle(
         items: BufferedDispatchContext[],
-        bail: (err: any) => never,
+        retry: RetrierContext,
         batchSize?: number
     ): Promise<IBatchResult> {
         const total = count(items, this.accessor);
@@ -32,7 +32,7 @@ export class BatchHandler<T> {
         let completedContexts = 0;
         try {
             for (const chunk of batch(items, this.accessor, this.grouping, batchSize)) {
-                await this.target.sink(iterate(chunk.batch), bail);
+                await this.target.sink(iterate(chunk.batch), retry);
                 completedContexts += chunk.completed.length;
             }
 
@@ -44,7 +44,7 @@ export class BatchHandler<T> {
             if (this.mayRetry(items) && batchSize > 1) {
                 const done = items.slice(0, completedContexts);
                 const remaining = items.slice(completedContexts);
-                const result = await this.handle(remaining, bail, Math.floor(batchSize / 2));
+                const result = await this.handle(remaining, retry, Math.floor(batchSize / 2));
                 return {
                     successful: done.concat(result.successful),
                     failed: result.failed,

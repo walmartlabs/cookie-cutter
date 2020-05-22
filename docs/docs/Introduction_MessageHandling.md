@@ -30,10 +30,13 @@ export interface IDispatchContext<TState = any> {
     publish<T>(type: IClassType<T>, msg: T, meta?: Readonly<{ [key in string]: any }>): void;
     store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void;
     typeName<T>(type: IClassType<T>): string;
+    bail(err: any): never; // deprecated
+    readonly services: IServiceRegistry;
     readonly state: IDispatchState<TState>;
     readonly metrics: IMetrics;
     readonly logger: ILogger;
     readonly trace: ITracing;
+    readonly retry: RetrierContext;
 }
 ```
 
@@ -58,6 +61,20 @@ export function after(msg: IMessage, ctx: IDispatchContext): void {
 ```
 
 Please mind that `before` and `after`'s first argument is of type `IMessage`. Both functions have access to the same dispatch context that the actual message handler receives and therefore they can emit additional outputs via `store` or `publish`.
+
+## Invalid Message Handler
+
+You can also add an `invalid` function which will get invoked if a message does not pass input validation. This handler will be invoked for any message that does not pass validation. This function allows full control over logging the payload of the message or any other relevant metadata. It can also be used to throw an Error and force the application to terminate if in `LogAndFail` or `LogAndRetryOrFail` mode (if that's appropriate for the use case).
+
+Defining this function disables the built-in error log for `received invalid message`, does not fail the input handling span and does not increment the `error.invalid_msg` metric.
+
+```typescript
+export function invalid(msg: IMessage, ctx: IDispatchContext): void {
+    // do something
+}
+```
+
+As with the other handlers, this function also has access to the dispatch context and can emit additional outputs via `store` or `publish`. These outputs will be passed through output validation.
 
 ## Implementation Strategies
 

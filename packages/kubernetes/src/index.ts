@@ -5,9 +5,14 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import * as k8s from "@kubernetes/client-node";
 import { config, IInputSource } from "@walmartlabs/cookie-cutter-core";
 import { KubernetesAdmissionControllerSource } from "./KubernetesAdmissionControllerSource";
+import { K8sResourceAdded, K8sResourceDeleted, K8sResourceModified } from "./KubernetesBaseSource";
+import { KubernetesPollSource } from "./KubernetesPollSource";
 import { KubernetesWatchSource } from "./KubernetesWatchSource";
+
+export { K8sResourceAdded, K8sResourceModified, K8sResourceDeleted };
 
 export interface IK8sAdmissionControllerSourceConfiguration {
     readonly privateKey: string;
@@ -16,11 +21,29 @@ export interface IK8sAdmissionControllerSourceConfiguration {
     readonly port?: number;
 }
 
+// IWatchQueryParams should match expected watch query parameters that get passed
+// directly into any k8 http api call.
+// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.15/#watch-30
+export interface IWatchQueryParams {
+    // timeout for the watch call. This limits the duration of the call, regardless of any activity or inactivity.
+    timeoutSeconds?: number;
+    [key: string]: any;
+}
+
 export interface IK8sWatchConfiguration {
-    readonly queryPath: string;
-    readonly queryParams?: any;
+    readonly queryPath?: string;
+    readonly queryParams?: IWatchQueryParams;
+    // the timeout that's used to periodically stop the watch and reconnect it.
+    readonly reconnectTimeout?: number;
     readonly configFilePath?: string;
     readonly currentContext?: string;
+    readonly queryProvider?: IK8sQueryProvider;
+}
+
+export interface IK8sQueryProvider {
+    readonly getQueryConfig: (
+        client: k8s.ApiextensionsV1beta1Api
+    ) => Promise<{ readonly queryPath: string; readonly queryParams?: IWatchQueryParams }>;
 }
 
 @config.section
@@ -90,6 +113,22 @@ class K8sWatchConfiguration implements IK8sWatchConfiguration {
     public get currentContext(): string {
         return config.noop();
     }
+
+    @config.field(config.converters.none)
+    public set queryProvider(_: IK8sQueryProvider) {
+        config.noop();
+    }
+    public get queryProvider(): IK8sQueryProvider {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespanOf(config.TimeSpanTargetUnit.Milliseconds))
+    public set reconnectTimeout(_: number) {
+        config.noop();
+    }
+    public get reconnectTimeout(): number {
+        return config.noop();
+    }
 }
 
 export interface IAdmissionReviewRequest {
@@ -119,23 +158,24 @@ export class K8sAdmissionReviewRequest {
     constructor(public readonly request: IAdmissionReviewRequest) {}
 }
 
-export class K8sResourceAdded {
-    constructor(public readonly resource: any) {}
-}
-
-export class K8sResourceModified {
-    constructor(public readonly resource: any) {}
-}
-
-export class K8sResourceDeleted {
-    constructor(public readonly resource: any) {}
-}
-
 export function k8sWatchSource(configuration: IK8sWatchConfiguration): IInputSource {
     configuration = config.parse(K8sWatchConfiguration, configuration, {
-        queryParams: {},
+        queryParams: {
+            timeoutSeconds: 600,
+        },
+        reconnectTimeout: 60000,
     });
     return new KubernetesWatchSource(configuration);
+}
+
+export function k8sPollSource(configuration: IK8sWatchConfiguration): IInputSource {
+    configuration = config.parse(K8sWatchConfiguration, configuration, {
+        queryParams: {
+            timeoutSeconds: 60,
+        },
+        reconnectTimeout: 60000,
+    });
+    return new KubernetesPollSource(configuration);
 }
 
 export function k8sAdmissionControllerSource(

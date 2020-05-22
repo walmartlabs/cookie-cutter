@@ -24,9 +24,13 @@ import {
     MessageProcessingResults,
     OutputSinkConsistencyLevel,
     StateRef,
+    SequenceConflictError,
+    EventProcessingMetadata,
 } from "../../model";
-import { iterate, prettyEventName } from "../../utils";
+import { iterate, prettyEventName, RetrierContext } from "../../utils";
 import { BatchHandler } from "./BatchHandler";
+import { EpochManager } from "../EpochManager";
+import { filterByEpoch, filterNonLinearStateChanges } from "./helper";
 
 export class SinkCoordinator implements IRequireInitialization {
     private readonly storeTarget: BatchHandler<IStoredMessage | IStateVerification>;
@@ -38,7 +42,8 @@ export class SinkCoordinator implements IRequireInitialization {
     constructor(
         storeSink: IOutputSink<IStoredMessage | IStateVerification>,
         publishSink: IOutputSink<IPublishedMessage>,
-        private readonly annotators: IMessageMetricAnnotator[]
+        private readonly annotators: IMessageMetricAnnotator[],
+        private readonly epochs: EpochManager
     ) {
         this.metrics = DefaultComponentContext.metrics;
         this.logger = DefaultComponentContext.logger;
@@ -87,21 +92,51 @@ export class SinkCoordinator implements IRequireInitialization {
 
     public async handle(
         items: IterableIterator<BufferedDispatchContext>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<IBatchResult> {
         const contexts = Array.from(items);
-        const storeResult = await this.storeTarget.handle(contexts, bail);
+
+        const byEpoch = filterByEpoch(contexts, (ctx) => ctx.loadedStates, this.epochs);
+        const bySequenceNumber = filterNonLinearStateChanges(byEpoch.successful, (ctx) => [
+            ctx.source.metadata<number>(EventProcessingMetadata.Sequence),
+            Array.from(ctx.stored).map((m) => m.state),
+        ]);
+
+        const good = bySequenceNumber.successful;
+        const bad = bySequenceNumber.failed.concat(byEpoch.failed);
+
+        const storeResult = await this.storeTarget.handle(good, retry);
         this.emitMetrics(
             this.stored(storeResult.successful),
-            this.stored(storeResult.failed),
+            this.stored(storeResult.failed.concat(bad)),
             MessageProcessingMetrics.Store
         );
+
+        const badKeys = new Set<string>();
+        for (const item of bad) {
+            for (const state of item.loadedStates) {
+                badKeys.add(state.key);
+            }
+        }
+
+        if (storeResult.error?.error instanceof SequenceConflictError) {
+            for (const item of storeResult.failed) {
+                for (const state of item.loadedStates) {
+                    badKeys.add(state.key);
+                }
+            }
+        }
+
+        for (const key of badKeys.values()) {
+            this.epochs.invalidate(key);
+        }
+
         if (storeResult.error) {
             // if any of the BufferedDispatchContexts were successfully
             // processed then we need to make sure the corresponding publishes
             // are processed before we bail with an error for the failed items
             const { successful } = storeResult;
-            const publishResult = await this.publishTarget.handle(successful, bail);
+            const publishResult = await this.publishTarget.handle(successful, retry);
             this.emitMetrics(
                 this.published(publishResult.successful),
                 this.published(publishResult.failed),
@@ -116,10 +151,20 @@ export class SinkCoordinator implements IRequireInitialization {
                 );
             }
 
-            return storeResult;
+            return {
+                successful: storeResult.successful,
+                failed: storeResult.failed.concat(bad),
+                error: storeResult.error,
+            };
+        } else if (bad.length > 0) {
+            return {
+                successful: good,
+                failed: bad,
+                error: byEpoch.error || bySequenceNumber.error,
+            };
         }
 
-        const publishResult = await this.publishTarget.handle(contexts, bail);
+        const publishResult = await this.publishTarget.handle(contexts, retry);
         this.emitMetrics(
             this.published(publishResult.successful),
             this.published(publishResult.failed),

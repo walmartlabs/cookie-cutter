@@ -113,7 +113,7 @@ describe("s3Sink", () => {
         const handlers = {
             onIncrement: async (msg: Increment, ctx: IDispatchContext): Promise<void> => {
                 key = `new_key-${msg.count + 2}`;
-                ctx.publish(Buffer, new Buffer("test_payload" + msg.count), {
+                ctx.publish(Buffer, Buffer.from("test_payload" + msg.count), {
                     [S3Metadata.Key]: key,
                     [S3Metadata.Bucket]: bucket,
                 });
@@ -128,7 +128,7 @@ describe("s3Sink", () => {
         const handlers = {
             onIncrement: async (msg: Increment, ctx: IDispatchContext): Promise<void> => {
                 const key: string = `key-${msg.count}`;
-                ctx.publish(Buffer, new Buffer("test_payload" + msg.count), {
+                ctx.publish(Buffer, Buffer.from("test_payload" + msg.count), {
                     [S3Metadata.Key]: key,
                     [S3Metadata.Bucket]: "invalid_bucket",
                 });
@@ -168,7 +168,7 @@ describe("s3Client", () => {
     });
 
     it("saves objects to an existing s3 compliant backend bucket", async () => {
-        await client.putObject(undefined, Buffer.name, new Buffer(s3Object), bucket, "clientkey");
+        await client.putObject(undefined, Buffer.name, Buffer.from(s3Object), bucket, "clientkey");
     });
 
     it("fails to save objects to non-existent bucket", async () => {
@@ -177,7 +177,7 @@ describe("s3Client", () => {
             await client.putObject(
                 undefined,
                 Buffer.name,
-                new Buffer(s3Object),
+                Buffer.from(s3Object),
                 "invalid_bucket",
                 "clientkey"
             );
@@ -198,11 +198,11 @@ describe("s3Client", () => {
         try {
             // simulate large payloads chucks that are each over 5mb
             const part1 = "1".repeat(6000000);
-            await mp.send(new Buffer(part1));
+            await mp.send(Buffer.from(part1));
             const part2 = "2".repeat(6000000);
-            await mp.send(new Buffer(part2));
+            await mp.send(Buffer.from(part2));
             const part3 = "3".repeat(6000000);
-            await mp.send(new Buffer(part3));
+            await mp.send(Buffer.from(part3));
             await mp.complete();
         } catch (e) {
             error = e;
@@ -211,7 +211,7 @@ describe("s3Client", () => {
     });
 
     it("generates pre-signed urls for get operations", async () => {
-        await client.putObject(undefined, Buffer.name, new Buffer(s3Object), bucket, "clientkey");
+        await client.putObject(undefined, Buffer.name, Buffer.from(s3Object), bucket, "clientkey");
         const url = client.createPresignedReadOnlyUrl(bucket, "clientkey", 5000);
         const response = await fetch(url);
         await expect(response.text()).resolves.toBe("test_blob");

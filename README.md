@@ -42,4 +42,4 @@ The documentation is available [here](https://walmartlabs.github.io/cookie-cutte
 
 # License
 
-See [LICENSE](LICENSE.md) and [LICENSE-DOCS](LICENSE-DOCS) for more details.
+See [LICENSE](LICENSE) and [LICENSE-DOCS](LICENSE-DOCS) for more details.

@@ -4,7 +4,14 @@
 /**/junit.xml
 /**/.yarnignore
 !/.yarnignore
+/**/prometheus/config/targets.json
 
 /docs/website/build
 /yarn-error.log
+/**/package-lock.json
 .DS_Store
+
+# vim
+*~
+*.swp
+*.swo

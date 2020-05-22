@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { IDispatchContext, IMessage, IMessageDispatcher } from "../model";
+import { IDispatchContext, IMessage, IMessageDispatcher, IValidateResult } from "../model";
 import { prettyEventName } from "../utils";
 
 export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
@@ -18,13 +18,24 @@ export class ConventionBasedMessageDispatcher implements IMessageDispatcher {
         return func !== undefined;
     }
 
-    public async dispatch(msg: IMessage, ctx: IDispatchContext): Promise<void> {
+    public canHandleInvalid(): boolean {
+        const invalid = "invalid";
+        return this.target[invalid] !== undefined;
+    }
+
+    public async dispatch(
+        msg: IMessage,
+        ctx: IDispatchContext,
+        metadata: { validation: IValidateResult }
+    ): Promise<any> {
         const type = prettyEventName(msg.type);
-        const calls: Array<[string, any, boolean]> = [
-            ["before", msg, false],
-            [`on${type}`, msg.payload, true],
-            ["after", msg, false],
-        ];
+        const calls: [string, any, boolean][] = metadata.validation.success
+            ? [
+                  ["before", msg, false],
+                  [`on${type}`, msg.payload, true],
+                  ["after", msg, false],
+              ]
+            : [["invalid", msg, true]];
 
         let result: any | undefined;
         for (const [name, msg, store] of calls) {

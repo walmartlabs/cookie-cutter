@@ -13,10 +13,13 @@ export interface IDispatchContext<TState = any> {
     publish<T>(type: IClassType<T>, msg: T, meta?: Readonly<{ [key in string]: any }>): void;
     store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void;
     typeName<T>(type: IClassType<T>): string;
+    bail(err: any): never; // deprecated
+    readonly services: IServiceRegistry;
     readonly state: IDispatchState<TState>;
     readonly metrics: IMetrics;
     readonly logger: ILogger;
     readonly trace: ITracing;
+    readonly retry: RetrierContext;
 }
 ```
 
@@ -127,3 +130,36 @@ Store accepts three arguments
 1. the type of the output message in the form of a JavaScript class type / constructor function.
 2. the `stateRef` that this state update is based upon. it serves as the optimistic concurrency token.
 3. the payload of the message (this can either be an instance of the class type or an anonymous object that matches the signature)
+
+## RetrierContext
+
+The RetrierContext allows anyone with access to the dispatch context to communicate with the retrier. It can be used to inform the retrier that it should stop retrying by calling `ctx.retry.bail(err: any)`. The RetrierContext can also be used to override the next retry interval by using `ctx.retry.setNextRetryInterval(intervalInMs: number)`.
+
+```typescript
+interface IRetrierContext {
+    // ...
+    bail: (err: any) => never;
+    setNextRetryInterval: (interval: number) => void;
+}
+```
+
+```typescript
+async function onMyInput(msg: IMyInput, ctx: IDispatchContext<MyState>): Promise<void> {
+    try {
+        // action that can throw
+    } catch (e) {
+        if (isRetryableError(e)) {
+            if (e.headers && e.headers[RETRY_AFTER_MS]) {
+                ctx.retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+            }
+            throw e;
+        } else {
+            ctx.retry.bail(e);
+        }
+    }
+}
+```
+
+## bail (deprecated)
+
+Use `ctx.retry.bail(err: any)` instead of `ctx.bail(err: any)`.

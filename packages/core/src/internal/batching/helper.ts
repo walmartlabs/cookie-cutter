@@ -5,7 +5,10 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { BufferedDispatchContext } from "..";
+import { BufferedDispatchContext, EpochManager } from "..";
+import { IBatchResult } from ".";
+import { SequenceConflictError } from "../..";
+import { StateRef } from "../../model";
 
 export type BelongsToSameGroupFunc<T> = (prev: T | undefined, current: T) => boolean;
 
@@ -92,6 +95,110 @@ export function count<T>(
     accessor: (item: BufferedDispatchContext) => IterableIterator<T>
 ): number {
     return items.reduce((p, c) => Array.from(accessor(c)).length + p, 0);
+}
+
+export function filterByEpoch<T>(
+    items: T[],
+    accessor: (item: T) => StateRef[],
+    epochs: EpochManager
+): IBatchResult<T> {
+    // This filtering logic only applies if epochs are enabled, which
+    // is the case for RPC mode + state caching enabled
+    //
+    // Whenever there is sequence conflict we increment the epoch
+    // counter for that key. If we see an output here that is based
+    // on a stateRef with an earlier epoch then we can immediately
+    // discard it because it is based on a stale state.
+    for (let i = 0; i < items.length; i++) {
+        const bad = accessor(items[i]).filter(
+            (s) => s.epoch !== undefined && s.epoch < epochs.get(s.key)
+        );
+        if (bad.length > 0) {
+            return {
+                successful: items.slice(0, i),
+                failed: items.slice(i),
+                error: {
+                    error: new SequenceConflictError({
+                        key: bad[0].key,
+                        actualSn: bad[0].seqNum,
+                        expectedSn: bad[0].seqNum,
+                        newSn: bad[0].seqNum,
+                        actualEpoch: bad[0].epoch,
+                        expectedEpoch: epochs.get(bad[0].key),
+                    }),
+                    retryable: false,
+                },
+            };
+        }
+    }
+
+    return {
+        successful: items,
+        failed: [],
+    };
+}
+
+export function filterNonLinearStateChanges<T>(
+    items: T[],
+    accessor: (item: T) => [number, StateRef[]]
+): IBatchResult<T> {
+    // This filtering logic only applies if epochs are enabled, which
+    // is the case for RPC mode + state caching enabled
+    //
+    // When multiple handlers execute concurrently it is possible that
+    // they will create competing branches based on the same state
+    //
+    //  -----------------
+    //  |  state cache  |
+    //  -----------------
+    //  | stateRef sn=1 |-----------------|
+    //  -----------------                 |
+    //         |                          |
+    //         |                          |
+    //         v                          v
+    //  ------------------          ------------------
+    //  |  input msg A   |          |  input msg B   |
+    //  ------------------          ------------------
+    //  | ctx.state.get  |          | ctx.state.get()|
+    //  | ctx.store(...) |          | ctx.store(...) |
+    //  ------------------          ------------------
+    //  | sn = 2         |          | sn = 2         |
+    //  ------------------          ------------------
+    //
+    // This function will detect these kind of conflicts
+    // and raise a Sequence Conflict error for the first
+    // output that would result in a non-linear state changes.
+    const lookup = new Map<string, { sn: number; seq: number }>();
+    for (let i = 0; i < items.length; i++) {
+        const [seq, states] = accessor(items[i]);
+        for (const state of states) {
+            const l = lookup.get(state.key);
+            if (!l) {
+                lookup.set(state.key, { sn: state.seqNum + 1, seq });
+            } else if (l.seq === seq || l.sn === state.seqNum) {
+                lookup.set(state.key, { sn: l.sn + 1, seq });
+            } else {
+                return {
+                    successful: items.slice(0, i),
+                    failed: items.slice(i),
+                    error: {
+                        error: new SequenceConflictError({
+                            actualSn: l.sn,
+                            key: state.key,
+                            expectedSn: state.seqNum,
+                            newSn: state.seqNum + 1,
+                        }),
+                        retryable: false,
+                    },
+                };
+            }
+        }
+    }
+
+    return {
+        successful: items,
+        failed: [],
+    };
 }
 
 function* groupBy<T>(items: T[], grouping: BelongsToSameGroupFunc<T>): IterableIterator<T[]> {

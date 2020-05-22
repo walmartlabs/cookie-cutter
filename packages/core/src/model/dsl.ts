@@ -21,7 +21,7 @@ import {
 import { CancelablePromise } from "../utils";
 import { IMessageTypeMapper, IStateVerification, IStoredMessage } from "./message";
 import { IMessageMetricAnnotator } from "./metrics";
-import { ITracerBuilder } from "./tracing";
+import { ITracerBuilder, ITracingBuilder } from "./tracing";
 
 export interface IApplicationBuilder {
     run(errorHandling: ErrorHandlingMode, parallelism?: ParallelismMode): CancelablePromise<void>;
@@ -31,7 +31,15 @@ export interface IApplicationBuilder {
     validate(validator: IMessageValidator): IApplicationBuilder;
     state<TState, T extends IStateProvider<TState>>(provider: T): IApplicationBuilder;
     metrics(metrics: IMetrics): IApplicationBuilder;
+    /**
+     * @deprecated Will be deprecated starting version 2.0. Please use `tracing` instead.
+     *
+     * @param {ITracerBuilder} trace
+     * @returns {IApplicationBuilder}
+     * @memberof IApplicationBuilder
+     */
     tracer(trace: ITracerBuilder): IApplicationBuilder;
+    tracing(): ITracingBuilder;
     logger(logger: ILogger, level?: LogLevel): IApplicationBuilder;
     dispatch<T>(target: T): IApplicationBuilder;
     dispatch(dispatcher: IMessageDispatcher): IApplicationBuilder;

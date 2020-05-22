@@ -7,8 +7,10 @@ LICENSE file in the root directory of this source tree.
 
 import {
     DefaultComponentContext,
+    EventSourcedMetadata,
     failSpan,
     IComponentContext,
+    ILogger,
     IMetrics,
     IMetricTags,
     IRequireInitialization,
@@ -21,7 +23,8 @@ import {
     ServiceResponse,
 } from "azure-storage";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
-import { IQueueConfiguration } from "../streaming";
+import { promisify } from "util";
+import { IQueueConfiguration, IQueueMessagePreprocessor, QueueMetadata } from "../streaming";
 
 interface IQueueRequestOptions {
     /**
@@ -79,20 +82,42 @@ export interface IQueueReadOptions extends IQueueRequestOptions {
     visibilityTimeout?: number;
 }
 
+export interface IQueueMessage {
+    headers: Record<string, string>;
+    payload: unknown;
+}
+
+const QUEUE_NOT_FOUND_ERROR_CODE = 404;
+
+export class EnvelopeQueueMessagePreprocessor implements IQueueMessagePreprocessor {
+    public process(payload: string): IQueueMessage {
+        return JSON.parse(payload) as {
+            headers: Record<string, string>;
+            payload: unknown;
+        };
+    }
+}
+
 export class QueueClient implements IRequireInitialization {
     private readonly queueService: QueueService;
-    private readonly defaultQueue: string;
+    public readonly defaultQueue: string;
     private tracer: Tracer;
     private metrics: IMetrics;
+    private logger: ILogger;
     private spanOperationName = "Azure Queue Client Call";
 
     constructor(private config: IQueueConfiguration) {
         this.defaultQueue = config.queueName;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
+        this.logger = DefaultComponentContext.logger;
 
         const { retryCount, retryInterval } = config;
-        this.queueService = createQueueService(config.storageAccount, config.storageAccessKey);
+        this.queueService = createQueueService(
+            config.storageAccount,
+            config.storageAccessKey,
+            config.url
+        );
         if (retryCount > 0) {
             const retryOperations = new LinearRetryPolicyFilter(retryCount, retryInterval);
             this.queueService = this.queueService.withFilter(retryOperations);
@@ -102,6 +127,7 @@ export class QueueClient implements IRequireInitialization {
     public async initialize(context: IComponentContext) {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
+        this.logger = context.logger;
     }
 
     private generateMetricTags(
@@ -138,12 +164,34 @@ export class QueueClient implements IRequireInitialization {
         span.setTag(QueueOpenTracingTagKeys.QueueName, queueName);
     }
 
+    private async createQueueIfNotExists(
+        spanContext: SpanContext,
+        queueName: string
+    ): Promise<void> {
+        const spanName = "Create Azure Queue (If Not Exists)";
+        const createQueueSpan = this.tracer.startSpan(spanName, { childOf: spanContext });
+        createQueueSpan.log({ queueName });
+
+        try {
+            const createQueueIfNotExistsAsync = promisify(
+                this.queueService.createQueueIfNotExists
+            ).bind(this.queueService);
+            const { created, exists } = await createQueueIfNotExistsAsync(queueName);
+            createQueueSpan.log({ created, exists });
+            createQueueSpan.finish();
+            return;
+        } catch (err) {
+            failSpan(createQueueSpan, err);
+            throw err;
+        }
+    }
+
     public write(
         spanContext: SpanContext,
         payload: any,
-        headers: { [key: string]: string },
+        headers: Record<string, string>,
         options?: IQueueCreateMessageOptions
-    ): Promise<QueueService.QueueMessageResult> {
+    ): Promise<IQueueMessage> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
         const queueName = (options && options.queueName) || this.defaultQueue;
         const kind = spanContext ? Tags.SPAN_KIND_RPC_CLIENT : undefined;
@@ -154,73 +202,98 @@ export class QueueClient implements IRequireInitialization {
             headers,
         });
 
-        return new Promise<QueueService.QueueMessageResult>((resolve, reject) => {
-            const sizeMb = this.getMB(text);
-            span.log({ sizeMb });
-            if (sizeMb >= 64) {
-                const error = new Error(
-                    "Queue Message too big, must be less then 64mb. is: " + sizeMb
-                );
-                failSpan(span, error);
-                span.finish();
-                this.metrics.increment(
-                    QueueMetrics.Write,
-                    this.generateMetricTags(queueName, undefined, QueueMetricResults.ErrorTooBig)
-                );
-                return reject(error);
-            }
-            this.queueService.createMessage(
-                queueName,
-                text,
-                options,
-                (
-                    err: Error,
-                    message: QueueService.QueueMessageResult,
-                    response: ServiceResponse
-                ) => {
-                    if (err) {
-                        failSpan(span, err);
-                    }
-                    span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+        const attemptWrite = () =>
+            new Promise<IQueueMessage>((resolve, reject) => {
+                const { sizeKb, isTooBig } = this.isMessageTooBig(text);
+                span.log({ sizeKb });
+                if (isTooBig) {
+                    const error: Error & { code?: number } = new Error(
+                        "Queue Message too big, must be less then 64kb. is: " + sizeKb
+                    );
+                    error.code = 413;
+                    failSpan(span, error);
                     span.finish();
-                    if (err) {
-                        this.metrics.increment(
-                            QueueMetrics.Write,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Error
-                            )
-                        );
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            QueueMetrics.Write,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Success
-                            )
-                        );
-                        resolve(message);
-                    }
+                    this.metrics.increment(
+                        QueueMetrics.Write,
+                        this.generateMetricTags(
+                            queueName,
+                            undefined,
+                            QueueMetricResults.ErrorTooBig
+                        )
+                    );
+                    return reject(error);
                 }
-            );
+
+                this.queueService.createMessage(
+                    queueName,
+                    text,
+                    options,
+                    (
+                        err: Error & { code?: number },
+                        _: QueueService.QueueMessageResult,
+                        response: ServiceResponse
+                    ) => {
+                        if (err) {
+                            failSpan(span, err);
+                        }
+                        span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+                        span.finish();
+                        if (err) {
+                            err.code = response.statusCode;
+                            this.metrics.increment(
+                                QueueMetrics.Write,
+                                this.generateMetricTags(
+                                    queueName,
+                                    response.statusCode,
+                                    QueueMetricResults.Error
+                                )
+                            );
+                            return reject(err);
+                        } else {
+                            this.metrics.increment(
+                                QueueMetrics.Write,
+                                this.generateMetricTags(
+                                    queueName,
+                                    response.statusCode,
+                                    QueueMetricResults.Success
+                                )
+                            );
+                            return resolve({
+                                headers,
+                                payload,
+                            });
+                        }
+                    }
+                );
+            });
+
+        return attemptWrite().catch((err) => {
+            const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
+            if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
+                return this.createQueueIfNotExists(spanContext, queueName).then(attemptWrite);
+            } else {
+                return Promise.reject(err);
+            }
         });
     }
 
     public async read(
         spanContext: SpanContext,
         options?: IQueueReadOptions
-    ): Promise<QueueService.QueueMessageResult[]> {
+    ): Promise<IQueueMessage[]> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
-        const { queueName, visibilityTimeout, numOfMessages } = Object.assign(
-            {},
-            {
-                queueName: this.defaultQueue,
-            },
-            options || {}
-        );
+
+        let queueName: string = this.defaultQueue;
+        let visibilityTimeout: number;
+        let numOfMessages: number;
+        if (options) {
+            if (options.queueName) {
+                queueName = options.queueName;
+            }
+            visibilityTimeout = options.visibilityTimeout;
+            numOfMessages = options.numOfMessages;
+        }
+
         const kind = spanContext ? Tags.SPAN_KIND_RPC_CLIENT : undefined;
         this.spanLogAndSetTags(span, kind, this.read.name, queueName, {
             queueName,
@@ -228,7 +301,7 @@ export class QueueClient implements IRequireInitialization {
             numOfMessages,
         });
 
-        return new Promise((resolve, reject) => {
+        return new Promise<IQueueMessage[]>((resolve, reject) => {
             this.queueService.getMessages(
                 queueName,
                 { visibilityTimeout, numOfMessages },
@@ -262,7 +335,46 @@ export class QueueClient implements IRequireInitialization {
                                 QueueMetricResults.Success
                             )
                         );
-                        resolve(results);
+                        resolve(
+                            results.reduce((messages, result) => {
+                                const mesageObj = this.config.preprocessor.process(
+                                    result.messageText
+                                );
+
+                                if (
+                                    !mesageObj.headers ||
+                                    !mesageObj.headers[EventSourcedMetadata.EventType]
+                                ) {
+                                    span.log({ messageId: result.messageId });
+                                    failSpan(
+                                        span,
+                                        new Error("Message does not have EventType header value.")
+                                    );
+                                    this.logger.error(
+                                        "Message does not have EventType header value.",
+                                        {
+                                            messageId: result.messageId,
+                                        }
+                                    );
+
+                                    return messages;
+                                }
+
+                                mesageObj.headers[QueueMetadata.DequeueCount] = (
+                                    result.dequeueCount || 1
+                                ).toString();
+                                mesageObj.headers[QueueMetadata.QueueName] = result.queue;
+                                mesageObj.headers[QueueMetadata.TimeToLive] = result.expirationTime;
+                                mesageObj.headers[QueueMetadata.VisibilityTimeout] =
+                                    result.timeNextVisible;
+                                mesageObj.headers[QueueMetadata.MessageId] = result.messageId;
+                                mesageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
+
+                                messages.push(mesageObj);
+
+                                return messages;
+                            }, [])
+                        );
                     }
                 }
             );
@@ -365,11 +477,25 @@ export class QueueClient implements IRequireInitialization {
         });
     }
 
-    private getMB(input: string | Buffer) {
-        const mb = (n: number) => n / 1024 / 1024;
+    private getKB(input: string | Buffer) {
+        const kb = (n: number) => n / 1024;
         if (typeof input === "string") {
-            return mb(Buffer.byteLength(input, "utf8"));
+            // QueueClient calculates final kb by creating a buffer from the input and encoding in base64.
+            // Since we don't want to base64 twice to calculate things we can take byte length and multiply
+            // by 8 / 6 to get final number of bytes that would have been output by base64. Every 6 bits of data
+            // is encoded into one base64 character.
+            // https://github.com/Azure/azure-storage-node/blob/0557d02cd2116046db1a2d7fc61a74aa28c8b557/lib/services/queue/queuemessageencoder.js#L76
+            // https://stackoverflow.com/questions/13378815/base64-length-calculation
+            return kb(Math.ceil((Buffer.byteLength(input, "utf8") * 8) / 6));
         }
-        return mb(input.byteLength);
+        return kb(input.byteLength);
+    }
+
+    private isMessageTooBig(input: string | Buffer) {
+        const sizeKb = this.getKB(input);
+        return {
+            sizeKb,
+            isTooBig: sizeKb >= 64,
+        };
     }
 }

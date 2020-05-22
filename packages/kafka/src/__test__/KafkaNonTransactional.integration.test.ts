@@ -24,6 +24,10 @@ import * as ip from "ip";
 import * as kafkajs from "kafkajs";
 import * as ot from "opentracing";
 import { KafkaMetadata, kafkaSink, kafkaSource } from "..";
+const { CompressionTypes, CompressionCodecs } = require("kafkajs");
+const SnappyCodec = require("kafkajs-snappy");
+
+CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
 
 ot.initGlobalTracer(new ot.MockTracer()); // Necessary for trace header to work
 
@@ -659,7 +663,7 @@ describe("Kafka Integration Tests", () => {
             );
 
             let totalProcessedMsgs = 0;
-            const expMinimumTotalProcessedMsgs = 6;
+            const expMinimumTotalProcessedMsgs = 5;
             let secondAppProcessedMsgs = 0;
             let createSecondConsumer = false;
             let appConsumer2;
@@ -729,6 +733,80 @@ describe("Kafka Integration Tests", () => {
             } finally {
                 expect(totalProcessedMsgs).toBeGreaterThanOrEqual(expMinimumTotalProcessedMsgs);
                 expect(secondAppProcessedMsgs).toBeLessThanOrEqual(2);
+            }
+        });
+    });
+    describe("Snappy Encoded Messages", () => {
+        const snappyTopic = `snappy-topic-${new Date().getTime()}`;
+        const shoppingCartIds = ["test-id-1", "test-id-2"];
+        let admin;
+        beforeAll(async () => {
+            const client = new kafkajs.Kafka({
+                clientId: "admin",
+                brokers: [generateBrokerAddr()],
+            });
+            admin = client.admin();
+            await admin.connect();
+            await admin.createTopics({
+                waitForLeaders: true,
+                topics: [{ topic: snappyTopic, numPartitions: 1 }],
+            });
+            const producer = client.producer();
+            await producer.send({
+                topic: snappyTopic,
+                compression: CompressionTypes.Snappy,
+                messages: [
+                    {
+                        key: "key1",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
+                        headers: { event_type: ShoppingCartCreated.name },
+                    },
+                    {
+                        key: "key2",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[1] }),
+                        headers: { event_type: ShoppingCartCreated.name },
+                    },
+                ],
+            });
+        });
+        afterAll(async () => {
+            await admin.disconnect();
+        });
+        it("successfully consumes messages from a snappy encoded topic", async () => {
+            const groupId = "snappy-topic";
+            const expNumConsumedMsgs = 2;
+            const receivedKafkaMsg = [];
+            const receivedKafkaKeys = [];
+            const appConsumer = consumer(
+                {
+                    onShoppingCartCreated: async (
+                        msg: ShoppingCartCreated,
+                        _: IDispatchContext
+                    ): Promise<void> => {
+                        receivedKafkaMsg.push(msg.shoppingCartId);
+                        receivedKafkaKeys.push(_.metadata(KafkaMetadata.Key));
+                    },
+                },
+                snappyTopic,
+                groupId,
+                ErrorHandlingMode.LogAndContinue
+            );
+
+            try {
+                const checkKafkaPromise = new Promise(async (resolve) => {
+                    while (receivedKafkaMsg.length < expNumConsumedMsgs) {
+                        await sleep(1000);
+                        await waitForPendingIO();
+                    }
+                    appConsumer.cancel();
+                    resolve();
+                });
+                await checkKafkaPromise;
+                await appConsumer;
+            } finally {
+                // check that we received expected msgs
+                expect(receivedKafkaMsg).toEqual(expect.arrayContaining(shoppingCartIds));
+                expect(receivedKafkaMsg.length).toBeLessThanOrEqual(expNumConsumedMsgs);
             }
         });
     });

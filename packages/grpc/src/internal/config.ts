@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { config } from "@walmartlabs/cookie-cutter-core";
+import { config, IComponentRuntimeBehavior } from "@walmartlabs/cookie-cutter-core";
 import {
     IGrpcClientConfiguration,
     IGrpcConfiguration,
@@ -95,6 +95,14 @@ export class GrpcClientConfiguration extends GrpcConfiguration implements IGrpcC
         config.noop();
     }
     public get requestTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set behavior(_: Required<IComponentRuntimeBehavior>) {
+        config.noop();
+    }
+    public get behavior(): Required<IComponentRuntimeBehavior> {
         return config.noop();
     }
 }

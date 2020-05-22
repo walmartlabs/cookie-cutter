@@ -89,11 +89,31 @@ class InstanaBuilder implements ITracerBuilder {
     }
 }
 
-export function instanaTracer(configuration: IInstanaConfiguration): ITracerBuilder {
+export function instanaTracer(
+    configuration: IInstanaConfiguration,
+    tracer: boolean = false
+): ITracerBuilder | Tracer {
     const packageInfo = getRootProjectPackageInfo();
     const parsedConfig = config.parse(InstanaConfiguration, configuration, {
         package: { name: packageInfo.name },
         logLevel: LogLevel.Info,
     });
+    if (tracer) {
+        const instana = require("@instana/collector");
+
+        instana({
+            tracing: {
+                disableAutomaticTracing: true,
+            },
+            serviceName: parsedConfig.package.name,
+            reportUncaughtException: true,
+            agentHost: parsedConfig.host,
+            level: parsedConfig.logLevel,
+            // TODO - update our logger to work with Instana
+            // it currently doesn't format messages from Instana correctly
+        });
+        return instana.opentracing.createTracer();
+    }
+
     return new InstanaBuilder(parsedConfig);
 }

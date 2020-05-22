@@ -11,7 +11,7 @@ import { Increment } from "../tally";
 describe("EncodedMessage", () => {
     it("returns the decoded message as payload", () => {
         const encoder = new NullMessageEncoder();
-        const data = new Buffer("test");
+        const data = Buffer.from("test");
         const msg = new EncodedMessage(encoder, "test_type", data);
         expect(msg.payload).toMatchObject(data);
     });
@@ -21,7 +21,7 @@ describe("EncodedMessage", () => {
         const delimiter = "|";
         const typeName = Increment.name;
         const encoder = new CsvMessageEncoder(headers, delimiter, typeName);
-        const data = new Buffer("val1|val2|val3");
+        const data = Buffer.from("val1|val2|val3");
         const msg = new EncodedMessage(encoder, "", data);
         expect(msg).toMatchObject({
             type: typeName,
@@ -36,7 +36,7 @@ describe("EncodedMessage", () => {
     it("returns an already decoded message as payload without decoding twice", () => {
         const encoder = new NullMessageEncoder();
         const spy = jest.spyOn(encoder, "decode");
-        const data = new Buffer("test");
+        const data = Buffer.from("test");
         const msg = new EncodedMessage(encoder, "test_type", data);
         const payloads = [msg.payload, msg.payload];
         expect(payloads).toMatchObject([data, data]);

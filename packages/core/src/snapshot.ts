@@ -29,7 +29,7 @@ export class SnapshotJsonMessageEncoder implements IMessageEncoder {
 
     public encode(msg: IMessage): Uint8Array {
         if (msg.type === Snapshot.name) {
-            return new Buffer(JSON.stringify(msg.payload));
+            return Buffer.from(JSON.stringify(msg.payload));
         }
 
         throw new Error("unknown message type");
@@ -39,7 +39,7 @@ export class SnapshotJsonMessageEncoder implements IMessageEncoder {
         if (typeName === Snapshot.name) {
             return {
                 type: Snapshot.name,
-                payload: JSON.parse(new Buffer(data).toString()),
+                payload: JSON.parse(Buffer.from(data).toString()),
             };
         }
 

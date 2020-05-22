@@ -22,7 +22,9 @@ import {
     MessageRef,
     SequenceConflictError,
 } from "../model";
+import { RetrierContext } from "../utils";
 import { SinkCoordinator } from "./batching";
+import { EpochManager } from "./EpochManager";
 
 export class CompositeOutputSink
     implements
@@ -37,9 +39,10 @@ export class CompositeOutputSink
         annotators: IMessageMetricAnnotator[],
         private readonly publishSink: Lifecycle<IOutputSink<IPublishedMessage>>,
         private readonly storeSink: Lifecycle<IOutputSink<IStoredMessage | IStateVerification>>,
-        public readonly guarantees: IOutputSinkGuarantees
+        public readonly guarantees: IOutputSinkGuarantees,
+        epochs: EpochManager
     ) {
-        this.coordinator = new SinkCoordinator(storeSink, publishSink, annotators);
+        this.coordinator = new SinkCoordinator(storeSink, publishSink, annotators, epochs);
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -56,17 +59,17 @@ export class CompositeOutputSink
 
     public async sink(
         output: IterableIterator<BufferedDispatchContext>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
-        const result = await this.coordinator.handle(output, bail);
+        const result = await this.coordinator.handle(output, retry);
 
         if (result.error) {
             if (result.error.error instanceof SequenceConflictError) {
-                bail(new SequenceConflictError(result.error.error.details, result.failed[0]));
+                retry.bail(new SequenceConflictError(result.error.error.details, result.failed[0]));
             }
 
             if (!result.error.retryable) {
-                bail(result.error.error);
+                retry.bail(result.error.error);
             }
 
             throw result.error.error;

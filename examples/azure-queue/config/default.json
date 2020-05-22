@@ -1,0 +1,7 @@
+{
+    "queue": {
+        "storageAccount": "CREATE local.json with same structure as default.json but put real info in there",
+        "storageAccessKey": "CREATE local.json with same structure as default.json but put real info in there",
+        "queueName": "azure-queue-test"
+    }
+}

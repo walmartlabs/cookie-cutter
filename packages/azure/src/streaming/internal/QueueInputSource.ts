@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import {
+    DefaultComponentContext,
     EventSourcedMetadata,
     failSpan,
     IComponentContext,
@@ -21,7 +22,12 @@ import {
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
 import { isArray } from "util";
 import { IQueueConfiguration, QueueMetadata } from "..";
-import { IQueueReadOptions, QueueClient, QueueOpenTracingTagKeys } from "../../utils";
+import {
+    IQueueReadOptions,
+    QueueClient,
+    QueueClientWithLargeItemSupport,
+    QueueOpenTracingTagKeys,
+} from "../../utils";
 
 enum QueueMetrics {
     ApproximateMessageCount = "cookie_cutter.azure_queue_consumer.approximate_message_count",
@@ -45,9 +51,12 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
 
     constructor(config: IQueueConfiguration & IQueueReadOptions) {
         this.config = config;
-        this.client = new QueueClient(config);
+        this.client = QueueClientWithLargeItemSupport.create(config);
         this.readOptions = config;
         this.encoder = config.encoder;
+        this.metrics = DefaultComponentContext.metrics;
+        this.tracer = DefaultComponentContext.tracer;
+        this.logger = DefaultComponentContext.logger;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -64,7 +73,7 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
         while (this.running) {
             const messages = await this.client.read(undefined, this.readOptions);
             for (const message of messages) {
-                const { headers, payload } = JSON.parse(message.messageText) as {
+                const { headers, payload } = message as {
                     headers: any;
                     payload: IBufferToJSON | any;
                 };
@@ -87,8 +96,15 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                 span.setTag(Tags.SAMPLING_PRIORITY, 1);
                 span.setTag(QueueOpenTracingTagKeys.QueueName, this.readOptions.queueName);
                 const metadata: IMetadata = {
-                    [QueueMetadata.VisibilityTimeout]: message.timeNextVisible,
-                    [QueueMetadata.DequeueCount]: message.dequeueCount,
+                    [QueueMetadata.VisibilityTimeout]:
+                        message.headers[QueueMetadata.VisibilityTimeout],
+                    [QueueMetadata.DequeueCount]: parseInt(
+                        message.headers[QueueMetadata.DequeueCount] || "1",
+                        10
+                    ),
+                    [QueueMetadata.MessageId]: message.headers[QueueMetadata.MessageId],
+                    [QueueMetadata.QueueName]: message.headers[QueueMetadata.QueueName],
+                    [QueueMetadata.PopReceipt]: message.headers[QueueMetadata.PopReceipt],
                 };
 
                 const msgRef = new MessageRef(metadata, msg, span.context());
@@ -97,9 +113,9 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                         if (!error) {
                             await this.client.markAsProcessed(
                                 span.context(),
-                                message.messageId,
-                                message.popReceipt,
-                                message.queue
+                                message.headers[QueueMetadata.MessageId],
+                                message.headers[QueueMetadata.PopReceipt],
+                                message.headers[QueueMetadata.QueueName]
                             );
                         } else {
                             span.log({ reprocess: true });

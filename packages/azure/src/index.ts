@@ -26,6 +26,7 @@ export interface ICosmosConfiguration {
 }
 
 export interface IBlobStorageConfiguration {
+    readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly container: string;
@@ -34,10 +35,10 @@ export interface IBlobStorageConfiguration {
 
 export interface ICosmosQuery {
     query: string;
-    parameters?: Array<{
+    parameters?: {
         name: string;
         value: string | number | boolean;
-    }>;
+    }[];
 }
 
 export interface ICosmosQueryClient {

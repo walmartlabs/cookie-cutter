@@ -17,6 +17,7 @@ export interface IMetadata {
 
 export class MessageRef {
     private readonly listeners: ReleaseCallbackFn[];
+    private evicted: boolean = false;
 
     constructor(
         private meta: IMetadata,
@@ -50,6 +51,14 @@ export class MessageRef {
 
     public getAllMetadata(): IMetadata {
         return this.meta;
+    }
+
+    public evict() {
+        this.evicted = true;
+    }
+
+    public get isEvicted(): boolean {
+        return this.evicted;
     }
 }
 
