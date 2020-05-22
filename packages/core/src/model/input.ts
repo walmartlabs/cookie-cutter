@@ -7,7 +7,11 @@ LICENSE file in the root directory of this source tree.
 
 import { MessageRef } from ".";
 
+export interface IInputSourceContext {
+    evict(predicate: (msg: MessageRef) => boolean): Promise<void>;
+}
+
 export interface IInputSource {
-    start(): AsyncIterableIterator<MessageRef>;
+    start(context: IInputSourceContext): AsyncIterableIterator<MessageRef>;
     stop(): Promise<void>;
 }

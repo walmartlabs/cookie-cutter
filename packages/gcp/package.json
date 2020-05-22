@@ -1,23 +1,31 @@
 {
-  "name": "@walmartlabs/cookie-cutter-gcp",
-  "version": "1.1.0-alpha",
-  "license": "Apache-2.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "dependencies": {
-    "@google-cloud/storage": "3.1.0",
-    "@google-cloud/bigquery": "4.1.8"
-  },
-  "peerDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "devDependencies": {
-    "@walmartlabs/cookie-cutter-core": "^1.1.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-    "lint": "tslint --project tsconfig.json",
-    "lint:fix": "yarn run lint --fix"
-  }
+    "name": "@walmartlabs/cookie-cutter-gcp",
+    "version": "1.2.0-rc.1",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "homepage": "https://walmartlabs.github.io/cookie-cutter",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/walmartlabs/cookie-cutter.git"
+    },
+    "bugs": {
+        "url": "https://github.com/walmartlabs/cookie-cutter/issues"
+    },
+    "dependencies": {
+        "@google-cloud/storage": "4.4.0",
+        "@google-cloud/bigquery": "4.7.0"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
 }

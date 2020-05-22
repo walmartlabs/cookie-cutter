@@ -14,7 +14,7 @@ import { OpenTracingTagKeys } from "../model";
 export * from "./AsyncPipe";
 export * from "./Future";
 export * from "./BoundedPriorityQueue";
-export { createRetrier, IRetrier } from "./retry";
+export { createRetrier, createRetrierContext, IRetrier, RetrierContext } from "./retry";
 
 export type CancelablePromise<T> = Promise<T> & { cancel(): void };
 
@@ -106,11 +106,11 @@ export function failSpan(span: Span | undefined, e: any) {
 }
 
 export function generateUniqueId(
-    ...values: Array<string | number | boolean | Date | Array<string | number | boolean | Date>>
+    ...values: (string | number | boolean | Date | (string | number | boolean | Date)[])[]
 ): string {
     const md5sum = crypto.createHash("md5");
     const update = (
-        vals: Array<string | number | boolean | Date | Array<string | number | boolean | Date>>
+        vals: (string | number | boolean | Date | (string | number | boolean | Date)[])[]
     ): void => {
         for (const val of vals) {
             switch (typeof val) {

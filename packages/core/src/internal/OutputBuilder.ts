@@ -22,6 +22,7 @@ import {
     makeLifecycle,
     OutputSinkConsistencyLevel,
 } from "../model";
+import { EpochManager } from "./EpochManager";
 
 export class OutputBuilder
     implements
@@ -33,12 +34,14 @@ export class OutputBuilder
     private publishSinkSet: boolean;
     private readonly enrichers: IMessageEnricher[] = [];
     private readonly annotators: IMessageMetricAnnotator[] = [];
+    public readonly epochs: EpochManager;
 
     constructor(private readonly parent: IApplicationBuilder) {
         this.publishSink = makeLifecycle(new NullOutputSink());
         this.storeSink = makeLifecycle(new NullOutputSink());
         this.storeSinkSet = false;
         this.publishSinkSet = false;
+        this.epochs = new EpochManager();
     }
 
     public done(): IApplicationBuilder {
@@ -63,7 +66,8 @@ export class OutputBuilder
             this.annotators,
             this.publishSink,
             this.storeSink,
-            this.guarantees
+            this.guarantees,
+            this.epochs
         );
     }
 

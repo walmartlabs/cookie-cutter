@@ -1,0 +1,18 @@
+{
+    "name": "@examples/redis-service",
+    "private": true,
+    "version": "0.0.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
+        "@walmartlabs/cookie-cutter-redis": "^1.2.0-rc",
+        "config": "3.3.1"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index",
+        "test": "echo 'NO TESTS'",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
+}

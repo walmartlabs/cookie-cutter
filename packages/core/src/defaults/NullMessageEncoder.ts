@@ -22,7 +22,7 @@ export class NullMessageEncoder implements IMessageEncoder {
     public decode(data: Uint8Array, typeName?: string): IMessage {
         return {
             type: typeName,
-            payload: new Buffer(data),
+            payload: Buffer.from(data),
         };
     }
 }

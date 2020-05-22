@@ -5,8 +5,13 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { Container, CosmosClient as Client, StoredProcedureDefinition } from "@azure/cosmos";
-import { HeaderUtils, IHeaders } from "@azure/cosmos/lib/src/queryExecutionContext";
+import {
+    Constants,
+    Container,
+    CosmosClient as Client,
+    CosmosHeaders,
+    StoredProcedureDefinition,
+} from "@azure/cosmos";
 import {
     DefaultComponentContext,
     failSpan,
@@ -43,6 +48,8 @@ enum CosmosMetricResults {
     Error = "error",
     ErrorSequenceConflict = "error.sequence_conflict",
 }
+
+export const RETRY_AFTER_MS = Constants.HttpHeaders.RetryAfterInMilliseconds;
 
 export const BULK_INSERT_SPROC_ID = "bulkInsertSproc";
 export const UPSERT_SPROC_ID = "upsertSproc";
@@ -104,9 +111,7 @@ export class CosmosClient
 
         this.client = new Client({
             endpoint: config.url,
-            auth: {
-                masterKey: config.key,
-            },
+            key: config.key,
             agent: this.agent,
         });
     }
@@ -114,7 +119,7 @@ export class CosmosClient
     public async initialize(context: IComponentContext) {
         this.metrics = context.metrics;
         this.tracer = context.tracer;
-        const sprocPromises: Array<Promise<void>> = [];
+        const sprocPromises: Promise<void>[] = [];
         for (const sprocID of SPROCS.keys()) {
             sprocPromises.push(this.initializeStoredProcedure(sprocID));
         }
@@ -149,22 +154,22 @@ export class CosmosClient
             query: "SELECT * FROM collection c WHERE c.id = @id",
             parameters: [{ name: "@id", value: sprocID }],
         };
-        const result = await container.storedProcedures.query(query);
-        const response = await result.toArray();
-        if (response.result.length === 0) {
+        const queryIterator = await container.scripts.storedProcedures.query(query);
+        const response = await queryIterator.fetchAll();
+        if (response.resources.length === 0) {
             const newSproc: StoredProcedureDefinition = {
                 id: sprocID,
                 body: sprocBody,
             };
-            await container.storedProcedures.create(newSproc);
+            await container.scripts.storedProcedures.create(newSproc);
         } else {
-            const sproc = response.result[0];
+            const sproc = response.resources[0];
             if (sproc.body !== sprocBody) {
                 const newSproc: StoredProcedureDefinition = {
                     id: sprocID,
                     body: sprocBody,
                 };
-                await container.storedProcedure(sproc.id).replace(newSproc);
+                await container.scripts.storedProcedure(sproc.id).replace(newSproc);
             }
         }
         this.spInitialized.set(sprocID, true);
@@ -202,12 +207,12 @@ export class CosmosClient
         span.setTag("document.id", docId);
     }
 
-    private getRequestCharge(headers: IHeaders): number {
-        try {
-            return HeaderUtils.getRequestChargeIfAny(headers);
-        } catch {
-            return 0;
+    private getRequestCharge(headers: CosmosHeaders) {
+        if (headers) {
+            const rc = headers[Constants.HttpHeaders.RequestCharge];
+            return rc ? parseFloat(rc as string) : 0;
         }
+        return 0;
     }
 
     private async executeSproc(
@@ -240,10 +245,10 @@ export class CosmosClient
                     spans.push(docSpan);
                 }
             }
-            const response = await container
+            const response = await container.scripts
                 .storedProcedure(sprocID)
-                .execute(parameters, { partitionKey, enableScriptLogging: true });
-            requestCharge = this.getRequestCharge(response.headers);
+                .execute(partitionKey, parameters, { enableScriptLogging: true });
+            requestCharge = parseFloat(response.requestCharge as any);
             this.metrics.increment(
                 CosmosMetrics.Sproc,
                 this.generateMetricTags(CosmosMetricResults.Success, { sproc_id: sprocID })
@@ -298,15 +303,14 @@ export class CosmosClient
         try {
             const container = await this.container();
             const iterator = container.items.query(query, {
-                enableCrossPartitionQuery: true,
                 populateQueryMetrics: true,
             });
             const combinedResults = [];
             while (iterator.hasMoreResults()) {
-                const { result, headers } = await iterator.executeNext();
-                requestCharge += this.getRequestCharge(headers);
-                if (result) {
-                    combinedResults.push(...result);
+                const feedResponse = await iterator.fetchNext();
+                requestCharge += parseFloat(feedResponse.requestCharge as any);
+                if (feedResponse.resources) {
+                    combinedResults.push(...feedResponse.resources);
                 }
             }
             this.metrics.increment(

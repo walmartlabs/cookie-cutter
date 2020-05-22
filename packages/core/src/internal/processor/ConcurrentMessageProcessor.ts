@@ -5,73 +5,65 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { Span, Tags, Tracer } from "opentracing";
-import { BufferedDispatchContext, TraceContext } from "..";
-import {
-    IConcurrencyConfiguration,
-    IInputSource,
-    ILogger,
-    IMessageDispatcher,
-    IMessageEnricher,
-    IMessageMetricAnnotator,
-    IMessageTypeMapper,
-    IMessageValidator,
-    IMetrics,
-    IMetricTags,
-    IOutputSink,
-    IServiceRegistry,
-    IStateCacheLifecycle,
-    IStateProvider,
-    MessageProcessingMetrics,
-    MessageProcessingResults,
-    OpenTracingOperations,
-    OpenTracingTagKeys,
-    SequenceConflictError,
-} from "../../model";
-import { EventProcessingMetadata, MessageRef } from "../../model";
+import { Span } from "opentracing";
+import { IMessageProcessor, IMessageProcessorConfiguration } from ".";
+import { BufferedDispatchContext } from "..";
 import {
     BoundedPriorityQueue,
+    EventProcessingMetadata,
     failSpan,
+    IConcurrencyConfiguration,
+    IInputSource,
+    IInputSourceContext,
+    IMessageEnricher,
+    IMessageMetricAnnotator,
+    IMetricTags,
+    IOutputSink,
     IRetrier,
-    iterate,
+    IServiceRegistry,
+    MessageProcessingMetrics,
+    MessageProcessingResults,
+    MessageRef,
     prettyEventName,
+    SequenceConflictError,
     sleep,
     waitForPendingIO,
-} from "../../utils";
+} from "../..";
+import { BaseMessageProcessor, IInflightSignal } from "./BaseMessageProcessor";
 import { Batch } from "./Batch";
-import { IMessageProcessor, IMessageProcessorConfiguration } from "./IMessageProcessor";
 import { ReprocessingContext } from "./ReprocessingContext";
 import { annotator, validate } from "./utils";
 
+export interface IQueueItem<T> {
+    item: T;
+    signal: IInflightSignal;
+}
+
 const HIGH_PRIORITY = 1;
 
-export class ConcurrentMessageProcessor implements IMessageProcessor {
-    protected readonly logger: ILogger;
-    protected readonly metrics: IMetrics;
-    protected readonly dispatcher: IMessageDispatcher;
-    protected readonly validator: IMessageValidator;
-    protected readonly stateProvider: IStateProvider<any> & IStateCacheLifecycle<any>;
-    protected readonly messageTypeMapper: IMessageTypeMapper;
+export class ConcurrentMessageProcessor extends BaseMessageProcessor implements IMessageProcessor {
     protected readonly inputQueue: BoundedPriorityQueue<MessageRef>;
-    protected readonly outputQueue: BoundedPriorityQueue<BufferedDispatchContext>;
-    protected tracer: Tracer;
-    protected inFlight: number;
-    protected processingStrategy = ConcurrentMessageProcessor.name;
+    protected readonly outputQueue: BoundedPriorityQueue<IQueueItem<BufferedDispatchContext>>;
 
-    constructor(
+    public constructor(
         protected readonly config: IConcurrencyConfiguration,
         processorConfig: IMessageProcessorConfiguration
     ) {
-        this.logger = processorConfig.logger;
-        this.metrics = processorConfig.metrics;
-        this.dispatcher = processorConfig.dispatcher;
-        this.validator = processorConfig.validator;
-        this.stateProvider = processorConfig.stateProvider;
-        this.messageTypeMapper = processorConfig.messageTypeMapper;
-        this.tracer = processorConfig.tracer;
+        super(processorConfig);
         this.inputQueue = new BoundedPriorityQueue(config.inputQueueCapacity);
         this.outputQueue = new BoundedPriorityQueue(config.outputQueueCapacity);
-        this.inFlight = 0;
+    }
+
+    protected get name(): string {
+        return ConcurrentMessageProcessor.name;
+    }
+
+    protected reportStatistics() {
+        this.metrics.gauge(
+            MessageProcessingMetrics.InputQueue,
+            this.inputQueue.length + super.currentlyInflight.length
+        );
+        this.metrics.gauge(MessageProcessingMetrics.OutputQueue, this.outputQueue.length);
     }
 
     public async run(
@@ -86,16 +78,10 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
         let timer: NodeJS.Timer | undefined;
         try {
             if (this.config.emitMetricsForQueues) {
-                timer = setInterval(() => {
-                    this.metrics.gauge(
-                        MessageProcessingMetrics.InputQueue,
-                        this.inputQueue.length + this.inFlight
-                    );
-                    this.metrics.gauge(
-                        MessageProcessingMetrics.OutputQueue,
-                        this.outputQueue.length
-                    );
-                }, this.config.queueMetricsIntervalMs);
+                timer = setInterval(
+                    () => this.reportStatistics(),
+                    this.config.queueMetricsIntervalMs
+                );
                 timer.unref();
             }
 
@@ -121,11 +107,20 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
     }
 
     private async inputLoop(source: IInputSource): Promise<void> {
-        for await (const item of source.start()) {
-            if (!(await this.inputQueue.enqueue(item))) {
-                await item.release(undefined, new Error("unavailable"));
+        const inputContext: IInputSourceContext = {
+            evict: async (predicate: (MessageRef) => boolean): Promise<void> => {
+                this.inputQueue.update(predicate, (msg) => msg.evict());
+                await Promise.all(super.currentlyInflight.map((i) => i.promise));
+            },
+        };
+
+        for await (const msg of source.start(inputContext)) {
+            if (!(await this.inputQueue.enqueue(msg))) {
+                await msg.release(undefined, new Error("unavailable"));
             }
         }
+
+        await Promise.all(super.currentlyInflight.map((s) => s.promise));
         this.inputQueue.close();
     }
 
@@ -136,20 +131,20 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
         dispatchRetrier: IRetrier
     ): Promise<void> {
         for await (const msg of this.inputQueue.iterate()) {
+            const signal = super.createInflightSignal();
             try {
-                this.inFlight++;
                 await this.handleInput(
                     msg,
+                    signal,
                     enricher,
                     msgMetricsAnnotator,
                     serviceDiscovery,
                     dispatchRetrier
                 );
             } catch (e) {
+                signal.resolve();
                 this.inputQueue.close();
                 throw e;
-            } finally {
-                this.inFlight--;
             }
         }
 
@@ -162,8 +157,19 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
         this.outputQueue.close();
     }
 
+    protected async handleReprocessingContext(msg: MessageRef): Promise<void> {
+        // if we are reprocessing this message then undo all state changes first
+        const reproContext = msg.metadata<ReprocessingContext>(
+            EventProcessingMetadata.ReprocessingContext
+        );
+        if (reproContext) {
+            this.stateProvider.invalidate(reproContext.evictions());
+        }
+    }
+
     protected async handleInput(
         msg: MessageRef,
+        signal: IInflightSignal,
         enricher: IMessageEnricher,
         msgMetricsAnnotator: IMessageMetricAnnotator,
         serviceDiscovery: IServiceRegistry,
@@ -175,91 +181,67 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
         let handled: boolean = false;
         let dispatchError;
         try {
-            // if we are reprocessing this message then undo all state changes first
-            const reproContext = msg.metadata<ReprocessingContext>(
-                EventProcessingMetadata.ReprocessingContext
-            );
-            if (reproContext) {
-                this.stateProvider.invalidate(reproContext.evictions());
+            if (msg.isEvicted) {
+                return;
             }
 
-            handlingInputSpan = this.tracer.startSpan(OpenTracingOperations.HandlingInputMsg, {
-                childOf: msg.spanContext,
-            });
-            handlingInputSpan.setTag(
-                OpenTracingTagKeys.ProcessingStrategy,
-                this.processingStrategy
-            );
-            handlingInputSpan.setTag(OpenTracingTagKeys.EventType, eventType);
-            handlingInputSpan.setTag(Tags.COMPONENT, "cookie-cutter-core");
+            await this.handleReprocessingContext(msg);
 
-            const context = new BufferedDispatchContext(
+            handlingInputSpan = super.createDispatchSpan(msg.spanContext, eventType);
+            const context = super.createDispatchContext(
                 msg,
-                this.metrics,
-                this.logger,
-                this.stateProvider,
-                new TraceContext(this.tracer, handlingInputSpan),
+                handlingInputSpan,
                 enricher,
-                this.messageTypeMapper,
                 serviceDiscovery
             );
 
             if (!this.dispatcher.canDispatch(msg.payload)) {
-                this.metrics.increment(MessageProcessingMetrics.Processed, {
-                    event_type: eventType,
-                    result: MessageProcessingResults.Unhandled,
-                });
+                super.incrementProcessedMsg({}, eventType, MessageProcessingResults.Unhandled);
             } else {
                 baseMetricTags = annotator(msg.payload, msgMetricsAnnotator);
-                this.metrics.increment(MessageProcessingMetrics.Received, {
-                    ...baseMetricTags,
-                    event_type: eventType,
-                });
+                super.incrementReceived(baseMetricTags, eventType);
 
                 const result = this.validator.validate(msg.payload);
-                if (result.success) {
-                    context.handlerResult.value = await dispatchRetrier.retry(async (bail) => {
-                        context.bail = bail;
-                        try {
-                            const val = await this.dispatcher.dispatch(msg.payload, context);
-                            context.handlerResult.error = undefined;
-                            dispatchError = undefined;
-                            return val;
-                        } catch (e) {
-                            this.logger.error("failed to dispatch message", e, {
-                                type: msg.payload.type,
-                            });
-                            context.handlerResult.error = e;
-                            context.clear();
-                            dispatchError = e;
-                            throw e;
-                        }
-                    });
-
-                    if (validate(context, this.validator, this.logger)) {
-                        context.complete();
-                    } else {
-                        context.clear();
-                        this.metrics.increment(MessageProcessingMetrics.Processed, {
-                            ...baseMetricTags,
-                            result: MessageProcessingResults.ErrInvalidMsg,
-                            event_type: eventType,
+                if (
+                    result.success ||
+                    (this.dispatcher.canHandleInvalid && this.dispatcher.canHandleInvalid())
+                ) {
+                    try {
+                        await super.dispatchToHandler(msg, context, dispatchRetrier, {
+                            validation: result,
                         });
+                        dispatchError = context.handlerResult.error;
+
+                        if (!dispatchError) {
+                            if (validate(context, this.validator, this.logger)) {
+                                context.complete();
+                            } else {
+                                context.clear();
+                                super.incrementProcessedMsg(
+                                    baseMetricTags,
+                                    eventType,
+                                    MessageProcessingResults.ErrInvalidMsg
+                                );
+                            }
+                        }
+                    } catch (e) {
+                        dispatchError = e;
+                        throw e;
                     }
                 } else {
                     this.logger.error("received invalid message", result.message, {
                         type: msg.payload.type,
                     });
                     failSpan(handlingInputSpan, "message failed validation");
-                    this.metrics.increment(MessageProcessingMetrics.Processed, {
-                        ...baseMetricTags,
-                        result: MessageProcessingResults.ErrInvalidMsg,
-                        event_type: eventType,
-                    });
+                    super.incrementProcessedMsg(
+                        baseMetricTags,
+                        eventType,
+                        MessageProcessingResults.ErrInvalidMsg
+                    );
                 }
             }
 
-            if (await this.outputQueue.enqueue(context)) {
+            if (await this.outputQueue.enqueue({ item: context, signal })) {
                 handled = true;
             }
 
@@ -277,14 +259,18 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
                 if (handlingInputSpan) {
                     failSpan(handlingInputSpan, dispatchError);
                 }
-                this.metrics.increment(MessageProcessingMetrics.Processed, {
-                    ...baseMetricTags,
-                    result: MessageProcessingResults.ErrFailedMsgProcessing,
-                    event_type: eventType,
-                });
+                super.incrementProcessedMsg(
+                    baseMetricTags,
+                    eventType,
+                    MessageProcessingResults.ErrFailedMsgProcessing
+                );
             }
             if (!handled) {
-                await msg.release(undefined, new Error("unavailable"));
+                try {
+                    await msg.release(undefined, new Error("unavailable"));
+                } finally {
+                    signal.resolve();
+                }
             }
 
             if (handlingInputSpan) {
@@ -299,13 +285,14 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
         sinkRetrier: IRetrier
     ): Promise<void> {
         let reproContext: ReprocessingContext | undefined;
-        const batch = new Batch<BufferedDispatchContext>(
+        const batch = new Batch<IQueueItem<BufferedDispatchContext>>(
             this.config.minimumBatchSize,
             this.config.maximumBatchSize
         );
         let continueTriggered = false;
 
-        for await (const context of this.outputQueue.iterate()) {
+        for await (const queueItem of this.outputQueue.iterate()) {
+            const context = queueItem.item;
             const baseMetricTags: IMetricTags = context.completed
                 ? annotator(context.source.payload, msgMetricsAnnotator)
                 : {};
@@ -314,42 +301,40 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
             let sinkError;
             try {
                 if (context.completed) {
-                    handlingOutputSpan = this.tracer.startSpan(
-                        OpenTracingOperations.SendingToSink,
-                        { childOf: context.source.spanContext }
+                    handlingOutputSpan = super.createSinkSpan(
+                        context.source.spanContext,
+                        eventType
                     );
-                    handlingOutputSpan.setTag(
-                        OpenTracingTagKeys.ProcessingStrategy,
-                        ConcurrentMessageProcessor.name
-                    );
-                    handlingOutputSpan.setTag(OpenTracingTagKeys.EventType, eventType);
-                    handlingOutputSpan.setTag(Tags.COMPONENT, "cookie-cutter-core");
                 }
                 if (reproContext !== undefined) {
                     const sequence = context.source.metadata<number>(
                         EventProcessingMetadata.Sequence
                     );
-                    if (sequence !== reproContext.atSn) {
+                    if (this.shouldSkip(sequence, reproContext.atSn)) {
                         this.logger.debug(
                             `skipping output message with sequence ${sequence} while waiting for retry`
                         );
-                        if (
-                            !(await this.inputQueue.enqueue(
-                                reproContext.wrap(context),
-                                HIGH_PRIORITY
-                            ))
-                        ) {
-                            await context.source.release(
-                                undefined,
-                                new Error("unable to reprocess")
-                            );
-                            return;
+                        try {
+                            if (
+                                !(await this.inputQueue.enqueue(
+                                    reproContext.wrap(context),
+                                    HIGH_PRIORITY
+                                ))
+                            ) {
+                                await context.source.release(
+                                    undefined,
+                                    new Error("unable to reprocess")
+                                );
+                                return;
+                            }
+                        } finally {
+                            queueItem.signal.resolve();
                         }
-                        this.metrics.increment(MessageProcessingMetrics.Processed, {
-                            ...baseMetricTags,
-                            result: MessageProcessingResults.ErrReprocessing,
-                            event_type: eventType,
-                        });
+                        super.incrementProcessedMsg(
+                            baseMetricTags,
+                            eventType,
+                            MessageProcessingResults.ErrReprocessing
+                        );
                         continueTriggered = true;
                         continue;
                     } else {
@@ -357,7 +342,7 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
                     }
                 }
 
-                batch.add(context);
+                batch.add(queueItem);
                 if (this.outputQueue.length === 0 && batch.shouldLinger()) {
                     await sleep(this.config.batchLingerIntervalMs);
                 }
@@ -371,38 +356,32 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
                     this.metrics.gauge(MessageProcessingMetrics.OutputBatch, batch.items.length);
                 }
 
-                await sinkRetrier.retry(async (bail) => {
-                    try {
-                        await sink.sink(iterate(batch.items), bail);
-                        sinkError = undefined;
-                    } catch (e) {
-                        this.logger.error("failed to process output in sink", e, {
-                            type: context.source.payload.type,
-                        });
-                        sinkError = e;
-                        if (e instanceof SequenceConflictError) {
-                            bail(e);
-                        }
-                        throw e;
-                    }
-                });
+                sinkError = await super.dispatchToSink(
+                    batch.items.map((i) => i.item),
+                    sink,
+                    sinkRetrier
+                );
 
                 for (const item of batch.items) {
-                    if (item.completed) {
+                    if (item.item.completed) {
                         this.metrics.increment(MessageProcessingMetrics.Processed, {
-                            ...annotator(item.source.payload, msgMetricsAnnotator),
+                            ...annotator(item.item.source.payload, msgMetricsAnnotator),
                             result: MessageProcessingResults.Success,
-                            event_type: prettyEventName(item.source.payload.type),
+                            event_type: prettyEventName(item.item.source.payload.type),
                         });
                     }
                 }
             } catch (e) {
+                sinkError = e;
                 if (!(e instanceof SequenceConflictError)) {
                     throw e;
                 }
             } finally {
                 if (continueTriggered) {
                     continueTriggered = false;
+                    for (const { signal } of batch.items) {
+                        signal.resolve();
+                    }
                 } else {
                     if (sinkError) {
                         if (handlingOutputSpan) {
@@ -410,49 +389,71 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
                         }
                         if (!(sinkError instanceof SequenceConflictError)) {
                             for (const item of batch.items) {
-                                item.handlerResult.error = sinkError;
+                                item.item.handlerResult.error = sinkError;
                             }
-                            await this.releaseSourceMessages(batch.items);
+                            await this.releaseSourceMessages(batch.items.map((i) => i.item));
                         } else {
                             const sequence = sinkError.context.source.metadata<number>(
                                 EventProcessingMetadata.Sequence
                             );
                             reproContext = new ReprocessingContext(sequence);
                             await this.releaseSourceMessages(
-                                batch.items.slice(0, batch.items.indexOf(sinkError.context))
+                                batch.items
+                                    .slice(
+                                        0,
+                                        batch.items.map((i) => i.item).indexOf(sinkError.context)
+                                    )
+                                    .map((i) => i.item)
                             );
                             for (
-                                let i = batch.items.indexOf(sinkError.context);
+                                let i = batch.items.map((i) => i.item).indexOf(sinkError.context);
                                 i < batch.items.length;
                                 i++
                             ) {
-                                const item = batch.items[i];
+                                const { item } = batch.items[i];
                                 if (
                                     !(await this.inputQueue.enqueue(
                                         reproContext.wrap(item),
                                         HIGH_PRIORITY
                                     ))
                                 ) {
-                                    await item.source.release(
+                                    await context.source.release(
                                         undefined,
                                         new Error("unable to reprocess")
                                     );
                                 }
                             }
-                            this.logger.warn("sequence number conflict, retrying", {
+
+                            let errorTags: any = {
                                 key: sinkError.details.key,
                                 newSn: sinkError.details.newSn,
                                 expectedSn: sinkError.details.expectedSn,
                                 actualSn: sinkError.details.actualSn,
-                            });
-                            this.metrics.increment(MessageProcessingMetrics.Processed, {
-                                ...baseMetricTags,
-                                result: MessageProcessingResults.ErrSeqNum,
-                                event_type: eventType,
-                            });
+                            };
+                            if (
+                                sinkError.details.actualEpoch !== undefined ||
+                                sinkError.details.expectedEpoch !== undefined
+                            ) {
+                                errorTags = {
+                                    ...errorTags,
+                                    expectedEpoch: sinkError.details.expectedEpoch,
+                                    actualEpoch: sinkError.details.actualEpoch,
+                                };
+                            }
+                            this.logger.warn("sequence number conflict, retrying", errorTags);
+
+                            super.incrementProcessedMsg(
+                                baseMetricTags,
+                                eventType,
+                                MessageProcessingResults.ErrSeqNum
+                            );
                         }
                     } else {
-                        await this.releaseSourceMessages(batch.items);
+                        await this.releaseSourceMessages(batch.items.map((i) => i.item));
+                    }
+
+                    for (const { signal } of batch.items) {
+                        signal.resolve();
                     }
                     batch.reset();
                 }
@@ -463,19 +464,22 @@ export class ConcurrentMessageProcessor implements IMessageProcessor {
         }
     }
 
-    protected async releaseSourceMessages(
-        batch: Array<BufferedDispatchContext<any>>
-    ): Promise<void> {
+    protected async releaseSourceMessages(batch: BufferedDispatchContext<any>[]): Promise<void> {
         for (const item of batch) {
             try {
                 await item.source.release(item.handlerResult.value, item.handlerResult.error);
             } catch (e) {
                 this.logger.error("failed to release input", e, { type: item.source.payload.type });
-                this.metrics.increment(MessageProcessingMetrics.Processed, {
-                    result: MessageProcessingResults.ErrFailedMsgRelease,
-                    event_type: prettyEventName(item.source.payload.type),
-                });
+                super.incrementProcessedMsg(
+                    {},
+                    prettyEventName(item.source.payload.type),
+                    MessageProcessingResults.ErrFailedMsgRelease
+                );
             }
         }
+    }
+
+    protected shouldSkip(sequence: number, reproAtSn: number): boolean {
+        return sequence !== reproAtSn;
     }
 }

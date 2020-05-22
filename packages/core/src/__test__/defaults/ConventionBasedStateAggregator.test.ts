@@ -98,7 +98,7 @@ describe("ConventionBasedStateAggregator", () => {
         const encoder = new JsonMessageEncoder();
         const aggregator = new ConventionBasedStateAggregator(TestState, target);
         const invalidMsgType = "invalid.message.type";
-        const invalidEncodedMsg = new Uint8Array(new Buffer("invalid"));
+        const invalidEncodedMsg = new Uint8Array(Buffer.from("invalid"));
 
         const state = aggregator.aggregate({
             lastSn: 4,

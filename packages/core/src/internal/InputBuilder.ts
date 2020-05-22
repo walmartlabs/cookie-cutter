@@ -21,7 +21,7 @@ import {
 
 export class InputBuilder
     implements IInputBuilder, IComponentBuilder<IInputSource & IMessageMetricAnnotator> {
-    private readonly inputs: Array<Lifecycle<IInputSource>> = [];
+    private readonly inputs: Lifecycle<IInputSource>[] = [];
     private readonly enrichers: IMessageEnricher[] = [];
     private readonly annotators: IMessageMetricAnnotator[] = [];
     private deduper: IMessageDeduper;

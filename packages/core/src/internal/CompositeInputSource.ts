@@ -11,6 +11,7 @@ import {
     IComponentContext,
     IDisposable,
     IInputSource,
+    IInputSourceContext,
     ILogger,
     IMessage,
     IMessageDeduper,
@@ -29,7 +30,7 @@ export class CompositeInputSource
     private logger: ILogger;
 
     constructor(
-        private readonly inputs: Array<Lifecycle<IInputSource>>,
+        private readonly inputs: Lifecycle<IInputSource>[],
         private readonly enrichers: IMessageEnricher[],
         private readonly annotators: IMessageMetricAnnotator[],
         private readonly deduper: Lifecycle<IMessageDeduper>
@@ -47,8 +48,8 @@ export class CompositeInputSource
         await Promise.all(this.inputs.map((i) => i.stop()));
     }
 
-    public async *start(): AsyncIterableIterator<MessageRef> {
-        const sources = this.inputs.map((i) => i.start());
+    public async *start(context: IInputSourceContext): AsyncIterableIterator<MessageRef> {
+        const sources = this.inputs.map((i) => i.start(context));
         if (sources.length === 0) {
             return;
         }

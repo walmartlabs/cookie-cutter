@@ -23,7 +23,7 @@ import {
     MessageRef,
     StateRef,
 } from "../model";
-import { iterate } from "../utils";
+import { iterate, RetrierContext } from "../utils";
 import { BufferedMetrics } from "./BufferedMetrics";
 
 class DispatchState<TState> implements IDispatchState<TState> {
@@ -49,7 +49,7 @@ class DispatchState<TState> implements IDispatchState<TState> {
         this._loaded.clear();
     }
 
-    public compute(): Array<StateRef<TState>>;
+    public compute(): StateRef<TState>[];
     public compute(key: string): StateRef<TState>;
     public compute(key?: any) {
         if (key) {
@@ -57,7 +57,10 @@ class DispatchState<TState> implements IDispatchState<TState> {
             if (matches.length === 0) {
                 return undefined;
             }
-            return this.stateProvider.compute(matches[0].state, matches.map((m) => m.message));
+            return this.stateProvider.compute(
+                matches[0].state,
+                matches.map((m) => m.message)
+            );
         }
 
         const states = Array<StateRef<TState>>();
@@ -82,7 +85,7 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
     public readonly logger: ILogger;
     public readonly metrics: BufferedMetrics;
     private _completed: boolean = false;
-    public bail: (err: any) => never;
+    public retry: RetrierContext;
 
     constructor(
         public readonly source: MessageRef,
@@ -100,7 +103,18 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
         this.logger = new MetadataLoggerDecorator(logger, this.source.getAllMetadata());
         this.metrics = new BufferedMetrics(metricsPublisher);
         this._state = new DispatchState(this.stateProvider, this.trace, this.storedItems);
-        this.bail = undefined;
+        this.retry = undefined;
+    }
+
+    /**
+     * @deprecated Deprecated.
+     *
+     * @param {any} err
+     * @returns never
+     */
+    public bail(err: any): never {
+        this.retry.bail(err);
+        throw err;
     }
 
     public get state(): IDispatchState<TState> {

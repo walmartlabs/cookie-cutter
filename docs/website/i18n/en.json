@@ -56,8 +56,14 @@
       "module-mssql": {
         "title": "MSSQL"
       },
+      "module-prometheus": {
+        "title": "Prometheus"
+      },
       "module-protobuf": {
         "title": "Protobuf"
+      },
+      "module-redis": {
+        "title": "Redis"
       },
       "module-s3": {
         "title": "S3"

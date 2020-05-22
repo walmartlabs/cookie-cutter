@@ -23,7 +23,7 @@ export interface IOutputSinkGuarantees {
 }
 
 export interface IOutputSink<T> {
-    sink(output: IterableIterator<T>): Promise<void>;
+    sink(output: IterableIterator<T>, retry: RetrierContext): Promise<void>;
     readonly guarantees: IOutputSinkGuarantees;
 }
 ```
@@ -63,4 +63,31 @@ Application.create()
     .typeMapper(myCustomerTypeMapper)
     // ...
     .run();
+```
+
+## RetrierContext
+
+The RetrierContext allows sinks to communicate with the retrier. Sinks can inform the retrier that it should stop retrying by calling `retry.bail(err: any)`. Sinks can also override the next retry interval by using `retry.setNextRetryInterval(intervalInMs: number)`.
+
+```typescript
+interface IRetrierContext {
+    // ...
+    bail: (err: any) => never;
+    setNextRetryInterval: (interval: number) => void;
+}
+```
+
+```typescript
+try {
+    await this.client.upsert(record, state.key, state.seqNum);
+} catch (e) {
+    if (isRetryableError(e)) {
+        if (e.headers && e.headers[RETRY_AFTER_MS]) {
+            retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+        }
+        throw e;
+    } else {
+        retry.bail(e);
+    }
+}
 ```

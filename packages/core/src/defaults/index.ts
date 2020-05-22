@@ -18,6 +18,8 @@ export * from "./StaticInputSource";
 export * from "./CapturingOutputSink";
 export * from "./ConsoleLogger";
 export * from "./InMemoryStateAggregationSource";
+export * from "./InMemoryMaterializedViewStateOutputSink";
+export * from "./InMemoryMaterializedViewStateProvider";
 export * from "./InMemoryStateOutputSink";
 export * from "./JsonMessageEncoder";
 export * from "./CsvMessageEncoder";

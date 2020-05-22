@@ -6,10 +6,18 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
-import { IQueueConfiguration, IQueueSourceConfiguration } from "..";
+import { IQueueConfiguration, IQueueMessagePreprocessor, IQueueSourceConfiguration } from "..";
 
 @config.section
 export class QueueConfiguration implements IQueueConfiguration {
+    @config.field(config.converters.string)
+    public set url(_: string) {
+        config.noop();
+    }
+    public get url(): string {
+        return config.noop();
+    }
+
     @config.field(config.converters.string)
     public set storageAccount(_: string) {
         config.noop();
@@ -34,6 +42,14 @@ export class QueueConfiguration implements IQueueConfiguration {
         return config.noop();
     }
 
+    @config.field(config.converters.none)
+    public set preprocessor(_: IQueueMessagePreprocessor) {
+        config.noop();
+    }
+    public get preprocessor(): IQueueMessagePreprocessor {
+        return config.noop();
+    }
+
     @config.field(config.converters.number)
     public set retryCount(_: number) {
         config.noop();
@@ -55,6 +71,22 @@ export class QueueConfiguration implements IQueueConfiguration {
         config.noop();
     }
     public get encoder(): IMessageEncoder {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set largeItemBlobContainer(_: string) {
+        config.noop();
+    }
+    public get largeItemBlobContainer(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.boolean)
+    public set createQueueIfNotExists(_: boolean) {
+        config.noop();
+    }
+    public get createQueueIfNotExists(): boolean {
         return config.noop();
     }
 }

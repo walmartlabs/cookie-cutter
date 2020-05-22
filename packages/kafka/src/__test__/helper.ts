@@ -22,7 +22,7 @@ export function createPublishedMessage({
     return {
         message: imessage,
         metadata,
-        original: new MessageRef(metadata, imessage, {}),
+        original: new MessageRef(metadata, imessage),
         spanContext: null,
     };
 }

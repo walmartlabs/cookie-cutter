@@ -10,6 +10,7 @@ import {
     DefaultComponentContext,
     IComponentContext,
     IDisposable,
+    IInputSourceContext,
     ILogger,
     IMetrics,
     IRequireInitialization,
@@ -32,15 +33,17 @@ import {
 import * as LZ4Codec from "kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
 import Long = require("long");
-import * as uuid from "uuid";
+import { isNumber, isString } from "util";
 import {
     IKafkaBrokerConfiguration,
     IKafkaSubscriptionConfiguration,
     IKafkaTopic,
+    KafkaMetadata,
     KafkaOffsetResetStrategy,
 } from ".";
-import { IRawKafkaMessage } from "./model";
+import { IMessageHeaders, IRawKafkaMessage } from "./model";
 import { OffsetManager } from "./OffsetManager";
+import { generateClientId } from "./utils";
 
 CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
 CompressionCodecs[CompressionTypes.LZ4] = new (LZ4Codec as any)().codec;
@@ -75,6 +78,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
     private done = false;
     private offsetCommitIntervalMs: number;
     private timer: NodeJS.Timer;
+    private groupEpoch: number = 0;
 
     constructor(config: KafkaConsumerConfig) {
         this.config = config;
@@ -89,10 +93,14 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
         this.metrics = context.metrics;
     }
 
+    public get epoch(): number {
+        return this.groupEpoch;
+    }
+
     /**
      * Consume messages from configured topics. Expose each message via generator.
      */
-    public async *consume(): AsyncIterableIterator<IRawKafkaMessage> {
+    public async *consume(context: IInputSourceContext): AsyncIterableIterator<IRawKafkaMessage> {
         const topics: IKafkaTopic[] = [];
         for (const t of this.config.topics as IKafkaTopic[]) {
             topics.push({
@@ -128,9 +136,10 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             retries: 10,
         };
 
+        const { broker } = this.config;
         const client = new Kafka({
-            clientId: `${this.config.group}-${uuid.v4()}`,
-            brokers: [this.config.broker],
+            clientId: generateClientId(),
+            brokers: Array.isArray(broker) ? broker : [broker],
         });
 
         this.admin = client.admin({
@@ -142,6 +151,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             partitionAssigners: [PartitionAssigners.roundRobin],
             maxBytesPerPartition: this.config.maxBytesPerPartition,
             maxWaitTimeInMs: this.config.consumeTimeout,
+            sessionTimeout: this.config.sessionTimeout,
             retry,
         });
 
@@ -162,6 +172,22 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
         this.consumer.on(
             this.consumer.events.GROUP_JOIN,
             ({ payload: { memberAssignment } }: ConsumerGroupJoinEvent) => {
+                this.groupEpoch++;
+
+                // TODO: once https://github.com/tulios/kafkajs/issues/592
+                // is resolved move this code to the callback for
+                // the synchronization barrier
+                const epoch = this.groupEpoch;
+                context
+                    .evict(
+                        (msg) =>
+                            isNumber(msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch)) &&
+                            msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch) < epoch
+                    )
+                    .catch((e) => {
+                        this.logger.error("failed to evict in-flight messages on rebalance", e);
+                    });
+
                 if (!memberAssignment) {
                     throw new Error("Member assignment missing in KafkaJS join event");
                 }
@@ -265,6 +291,14 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                     partition,
                 });
                 for (const { offset, key, value, timestamp, headers } of messages) {
+                    const iMessageHeaders: IMessageHeaders = {};
+                    for (const key of Object.keys(headers)) {
+                        if (!isString(headers[key])) {
+                            iMessageHeaders[key] = (headers[key] as Buffer).toString();
+                        } else {
+                            iMessageHeaders[key] = headers[key] as string;
+                        }
+                    }
                     if (this.done) {
                         return;
                     }
@@ -276,7 +310,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                             key,
                             value,
                             timestamp,
-                            headers,
+                            headers: iMessageHeaders,
                         });
                     } catch (e) {
                         // pipe was closed, good to exit

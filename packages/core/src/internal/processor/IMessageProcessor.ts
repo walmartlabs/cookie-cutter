@@ -21,6 +21,7 @@ import {
     IStateCacheLifecycle,
     IStateProvider,
 } from "../..";
+import { IRequireInitialization } from "../../model";
 import { IRetrier } from "../../utils";
 
 export interface IMessageProcessorConfiguration {
@@ -33,7 +34,7 @@ export interface IMessageProcessorConfiguration {
     readonly messageTypeMapper: IMessageTypeMapper;
 }
 
-export interface IMessageProcessor {
+export interface IMessageProcessor extends IRequireInitialization {
     run(
         source: IInputSource,
         inputMessageMetricAnnotator: IMessageMetricAnnotator,

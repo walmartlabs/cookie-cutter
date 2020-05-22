@@ -38,7 +38,7 @@ describe("ProtoJsonMessageEncoder", () => {
             payload: PAYLOAD,
         });
 
-        expect(buffer).toMatchObject(new Buffer(JSON.stringify(PAYLOAD)));
+        expect(buffer).toMatchObject(Buffer.from(JSON.stringify(PAYLOAD)));
     });
 
     it("creates a JSON object from an encoded IMessage payload json string buffer", async () => {

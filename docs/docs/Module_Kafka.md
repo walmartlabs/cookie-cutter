@@ -34,6 +34,7 @@ The available configuration options are
 | _offsetCommitInterval_      | defines how often offsets will be committed to Kafka, the default values is 5 seconds          |
 | _consumeTimeout_            | sets max.poll.interval.ms, the default value is 50ms                                           |
 | _maxBytesPerPartition_      | sets max.partition.fetch.bytes, the default value is 10MiB                                     |
+| _sessionTimeout_            | sets session.timeout.ms, the default value is 30000ms (30s)                                    |
 | _preprocessor_              | optional preprocessing function that allows for manipulation of the incoming message before decoding the message's payload. This can for instance be used for messages that are enveloped in some way |
 
 ### OffsetResetStrategy

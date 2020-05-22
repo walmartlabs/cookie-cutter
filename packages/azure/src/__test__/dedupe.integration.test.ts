@@ -44,8 +44,7 @@ function msg(streamId: string, sn: number): MessageRef {
         {
             type: InputMessage.name,
             payload: new InputMessage(`hello ${streamId}@${sn}`),
-        },
-        {}
+        }
     );
 }
 
@@ -93,13 +92,13 @@ describe.skip("Message Deduplication for Streaming", () => {
         }
 
         const client = new CosmosClient(COSMOS_CONFIG);
-        const data = await client.query(
-            {
-                query: "SELECT * FROM c WHERE c.stream_id=@s1 OR c.stream_id=@s2",
-                parameters: [{ name: "@s1", value: STREAM_1 }, { name: "@s2", value: STREAM_2 }],
-            },
-            undefined
-        );
+        const data = await client.query(undefined, {
+            query: "SELECT * FROM c WHERE c.stream_id=@s1 OR c.stream_id=@s2",
+            parameters: [
+                { name: "@s1", value: STREAM_1 },
+                { name: "@s2", value: STREAM_2 },
+            ],
+        });
 
         expect(data.length).toBe(TEST_DATA.length - 1);
     });
@@ -140,13 +139,13 @@ describe.skip("Message Deduplication for Materialized Views", () => {
         }
 
         const client = new CosmosClient(COSMOS_CONFIG);
-        const data = await client.query(
-            {
-                query: "SELECT * FROM c WHERE c.stream_id=@s1 OR c.stream_id=@s2",
-                parameters: [{ name: "@s1", value: STREAM_1 }, { name: "@s2", value: STREAM_2 }],
-            },
-            undefined
-        );
+        const data = await client.query(undefined, {
+            query: "SELECT * FROM c WHERE c.stream_id=@s1 OR c.stream_id=@s2",
+            parameters: [
+                { name: "@s1", value: STREAM_1 },
+                { name: "@s2", value: STREAM_2 },
+            ],
+        });
 
         expect(data).toMatchObject([
             {
@@ -200,13 +199,13 @@ describe.skip("Message Deduplication for Event Sourcing", () => {
         }
 
         const client = new CosmosClient(COSMOS_CONFIG);
-        const data = await client.query(
-            {
-                query: "SELECT * FROM c WHERE c.stream_id=@s1 OR c.stream_id=@s2",
-                parameters: [{ name: "@s1", value: STREAM_1 }, { name: "@s2", value: STREAM_2 }],
-            },
-            undefined
-        );
+        const data = await client.query(undefined, {
+            query: "SELECT * FROM c WHERE c.stream_id=@s1 OR c.stream_id=@s2",
+            parameters: [
+                { name: "@s1", value: STREAM_1 },
+                { name: "@s2", value: STREAM_2 },
+            ],
+        });
 
         expect(data.length).toBe(TEST_DATA.length - 1);
     });

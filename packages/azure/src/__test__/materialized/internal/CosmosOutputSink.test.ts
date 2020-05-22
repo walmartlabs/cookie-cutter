@@ -7,33 +7,34 @@ LICENSE file in the root directory of this source tree.
 
 import {
     createRetrier,
+    createRetrierContext,
     ErrorHandlingMode,
     EventSourcedMetadata,
     iterate,
     JsonMessageEncoder,
     MessageRef,
+    RetrierContext,
     RetryMode,
     SequenceConflictError,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
+import { SpanContext } from "opentracing";
 import { ICosmosConfiguration } from "../../..";
 import { CosmosOutputSink } from "../../../materialized/internal";
-import { CosmosClient, ICosmosDocument } from "../../../utils";
+import { CosmosClient, ICosmosDocument, RETRY_AFTER_MS } from "../../../utils";
 import { DummyMessageEncoder } from "../../dummyEncoder";
 import { DummyState } from "../../dummystate";
 
 jest.mock("../../../utils/CosmosClient", () => {
+    const { RETRY_AFTER_MS } = jest.requireActual("../../../utils/CosmosClient");
     return {
         CosmosClient: jest.fn(),
+        RETRY_AFTER_MS,
     };
 });
 const MockCosmosClient: jest.Mock = CosmosClient as any;
 
-const bailed: jest.Mock = jest.fn();
-const bail = (err: any): never => {
-    bailed(err);
-    throw err;
-};
+const retries = 5;
 
 describe("materialized CosmosOutputSink", () => {
     const config: ICosmosConfiguration = {
@@ -44,11 +45,12 @@ describe("materialized CosmosOutputSink", () => {
         encoder: new JsonMessageEncoder(),
     };
     let upsert: jest.Mock;
-    const spanContext = {};
+    const spanContext = new SpanContext();
     const optimisticConcurrencyKey = "occErr";
     let dbQueryTimeout = "dbQueryTimeout";
     let counter = 0;
     const numErrors = 5;
+    const ms = 11;
     const not400ErrorKey = "not400Error";
     const regularKey = "regularKey";
     const bodyDbQueryTimeout = `DB Query returned FALSE: Failed to replace document: stream_id: ${dbQueryTimeout}, sn: 0`;
@@ -58,7 +60,7 @@ describe("materialized CosmosOutputSink", () => {
             if (partitionKey === optimisticConcurrencyKey) {
                 throw {
                     code: 400,
-                    body: bodyOptimisticConcurrency,
+                    body: { message: bodyOptimisticConcurrency },
                 };
             }
             if (partitionKey === dbQueryTimeout) {
@@ -69,7 +71,8 @@ describe("materialized CosmosOutputSink", () => {
                 }
                 throw {
                     code: 400,
-                    body: bodyDbQueryTimeout,
+                    body: { message: bodyDbQueryTimeout },
+                    headers: { [RETRY_AFTER_MS]: ms },
                 };
             }
             if (partitionKey === not400ErrorKey) {
@@ -95,6 +98,8 @@ describe("materialized CosmosOutputSink", () => {
     });
 
     it("upserts creates document", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const sink = new CosmosOutputSink(config);
         const currentSn = 1;
         await sink.sink(
@@ -116,7 +121,7 @@ describe("materialized CosmosOutputSink", () => {
                     ),
                 },
             ]),
-            bail
+            retry
         );
 
         const expected: ICosmosDocument = {
@@ -135,7 +140,7 @@ describe("materialized CosmosOutputSink", () => {
             },
         };
 
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(upsert).lastCalledWith(
             expect.objectContaining(expected),
             expected.stream_id,
@@ -144,6 +149,8 @@ describe("materialized CosmosOutputSink", () => {
     });
 
     it("upserts last document per key", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const sink = new CosmosOutputSink(config);
         const currentSn = 1;
         const streamId = "key1";
@@ -156,7 +163,7 @@ describe("materialized CosmosOutputSink", () => {
                         payload: { value: "foo" },
                     },
                     spanContext,
-                    original: new MessageRef({}, null, {}),
+                    original: new MessageRef({}, null),
                 },
                 {
                     state: new StateRef({}, streamId, currentSn),
@@ -168,10 +175,10 @@ describe("materialized CosmosOutputSink", () => {
                     original: new MessageRef({}, null, undefined),
                 },
             ]),
-            bail
+            retry
         );
 
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(upsert).lastCalledWith(
             expect.objectContaining({ sn: 3, data: { value: "bar" } }),
             streamId,
@@ -180,6 +187,8 @@ describe("materialized CosmosOutputSink", () => {
     });
 
     it("upserts existing document that will be deleted", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const sink = new CosmosOutputSink(config);
         const currentSn = 1;
         const streamId = "key1";
@@ -192,7 +201,7 @@ describe("materialized CosmosOutputSink", () => {
                         payload: { value: "foo" },
                     },
                     spanContext,
-                    original: new MessageRef({}, null, {}),
+                    original: new MessageRef({}, null),
                 },
                 {
                     state: new StateRef({}, streamId, currentSn),
@@ -204,17 +213,20 @@ describe("materialized CosmosOutputSink", () => {
                     original: new MessageRef({}, null, undefined),
                 },
             ]),
-            bail
+            retry
         );
 
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(upsert).lastCalledWith(
             expect.objectContaining({ sn: 3, data: undefined }),
             streamId,
             currentSn
         );
     });
+
     it("upsert that returns a non 400 error", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const sink = new CosmosOutputSink(config);
         const currentSn = 1;
         await expect(
@@ -230,14 +242,14 @@ describe("materialized CosmosOutputSink", () => {
                         original: new MessageRef({}, null, undefined),
                     },
                 ]),
-                bail
+                retry
             )
         ).rejects.toMatchObject({
             code: 500,
             body: "Internal Server Error",
         });
 
-        expect(bailed).toHaveBeenCalledTimes(1);
+        expect(spyBail).toHaveBeenCalledTimes(1);
         expect(upsert).lastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
             not400ErrorKey,
@@ -246,6 +258,8 @@ describe("materialized CosmosOutputSink", () => {
     });
 
     it("upsert that returns optimistic concurrency error", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const sink = new CosmosOutputSink(config);
         const currentSn = 1;
         await expect(
@@ -261,7 +275,7 @@ describe("materialized CosmosOutputSink", () => {
                         original: new MessageRef({}, null, undefined),
                     },
                 ]),
-                bail
+                retry
             )
         ).rejects.toMatchObject(
             new SequenceConflictError({
@@ -272,7 +286,7 @@ describe("materialized CosmosOutputSink", () => {
             })
         );
 
-        expect(bailed).toHaveBeenCalledTimes(1);
+        expect(spyBail).toHaveBeenCalledTimes(1);
         expect(upsert).lastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
             optimisticConcurrencyKey,
@@ -280,7 +294,45 @@ describe("materialized CosmosOutputSink", () => {
         );
     });
 
+    it("successfully calls retry.setNextRetryInterval when it sees the RETRY_AFTER_MS header", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
+        const spySetNextRetryInterval = jest.spyOn(retry, "setNextRetryInterval");
+        const sink = new CosmosOutputSink(config);
+        const currentSn = 1;
+        await expect(
+            sink.sink(
+                iterate([
+                    {
+                        state: new StateRef({}, dbQueryTimeout, currentSn),
+                        message: {
+                            type: DummyState.name,
+                            payload: { value: "test" },
+                        },
+                        spanContext,
+                        original: new MessageRef({}, null, undefined),
+                    },
+                ]),
+                retry
+            )
+        ).rejects.toMatchObject({
+            code: 400,
+            body: { message: bodyDbQueryTimeout },
+            headers: { [RETRY_AFTER_MS]: ms },
+        });
+
+        expect(spySetNextRetryInterval).toHaveBeenCalledWith(ms);
+        expect(spyBail).toHaveBeenCalledTimes(0);
+        expect(upsert).lastCalledWith(
+            expect.objectContaining({ sn: 2, data: { value: "test" } }),
+            dbQueryTimeout,
+            currentSn
+        );
+    });
+
     it("upserts that successfully retries for different errors returned from sproc", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expectedKey = dbQueryTimeout;
         const sink = new CosmosOutputSink(config);
         const currentSn = 1;
@@ -294,7 +346,7 @@ describe("materialized CosmosOutputSink", () => {
             retryMode: RetryMode.Linear,
         });
         await expect(
-            retrier.retry(async (bail: (err: any) => never) => {
+            retrier.retry(async (retry: RetrierContext) => {
                 try {
                     await sink.sink(
                         iterate([
@@ -308,13 +360,14 @@ describe("materialized CosmosOutputSink", () => {
                                 original: new MessageRef({}, null, undefined),
                             },
                         ]),
-                        bail
+                        retry
                     );
                 } catch (e) {
                     throw e;
                 }
             })
         ).resolves.toBe(undefined);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(upsert).toHaveBeenCalledTimes(numErrors + 1);
         expect(upsert).lastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
@@ -325,6 +378,8 @@ describe("materialized CosmosOutputSink", () => {
     });
 
     it("upserts using a message encoder that only satisfies IMessageEncoder", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const encoder = new DummyMessageEncoder();
         const config: ICosmosConfiguration = {
             url: "test",
@@ -354,7 +409,7 @@ describe("materialized CosmosOutputSink", () => {
                     ),
                 },
             ]),
-            bail
+            retry
         );
 
         const data = encoder.encode({ type: "testType", payload: { value: "test" } });
@@ -374,7 +429,7 @@ describe("materialized CosmosOutputSink", () => {
             },
         };
 
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(upsert).lastCalledWith(
             expect.objectContaining(expected),
             expected.stream_id,

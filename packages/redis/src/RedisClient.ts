@@ -46,11 +46,11 @@ export class RedisClient implements IRequireInitialization, IDisposable {
     private spanOperationName: string = "Redis Client Call";
 
     constructor(private readonly config: IRedisOptions) {
-        this.client = null as any;
         this.encoder = config.encoder;
         this.typeMapper = config.typeMapper;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
+        this.client = new RedisProxy(this.config.host, this.config.port, this.config.db);
     }
 
     public async dispose(): Promise<void> {
@@ -60,12 +60,7 @@ export class RedisClient implements IRequireInitialization, IDisposable {
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
-        this.client = new RedisProxy(
-            this.config.host,
-            this.config.port,
-            this.config.db,
-            context.logger
-        );
+        await this.client.initialize(context);
     }
 
     private getTypeName<T>(type: string | IClassType<T>): string {
@@ -94,7 +89,7 @@ export class RedisClient implements IRequireInitialization, IDisposable {
         key: string
     ): Promise<void> {
         const db = this.config.db;
-        const span = this.tracer!.startSpan(this.spanOperationName, { childOf: context });
+        const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.putObject.name, db, key);
         const typeName = this.getTypeName(type);
         const msg: IMessage = {
@@ -104,14 +99,14 @@ export class RedisClient implements IRequireInitialization, IDisposable {
         const encodedBody = this.encoder.encode(msg);
         try {
             await this.client.set(key, encodedBody);
-            this.metrics!.increment(RedisMetrics.Set, {
+            this.metrics.increment(RedisMetrics.Set, {
                 type,
                 db,
                 result: RedisMetricResults.Success,
             });
         } catch (e) {
             failSpan(span, e);
-            this.metrics!.increment(RedisMetrics.Set, {
+            this.metrics.increment(RedisMetrics.Set, {
                 type,
                 db,
                 result: RedisMetricResults.Error,
@@ -129,7 +124,7 @@ export class RedisClient implements IRequireInitialization, IDisposable {
         key: string
     ): Promise<T | undefined> {
         const db = this.config.db;
-        const span = this.tracer!.startSpan(this.spanOperationName, { childOf: context });
+        const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.getObject.name, this.config.db, key);
         try {
             const typeName = this.getTypeName(type);
@@ -140,7 +135,7 @@ export class RedisClient implements IRequireInitialization, IDisposable {
                 data = msg.payload;
             }
 
-            this.metrics!.increment(RedisMetrics.Get, {
+            this.metrics.increment(RedisMetrics.Get, {
                 type,
                 db,
                 result: RedisMetricResults.Success,
@@ -148,7 +143,7 @@ export class RedisClient implements IRequireInitialization, IDisposable {
             return data;
         } catch (e) {
             failSpan(span, e);
-            this.metrics!.increment(RedisMetrics.Get, {
+            this.metrics.increment(RedisMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
                 error: e,

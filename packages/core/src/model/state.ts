@@ -30,6 +30,7 @@ export interface IStateProvider<TState> {
 export interface IStateCacheLifecycle<TState> {
     set(stateRef: StateRef<TState>): void;
     invalidate(keys: IterableIterator<string> | string): void;
+    on(event: "evicted", cb: (item: StateRef<TState>) => void);
 }
 
 export interface IStateAggregator<TState, TSnapshot> {
@@ -48,7 +49,8 @@ export class StateRef<TState = any> {
     constructor(
         public readonly state: TState,
         public readonly key: string,
-        public readonly seqNum: number
+        public readonly seqNum: number,
+        public readonly epoch?: number
     ) {}
 
     public get uniqueId(): string {

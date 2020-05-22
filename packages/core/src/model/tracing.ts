@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { Span, SpanContext, Tracer } from "opentracing";
+import { IApplicationBuilder } from "./dsl";
 
 export enum OpenTracingOperations {
     HandlingInputMsg = "Handling Input Message",
@@ -43,4 +44,10 @@ export interface ITracing {
 
 export interface ITracerBuilder {
     create(): Tracer;
+}
+
+export interface ITracingBuilder {
+    set(tracer: Tracer): ITracingBuilder;
+    annotate(globalTags: ISpanTags): ITracingBuilder;
+    done(): IApplicationBuilder;
 }

@@ -1,0 +1,18 @@
+{
+    "name": "@examples/kafka-events",
+    "private": true,
+    "version": "0.0.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
+        "@walmartlabs/cookie-cutter-kafka": "^1.2.0-rc"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start:publisher": "node dist/publisher",
+        "start:consumer": "node dist/consumer",
+        "test": "echo '- no tests -'",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
+}

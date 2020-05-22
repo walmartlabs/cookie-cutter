@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 
 import {
     createRetrier,
+    createRetrierContext,
     ErrorHandlingMode,
     EventSourcedMetadata,
     IMessage,
@@ -14,28 +15,27 @@ import {
     iterate,
     JsonMessageEncoder,
     MessageRef,
+    RetrierContext,
     RetryMode,
     SequenceConflictError,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
 import { ICosmosConfiguration } from "../../..";
 import { CosmosOutputSink } from "../../../event-sourced/internal";
-import { CosmosClient } from "../../../utils/CosmosClient";
+import { CosmosClient, RETRY_AFTER_MS } from "../../../utils/CosmosClient";
 import { DummyMessageEncoder } from "../../dummyEncoder";
 import { DummyState } from "../../dummystate";
 
 jest.mock("../../../utils/CosmosClient", () => {
+    const { RETRY_AFTER_MS } = jest.requireActual("../../../utils/CosmosClient");
     return {
         CosmosClient: jest.fn(),
+        RETRY_AFTER_MS,
     };
 });
 const MockCosmosClient: jest.Mock = CosmosClient as any;
 
-const bailed: jest.Mock = jest.fn();
-const bail = (err: any): never => {
-    bailed(err);
-    throw err;
-};
+const retries = 5;
 
 describe("event-sourced CosmosOutputSink", () => {
     const someEncoder = new DummyMessageEncoder();
@@ -79,6 +79,7 @@ describe("event-sourced CosmosOutputSink", () => {
     let tooManyRequestsErrorKey = "tooMany";
     let counter = 0;
     const numErrors = 5;
+    const ms = 11;
     const sequenceErrorBody = `Sequence Conflict for document at index: 0, stream_id: ${seqNumAlreadyUsedErrorKey}, new sn: 0, expected sn: 0, actual sn: 0.`; // keep the strings synced to ../resources/bulkInsertSproc.js
     const tooManyRequestErrorBody = `DB Query returned FALSE: createDocument failed on document at index: 0, stream_id: 0, sn: 0.`; // keep the strings synced to ../resources/bulkInsertSproc.js
     beforeEach(() => {
@@ -86,7 +87,7 @@ describe("event-sourced CosmosOutputSink", () => {
             if (partitionKey === seqNumAlreadyUsedErrorKey) {
                 throw {
                     code: 400,
-                    body: sequenceErrorBody,
+                    body: { message: sequenceErrorBody },
                 };
             }
             if (partitionKey === tooManyRequestsErrorKey) {
@@ -97,13 +98,14 @@ describe("event-sourced CosmosOutputSink", () => {
                 }
                 throw {
                     code: 429,
-                    body: tooManyRequestErrorBody,
+                    body: { message: tooManyRequestErrorBody },
+                    headers: { [RETRY_AFTER_MS]: ms },
                 };
             }
             if (partitionKey === unknown400ErrorKey) {
                 throw {
                     code: 400,
-                    body: unknown400ErrorKey,
+                    body: { message: unknown400ErrorKey },
                 };
             }
             if (partitionKey === not400ErrorKey) {
@@ -128,6 +130,8 @@ describe("event-sourced CosmosOutputSink", () => {
     });
 
     it("throws a non 400 error thrown by bulkInsert", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expSeqNum = 1;
         const sink = new CosmosOutputSink(config);
         await expect(
@@ -138,13 +142,13 @@ describe("event-sourced CosmosOutputSink", () => {
                         ...payload,
                     },
                 ]),
-                bail
+                retry
             )
         ).rejects.toMatchObject({
             code: 500,
             body: "Internal Server Error",
         });
-        expect(bailed).toHaveBeenCalledTimes(1);
+        expect(spyBail).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledWith(
             expect.arrayContaining([
@@ -161,6 +165,8 @@ describe("event-sourced CosmosOutputSink", () => {
     });
 
     it("throws an unexpected 400 error thrown by bulkInsert", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expSeqNum = 1;
         const sink = new CosmosOutputSink(config);
         await expect(
@@ -171,13 +177,13 @@ describe("event-sourced CosmosOutputSink", () => {
                         ...payload,
                     },
                 ]),
-                bail
+                retry
             )
         ).rejects.toMatchObject({
             code: 400,
-            body: unknown400ErrorKey,
+            body: { message: unknown400ErrorKey },
         });
-        expect(bailed).toHaveBeenCalledTimes(1);
+        expect(spyBail).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledWith(
             expect.arrayContaining([
@@ -194,13 +200,17 @@ describe("event-sourced CosmosOutputSink", () => {
     });
 
     it("does not call bulkInsert with empty docs", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const sink = new CosmosOutputSink(config);
-        await expect(sink.sink(iterate([]), bail)).resolves.toBe(undefined);
-        expect(bailed).toHaveBeenCalledTimes(0);
+        await expect(sink.sink(iterate([]), retry)).resolves.toBe(undefined);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(bulkInsert).toHaveBeenCalledTimes(0);
     });
 
     it("succeeds in writing events with sequentially numbered state refs", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expSeqNumKey1 = 1;
         const expSeqNumKey2 = 2;
         const sink = new CosmosOutputSink(config);
@@ -216,10 +226,10 @@ describe("event-sourced CosmosOutputSink", () => {
                         ...payload,
                     },
                 ]),
-                bail
+                retry
             )
         ).resolves.toBe(undefined);
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(bulkInsert).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledWith(
             expect.arrayContaining([
@@ -242,6 +252,8 @@ describe("event-sourced CosmosOutputSink", () => {
     });
 
     it("throws a SequenceConflictError when bulkInsert throws a sequence conflict error", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expSeqNum = 1;
         const sink = new CosmosOutputSink(config);
         await expect(
@@ -252,7 +264,7 @@ describe("event-sourced CosmosOutputSink", () => {
                         ...payload,
                     },
                 ]),
-                bail
+                retry
             )
         ).rejects.toMatchObject(
             new SequenceConflictError({
@@ -262,7 +274,7 @@ describe("event-sourced CosmosOutputSink", () => {
                 actualSn: 0,
             })
         );
-        expect(bailed).toHaveBeenCalledTimes(1);
+        expect(spyBail).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledWith(
             expect.arrayContaining([
@@ -278,7 +290,47 @@ describe("event-sourced CosmosOutputSink", () => {
         );
     });
 
+    it("successfully calls retry.setNextRetryInterval when it sees the RETRY_AFTER_MS header", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
+        const spySetNextRetryInterval = jest.spyOn(retry, "setNextRetryInterval");
+        const expSeqNum = 1;
+        const sink = new CosmosOutputSink(config);
+        await expect(
+            sink.sink(
+                iterate([
+                    {
+                        state: new StateRef({}, tooManyRequestsErrorKey, expSeqNum),
+                        ...payload,
+                    },
+                ]),
+                retry
+            )
+        ).rejects.toMatchObject({
+            code: 429,
+            body: { message: tooManyRequestErrorBody },
+            headers: { [RETRY_AFTER_MS]: ms },
+        });
+        expect(spySetNextRetryInterval).toHaveBeenCalledWith(ms);
+        expect(spyBail).toHaveBeenCalledTimes(0);
+        expect(bulkInsert).toHaveBeenCalledTimes(1);
+        expect(bulkInsert).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: `${tooManyRequestsErrorKey}-${expSeqNum + 1}`,
+                    stream_id: tooManyRequestsErrorKey,
+                    sn: expSeqNum + 1,
+                    ...remainingFields,
+                }),
+            ]),
+            tooManyRequestsErrorKey,
+            verifySn
+        );
+    });
+
     it("successfully retries for event that throws TooManyRequestsError", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expectedDocumentKey = tooManyRequestsErrorKey;
         const expSeqNum = 1;
         const sink = new CosmosOutputSink(config);
@@ -292,7 +344,7 @@ describe("event-sourced CosmosOutputSink", () => {
             retryMode: RetryMode.Linear,
         });
         await expect(
-            retrier.retry(async (bail: (err: any) => never) => {
+            retrier.retry(async (retry: RetrierContext) => {
                 try {
                     await sink.sink(
                         iterate([
@@ -301,14 +353,14 @@ describe("event-sourced CosmosOutputSink", () => {
                                 ...payload,
                             },
                         ]),
-                        bail
+                        retry
                     );
                 } catch (e) {
                     throw e;
                 }
             })
         ).resolves.toBe(undefined);
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(bulkInsert).toHaveBeenCalledTimes(numErrors + 1);
         expect(bulkInsert).toHaveBeenLastCalledWith(
             expect.arrayContaining([
@@ -325,6 +377,8 @@ describe("event-sourced CosmosOutputSink", () => {
     });
 
     it("succeeds in writing events with the same state ref", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const expSeqNum = 1;
         const sink = new CosmosOutputSink(config);
         await expect(
@@ -339,10 +393,10 @@ describe("event-sourced CosmosOutputSink", () => {
                         ...payload,
                     },
                 ]),
-                bail
+                retry
             )
         ).resolves.toBe(undefined);
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(bulkInsert).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledWith(
             expect.arrayContaining([
@@ -365,6 +419,8 @@ describe("event-sourced CosmosOutputSink", () => {
     });
 
     it("succeeds in writing events using a message encoder that satisfies IEncodedMessageEmbedder", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
         const jsonEncoder = new JsonMessageEncoder();
         const config: ICosmosConfiguration = {
             url: "test",
@@ -398,10 +454,10 @@ describe("event-sourced CosmosOutputSink", () => {
                         ...payload,
                     },
                 ]),
-                bail
+                retry
             )
         ).resolves.toBe(undefined);
-        expect(bailed).toHaveBeenCalledTimes(0);
+        expect(spyBail).toHaveBeenCalledTimes(0);
         expect(bulkInsert).toHaveBeenCalledTimes(1);
         expect(bulkInsert).toHaveBeenCalledWith(
             expect.arrayContaining([

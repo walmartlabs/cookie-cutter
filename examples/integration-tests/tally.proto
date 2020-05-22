@@ -1,0 +1,15 @@
+syntax="proto3";
+package samples;
+
+message Request {
+    string id = 1;
+    int32 delta = 2;
+}
+
+message Response {
+    int32 new_total = 1;
+}
+
+service TallyService {
+    rpc ChangeTally(Request) returns(Response);
+}

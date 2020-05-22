@@ -41,7 +41,7 @@ describe("BlobStorageSnapshotOutputSink", () => {
         container: "unit-test",
         frequency: 1,
     };
-    const span: SpanContext = {};
+    const span = new SpanContext();
     const somePayload = JSON.parse(
         '{"journeys": [{"prop1": "string one"},{"prop1": "string two"}]}'
     );

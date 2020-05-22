@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { BufferedDispatchContext } from "../internal";
+import { RetrierContext } from "../utils";
 
 export enum OutputSinkConsistencyLevel {
     /*
@@ -32,7 +33,7 @@ export interface IOutputSinkGuarantees {
 }
 
 export interface IOutputSink<T> {
-    sink(output: IterableIterator<T>, bail: (err: any) => never): Promise<void>;
+    sink(output: IterableIterator<T>, retry: RetrierContext): Promise<void>;
     readonly guarantees: IOutputSinkGuarantees;
 }
 
@@ -41,6 +42,8 @@ export interface ISequenceConflictDetails {
     readonly newSn: number;
     readonly expectedSn: number;
     readonly actualSn: number;
+    readonly expectedEpoch?: number;
+    readonly actualEpoch?: number;
 }
 
 export class SequenceConflictError extends Error {

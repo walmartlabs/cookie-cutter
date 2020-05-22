@@ -62,7 +62,7 @@ class MessageWithSimpleArray {
 }
 
 class MessageWithArrayOfObjects {
-    constructor(public arr: Array<SimpleObject | PartialObject>) {}
+    constructor(public arr: (SimpleObject | PartialObject)[]) {}
 }
 
 class CommandHandler {
@@ -180,7 +180,10 @@ describe("Microsoft SQL", () => {
                         payload: new SimpleObject(1, "1"),
                     },
                 ];
-                await evaluateTest(messages, [{ id: 0, str: "0" }, { id: 1, str: "1" }]);
+                await evaluateTest(messages, [
+                    { id: 0, str: "0" },
+                    { id: 1, str: "1" },
+                ]);
             } finally {
                 await dropFromDB(SimpleObject.name);
             }
@@ -206,7 +209,10 @@ describe("Microsoft SQL", () => {
                         payload: new MessageWithObject(new SimpleObject(1, "1")),
                     },
                 ];
-                await evaluateTest(messages, [{ id: 0, str: "0" }, { id: 1, str: "1" }]);
+                await evaluateTest(messages, [
+                    { id: 0, str: "0" },
+                    { id: 1, str: "1" },
+                ]);
             } finally {
                 await dropFromDB(MessageWithObject.name);
             }
@@ -253,7 +259,10 @@ describe("Microsoft SQL", () => {
                         ]),
                     },
                 ];
-                await evaluateTest(messages, [{ id: 0, str: "0" }, { id: 1, str: "1" }]);
+                await evaluateTest(messages, [
+                    { id: 0, str: "0" },
+                    { id: 1, str: "1" },
+                ]);
             } finally {
                 await dropFromDB(MessageWithArrayOfObjects.name);
             }
@@ -278,7 +287,10 @@ describe("Microsoft SQL", () => {
                         ]),
                     },
                 ];
-                await evaluateTest(messages, [{ id: 0, str: null }, { id: 1, str: null }]);
+                await evaluateTest(messages, [
+                    { id: 0, str: null },
+                    { id: 1, str: null },
+                ]);
             } finally {
                 await dropFromDB(MessageWithArrayOfObjects.name);
             }

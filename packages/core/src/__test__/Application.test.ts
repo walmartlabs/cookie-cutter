@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+const mockLogError: jest.Mock = jest.fn();
 import {
     Application,
     ErrorHandlingMode,
@@ -28,12 +29,14 @@ import {
     IValidateResult,
     MessageProcessingMetrics,
     MessageProcessingResults,
+    MessageRef,
     OutputSinkConsistencyLevel,
     SequenceConflictError,
     StateRef,
 } from "../model";
+import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
-import { runStatefulApp, runStatelessApp } from "./util";
+import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
@@ -259,6 +262,115 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             expect(tally).toBe(-3);
         });
 
+        it("correctly routes appropriate message through the invalid message handler", async () => {
+            const metrics = jest.fn().mockImplementationOnce(() => {
+                return {
+                    increment: jest.fn(),
+                    gauge: jest.fn(),
+                    timing: jest.fn(),
+                };
+            })();
+            const mockInvalid = jest.fn(async (msg: IMessage, ctx: IDispatchContext) => {
+                const count = (msg.payload as Increment).count;
+                if (count === 3) {
+                    ctx.publish(Increment, new Increment(10 * count));
+                } else if (count === 11) {
+                    // do nothing
+                } else if (count === 13) {
+                    // sleep so concurrent app does not crash too early
+                    await sleep(200);
+                    throw new Error("Error from invalid message handler");
+                } else {
+                    ctx.publish(Increment, new Increment(10 * count + 1));
+                }
+            });
+            class MyMessageValidator implements IMessageValidator {
+                public validate(msg: IMessage): IValidateResult {
+                    if (msg.payload.count % 2 === 0) {
+                        return { success: true };
+                    } else {
+                        return { success: false, message: "failed validate" };
+                    }
+                }
+            }
+
+            let capture: any[] = [];
+            try {
+                await Application.create()
+                    .metrics(metrics)
+                    .validate(new MyMessageValidator())
+                    .input()
+                    .add(
+                        new StaticInputSource([
+                            { type: Increment.name, payload: new Increment(2) },
+                            { type: Increment.name, payload: new Increment(3) }, // fails input validation, passes output validation
+                            { type: Increment.name, payload: new Increment(4) },
+                            { type: Increment.name, payload: new Increment(6) }, // passes input validation, fails output validation
+                            { type: Increment.name, payload: new Increment(9) }, // fails input validation and fails output validation after getting modified
+                            { type: Increment.name, payload: new Increment(11) }, // fails input validation and passes outout validation with zero output messages
+                            { type: Increment.name, payload: new Increment(13) }, // fails input validation and throws from invalid handler
+                        ])
+                    )
+                    .annotate({
+                        annotate: (input: IMessage): IMetricTags => {
+                            return { tag: input.payload.count };
+                        },
+                    })
+                    .done()
+                    .dispatch({
+                        onIncrement: (msg: Increment, ctx: IDispatchContext) => {
+                            if (msg.count === 6) {
+                                ctx.publish(Increment, new Increment(7));
+                            } else {
+                                ctx.publish(Increment, msg);
+                            }
+                        },
+                        invalid: mockInvalid,
+                    })
+                    .output()
+                    .published(new CapturingOutputSink(capture))
+                    .done()
+                    .run(ErrorHandlingMode.LogAndFail, mode);
+            } catch (e) {
+                expect(e).toMatchObject(
+                    new Error(`test failed: init: true, run: false, dispose: true`)
+                );
+            }
+
+            capture = capture.map((m) => m.message);
+            expect(capture).toEqual([inc(2), inc(30), inc(4)]);
+            expect(mockInvalid).toHaveBeenCalledTimes(4);
+            expect(mockInvalid).toHaveBeenNthCalledWith(1, inc(3), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(2, inc(9), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(3, inc(11), expect.any(Object));
+            expect(mockInvalid).toHaveBeenNthCalledWith(4, inc(13), expect.any(Object));
+            for (const tag of [2, 3, 4, 11]) {
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag,
+                        result: MessageProcessingResults.Success,
+                    })
+                );
+            }
+            for (const tag of [6, 9]) {
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag,
+                        result: MessageProcessingResults.ErrInvalidMsg,
+                    })
+                );
+            }
+            expect(metrics.increment).toHaveBeenCalledWith(
+                MessageProcessingMetrics.Processed,
+                expect.objectContaining({
+                    tag: 13,
+                    result: MessageProcessingResults.ErrFailedMsgProcessing,
+                })
+            );
+        });
+
         it("successfully proceeds after an invalid input and invalid output messages", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {
@@ -345,6 +457,69 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             );
         });
 
+        for (const errorHandlingMode of [
+            ErrorHandlingMode.LogAndContinue,
+            ErrorHandlingMode.LogAndFail,
+        ]) {
+            it(`successfully increments ErrFailedMsgProcessing on error from dispatch handler in ${ErrorHandlingMode[errorHandlingMode]}`, async () => {
+                const metrics = jest.fn().mockImplementationOnce(() => {
+                    return {
+                        increment: jest.fn(),
+                        gauge: jest.fn(),
+                        timing: jest.fn(),
+                    };
+                })();
+
+                let capture: any[] = [];
+                let err;
+                try {
+                    await Application.create()
+                        .metrics(metrics)
+                        .input()
+                        .add(
+                            new StaticInputSource([
+                                { type: Increment.name, payload: new Increment(4) },
+                            ])
+                        )
+                        .annotate({
+                            annotate: (input: IMessage): IMetricTags => {
+                                return { tag: input.payload.count };
+                            },
+                        })
+                        .done()
+                        .dispatch({
+                            onIncrement: (msg: Increment, ctx: IDispatchContext) => {
+                                if (msg.count === 4) {
+                                    throw new Error("Throws from dispatch");
+                                }
+                                ctx.publish(Increment, msg);
+                            },
+                        })
+                        .output()
+                        .published(new CapturingOutputSink(capture))
+                        .done()
+                        .run(errorHandlingMode, mode);
+                } catch (e) {
+                    err = e;
+                }
+                if (errorHandlingMode === ErrorHandlingMode.LogAndFail) {
+                    expect(err).toMatchObject(
+                        new Error(`test failed: init: true, run: false, dispose: true`)
+                    );
+                }
+
+                capture = capture.map((m) => m.message);
+                expect(capture).toMatchObject([]);
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    MessageProcessingMetrics.Processed,
+                    expect.objectContaining({
+                        tag: 4,
+                        result: MessageProcessingResults.ErrFailedMsgProcessing,
+                    })
+                );
+            });
+        }
+
         it("doesn't record metrics for handlers that throw an error", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {
@@ -413,6 +588,68 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     result: MessageProcessingResults.Success,
                 })
             );
+        });
+    });
+}
+
+for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
+    describe(`Application in ${ParallelismMode[mode]} mode`, () => {
+        it("does not process evicted messages", async () => {
+            const readyToEvict = new Future<void>();
+
+            const source: IInputSource = {
+                async *start(ctx) {
+                    const evicter = (async () => {
+                        await readyToEvict.promise;
+                        await ctx.evict((_) => true);
+                    })();
+
+                    yield new MessageRef({}, inc(1));
+                    yield new MessageRef({}, inc(2));
+                    yield new MessageRef({}, inc(3));
+                    yield new MessageRef({}, inc(4));
+
+                    await evicter;
+                },
+                stop: (): Promise<void> => {
+                    return Promise.resolve();
+                },
+            };
+
+            const capture = new Array();
+            await Application.create()
+                .input()
+                .add(source)
+                .done()
+                .dispatch({
+                    onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
+                        await sleep(50);
+                        ctx.publish(Increment, msg);
+                        if (msg.count === 2) {
+                            readyToEvict.resolve();
+                        }
+                    },
+                })
+                .output()
+                .published(new CapturingOutputSink(capture))
+                .done()
+                .run({
+                    dispatch: {
+                        mode: ErrorHandlingMode.LogAndFail,
+                    },
+                    sink: {
+                        mode: ErrorHandlingMode.LogAndFail,
+                    },
+                    parallelism: {
+                        mode,
+                        concurrencyConfiguration: {
+                            maximumParallelRpcRequests: 2,
+                        },
+                    },
+                });
+
+            const published = capture.map((m) => m.message);
+            expect(published).toMatchObject([inc(1), inc(2)]);
         });
     });
 }
@@ -609,6 +846,39 @@ for (const mode of [ParallelismMode.Rpc]) {
             expect(unique.size).toBe(input.length);
         });
 
+        it("computes correct state when conflicting messages are handled in parallel", async () => {
+            const input: IMessage[] = [];
+            for (let i = 1; i < 15; i++) {
+                input.push(inc(i));
+            }
+
+            const expected = input.reduce((p, c) => p + c.payload.count, 0);
+
+            const streams = new Map();
+            await runMaterializedStatefulApp(
+                TallyState,
+                streams,
+                input,
+                {
+                    onIncrement: async (msg: Increment, ctx: IDispatchContext<TallyState>) => {
+                        const stateRef = await ctx.state.get("state-1");
+                        stateRef.state.total += msg.count;
+                        ctx.store(TallyState, stateRef, stateRef.state.snap());
+
+                        // sleep for a few messages to provoke an epoch conflict
+                        if (msg.count % 7 === 0) {
+                            await sleep(msg.count * 2 + 100);
+                        }
+                    },
+                },
+                mode,
+                ErrorHandlingMode.LogAndFail
+            );
+
+            expect(streams.get("state-1").data.total).toBe(expected);
+            expect(streams.get("state-1").seqNum).toBe(input.length);
+        });
+
         it("correctly calls the gauge metric for number of items InFlight in RPC mode", async () => {
             const metrics = jest.fn().mockImplementationOnce(() => {
                 return {
@@ -694,16 +964,17 @@ describe(`Application`, () => {
 
 async function runApplication(
     source: IInputSource,
-    dispatchTarger: any,
+    dispatchTarget: any,
     store: IOutputSink<IStoredMessage>,
     capture: IPublishedMessage[],
     appBehavior: IApplicationRuntimeBehavior
 ): Promise<void> {
     await Application.create()
+        .logger({ error: mockLogError, debug: jest.fn(), warn: jest.fn(), info: jest.fn() })
         .input()
         .add(source)
         .done()
-        .dispatch(dispatchTarger)
+        .dispatch(dispatchTarget)
         .output()
         .stored(store)
         .published(new CapturingOutputSink(capture))
@@ -711,6 +982,21 @@ async function runApplication(
         .run(appBehavior);
 }
 
+const expectLogNthCall = (mockFn: jest.Mock, nth: number, isFinalAttempt: boolean) => {
+    expect(mockFn).toHaveBeenNthCalledWith(
+        nth,
+        expect.any(String),
+        expect.any(Object),
+        expect.objectContaining({
+            type: expect.any(String),
+            currentAttempt: nth,
+            maxAttempts: expect.any(Number),
+            finalAttempt: isFinalAttempt,
+        })
+    );
+};
+const isFinalAttempt = true;
+const notFinalAttempt = false;
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]}`, () => {
         const behavior = { mode: ErrorHandlingMode.LogAndRetryOrContinue, retries: 2 };
@@ -745,19 +1031,15 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             const throwSink: jest.Mock = jest.fn().mockImplementation(async () => {
                 throw thrownError;
             });
-            const bailSink: jest.Mock = jest.fn().mockImplementation(async (output, bail) => {
-                if (output || true) {
-                    bail(bailedError);
-                }
+            const bailSink: jest.Mock = jest.fn().mockImplementation(async (_, retry) => {
+                retry.bail(bailedError);
             });
-            const bailSeqConSink: jest.Mock = jest.fn().mockImplementation(async (output, bail) => {
+            const bailSeqConSink: jest.Mock = jest.fn().mockImplementation(async (_, retry) => {
                 if (counter > 0) {
                     return;
                 }
-                if (output || true) {
-                    counter++;
-                    bail(secConError);
-                }
+                counter++;
+                retry.bail(secConError);
             });
 
             const target = {
@@ -788,6 +1070,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(throwSink).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -804,6 +1088,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSink).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -834,6 +1119,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(throwSink).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });
@@ -848,6 +1135,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(bailSink).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });
@@ -905,6 +1193,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetThrow.onTest).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -920,6 +1210,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetBail.onTest).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toMatchObject(
                     new Error(`test failed: init: true, run: false, dispose: true`)
@@ -935,6 +1226,8 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetThrow.onTest).toHaveBeenCalledTimes(3);
+                expectLogNthCall(mockLogError, 2, notFinalAttempt);
+                expectLogNthCall(mockLogError, 3, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });
@@ -948,6 +1241,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     err = e;
                 }
                 expect(targetBail.onTest).toHaveBeenCalledTimes(1);
+                expectLogNthCall(mockLogError, 1, isFinalAttempt);
                 expect(capture.length).toBe(0);
                 expect(err).toBe(undefined);
             });

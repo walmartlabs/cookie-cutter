@@ -1,0 +1,33 @@
+{
+    "name": "@walmartlabs/cookie-cutter-prometheus",
+    "version": "1.2.0-rc.1",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "homepage": "https://walmartlabs.github.io/cookie-cutter",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/walmartlabs/cookie-cutter.git"
+    },
+    "bugs": {
+        "url": "https://github.com/walmartlabs/cookie-cutter/issues"
+    },
+    "peerDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
+    },
+    "devDependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "integrate": "docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    },
+    "dependencies": {
+        "@types/request-promise-native": "1.0.17",
+        "request-promise-native": "1.0.8",
+        "ip": "1.1.5"
+    }
+}

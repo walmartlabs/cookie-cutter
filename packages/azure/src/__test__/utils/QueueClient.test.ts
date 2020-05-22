@@ -5,12 +5,12 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { config, JsonMessageEncoder } from "@walmartlabs/cookie-cutter-core";
+import { config, EventSourcedMetadata, JsonMessageEncoder } from "@walmartlabs/cookie-cutter-core";
 import { createQueueService, LinearRetryPolicyFilter, QueueService } from "azure-storage";
 import { MockTracer, Span, SpanContext } from "opentracing";
-import { IQueueConfiguration } from "../../streaming";
-import { QueueConfiguration } from "../../streaming/internal";
-import { QueueClient } from "../../utils";
+import { IQueueConfiguration, IQueueSourceConfiguration, QueueMetadata } from "../../streaming";
+import { QueueConfiguration, QueueSourceConfiguration } from "../../streaming/internal";
+import { EnvelopeQueueMessagePreprocessor, QueueClient } from "../../utils";
 
 jest.mock("azure-storage", () => {
     return {
@@ -27,19 +27,28 @@ const withFilter = function(this: QueueService) {
 };
 
 describe("QueueClient", () => {
-    const configuration: IQueueConfiguration = config.parse(QueueConfiguration, {
+    const rawConfiguration = {
         queueName: "queue123",
         storageAccount: "myAccount",
         storageAccessKey: "myKey",
         encoder: new JsonMessageEncoder(),
         retryInterval: "5s",
         retryCount: 3,
-    } as any);
-    const context: SpanContext = {};
+        preprocessor: new EnvelopeQueueMessagePreprocessor(),
+    } as any;
+    const parseConfig = (raw: any): IQueueConfiguration => config.parse(QueueConfiguration, raw);
+    const configuration = parseConfig(rawConfiguration);
+    const context = new SpanContext();
     const span: Span = new MockTracer().startSpan("unit-test", { childOf: context });
     const payload = "hello world to queues";
-    const headers = {};
-    const messageQueueResult = { messageId: "message123", popReceipt: "pop123" };
+    const headers = {
+        [EventSourcedMetadata.EventType]: "foo",
+    };
+    const messageQueueResult = {
+        messageId: "message123",
+        popReceipt: "pop123",
+        messageText: JSON.stringify({ headers, payload }),
+    };
 
     beforeEach(() => {
         MockCreateQueueService.mockReset();
@@ -96,23 +105,32 @@ describe("QueueClient", () => {
 
     describe("write", () => {
         const response = { statusCode: 200 };
-        const writeResultsIn = async (error?: any, result?: any) => {
+        const writeResultsIn = async (
+            error?: any,
+            result?: any,
+            res = response,
+            config = configuration
+        ) => {
             const createMessage = jest.fn();
-            createMessage.mockImplementation((_q, _t, _o, cb) => {
-                cb(error, result, response);
+            const createQueueIfNotExists = jest.fn();
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(error, result, res);
+            });
+            createQueueIfNotExists.mockImplementation((_q, cb) => {
+                cb(undefined, { created: true, exists: true });
             });
             MockCreateQueueService.mockImplementation(() => ({
                 createMessage,
                 withFilter,
+                createQueueIfNotExists,
             }));
-            const client = new QueueClient(configuration);
-            return { createMessage, client };
+            const client = new QueueClient(config);
+            return { createMessage, client, createQueueIfNotExists };
         };
         it("should write message with defaults", async () => {
             const { client, createMessage } = await writeResultsIn(undefined, messageQueueResult);
             const result = await client.write(span.context(), payload, headers);
             expect(result).toBeDefined();
-            expect(result.messageId).toBe(messageQueueResult.messageId);
             expect(createMessage).toBeCalledWith(
                 configuration.queueName,
                 JSON.stringify({ payload, headers }),
@@ -141,13 +159,73 @@ describe("QueueClient", () => {
             await expect(client.write(span.context(), payload, headers)).rejects.toEqual(error);
         });
         it("should error if text is to big", async () => {
-            const bigText = new Buffer(65 * 1024 * 1024);
+            const bigText = Buffer.alloc(65 * 1024);
             const { client, createMessage } = await writeResultsIn();
             const result = client.write(span.context(), bigText, headers);
             expect(createMessage).not.toBeCalled();
             await expect(result).rejects.toEqual(
-                new Error("Queue Message too big, must be less then 64mb. is: 130.00004863739014")
+                new Error("Queue Message too big, must be less then 64kb. is: 173.423828125")
             );
+        });
+        it("should error get back 413 from azure", async () => {
+            const bigText = Buffer.alloc(1024);
+            const e: Error & { statusCode?: number } = new Error(
+                "The request body is too large and exceeds the maximum permissible limit."
+            );
+            const { client, createMessage } = await writeResultsIn(e, undefined, {
+                statusCode: 413,
+            });
+            const result = client.write(span.context(), bigText, headers);
+            expect(createMessage).toBeCalled();
+            await expect(result).rejects.toMatchObject({ code: 413 });
+        });
+        it("should retry on 404s if configured to", async () => {
+            const serviceResponse = { statusCode: 404 };
+            const { client, createMessage, createQueueIfNotExists } = await writeResultsIn(
+                new Error(),
+                undefined,
+                serviceResponse,
+                parseConfig({ ...rawConfiguration, createQueueIfNotExists: true })
+            );
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(undefined, {}, { statusCode: 200 });
+            });
+            const result = await client.write(span.context(), payload, headers);
+            expect(createMessage).toBeCalledTimes(2);
+            expect(createQueueIfNotExists).toBeCalled();
+            expect(result).toBeDefined();
+        });
+        it("should not retry on 404s if not configured to", async () => {
+            const serviceResponse = { statusCode: 404 };
+            const { client, createMessage, createQueueIfNotExists } = await writeResultsIn(
+                new Error(),
+                undefined,
+                serviceResponse,
+                parseConfig({ ...rawConfiguration, createQueueIfNotExists: false })
+            );
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(undefined, {}, { statusCode: 200 });
+            });
+            const result = client.write(span.context(), payload, headers);
+            await expect(result).rejects.toMatchObject({ code: 404 });
+            expect(createQueueIfNotExists).not.toBeCalled();
+            expect(createMessage).toBeCalledTimes(1);
+        });
+        it("should not retry on other errors (even if configured to)", async () => {
+            const serviceResponse = { statusCode: 401 };
+            const { client, createMessage, createQueueIfNotExists } = await writeResultsIn(
+                new Error(),
+                undefined,
+                serviceResponse,
+                parseConfig({ ...rawConfiguration, createQueueIfNotExists: true })
+            );
+            createMessage.mockImplementationOnce((_q, _t, _o, cb) => {
+                cb(undefined, {}, { statusCode: 200 });
+            });
+            const result = client.write(span.context(), payload, headers);
+            await expect(result).rejects.toMatchObject({ code: 401 });
+            expect(createQueueIfNotExists).not.toBeCalled();
+            expect(createMessage).toBeCalledTimes(1);
         });
     });
     describe("read", () => {
@@ -168,12 +246,31 @@ describe("QueueClient", () => {
             const { client, getMessages } = await readResultsIn(undefined, [messageQueueResult]);
             const messages = await client.read(span.context());
             expect(messages).toHaveLength(1);
-            expect(messages[0].messageId).toBe(messageQueueResult.messageId);
-            expect(getMessages).toBeCalledWith(configuration.queueName, {}, expect.anything());
+            expect(messages[0].headers[QueueMetadata.MessageId]).toBe(messageQueueResult.messageId);
+            expect(getMessages).toBeCalledWith(
+                configuration.queueName,
+                { numOfMessages: undefined, visibilityTimeout: undefined },
+                expect.anything()
+            );
         });
         it("should read messages with options", async () => {
             const { client, getMessages } = await readResultsIn(undefined, [messageQueueResult]);
-            const options = { queueName: "different", numOfMessages: 20, visibilityTimeout: 312 };
+            let options: IQueueConfiguration & IQueueSourceConfiguration = {
+                storageAccount: "storageAcc",
+                storageAccessKey: "storageKey",
+                queueName: "different",
+                createQueueIfNotExists: false,
+                encoder: new JsonMessageEncoder(),
+                numOfMessages: 20,
+                visibilityTimeout: 60000,
+            };
+            options = config.parse(QueueSourceConfiguration, options, {
+                retryCount: 3,
+                retryInterval: 5000,
+                largeItemBlobContainer: "queue-large-items",
+                createQueueIfNotExists: false,
+                preprocessor: new EnvelopeQueueMessagePreprocessor(),
+            });
             await client.read(span.context(), options);
             expect(getMessages).toBeCalledWith(
                 options.queueName,
@@ -205,7 +302,7 @@ describe("QueueClient", () => {
             const client = new QueueClient(configuration);
             return { deleteMessage, client };
         };
-        it("should read messages with defaults", async () => {
+        it("should delete message when processed with default queue name", async () => {
             const { client, deleteMessage } = await markAsProcessedResultsIn();
             await client.markAsProcessed(
                 span.context(),
@@ -219,7 +316,7 @@ describe("QueueClient", () => {
                 expect.anything()
             );
         });
-        it("should read messages with options", async () => {
+        it("should delete message when processed with different queue name", async () => {
             const { client, deleteMessage } = await markAsProcessedResultsIn();
             const options = { queueName: "different" };
             await client.markAsProcessed(

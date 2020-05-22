@@ -12,6 +12,7 @@ import {
     IStateVerification,
     IStoredMessage,
     OutputSinkConsistencyLevel,
+    RetrierContext,
     SequenceConflictError,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
@@ -25,6 +26,7 @@ import {
     ICosmosDocument,
     isRetryableError,
     isSequenceConflict,
+    RETRY_AFTER_MS,
 } from "../../utils";
 
 export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSink<IStoredMessage> {
@@ -34,7 +36,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
 
     public async sink(
         output: IterableIterator<IStoredMessage | IStateVerification>,
-        bail: (err: any) => never
+        retry: RetrierContext
     ): Promise<void> {
         let state: StateRef<any> | undefined;
         let message: IStoredMessage | undefined;
@@ -67,11 +69,14 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
                 await this.client.upsert(record, state.key, state.seqNum);
             } catch (e) {
                 if (isRetryableError(e)) {
+                    if (e.headers && e.headers[RETRY_AFTER_MS]) {
+                        retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+                    }
                     throw e;
                 } else if (isSequenceConflict(e)) {
-                    bail(new SequenceConflictError(getSequenceConflictDetails(e)));
+                    retry.bail(new SequenceConflictError(getSequenceConflictDetails(e)));
                 } else {
-                    bail(e);
+                    retry.bail(e);
                 }
             }
         } else if (state !== undefined) {
@@ -92,11 +97,14 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
                 }
             } catch (e) {
                 if (isRetryableError(e)) {
+                    if (e.headers && e.headers[RETRY_AFTER_MS]) {
+                        retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+                    }
                     throw e;
                 } else if (isSequenceConflict(e)) {
-                    bail(new SequenceConflictError(getSequenceConflictDetails(e)));
+                    retry.bail(new SequenceConflictError(getSequenceConflictDetails(e)));
                 } else {
-                    bail(e);
+                    retry.bail(e);
                 }
             }
         }

@@ -31,7 +31,7 @@ export class StaticInputSource implements IInputSource {
             if (item instanceof MessageRef) {
                 msg = item;
             } else {
-                msg = new MessageRef({}, item, {});
+                msg = new MessageRef({}, item);
             }
             const metadata = {};
             if (msg.metadata<string>(EventSourcedMetadata.EventType) === undefined) {

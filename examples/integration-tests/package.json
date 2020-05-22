@@ -1,0 +1,22 @@
+{
+    "name": "@examples/integration-tests",
+    "private": true,
+    "version": "0.0.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
+        "@walmartlabs/cookie-cutter-grpc": "^1.2.0-rc"
+    },
+    "devDependencies": {
+        "protobufjs": "6.9.0"
+    },
+    "scripts": {
+        "prebuild": "pbjs -t static-module -w commonjs -o ./src/tally.js tally.proto && pbts -o ./src/tally.d.ts ./src/tally.js",
+        "build": "tsc",
+        "postbuild": "pbjs -t static-module -w commonjs -o ./dist/tally.js tally.proto",
+        "start": "node dist/index",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
+}

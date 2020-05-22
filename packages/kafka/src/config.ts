@@ -19,11 +19,11 @@ import {
 
 @config.section
 export class KafkaBrokerConfiguration implements IKafkaBrokerConfiguration {
-    @config.field(config.converters.string)
-    public set broker(_: string) {
+    @config.field(config.converters.listOf(config.converters.string))
+    public set broker(_: string | string[]) {
         config.noop();
     }
-    public get broker(): string {
+    public get broker(): string | string[] {
         return config.noop();
     }
 
@@ -56,10 +56,10 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
     }
 
     @config.field(topicConverter)
-    public set topics(_: string | Array<string | IKafkaTopic>) {
+    public set topics(_: string | (string | IKafkaTopic)[]) {
         config.noop();
     }
-    public get topics(): string | Array<string | IKafkaTopic> {
+    public get topics(): string | (string | IKafkaTopic)[] {
         return config.noop();
     }
 
@@ -102,6 +102,14 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
     public get preprocessor(): IKafkaMessagePreprocessor {
         return config.noop();
     }
+
+    @config.field(config.converters.timespan)
+    public set sessionTimeout(_: number) {
+        config.noop();
+    }
+    public get sessionTimeout(): number {
+        return config.noop();
+    }
 }
 
 @config.section
@@ -141,7 +149,7 @@ export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
 }
 
 export function topicConverter(
-    topicsConfiguration: string | Array<string | IKafkaTopic>
+    topicsConfiguration: string | (string | IKafkaTopic)[]
 ): IKafkaTopic[] {
     const topics = Array.isArray(topicsConfiguration)
         ? topicsConfiguration
