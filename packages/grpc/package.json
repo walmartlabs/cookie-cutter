@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-grpc",
-    "version": "1.2.0-rc.2",
+    "version": "1.2.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -18,10 +18,10 @@
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc"
+        "@walmartlabs/cookie-cutter-core": "^1.2.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
+        "@walmartlabs/cookie-cutter-core": "^1.2.0",
         "protobufjs": "6.9.0"
     },
     "scripts": {

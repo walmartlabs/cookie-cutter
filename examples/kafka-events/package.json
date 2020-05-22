@@ -4,8 +4,8 @@
     "version": "0.0.0",
     "license": "Apache-2.0",
     "dependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0-rc",
-        "@walmartlabs/cookie-cutter-kafka": "^1.2.0-rc"
+        "@walmartlabs/cookie-cutter-core": "^1.2.0",
+        "@walmartlabs/cookie-cutter-kafka": "^1.2.0"
     },
     "scripts": {
         "build": "tsc",
