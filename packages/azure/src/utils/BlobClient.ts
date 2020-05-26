@@ -55,6 +55,9 @@ export class BlobClient implements IRequireInitialization {
         this.options = config.requestTimeout
             ? { timeoutIntervalInMs: config.requestTimeout }
             : undefined;
+        // TODO remove this logging statement, it's just for linting
+        // tslint:disable-next-line: no-console
+        console.log(this.options);
     }
 
     public async initialize(context: IComponentContext) {
@@ -78,7 +81,7 @@ export class BlobClient implements IRequireInitialization {
                     failSpan(span, error);
                     span.finish();
                     return reject(error);
-            });
+                });
         });
     }
 

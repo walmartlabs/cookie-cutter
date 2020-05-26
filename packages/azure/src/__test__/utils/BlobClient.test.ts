@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-jest.mock("azure-storage", () => {
+jest.mock("@azure/storage-blob", () => {
     return {
         BlobService: jest.fn(),
         createBlobService: jest.fn(),
@@ -13,12 +13,12 @@ jest.mock("azure-storage", () => {
 });
 
 import { NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
-import { createBlobService } from "azure-storage";
+import { BlobServiceClient } from "@azure/storage-blob";
 import { Span, SpanContext } from "opentracing";
 import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
 
-const MockCreateBlobService: jest.Mock = createBlobService as any;
+const MockCreateBlobService: jest.Mock = BlobServiceClient.fromConnectionString as any;
 
 describe("BlobClient", () => {
     const config: IBlobStorageConfiguration = {

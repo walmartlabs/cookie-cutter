@@ -6,23 +6,23 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, EventSourcedMetadata, JsonMessageEncoder } from "@walmartlabs/cookie-cutter-core";
-import { createQueueService, LinearRetryPolicyFilter, QueueService } from "azure-storage";
+import { QueueServiceClient, StorageRetryPolicyType } from "@azure/storage-queue";
 import { MockTracer, Span, SpanContext } from "opentracing";
 import { IQueueConfiguration, IQueueSourceConfiguration, QueueMetadata } from "../../streaming";
 import { QueueConfiguration, QueueSourceConfiguration } from "../../streaming/internal";
 import { EnvelopeQueueMessagePreprocessor, QueueClient } from "../../utils";
 
-jest.mock("azure-storage", () => {
+jest.mock("@azure/storage-queue", () => {
     return {
-        createQueueService: jest.fn(),
+        getQueueClient: jest.fn(),
         LinearRetryPolicyFilter: jest.fn(),
     };
 });
 
-const MockCreateQueueService: jest.Mock = createQueueService as any;
-const MockLinearRetryPolicyFilter: jest.Mock = LinearRetryPolicyFilter as any;
+const MockCreateQueueService: jest.Mock = QueueServiceClient as any;
+const MockLinearRetryPolicyFilter: jest.Mock = StorageRetryPolicyType as any;
 
-const withFilter = function(this: QueueService) {
+const withFilter = function(this: QueueServiceClient) {
     return this;
 };
 
