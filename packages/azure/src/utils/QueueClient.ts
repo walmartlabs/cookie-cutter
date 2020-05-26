@@ -17,13 +17,14 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import {
-    createQueueService,
-    LinearRetryPolicyFilter,
-    QueueService,
-    ServiceResponse,
-} from "azure-storage";
+    QueueGetPropertiesResponse,
+    QueueServiceClient,
+    StoragePipelineOptions,
+    StorageRetryOptions,
+    StorageRetryPolicyType,
+    StorageSharedKeyCredential,
+} from "@azure/storage-queue";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
-import { promisify } from "util";
 import { IQueueConfiguration, IQueueMessagePreprocessor, QueueMetadata } from "../streaming";
 
 interface IQueueRequestOptions {
@@ -106,7 +107,7 @@ export class EnvelopeQueueMessagePreprocessor implements IQueueMessagePreprocess
 }
 
 export class QueueClient implements IRequireInitialization {
-    private readonly queueService: QueueService;
+    private readonly queueService: QueueServiceClient;
     public readonly defaultQueue: string;
     private tracer: Tracer;
     private metrics: IMetrics;
@@ -120,15 +121,28 @@ export class QueueClient implements IRequireInitialization {
         this.logger = DefaultComponentContext.logger;
 
         const { retryCount, retryInterval } = config;
-        this.queueService = createQueueService(
+        const sharedKeyCredential = new StorageSharedKeyCredential(
             config.storageAccount,
-            config.storageAccessKey,
-            config.url
+            config.storageAccessKey
         );
+
+        let storagePipelineOptions: StoragePipelineOptions;
+
         if (retryCount > 0) {
-            const retryOperations = new LinearRetryPolicyFilter(retryCount, retryInterval);
-            this.queueService = this.queueService.withFilter(retryOperations);
+            const retryOperations: StorageRetryOptions = {
+                retryDelayInMs: retryInterval,
+                retryPolicyType: StorageRetryPolicyType.FIXED, // LINEAR
+                maxTries: retryCount,
+            };
+            storagePipelineOptions = {
+                retryOptions: retryOperations,
+            };
         }
+        this.queueService = new QueueServiceClient(
+            config.url, // TODO is url the correct format here?
+            sharedKeyCredential,
+            storagePipelineOptions
+        );
     }
 
     public async initialize(context: IComponentContext) {
@@ -179,18 +193,19 @@ export class QueueClient implements IRequireInitialization {
         const createQueueSpan = this.tracer.startSpan(spanName, { childOf: spanContext });
         createQueueSpan.log({ queueName });
 
-        try {
-            const createQueueIfNotExistsAsync = promisify(
-                this.queueService.createQueueIfNotExists
-            ).bind(this.queueService);
-            const { created, exists } = await createQueueIfNotExistsAsync(queueName);
-            createQueueSpan.log({ created, exists });
-            createQueueSpan.finish();
-            return;
-        } catch (err) {
-            failSpan(createQueueSpan, err);
-            throw err;
-        }
+        const queueClient = this.queueService.getQueueClient(queueName);
+
+        queueClient
+            .create()
+            .then((result) => {
+                createQueueSpan.log({ result });
+                createQueueSpan.finish();
+                return;
+            })
+            .catch((error) => {
+                failSpan(createQueueSpan, error);
+                throw error;
+            });
     }
 
     public write(
@@ -215,7 +230,7 @@ export class QueueClient implements IRequireInitialization {
                 span.log({ sizeKb });
                 if (isTooBig) {
                     const error: Error & { code?: number } = new Error(
-                        "Queue Message too big, must be less then 64kb. is: " + sizeKb
+                        `Queue Message too big, must be less than 64kb, is: ${sizeKb}`
                     );
                     error.code = 413;
                     failSpan(span, error);
@@ -231,57 +246,57 @@ export class QueueClient implements IRequireInitialization {
                     return reject(error);
                 }
 
-                this.queueService.createMessage(
-                    queueName,
-                    text,
-                    options,
-                    (
-                        err: Error & { code?: number },
-                        _: QueueService.QueueMessageResult,
-                        response: ServiceResponse
-                    ) => {
-                        if (err) {
-                            failSpan(span, err);
+                const queueClient = this.queueService.getQueueClient(queueName);
+                queueClient
+                    .sendMessage(text, options)
+                    .then((result) => {
+                        if (result.errorCode) {
+                            const error: Error & { code?: number } = new Error(
+                                "Queue creation failed."
+                            );
+                            error.code = parseInt(result.errorCode, 10);
+                            failSpan(span, error);
                         }
-                        span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+                        span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
                         span.finish();
-                        if (err) {
-                            err.code = response.statusCode;
-                            this.metrics.increment(
-                                QueueMetrics.Write,
-                                this.generateMetricTags(
-                                    queueName,
-                                    response.statusCode,
-                                    QueueMetricResults.Error
-                                )
-                            );
-                            return reject(err);
-                        } else {
-                            this.metrics.increment(
-                                QueueMetrics.Write,
-                                this.generateMetricTags(
-                                    queueName,
-                                    response.statusCode,
-                                    QueueMetricResults.Success
-                                )
-                            );
-                            return resolve({
-                                headers,
-                                payload,
-                            });
-                        }
-                    }
-                );
+
+                        this.metrics.increment(
+                            QueueMetrics.Write,
+                            this.generateMetricTags(
+                                queueName,
+                                result._response.status,
+                                QueueMetricResults.Success
+                            )
+                        );
+
+                        return resolve({ headers, payload });
+                    })
+                    .catch((error) => {
+                        failSpan(span, error);
+                        span.setTag(Tags.HTTP_STATUS_CODE, error.errorCode);
+                        span.finish();
+                        this.metrics.increment(
+                            QueueMetrics.Write,
+                            this.generateMetricTags(
+                                queueName,
+                                error.errorCode,
+                                QueueMetricResults.Error
+                            )
+                        );
+                        return reject(error);
+                    });
             });
 
-        return attemptWrite().catch((err) => {
+        try {
+            return attemptWrite();
+        } catch (err) {
             const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
             if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
                 return this.createQueueIfNotExists(spanContext, queueName).then(attemptWrite);
             } else {
                 return Promise.reject(err);
             }
-        });
+        }
     }
 
     public async read(
@@ -308,84 +323,94 @@ export class QueueClient implements IRequireInitialization {
             numOfMessages,
         });
 
+        const queueClient = this.queueService.getQueueClient(queueName);
+
         return new Promise<IQueueMessage[]>((resolve, reject) => {
-            this.queueService.getMessages(
-                queueName,
-                { visibilityTimeout, numOfMessages },
-                (
-                    err: Error,
-                    results: QueueService.QueueMessageResult[],
-                    response: ServiceResponse
-                ) => {
-                    if (err) {
-                        span.log({ error: err });
+            queueClient
+                .receiveMessages({ visibilityTimeout, numberOfMessages: numOfMessages })
+                .then((response) => {
+                    if (response.errorCode) {
+                        span.log({ error: response.errorCode });
                         span.setTag(Tags.ERROR, true);
-                    }
-                    span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
-                    span.finish();
-                    if (err) {
+
+                        span.setTag(Tags.HTTP_STATUS_CODE, response._response.status);
+                        span.finish();
+
                         this.metrics.increment(
                             QueueMetrics.Read,
                             this.generateMetricTags(
                                 queueName,
-                                response.statusCode,
+                                response._response.status,
                                 QueueMetricResults.Error
                             )
                         );
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            QueueMetrics.Read,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Success
-                            )
-                        );
-                        resolve(
-                            results.reduce((messages, result) => {
-                                const messageObj = this.config.preprocessor.process(
-                                    result.messageText
-                                );
-
-                                if (
-                                    !messageObj.headers ||
-                                    !messageObj.headers[EventSourcedMetadata.EventType]
-                                ) {
-                                    span.log({ messageId: result.messageId });
-                                    failSpan(
-                                        span,
-                                        new Error("Message does not have EventType header value.")
-                                    );
-                                    this.logger.error(
-                                        "Message does not have EventType header value.",
-                                        {
-                                            messageId: result.messageId,
-                                        }
-                                    );
-
-                                    return messages;
-                                }
-
-                                messageObj.headers[QueueMetadata.DequeueCount] = (
-                                    result.dequeueCount || 1
-                                ).toString();
-                                messageObj.headers[QueueMetadata.QueueName] = result.queue;
-                                messageObj.headers[QueueMetadata.TimeToLive] =
-                                    result.expirationTime;
-                                messageObj.headers[QueueMetadata.VisibilityTimeout] =
-                                    result.timeNextVisible;
-                                messageObj.headers[QueueMetadata.MessageId] = result.messageId;
-                                messageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
-
-                                messages.push(messageObj);
-
-                                return messages;
-                            }, [])
-                        );
+                        const error: Error & { code?: number } = new Error("Queue read failed");
+                        reject(error);
                     }
-                }
-            );
+
+                    span.setTag(Tags.HTTP_STATUS_CODE, response._response.status);
+                    span.finish();
+
+                    this.metrics.increment(
+                        QueueMetrics.Read,
+                        this.generateMetricTags(
+                            queueName,
+                            response._response.status,
+                            QueueMetricResults.Success
+                        )
+                    );
+
+                    resolve(
+                        response.receivedMessageItems.reduce((messages, result) => {
+                            const messageObj = this.config.preprocessor.process(result.messageText);
+
+                            if (
+                                !messageObj.headers ||
+                                !messageObj.headers[EventSourcedMetadata.EventType]
+                            ) {
+                                span.log({ messageId: result.messageId });
+                                failSpan(
+                                    span,
+                                    new Error("Message does not have EventType header value.")
+                                );
+                                this.logger.error("Message does not have EventType header value.", {
+                                    messageId: result.messageId,
+                                });
+                                return messages;
+                            }
+
+                            messageObj.headers[QueueMetadata.DequeueCount] = (
+                                result.dequeueCount || 1
+                            ).toString();
+                            messageObj.headers[QueueMetadata.QueueName] = queueClient.name;
+                            messageObj.headers[QueueMetadata.TimeToLive] = (
+                                result.expiresOn.getTime() - Date.now()
+                            ).toString();
+                            messageObj.headers[
+                                QueueMetadata.VisibilityTimeout
+                            ] = result.nextVisibleOn.getTime().toString();
+                            messageObj.headers[QueueMetadata.MessageId] = result.messageId;
+                            messageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
+
+                            messages.push(messageObj);
+
+                            return messages;
+                        }, [])
+                    );
+                })
+                .catch((error) => {
+                    span.log({ error });
+                    span.setTag(Tags.ERROR, true);
+                    span.setTag(Tags.HTTP_STATUS_CODE, error.code);
+                    span.finish();
+
+                    this.metrics.increment(
+                        QueueMetrics.Read,
+                        this.generateMetricTags(queueName, error.code, QueueMetricResults.Error)
+                    );
+
+                    reject(error);
+                });
         });
     }
 
@@ -404,84 +429,96 @@ export class QueueClient implements IRequireInitialization {
         });
 
         return new Promise<void>((resolve, reject) => {
-            this.queueService.deleteMessage(
-                queueName,
-                messageId,
-                popReceipt,
-                (err: Error, response: ServiceResponse) => {
-                    if (err) {
-                        span.log({ error: err });
+            this.queueService
+                .getQueueClient(queueName)
+                .deleteMessage(messageId, popReceipt)
+                .then((result) => {
+                    if (result.errorCode) {
+                        const error: Error & { code?: number } = new Error(
+                            `Unable to delete message: ${messageId}`
+                        );
+                        span.log(error);
                         span.setTag(Tags.ERROR, true);
                     }
-                    span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+                    span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
                     span.finish();
-                    if (err) {
-                        this.metrics.increment(
-                            QueueMetrics.MarkAsProcessed,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Error
-                            )
-                        );
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            QueueMetrics.MarkAsProcessed,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Success
-                            )
-                        );
-                        resolve();
-                    }
-                }
-            );
+
+                    this.metrics.increment(
+                        QueueMetrics.MarkAsProcessed,
+                        this.generateMetricTags(
+                            queueName,
+                            result._response.status,
+                            QueueMetricResults.Success
+                        )
+                    );
+                    resolve();
+                })
+                .catch((error) => {
+                    span.log({ error });
+                    span.setTag(Tags.ERROR, true);
+                    span.finish();
+
+                    this.metrics.increment(
+                        QueueMetrics.MarkAsProcessed,
+                        this.generateMetricTags(
+                            queueName,
+                            error.errorCode,
+                            QueueMetricResults.Error
+                        )
+                    );
+                    reject(error);
+                });
         });
     }
 
     public queueMetadata(
         spanContext: SpanContext,
         queueName: string
-    ): Promise<QueueService.QueueResult> {
+    ): Promise<QueueGetPropertiesResponse> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
         const kind = spanContext ? Tags.SPAN_KIND_RPC_CLIENT : undefined;
         this.spanLogAndSetTags(span, kind, this.queueMetadata.name, queueName, { queueName });
 
         return new Promise((resolve, reject) => {
-            this.queueService.getQueueMetadata(
-                queueName,
-                (err: Error, result: QueueService.QueueResult, response: ServiceResponse) => {
-                    if (err) {
-                        span.log({ error: err });
+            this.queueService
+                .getQueueClient(queueName)
+                .getProperties()
+                .then((result) => {
+                    if (result.errorCode) {
+                        const error: Error & { code?: number } = new Error(
+                            "Could not fetch queue metadata"
+                        );
+                        span.log(error);
                         span.setTag(Tags.ERROR, true);
                     }
-                    span.setTag(Tags.HTTP_STATUS_CODE, response.statusCode);
+
+                    span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
                     span.finish();
-                    if (err) {
-                        this.metrics.increment(
-                            QueueMetrics.QueueMetadata,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Error
-                            )
-                        );
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            QueueMetrics.QueueMetadata,
-                            this.generateMetricTags(
-                                queueName,
-                                response.statusCode,
-                                QueueMetricResults.Success
-                            )
-                        );
-                        resolve(result);
-                    }
-                }
-            );
+
+                    this.metrics.increment(
+                        QueueMetrics.QueueMetadata,
+                        this.generateMetricTags(
+                            queueName,
+                            result._response.status,
+                            QueueMetricResults.Success
+                        )
+                    );
+                    resolve(result);
+                })
+                .catch((error) => {
+                    span.log(error);
+                    span.setTag(Tags.ERROR, true);
+
+                    this.metrics.increment(
+                        QueueMetrics.QueueMetadata,
+                        this.generateMetricTags(
+                            queueName,
+                            error.errorCode,
+                            QueueMetricResults.Error
+                        )
+                    );
+                    reject(error);
+                });
         });
     }
 
