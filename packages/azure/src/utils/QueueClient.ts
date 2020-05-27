@@ -273,13 +273,13 @@ export class QueueClient implements IRequireInitialization {
                     })
                     .catch((error) => {
                         failSpan(span, error);
-                        span.setTag(Tags.HTTP_STATUS_CODE, error.errorCode);
+                        span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
                         span.finish();
                         this.metrics.increment(
                             QueueMetrics.Write,
                             this.generateMetricTags(
                                 queueName,
-                                error.errorCode,
+                                error.statusCode,
                                 QueueMetricResults.Error
                             )
                         );
@@ -401,12 +401,16 @@ export class QueueClient implements IRequireInitialization {
                 .catch((error) => {
                     span.log({ error });
                     span.setTag(Tags.ERROR, true);
-                    span.setTag(Tags.HTTP_STATUS_CODE, error.code);
+                    span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
                     span.finish();
 
                     this.metrics.increment(
                         QueueMetrics.Read,
-                        this.generateMetricTags(queueName, error.code, QueueMetricResults.Error)
+                        this.generateMetricTags(
+                            queueName,
+                            error.statusCode,
+                            QueueMetricResults.Error
+                        )
                     );
 
                     reject(error);
@@ -462,7 +466,7 @@ export class QueueClient implements IRequireInitialization {
                         QueueMetrics.MarkAsProcessed,
                         this.generateMetricTags(
                             queueName,
-                            error.errorCode,
+                            error.statusCode,
                             QueueMetricResults.Error
                         )
                     );
@@ -513,7 +517,7 @@ export class QueueClient implements IRequireInitialization {
                         QueueMetrics.QueueMetadata,
                         this.generateMetricTags(
                             queueName,
-                            error.errorCode,
+                            error.statusCode,
                             QueueMetricResults.Error
                         )
                     );

@@ -46,7 +46,6 @@ export class BlobClient implements IRequireInitialization {
     constructor(config: IBlobStorageConfiguration) {
         this.containerName = config.container;
         this.storageAccount = config.storageAccount;
-        // TODO double check connection string - what about url?
         const connectionString = `DefaultEndpointsProtocol=https;AccountName=${this.storageAccount};AccountKey=${config.storageAccessKey};EndpointSuffix=core.windows.net`;
         this.blobService = BlobServiceClient.fromConnectionString(connectionString);
         this.tracer = DefaultComponentContext.tracer;
@@ -69,13 +68,11 @@ export class BlobClient implements IRequireInitialization {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.createContainerIfNotExists.name);
         return new Promise<ContainerCreateResponse>((resolve, reject) => {
-            this.blobService // TODO check difference between containerService & create container
+            this.blobService
                 .createContainer(this.containerName)
                 .then((result) => {
                     span.finish();
-                    // TODO revisit this
-                    resolve();
-                    return result;
+                    return resolve(result.containerCreateResponse);
                 })
                 .catch((error) => {
                     failSpan(span, error);
@@ -111,7 +108,6 @@ export class BlobClient implements IRequireInitialization {
         const containerClient = this.blobService.getContainerClient(this.containerName);
         const blobClient = containerClient.getBlockBlobClient(blobId);
 
-        // TODO check options for BlockBlobUpload
         return new Promise<void>((resolve, reject) => {
             blobClient
                 .upload(text, Buffer.byteLength(text))
@@ -127,11 +123,11 @@ export class BlobClient implements IRequireInitialization {
                     resolve();
                 })
                 .catch((error) => {
-                    span.setTag(Tags.HTTP_STATUS_CODE, error._response.status);
+                    span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
 
                     this.metrics.increment(
                         BlobMetrics.Write,
-                        this.generateMetricTags(BlobMetricResults.Error, error._response.status)
+                        this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
                     );
                     failSpan(span, error);
                     span.finish();
@@ -161,15 +157,14 @@ export class BlobClient implements IRequireInitialization {
                     );
                     span.finish();
 
-                    const stringResult = this.streamToString(result.readableStreamBody);
-                    resolve(stringResult);
+                    resolve(this.streamToString(result.readableStreamBody));
                 })
                 .catch((error) => {
-                    span.setTag(Tags.HTTP_STATUS_CODE, error._response.status);
+                    span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
 
                     this.metrics.increment(
                         BlobMetrics.Read,
-                        this.generateMetricTags(BlobMetricResults.Error, error._response.status)
+                        this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
                     );
                     failSpan(span, error);
                     span.finish();
@@ -191,17 +186,17 @@ export class BlobClient implements IRequireInitialization {
                     if (container.value.name === blobId) {
                         this.metrics.increment(
                             BlobMetrics.Exists,
-                            this.generateMetricTags(BlobMetricResults.Success, 123)
+                            this.generateMetricTags(BlobMetricResults.Success, 200)
                         );
                         return resolve(true);
                     }
                 })
                 .catch((error) => {
-                    span.setTag(Tags.HTTP_STATUS_CODE, error._response.status);
+                    span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
 
                     this.metrics.increment(
                         BlobMetrics.Exists,
-                        this.generateMetricTags(BlobMetricResults.Error, error.errorCode) // TODO find error code
+                        this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
                     );
                     failSpan(span, error);
                     span.finish();
