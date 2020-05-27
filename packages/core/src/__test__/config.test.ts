@@ -314,33 +314,32 @@ describe("Primitive Values", () => {
     });
 
     it("converts timespan -> number with different target and source units", () => {
-        const tester = {
-            msToD: [2 * 24 * 60 * 60 * 1000, 2],
-            hToS: [1, 60 * 60],
-            mToH: [3 * 60, 3],
-            msToM: [2 * 60 * 1000, 2],
-            hToM: [2.5, 2.5 * 60],
-            sToS: [13, 13],
+        const input: ITimes = {
+            millisecondsToDays: 2 * 24 * 60 * 60 * 1000,
+            hoursToSeconds: 1,
+            minutesToHours: 3 * 60,
+            millisecondsToMinutes: 2 * 60 * 1000,
+            hoursToMinutes: 2.5,
+            secondsToSeconds: 13,
         };
-        const actual = config.parse(
-            Times,
-            {
-                millisecondsToDays: tester.msToD[0],
-                hoursToSeconds: tester.hToS[0],
-                minutesToHours: tester.mToH[0],
-                millisecondsToMinutes: tester.msToM[0],
-                hoursToMinutes: tester.hToM[0],
-                secondsToSeconds: tester.sToS[0],
-            },
-            {}
-        );
 
-        expect(actual.millisecondsToDays).toBe(tester.msToD[1]);
-        expect(actual.hoursToSeconds).toBe(tester.hToS[1]);
-        expect(actual.minutesToHours).toBe(tester.mToH[1]);
-        expect(actual.millisecondsToMinutes).toBe(tester.msToM[1]);
-        expect(actual.hoursToMinutes).toBe(tester.hToM[1]);
-        expect(actual.secondsToSeconds).toBe(tester.sToS[1]);
+        const expected: ITimes = {
+            millisecondsToDays: 2,
+            hoursToSeconds: 60 * 60,
+            minutesToHours: 3,
+            millisecondsToMinutes: 2,
+            hoursToMinutes: 2.5 * 60,
+            secondsToSeconds: 13,
+        };
+
+        const actual = config.parse(Times, input, {});
+
+        expect(actual.millisecondsToDays).toBe(expected.millisecondsToDays);
+        expect(actual.hoursToSeconds).toBe(expected.hoursToSeconds);
+        expect(actual.minutesToHours).toBe(expected.minutesToHours);
+        expect(actual.millisecondsToMinutes).toBe(expected.millisecondsToMinutes);
+        expect(actual.hoursToMinutes).toBe(expected.hoursToMinutes);
+        expect(actual.secondsToSeconds).toBe(expected.secondsToSeconds);
     });
 
     it("converts string -> numeric enum", () => {
