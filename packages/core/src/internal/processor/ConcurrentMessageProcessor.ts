@@ -252,8 +252,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             if (sequence % this.config.yieldForIOMessageCount === 0) {
                 await waitForPendingIO();
             }
-        } catch (e) {
-            throw e;
         } finally {
             if (dispatchError) {
                 if (handlingInputSpan) {
