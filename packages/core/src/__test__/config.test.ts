@@ -104,6 +104,96 @@ describe("Primitive Values", () => {
         }
     }
 
+    interface ITimes {
+        readonly millisecondsToDays?: number;
+        readonly hoursToSeconds?: number;
+        readonly minutesToHours?: number;
+        readonly millisecondsToMinutes?: number;
+        readonly hoursToMinutes?: number;
+        readonly secondsToSeconds?: number;
+    }
+
+    @config.section
+    class Times implements ITimes {
+        @config.field(
+            config.converters.timespanOf(
+                config.TimeSpanTargetUnit.Days,
+                config.TimeSpanTargetUnit.Milliseconds
+            )
+        )
+        public get millisecondsToDays(): number {
+            return config.noop();
+        }
+        public set millisecondsToDays(_: number) {
+            config.noop();
+        }
+
+        @config.field(
+            config.converters.timespanOf(
+                config.TimeSpanTargetUnit.Seconds,
+                config.TimeSpanTargetUnit.Hours
+            )
+        )
+        public get hoursToSeconds(): number {
+            return config.noop();
+        }
+        public set hoursToSeconds(_: number) {
+            config.noop();
+        }
+
+        @config.field(
+            config.converters.timespanOf(
+                config.TimeSpanTargetUnit.Hours,
+                config.TimeSpanTargetUnit.Minutes
+            )
+        )
+        public get minutesToHours(): number {
+            return config.noop();
+        }
+        public set minutesToHours(_: number) {
+            config.noop();
+        }
+
+        @config.field(
+            config.converters.timespanOf(
+                config.TimeSpanTargetUnit.Minutes,
+                config.TimeSpanTargetUnit.Milliseconds
+            )
+        )
+        public get millisecondsToMinutes(): number {
+            return config.noop();
+        }
+        public set millisecondsToMinutes(_: number) {
+            config.noop();
+        }
+
+        @config.field(
+            config.converters.timespanOf(
+                config.TimeSpanTargetUnit.Minutes,
+                config.TimeSpanTargetUnit.Hours
+            )
+        )
+        public get hoursToMinutes(): number {
+            return config.noop();
+        }
+        public set hoursToMinutes(_: number) {
+            config.noop();
+        }
+
+        @config.field(
+            config.converters.timespanOf(
+                config.TimeSpanTargetUnit.Seconds,
+                config.TimeSpanTargetUnit.Seconds
+            )
+        )
+        public get secondsToSeconds(): number {
+            return config.noop();
+        }
+        public set secondsToSeconds(_: number) {
+            config.noop();
+        }
+    }
+
     it("parses empty object", () => {
         const actual = config.parse(Config, {}, {});
         expect(actual.str).toBeUndefined();
@@ -221,6 +311,35 @@ describe("Primitive Values", () => {
             expect(actual.timeout).toBe(c[1]);
             expect(actual.timeout2).toBe(c[1] && (c[1] as number) / 1000);
         }
+    });
+
+    it("converts timespan -> number with different target and source units", () => {
+        const input: ITimes = {
+            millisecondsToDays: 2 * 24 * 60 * 60 * 1000,
+            hoursToSeconds: 1,
+            minutesToHours: 3 * 60,
+            millisecondsToMinutes: 2 * 60 * 1000,
+            hoursToMinutes: 2.5,
+            secondsToSeconds: 13,
+        };
+
+        const expected: ITimes = {
+            millisecondsToDays: 2,
+            hoursToSeconds: 60 * 60,
+            minutesToHours: 3,
+            millisecondsToMinutes: 2,
+            hoursToMinutes: 2.5 * 60,
+            secondsToSeconds: 13,
+        };
+
+        const actual = config.parse(Times, input, {});
+
+        expect(actual.millisecondsToDays).toBe(expected.millisecondsToDays);
+        expect(actual.hoursToSeconds).toBe(expected.hoursToSeconds);
+        expect(actual.minutesToHours).toBe(expected.minutesToHours);
+        expect(actual.millisecondsToMinutes).toBe(expected.millisecondsToMinutes);
+        expect(actual.hoursToMinutes).toBe(expected.hoursToMinutes);
+        expect(actual.secondsToSeconds).toBe(expected.secondsToSeconds);
     });
 
     it("converts string -> numeric enum", () => {

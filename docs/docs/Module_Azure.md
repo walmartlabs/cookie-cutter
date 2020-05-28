@@ -287,8 +287,8 @@ Application.create()
           storageAccessKey: "[SOME_KEY]",
           queueName: "[QUEUE_NAME]",
           encoder: new JsonMessageEncoder(),
-          visibilityTimeout: 30000, // default 30 seconds
-          numOfMessages: 32, // default 32
+          visibilityTimeout: 30, // seconds, Azure default: 30 seconds
+          numOfMessages: 32, // Azure default: 1
         }))
         .done()
     .dispatch({
@@ -321,8 +321,8 @@ Application.create()
           deadLetterQueue: {
               queueName: "[OTHER_QUEUE_NAME]",
               maxDequeueCount: 10,
-              visibilityTimeout: 30000,
-              messageTimeToLive: 120000,
+              visibilityTimeout: 30, // seconds, Azure default: 30 seconds
+              messageTimeToLive: 120, // seconds, Azure default: 7 days
           }
         }))
         .done()
