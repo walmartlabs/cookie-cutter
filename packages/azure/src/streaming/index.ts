@@ -33,13 +33,13 @@ export interface IDeadLetterQueueConfiguration {
     readonly queueName: string;
     readonly maxDequeueCount: number;
     /**
-     * The time-to-live interval for the message, in milliseconds. The maximum time-to-live allowed is 7 days. If this parameter
-     * is omitted, the default time-to-live is 7 days (604800000 milliseconds)
+     * The time-to-live interval for the message, in seconds. The maximum time-to-live allowed is 7 days. If this parameter
+     * is omitted, the default time-to-live is 7 days (604800 seconds)
      */
     messageTimeToLive?: number;
     /**
-     * Specifies the new visibility timeout value, in milliseconds, relative to server time. The new value must be larger than or
-     * equal to 0, and cannot be larger than 7 days (604800000 milliseconds). The visibility timeout of a message cannot be set to a value later than
+     * Specifies the new visibility timeout value, in seconds, relative to server time. The new value must be larger than or
+     * equal to 0, and cannot be larger than 7 days (604800 seconds). The visibility timeout of a message cannot be set to a value later than
      * the expiry time (calculated based on time-to-live when updating message). visibilitytimeout should be set to a value smaller than the time-to-live value.
      */
     visibilityTimeout?: number;

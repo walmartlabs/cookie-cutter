@@ -31,7 +31,12 @@ export class DeadLetterQueueConfiguration implements IDeadLetterQueueConfigurati
         return config.noop();
     }
 
-    @config.field(config.converters.timespanOf(config.TimeSpanTargetUnit.Seconds))
+    @config.field(
+        config.converters.timespanOf(
+            config.TimeSpanTargetUnit.Seconds,
+            config.TimeSpanTargetUnit.Seconds
+        )
+    )
     public set visibilityTimeout(_: number) {
         config.noop();
     }
@@ -39,7 +44,12 @@ export class DeadLetterQueueConfiguration implements IDeadLetterQueueConfigurati
         return config.noop();
     }
 
-    @config.field(config.converters.timespanOf(config.TimeSpanTargetUnit.Seconds))
+    @config.field(
+        config.converters.timespanOf(
+            config.TimeSpanTargetUnit.Seconds,
+            config.TimeSpanTargetUnit.Seconds
+        )
+    )
     public set messageTimeToLive(_: number) {
         config.noop();
     }
