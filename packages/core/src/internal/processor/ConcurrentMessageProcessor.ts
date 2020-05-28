@@ -253,7 +253,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 await waitForPendingIO();
             }
         } catch (e) {
-            throw new Error("failed to process message");
+            throw e;
         } finally {
             if (dispatchError) {
                 if (handlingInputSpan) {
