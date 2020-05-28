@@ -291,33 +291,25 @@ export class CosmosClient
         }
     }
 
-    public async upsert(document: any, partitionKey: string, currentSn: number): Promise<void> {
-        const collectionInfo: [string, string] = getCollectionInfo(partitionKey);
-        const collectionId = collectionInfo[0];
-        const key = collectionInfo[1];
+    public async upsert(document: any, key: string, currentSn: number): Promise<void> {
+        const { collectionId, partitionKey } = getCollectionInfo(key);
 
         await this.executeSproc(
             UPSERT_SPROC_ID,
-            key,
+            partitionKey,
             [document],
             [document, currentSn],
             collectionId
         );
     }
 
-    public async bulkInsert(
-        documents: any[],
-        partitionKey: string,
-        validateSn: boolean
-    ): Promise<void> {
-        const collectionInfo: [string, string] = getCollectionInfo(partitionKey);
-        const collectionId = collectionInfo[0];
-        const key = collectionInfo[1];
+    public async bulkInsert(documents: any[], key: string, validateSn: boolean): Promise<void> {
+        const { collectionId, partitionKey } = getCollectionInfo(key);
 
         if (documents && documents.length >= 1) {
             await this.executeSproc(
                 BULK_INSERT_SPROC_ID,
-                key,
+                partitionKey,
                 documents,
                 [documents, validateSn],
                 collectionId

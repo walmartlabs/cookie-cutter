@@ -1,19 +1,27 @@
 import { getCollectionInfo } from "../../utils/helpers";
 
-describe("Collection Info helper test", () => {
-    it("correctly parses a collectionId and partition key", () => {
-        const test = "@collection/key";
-        const result: [string, string] = getCollectionInfo(test);
+describe("State Key Parsing", () => {
+    it("parses a state key with a collectionId overwrite", () => {
+        const inputKey = "@collection/key";
+        const { collectionId, partitionKey } = getCollectionInfo(inputKey);
 
-        expect(result[0]).toBe("collection");
-        expect(result[1]).toBe("key");
+        expect(collectionId).toBe("collection");
+        expect(partitionKey).toBe("key");
     });
 
-    it("correctly parses a partition key with no collection", () => {
-        const test = "key";
-        const result: [string, string] = getCollectionInfo(test);
+    it("parses a state key with no collectionId overwrite", () => {
+        const inputKey = "key";
+        const { collectionId, partitionKey } = getCollectionInfo(inputKey);
 
-        expect(result[0]).toBe(undefined);
-        expect(result[1]).toBe("key");
+        expect(collectionId).toBe(undefined);
+        expect(partitionKey).toBe("key");
+    });
+
+    it("parses a state key with an incorrectly formatted collectionId overwrite", () => {
+        const inputKey = "collection/key";
+        const { collectionId, partitionKey } = getCollectionInfo(inputKey);
+
+        expect(collectionId).toBe(undefined);
+        expect(partitionKey).toBe(undefined);
     });
 });

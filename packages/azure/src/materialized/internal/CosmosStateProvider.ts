@@ -48,9 +48,7 @@ export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public async get(spanContext: SpanContext, key: string): Promise<StateRef<TState>> {
-        const collectionInfo: [string, string] = getCollectionInfo(key);
-        const collectionId = collectionInfo[0];
-        const partitionKey = collectionInfo[1];
+        const { collectionId, partitionKey } = getCollectionInfo(key);
 
         const result = await this.client.query(
             spanContext,

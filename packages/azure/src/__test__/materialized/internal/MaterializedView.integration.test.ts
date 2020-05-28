@@ -196,7 +196,7 @@ describe.skip("Materialized Views", () => {
             );
 
             const state = new CosmosStateProvider(DummyState, client, new JsonMessageEncoder());
-            const stateRef = await state.get(undefined, `unknown/${streamId}`);
+            const stateRef = await state.get(undefined, `@unknown/${streamId}`);
             expect(stateRef).toMatchObject({
                 state: new DummyState(),
                 key: streamId,
