@@ -158,7 +158,12 @@ export class QueueSourceConfiguration extends QueueConfiguration
         return config.noop();
     }
 
-    @config.field(config.converters.timespanOf(config.TimeSpanTargetUnit.Seconds))
+    @config.field(
+        config.converters.timespanOf(
+            config.TimeSpanTargetUnit.Seconds,
+            config.TimeSpanTargetUnit.Seconds
+        )
+    )
     public set visibilityTimeout(_: number) {
         config.noop();
     }

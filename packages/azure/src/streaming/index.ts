@@ -74,8 +74,8 @@ export interface IQueueSourceConfiguration {
     numOfMessages?: number;
 
     /**
-     * Required if not peek only. Specifies the new visibility timeout value, in milliseconds,
-     * relative to server time. The new value must be larger than or equal to 0, and cannot be larger than 7 days (604800000 milliseconds).
+     * Required if not peek only. Specifies the new visibility timeout value, in seconds,
+     * relative to server time. The new value must be larger than or equal to 0, and cannot be larger than 7 days (604800 seconds).
      * The visibility timeout of a message can be set to a value later than the expiry time.
      */
     visibilityTimeout?: number;
