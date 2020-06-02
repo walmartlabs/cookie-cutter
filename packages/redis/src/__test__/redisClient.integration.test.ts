@@ -45,7 +45,7 @@ class TestClass {
     constructor(public contents: string) {}
 }
 
-interface redisClientTypePatch {
+interface RedisClientTypePatch {
     xread: (args: string[], cb: Callback<RawReadGroupResult>) => boolean;
     xinfo: (args: string[], cb: Callback<[string | number[]]>) => boolean;
 }
@@ -67,7 +67,7 @@ describe("redis integration test", () => {
         base64Encode: true,
     };
     let ccClient: Lifecycle<IRedisClient>;
-    let client: RedisClientWithStreamOperations & redisClientTypePatch;
+    let client: RedisClientWithStreamOperations & RedisClientTypePatch;
     let asyncXRead;
     let asyncXInfo;
     let asyncFlushAll;
@@ -78,7 +78,7 @@ describe("redis integration test", () => {
         ccClient = makeLifecycle(redisClient(config));
         await ccClient.initialize(DefaultComponentContext);
 
-        client = new RedisClient(config) as RedisClientWithStreamOperations & redisClientTypePatch;
+        client = new RedisClient(config) as RedisClientWithStreamOperations & RedisClientTypePatch;
         asyncXRead = promisify(client.xread).bind(client);
         asyncXInfo = promisify(client.xinfo).bind(client);
         asyncFlushAll = promisify(client.flushall).bind(client);
