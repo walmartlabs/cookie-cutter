@@ -84,10 +84,7 @@ describe("PubSubSink Tests", () => {
     const mockPubSub: jest.Mock = PubSub as any;
     const mockPublishFn = jest.fn();
     const mockTopic = jest.fn();
-    const sink = pubSubSink({
-        ...gcsAuthConfig,
-        ...pubSubPublisherConfigurationWithDefaultTopic,
-    });
+    let sink;
 
     beforeEach(() => {
         const mockFns = {
@@ -98,6 +95,10 @@ describe("PubSubSink Tests", () => {
         mockPublishFn.mockResolvedValue("messageId");
         mockTopic.mockImplementation(() => mockFns);
         mockPubSub.mockImplementation(() => mockFns);
+        sink = pubSubSink({
+            ...gcsAuthConfig,
+            ...pubSubPublisherConfigurationWithDefaultTopic,
+        });
     });
 
     it("Sink writes to default topic in pubsub", async () => {

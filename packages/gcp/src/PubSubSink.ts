@@ -123,7 +123,7 @@ export class PubSubSink
                         this.emitMetrics(
                             topic,
                             message.attributes[AttributeNames.eventType],
-                            PubSubMetricResults.Success
+                            PubSubMetricResults.Error
                         )
                     );
                     throw e;
@@ -166,7 +166,7 @@ export class PubSubSink
 
     private formatMessage(msg: IPublishedMessage): IPayloadWithAttributes {
         const timestamp = Date.now().toString();
-        const payload: Buffer | null = Buffer.from(this.config.encoder.encode(msg.message));
+        const payload: Buffer = Buffer.from(this.config.encoder.encode(msg.message));
 
         const attributes: Attributes = {
             [AttributeNames.timestamp]: timestamp,
