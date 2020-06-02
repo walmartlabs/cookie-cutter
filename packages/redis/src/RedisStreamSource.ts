@@ -217,6 +217,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             span.finish();
         }
     }
+
     private spanLogAndSetTags(
         span: Span,
         bucket: number,
