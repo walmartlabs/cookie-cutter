@@ -41,18 +41,18 @@ enum RedisMetricResults {
     Error = "error",
 }
 
-export enum RedisOpenTracingTagKeys {
+enum RedisOpenTracingTagKeys {
     BucketName = "redis.bucket",
 }
 
-export interface IPelResult {
+export interface IPELResult {
     streamId: string;
     consumerId: string;
     idleTime: number;
     timesDelivered: number;
 }
 
-function formatXPendingResults(results: RawPELResult): IPelResult[] {
+function formatXPendingResults(results: RawPELResult): IPELResult[] {
     return results.map(([streamId, consumerId, idleTime, timesDelivered]) => ({
         streamId,
         consumerId,
@@ -439,7 +439,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         streamName: string,
         consumerGroup: string,
         count
-    ): Promise<IPelResult[]> {
+    ): Promise<IPELResult[]> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client xPending Call", { childOf: context });
         this.spanLogAndSetTags(span, this.xPending.name, this.config.db, undefined, streamName);
