@@ -32,26 +32,43 @@ export enum RedisEvents {
 }
 
 // [[streamName, [[streamId, [key, value, key, value ...]]]]]
-export type XReadResult = [[string, [[string, string[]]]]];
+export type RawReadGroupResult = [[string, [[string, string[]]]]];
 
-interface IRedisStreamOperations {
+export type RawXClaimResult = [[string, string[]]];
+
+export type RawPELResult = [[string, string, number, number]];
+
+interface IRedisCommandPatches {
     xadd: (key: string, id: string, ...args: (string | Buffer)[] | Callback<string>[]) => boolean;
-    xread: (args: string[], cb: Callback<XReadResult>) => boolean;
+    xreadgroup: (args: string[], cb: Callback<RawReadGroupResult>) => boolean;
+    xgroup: (args: string[], cb: Callback<"OK">) => boolean;
+    xack: (args: string[], cb: Callback<number>) => boolean;
+    xpending: (args: string[], cb: Callback<RawPELResult>) => boolean;
+    xclaim: (args: string[], cb: Callback<RawXClaimResult>) => boolean;
+    set: (key: string, value: string | Buffer, cb: Callback<"OK">) => boolean;
 }
 
-export type RedisClientWithStreamOperations = RedisClient & IRedisStreamOperations;
+export type RedisClientWithStreamOperations = RedisClient & IRedisCommandPatches;
+
+export type RedisOptionArray = [string, string];
 
 export class RedisProxy implements IRequireInitialization, IDisposable {
     private client: RedisClientWithStreamOperations;
     private logger: ILogger;
     private asyncGet: (key: string) => Promise<string>;
-    private asyncSet: (key: string, value: string | Buffer) => Promise<{}>;
+    private asyncSet: (key: string, value: string | Buffer) => Promise<"OK">;
     private asyncQuit: () => Promise<any>;
     private asyncXAdd: (
         streamName: string,
         id: string,
         ...keyValues: (string | Buffer)[]
     ) => Promise<string>;
+    private asyncXReadGroup: (args: string[]) => Promise<RawReadGroupResult>;
+    private asyncXGroup: (args: string[]) => Promise<"OK">;
+    private asyncXAck: (args: string[]) => Promise<number>;
+    private asyncXPending: (args: string[]) => Promise<RawPELResult>;
+    private asyncXClaim: (args: string[]) => Promise<RawXClaimResult>;
+
     constructor(host: string, port: number, db: number) {
         this.logger = DefaultComponentContext.logger;
         const opts: ClientOpts = {
@@ -80,9 +97,15 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         this.client.on(RedisEvents.End, () => {
             this.logger.info(RedisLogMessages.End);
         });
+
         this.asyncGet = promisify(this.client.get).bind(this.client);
-        this.asyncSet = promisify(this.client.set).bind(this.client) as any;
+        this.asyncSet = promisify(this.client.set).bind(this.client);
         this.asyncXAdd = promisify(this.client.xadd).bind(this.client);
+        this.asyncXReadGroup = promisify(this.client.xreadgroup).bind(this.client);
+        this.asyncXGroup = promisify(this.client.xgroup).bind(this.client);
+        this.asyncXAck = promisify(this.client.xack).bind(this.client);
+        this.asyncXPending = promisify(this.client.xpending).bind(this.client);
+        this.asyncXClaim = promisify(this.client.xclaim).bind(this.client);
         this.asyncQuit = promisify(this.client.quit).bind(this.client);
     }
 
@@ -108,5 +131,29 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         ...args: (string | Buffer)[]
     ): Promise<string> {
         return this.asyncXAdd(streamName, id, ...args);
+    }
+
+    public async xgroup(args: string[]): Promise<"OK"> {
+        return this.asyncXGroup(args);
+    }
+
+    public async xack(
+        streamName: string,
+        consumerGroup: string,
+        streamId: string
+    ): Promise<number> {
+        return this.asyncXAck([streamName, consumerGroup, streamId]);
+    }
+
+    public async xreadgroup(args: string[]): Promise<RawReadGroupResult> {
+        return this.asyncXReadGroup(args);
+    }
+
+    public async xpending(args: string[]): Promise<RawPELResult> {
+        return this.asyncXPending(args);
+    }
+
+    public async xclaim(args: string[]): Promise<RawXClaimResult> {
+        return this.asyncXClaim(args);
     }
 }

@@ -58,11 +58,59 @@ export class RedisOptions implements IRedisOptions {
         return config.noop();
     }
 
-    @config.field(config.converters.listOf(config.converters.string))
-    public set readStream(_: string[]) {
+    @config.field(config.converters.string)
+    public set readStream(_: string) {
         config.noop();
     }
-    public get readStream(): string[] {
+    public get readStream(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set consumerGroup(_: string) {
+        config.noop();
+    }
+    public get consumerGroup(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set consumerId(_: string) {
+        config.noop();
+    }
+    public get consumerId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set consumerGroupStartId(_: string) {
+        config.noop();
+    }
+    public get consumerGroupStartId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set blockTimeout(_: number) {
+        config.noop();
+    }
+    public get blockTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set idleTimeout(_: number) {
+        config.noop();
+    }
+    public get idleTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set batchSize(_: number) {
+        config.noop();
+    }
+    public get batchSize(): number {
         return config.noop();
     }
 

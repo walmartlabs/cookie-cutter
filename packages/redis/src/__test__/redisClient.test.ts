@@ -20,6 +20,11 @@ const mockGet = jest.fn();
 const mockSet = jest.fn();
 const mockQuit = jest.fn();
 const mockXAdd = jest.fn();
+const mockXRead = jest.fn();
+const mockXReadGroup = jest.fn();
+const mockXGroup = jest.fn();
+const mockXAck = jest.fn();
+const mockXPending = jest.fn();
 
 jest.mock("redis", () => {
     const mockRedisClient = jest.fn(() => ({
@@ -28,6 +33,11 @@ jest.mock("redis", () => {
         set: mockSet,
         quit: mockQuit,
         xadd: mockXAdd,
+        xread: mockXRead,
+        xreadgroup: mockXReadGroup,
+        xgroup: mockXGroup,
+        xack: mockXAck,
+        xpending: mockXPending,
     }));
     return { RedisClient: mockRedisClient };
 });
