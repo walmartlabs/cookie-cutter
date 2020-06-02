@@ -80,7 +80,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         }
     }
 
-    stop(): Promise<void> {
+    public async stop(): Promise<void> {
         this.done = true;
         return;
     }
