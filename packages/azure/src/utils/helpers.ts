@@ -14,7 +14,7 @@ export function getCollectionInfo(key: string): { collectionId?: string; partiti
     let collectionId: string;
     let partitionKey: string;
 
-    if (collectionInfo.length === 1 && !collectionInfo[0].startsWith("@")) {
+    if (collectionInfo.length === 1) {
         partitionKey = collectionInfo[0];
         return { collectionId, partitionKey };
     }
