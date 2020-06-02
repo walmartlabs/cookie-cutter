@@ -168,7 +168,7 @@ describe("redis integration test", () => {
         expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
     });
 
-    it("succesfully creates a new consumer group", async () => {
+    it("successfully creates a new consumer group", async () => {
         const app = Application.create()
             .logger(new ConsoleLogger())
             .input()
@@ -187,7 +187,7 @@ describe("redis integration test", () => {
         expect(consumerGroups.length).toEqual(1);
     });
 
-    it("succesfully processes messages from the stream ", async () => {
+    it("successfully processes messages from the stream ", async () => {
         const xGroupResult = await ccClient.xGroup(
             new SpanContext(),
             config.readStream,
@@ -255,7 +255,7 @@ describe("redis integration test", () => {
         expect(results.length).toBe(0);
     });
 
-    it("succesfully processes expired idle messages from the config group ", async () => {
+    it("successfully processes expired idle messages from the consumer group ", async () => {
         const cfg = { ...config, idleTimeout: 0 };
 
         const xGroupResult = await ccClient.xGroup(
