@@ -57,7 +57,7 @@ export const AttributeNames = {
  */
 export class PubSubSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
-    private producer: PubSub;
+    private readonly producer: PubSub;
     private logger: ILogger;
     private tracer: Tracer;
     private metrics: IMetrics;
@@ -66,12 +66,6 @@ export class PubSubSink
     constructor(private readonly config: IGcpAuthConfiguration & IPubSubPublisherConfiguration) {
         this.logger = DefaultComponentContext.logger;
         this.tracer = DefaultComponentContext.tracer;
-    }
-
-    public async initialize(ctx: IComponentContext): Promise<void> {
-        this.logger = ctx.logger;
-        this.tracer = ctx.tracer;
-        this.metrics = ctx.metrics;
         this.producer = new PubSub({
             projectId: this.config.projectId,
             credentials: {
@@ -81,20 +75,10 @@ export class PubSubSink
         });
     }
 
-    private spanLogAndSetTags(span: Span, funcName: string, topic: string): void {
-        span.log({ topic });
-        span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
-        span.setTag(Tags.COMPONENT, "cookie-cutter-pubSub");
-        span.setTag(OpenTracingTagKeys.FunctionName, funcName);
-        span.setTag(PubSubOpenTracingTagKeys.TopicName, topic);
-    }
-
-    private emitMetrics(topic: string, eventType: string, result: PubSubMetricResults) {
-        this.metrics.increment(PubSubMetrics.MsgPublished, {
-            topic,
-            event_type: eventType,
-            result,
-        });
+    public async initialize(ctx: IComponentContext): Promise<void> {
+        this.logger = ctx.logger;
+        this.tracer = ctx.tracer;
+        this.metrics = ctx.metrics;
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
@@ -162,6 +146,22 @@ export class PubSubSink
             idempotent: false,
             maxBatchSize: this.config.maximumBatchSize,
         };
+    }
+
+    private spanLogAndSetTags(span: Span, funcName: string, topic: string): void {
+        span.log({ topic });
+        span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
+        span.setTag(Tags.COMPONENT, "cookie-cutter-pubSub");
+        span.setTag(OpenTracingTagKeys.FunctionName, funcName);
+        span.setTag(PubSubOpenTracingTagKeys.TopicName, topic);
+    }
+
+    private emitMetrics(topic: string, eventType: string, result: PubSubMetricResults) {
+        this.metrics.increment(PubSubMetrics.MsgPublished, {
+            topic,
+            event_type: eventType,
+            result,
+        });
     }
 
     private formatMessage(msg: IPublishedMessage): IPayloadWithAttributes {

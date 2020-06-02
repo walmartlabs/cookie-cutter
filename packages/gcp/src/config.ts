@@ -120,6 +120,7 @@ export class PubSubPublisherConfiguration extends GcpAuthConfiguration
     public get encoder(): IMessageEncoder {
         return config.noop();
     }
+
     @config.field(config.converters.string)
     public set defaultTopic(_: string) {
         config.noop();
@@ -127,6 +128,7 @@ export class PubSubPublisherConfiguration extends GcpAuthConfiguration
     public get defaultTopic(): string {
         return config.noop();
     }
+
     @config.field(config.converters.number)
     public set maximumBatchSize(_: number) {
         config.noop();
@@ -134,6 +136,7 @@ export class PubSubPublisherConfiguration extends GcpAuthConfiguration
     public get maximumBatchSize(): number {
         return config.noop();
     }
+
     @config.field(config.converters.timespan)
     public set maximumBatchWaitTime(_: number) {
         config.noop();
@@ -141,6 +144,7 @@ export class PubSubPublisherConfiguration extends GcpAuthConfiguration
     public get maximumBatchWaitTime(): number {
         return config.noop();
     }
+
     @config.field(config.converters.bytes)
     public set maxPayloadSize(_: number) {
         config.noop();
