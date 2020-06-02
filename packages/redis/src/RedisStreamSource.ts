@@ -23,14 +23,11 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     constructor(private readonly config: IRedisInputStreamOptions) {}
 
     public async *start(): AsyncIterableIterator<MessageRef> {
-        let messages: IRedisMessage[] = [];
-
         // On initial start attempt to fetch any messages from this consumers PEL
-        const pendingMessagesForConsumer = await this.getPendingMessagesForConsumer();
-        messages.push(...pendingMessagesForConsumer);
+        let messages = await this.getPendingMessagesForConsumer();
 
         while (!this.done) {
-            // Attempt to reclaim any PEL messages that have exceeded this.config.idleTimoutMS
+            // Attempt to reclaim any PEL messages that have exceeded this.config.idleTimout
             const pendingMessagesForConsumerGroup = await this.getPendingMessagesForConsumerGroup();
             messages.push(...pendingMessagesForConsumerGroup);
 
