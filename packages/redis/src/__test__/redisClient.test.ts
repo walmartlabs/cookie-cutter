@@ -25,6 +25,7 @@ const mockXReadGroup = jest.fn();
 const mockXGroup = jest.fn();
 const mockXAck = jest.fn();
 const mockXPending = jest.fn();
+const mockXClaim = jest.fn();
 
 jest.mock("redis", () => {
     const mockRedisClient = jest.fn(() => ({
@@ -38,6 +39,7 @@ jest.mock("redis", () => {
         xgroup: mockXGroup,
         xack: mockXAck,
         xpending: mockXPending,
+        xclaim: mockXClaim,
     }));
     return { RedisClient: mockRedisClient };
 });
