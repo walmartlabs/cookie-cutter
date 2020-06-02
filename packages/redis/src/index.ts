@@ -19,7 +19,7 @@ import { SpanContext } from "opentracing";
 import { generate } from "shortid";
 
 import { RedisOptions } from "./config";
-import { RedisClient, IPelResult } from "./RedisClient";
+import { RedisClient, IPELResult } from "./RedisClient";
 import { RedisStreamSink } from "./RedisStreamSink";
 import { RedisStreamSource } from "./RedisStreamSource";
 
@@ -103,7 +103,7 @@ export interface IRedisClient {
         streamName: string,
         consumerGroup: string,
         count: number
-    ): Promise<IPelResult[]>;
+    ): Promise<IPELResult[]>;
     xClaim(
         context: SpanContext,
         streamName: string,
