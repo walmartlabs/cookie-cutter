@@ -13,11 +13,11 @@ import {
     makeLifecycle,
     ObjectNameMessageTypeMapper,
     Application,
-    // StaticInputSource,
     IDispatchContext,
     ConsoleLogger,
     ErrorHandlingMode,
     NullOutputSink,
+    StaticInputSource,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { Callback, RedisClient } from "redis";
@@ -31,7 +31,8 @@ import {
     RedisMetadata,
 } from "../index";
 import { promisify } from "util";
-import { RedisClientWithStreamOperations, RawStreamResult } from "../RedisProxy";
+import { RedisClientWithStreamOperations, RawReadGroupResult } from "../RedisProxy";
+import { RedisStreamSink } from "../RedisStreamSink";
 
 class Foo {
     constructor(public text: string) {}
@@ -45,7 +46,7 @@ class TestClass {
 }
 
 interface redisClientTypePatch {
-    xread: (args: string[], cb: Callback<RawStreamResult>) => boolean;
+    xread: (args: string[], cb: Callback<RawReadGroupResult>) => boolean;
     xinfo: (args: string[], cb: Callback<[string | number[]]>) => boolean;
 }
 
@@ -67,8 +68,8 @@ describe("redis integration test", () => {
     };
     let ccClient: Lifecycle<IRedisClient>;
     let client: RedisClientWithStreamOperations & redisClientTypePatch;
-    // let asyncXRead;
-    // let asyncXInfo;
+    let asyncXRead;
+    let asyncXInfo;
     let asyncFlushAll;
     let asyncQuit;
 
@@ -78,8 +79,8 @@ describe("redis integration test", () => {
         await ccClient.initialize(DefaultComponentContext);
 
         client = new RedisClient(config) as RedisClientWithStreamOperations & redisClientTypePatch;
-        // asyncXRead = promisify(client.xread).bind(client);
-        // asyncXInfo = promisify(client.xinfo).bind(client);
+        asyncXRead = promisify(client.xread).bind(client);
+        asyncXInfo = promisify(client.xinfo).bind(client);
         asyncFlushAll = promisify(client.flushall).bind(client);
         asyncQuit = promisify(client.quit).bind(client);
     });
@@ -126,65 +127,65 @@ describe("redis integration test", () => {
         // const iterator = redisStreamSource(config).start();
     });
 
-    // it("successfully adds a value to a redis stream through the output sink", async () => {
-    //     const inputMsg = new Foo("test");
-    //     const app = Application.create()
-    //         .logger(new ConsoleLogger())
-    //         .input()
-    //         .add(new StaticInputSource([{ type: Foo.name, payload: inputMsg }]))
-    //         .done()
-    //         .dispatch({
-    //             onFoo: async (msg: Foo, ctx: IDispatchContext) => {
-    //                 ctx.publish(Bar, new Bar(`output for ${msg.text}`));
-    //             },
-    //         })
-    //         .output()
-    //         .published(new RedisStreamSink(config))
-    //         .done()
-    //         .run(ErrorHandlingMode.LogAndContinue);
+    it("successfully adds a value to a redis stream through the output sink", async () => {
+        const inputMsg = new Foo("test");
+        const app = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(new StaticInputSource([{ type: Foo.name, payload: inputMsg }]))
+            .done()
+            .dispatch({
+                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
+                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
+                },
+            })
+            .output()
+            .published(new RedisStreamSink(config))
+            .done()
+            .run(ErrorHandlingMode.LogAndContinue);
 
-    //     setTimeout(() => app.cancel(), 2000);
-    //     await app;
+        setTimeout(() => app.cancel(), 2000);
+        await app;
 
-    //     const results = await asyncXRead(["streams", "test-stream", "0"]);
-    //     expect(results).not.toBeFalsy();
+        const results = await asyncXRead(["streams", "test-stream", "0"]);
+        expect(results).not.toBeFalsy();
 
-    //     const storedValue = ((results: RawStreamResult): Uint8Array => {
-    //         // [streamName, [streamValue]]
-    //         const [, [streamValue]] = results[0];
+        const storedValue = ((results: RawReadGroupResult): Uint8Array => {
+            // [streamName, [streamValue]]
+            const [, [streamValue]] = results[0];
 
-    //         // [streamId, keyValues]
-    //         const [, keyValues] = streamValue;
+            // [streamId, keyValues]
+            const [, keyValues] = streamValue;
 
-    //         // [RedisMetadata.OutputSinkStreamKey, data]
-    //         const [, data] = keyValues;
+            // [RedisMetadata.OutputSinkStreamKey, data]
+            const [, data] = keyValues;
 
-    //         return new Uint8Array(Buffer.from(data, "base64"));
-    //     })(results);
+            return new Uint8Array(Buffer.from(data, "base64"));
+        })(results);
 
-    //     const msg = config.encoder.decode(storedValue, Bar.name);
+        const msg = config.encoder.decode(storedValue, Bar.name);
 
-    //     expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
-    // });
+        expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
+    });
 
-    // it("succesfully creates a new consumer group", async () => {
-    //     const app = Application.create()
-    //         .logger(new ConsoleLogger())
-    //         .input()
-    //         .add(redisStreamSource(config))
-    //         .done()
-    //         .dispatch({})
-    //         .run(ErrorHandlingMode.LogAndContinue);
+    it("succesfully creates a new consumer group", async () => {
+        const app = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(redisStreamSource(config))
+            .done()
+            .dispatch({})
+            .run(ErrorHandlingMode.LogAndContinue);
 
-    //     setTimeout(() => {
-    //         app.cancel();
-    //     }, 2000);
+        setTimeout(() => {
+            app.cancel();
+        }, 2000);
 
-    //     await app;
+        await app;
 
-    //     const consumerGroups = await asyncXInfo(["groups", config.readStream]);
-    //     expect(consumerGroups.length).toEqual(1);
-    // });
+        const consumerGroups = await asyncXInfo(["groups", config.readStream]);
+        expect(consumerGroups.length).toEqual(1);
+    });
 
     it("succesfully processes messages from the stream ", async () => {
         const xGroupResult = await ccClient.xGroup(
