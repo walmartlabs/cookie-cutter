@@ -17,12 +17,10 @@ import { RedisOpenTracingTagKeys, RedisClient } from "./RedisClient";
 export class RedisStreamSource implements IInputSource, IRequireInitialization, IDisposable {
     private done: boolean = false;
     private client: Lifecycle<IRedisClient>;
-    private tracer: Tracer;
+    private tracer: Tracer = DefaultComponentContext.tracer;
     private spanOperationName: string = "Redis Input Source Client Call";
 
-    constructor(private readonly config: IRedisInputStreamOptions) {
-        this.tracer = DefaultComponentContext.tracer;
-    }
+    constructor(private readonly config: IRedisInputStreamOptions) {}
 
     public async *start(): AsyncIterableIterator<MessageRef> {
         let messages: IRedisMessage[] = [];

@@ -41,7 +41,7 @@ enum RedisMetricResults {
     Error = "error",
 }
 
-enum RedisOpenTracingTagKeys {
+export enum RedisOpenTracingTagKeys {
     BucketName = "redis.bucket",
 }
 
