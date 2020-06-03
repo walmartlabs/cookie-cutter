@@ -72,9 +72,7 @@ describe("Prometheus", () => {
             expect(dataSplit[1].startsWith("test_key2 1 ")).toBe(true);
             expect(mockError).toHaveBeenCalledTimes(2);
             const str = "Prometheus Counter Error";
-            const err = new Error(
-                "Incrementing a Counter with a negative value is not allowed."
-            );
+            const err = new Error("Incrementing a Counter with a negative value is not allowed.");
             const data1 = { key: key1, value: -1, tags: undefined };
             const data2 = { key: key2, value: -2, tags: undefined };
             expect(mockError).toHaveBeenNthCalledWith(1, str, err, data1);
