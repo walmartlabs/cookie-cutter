@@ -11,14 +11,16 @@ import {
     IPublishedMessage,
     IRequireInitialization,
     IStoredMessage,
+    IMessageEncoder,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { BigQueryClient } from "./BigQueryClient";
 import { BigQuerySink } from "./BigQuerySink";
 export { BigQueryMetadata } from "./BigQuerySink";
-import { BigQueryConfiguration, GCSConfiguration } from "./config";
+import { BigQueryConfiguration, GCSConfiguration, PubSubPublisherConfiguration } from "./config";
 import { GcsClient } from "./GcsClient";
 import { GcsSink } from "./GcsSink";
+import { PubSubSink } from "./PubSubSink";
 
 export interface IGCSConfiguration {
     readonly projectId: string;
@@ -32,6 +34,20 @@ export interface IBigQueryConfiguration {
     readonly datasetId: string;
     readonly clientEmail: string;
     readonly privateKey: string;
+}
+
+export interface IGcpAuthConfiguration {
+    readonly projectId: string;
+    readonly clientEmail: string;
+    readonly privateKey: string;
+}
+
+export interface IPubSubPublisherConfiguration {
+    readonly encoder: IMessageEncoder;
+    readonly defaultTopic?: string;
+    readonly maximumBatchSize?: number;
+    readonly maximumBatchWaitTime?: number;
+    readonly maxPayloadSize?: number;
 }
 
 export interface IGcsClient {
@@ -75,4 +91,15 @@ export function bigQuerySink(
         privateKey: configuration.privateKey,
     };
     return new BigQuerySink(bigQueryClient(config), maxBatchSize);
+}
+
+export function pubSubSink(
+    configuration: IGcpAuthConfiguration & IPubSubPublisherConfiguration
+): IOutputSink<IPublishedMessage> {
+    configuration = config.parse(PubSubPublisherConfiguration, configuration, {
+        maximumBatchSize: 1000,
+        maximumBatchWaitTime: 100,
+        maxPayloadSize: 5242880,
+    });
+    return new PubSubSink(configuration);
 }
