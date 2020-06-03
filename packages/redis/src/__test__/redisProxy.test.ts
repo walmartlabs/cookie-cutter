@@ -13,6 +13,13 @@ const mockOn = jest.fn();
 const mockGet = jest.fn();
 const mockSet = jest.fn();
 const mockQuit = jest.fn();
+const mockXAdd = jest.fn();
+const mockXRead = jest.fn();
+const mockXReadGroup = jest.fn();
+const mockXGroup = jest.fn();
+const mockXAck = jest.fn();
+const mockXPending = jest.fn();
+const mockXClaim = jest.fn();
 
 jest.mock("redis", () => {
     const mockRedisClient = jest.fn(() => ({
@@ -20,7 +27,15 @@ jest.mock("redis", () => {
         get: mockGet,
         set: mockSet,
         quit: mockQuit,
+        xadd: mockXAdd,
+        xread: mockXRead,
+        xreadgroup: mockXReadGroup,
+        xgroup: mockXGroup,
+        xack: mockXAck,
+        xpending: mockXPending,
+        xclaim: mockXClaim,
     }));
+
     return { RedisClient: mockRedisClient };
 });
 import { RedisClient } from "redis";
@@ -37,7 +52,10 @@ describe("Unit test the redis Proxy", () => {
         mockGet.mockClear();
         mockSet.mockClear();
         mockQuit.mockClear();
+        mockXAdd.mockClear();
+        mockXRead.mockClear();
     });
+
     it("Instantiates the client and registers all event handlers with logging", async () => {
         expect(1).toBe(1);
         const infoLogger = jest.fn();
@@ -82,17 +100,19 @@ describe("Unit test the redis Proxy", () => {
         expect(errorLogger.mock.calls[0][0]).toEqual(RedisLogMessages.Error);
         expect(errorLogger.mock.calls[0][1]).toEqual(testError);
     });
+
     it("Passes the key and value to the redis set function and converts the value to base64.", async () => {
         const redisProxy = new RedisProxy("testHost", 0, 0);
         await redisProxy.initialize(ctx);
         const key = "testKey";
         const value = new Uint8Array(Buffer.from("TestValue"));
         const base64Value = Buffer.from(value).toString("base64");
-        await redisProxy.set(key, value);
+        await redisProxy.set(key, base64Value);
         expect(mockSet.mock.calls.length).toEqual(1);
         expect(mockSet.mock.calls[0][0]).toEqual(key);
         expect(mockSet.mock.calls[0][1]).toEqual(base64Value);
     });
+
     it("Gets value by key and decodes from base64", async () => {
         const redisProxy = new RedisProxy("testHost", 0, 0);
         await redisProxy.initialize(ctx);
@@ -103,8 +123,9 @@ describe("Unit test the redis Proxy", () => {
         const retValue = await redisProxy.get(key);
         expect(mockGet.mock.calls.length).toEqual(1);
         expect(mockGet.mock.calls[0][0]).toEqual(key);
-        expect(retValue).toEqual(value);
+        expect(retValue).toEqual(base64Value);
     });
+
     it("Returns undefined when no value is returned from the client", async () => {
         const redisProxy = new RedisProxy("testHost", 0, 0);
         await redisProxy.initialize(ctx);
@@ -114,6 +135,7 @@ describe("Unit test the redis Proxy", () => {
         expect(mockGet.mock.calls[0][0]).toEqual(key);
         expect(retValue).toBeUndefined();
     });
+
     it("Sends a quit command to the client", async () => {
         const redisProxy = new RedisProxy("testHost", 0, 0);
         await redisProxy.initialize(ctx);
