@@ -101,7 +101,7 @@ describe("PubSubSink Tests", () => {
         });
     });
 
-    it("Sink writes to default topic in pubsub", async () => {
+    it("writes to default topic in pubsub", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndContinue);
         await testApp;
         expect(mockPubSub).toBeCalledTimes(1);
@@ -118,7 +118,7 @@ describe("PubSubSink Tests", () => {
         });
     });
 
-    it("Sink writes to topic specified in metadata", async () => {
+    it("writes to topic specified in metadata", async () => {
         const messagesWithTopic: IMessage[] = [
             {
                 type: TestEvent.name,
@@ -145,7 +145,7 @@ describe("PubSubSink Tests", () => {
         });
     });
 
-    it("Reject on error from PubSub topic", async () => {
+    it("rejects on error from PubSub topic", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndFail);
         mockTopic.mockImplementation(() => {
             throw err;
@@ -153,7 +153,7 @@ describe("PubSubSink Tests", () => {
         await expect(testApp).rejects.toThrowError();
     });
 
-    it("Reject on error from PubSub topic", async () => {
+    it("rejects on error from PubSub topic", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndFail);
         mockPublishFn.mockImplementation(() => {
             throw err;
