@@ -52,6 +52,8 @@ export class RedisStreamSink
     }
 
     public async dispose(): Promise<void> {
-        await this.client.dispose();
+        if (this.client) {
+            await this.client.dispose();
+        }
     }
 }
