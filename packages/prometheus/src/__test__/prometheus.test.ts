@@ -70,7 +70,7 @@ describe("Prometheus", () => {
             await prom.dispose();
             expect(dataSplit[0]).toBe("# TYPE test_key2 counter");
             expect(dataSplit[1].startsWith("test_key2 1 ")).toBe(true);
-            expect(mockError).toHaveBeenCalledTimes(3);
+            expect(mockError).toHaveBeenCalledTimes(2);
             const str = "Prometheus Counter Error";
             const err = new Error(
                 "Incrementing a Counter with a negative value is not allowed."
