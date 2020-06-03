@@ -102,7 +102,7 @@ class PrometheusMetrics
         }
         if (value < 0) {
             const str = "Prometheus Counter Error";
-            const err = "Incrementing a Counter with a non-positive value is not allowed.";
+            const err = "Incrementing a Counter with a negative value is not allowed.";
             this.logger.error(str, new Error(err), { key, value, tags });
             return;
         }
