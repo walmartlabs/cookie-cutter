@@ -56,6 +56,13 @@ export type IRedisMessage = IMessage & {
     readonly streamId: string;
 };
 
+export enum RedisStreamMetadata {
+    StreamId = "streamId",
+    ConsumerId = "consumerId",
+    IdleTime = "idle_time",
+    NumberOfDeliveries = "num_of_deliveries",
+}
+
 export interface IRedisClient {
     putObject<T>(
         context: SpanContext,

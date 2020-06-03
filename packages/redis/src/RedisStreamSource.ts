@@ -11,7 +11,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
-import { IRedisInputStreamOptions, IRedisClient, IRedisMessage } from ".";
+import { IRedisInputStreamOptions, IRedisClient, IRedisMessage, RedisStreamMetadata } from ".";
 import { RedisOpenTracingTagKeys, RedisClient } from "./RedisClient";
 
 export class RedisStreamSource implements IInputSource, IRequireInitialization, IDisposable {
@@ -47,7 +47,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 );
 
                 const messageRef = new MessageRef(
-                    { streamId: message.streamId },
+                    { [RedisStreamMetadata.StreamId]: message.streamId },
                     message,
                     span.context()
                 );
