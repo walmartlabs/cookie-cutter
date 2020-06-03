@@ -39,6 +39,7 @@ enum RedisMetrics {
 enum RedisMetricResults {
     Success = "success",
     Error = "error",
+    AlreadyExists = "already_exists",
 }
 
 export enum RedisOpenTracingTagKeys {
@@ -305,12 +306,11 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         } catch (err) {
             const alreadyExistsErrorMessage = "BUSYGROUP Consumer Group name already exists";
             if (supressAlreadyExistsError && err.message === alreadyExistsErrorMessage) {
-                // TODO should this be considered an error or success?
-                this.metrics.increment(RedisMetrics.XGroupAlreadyExists, {
+                this.metrics.increment(RedisMetrics.XGroupCreate, {
                     db,
                     streamName,
                     consumerGroup,
-                    result: RedisMetricResults.Success,
+                    result: RedisMetricResults.AlreadyExists,
                 });
 
                 return "OK";
