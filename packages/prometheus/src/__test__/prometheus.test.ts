@@ -77,10 +77,8 @@ describe("Prometheus", () => {
             );
             const data1 = { key: key1, value: -1, tags: undefined };
             const data2 = { key: key2, value: -2, tags: undefined };
-            const data3 = { key: key2, value: 0, tags: undefined };
             expect(mockError).toHaveBeenNthCalledWith(1, str, err, data1);
             expect(mockError).toHaveBeenNthCalledWith(2, str, err, data2);
-            expect(mockError).toHaveBeenNthCalledWith(3, str, err, data3);
         });
 
         it("outputs 2 incremented counters", async () => {
