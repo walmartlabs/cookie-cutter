@@ -56,7 +56,7 @@ describe("Prometheus", () => {
     });
 
     describe("Counter", () => {
-        it("does not create/increment a Counter when given a non-positive increment value", async () => {
+        it("does not create/increment a Counter when given a negative increment value", async () => {
             const key1 = "key1";
             const key2 = "key2";
             const port = nextPort();
@@ -70,17 +70,13 @@ describe("Prometheus", () => {
             await prom.dispose();
             expect(dataSplit[0]).toBe("# TYPE test_key2 counter");
             expect(dataSplit[1].startsWith("test_key2 1 ")).toBe(true);
-            expect(mockError).toHaveBeenCalledTimes(3);
+            expect(mockError).toHaveBeenCalledTimes(2);
             const str = "Prometheus Counter Error";
-            const err = new Error(
-                "Incrementing a Counter with a non-positive value is not allowed."
-            );
+            const err = new Error("Incrementing a Counter with a negative value is not allowed.");
             const data1 = { key: key1, value: -1, tags: undefined };
             const data2 = { key: key2, value: -2, tags: undefined };
-            const data3 = { key: key2, value: 0, tags: undefined };
             expect(mockError).toHaveBeenNthCalledWith(1, str, err, data1);
             expect(mockError).toHaveBeenNthCalledWith(2, str, err, data2);
-            expect(mockError).toHaveBeenNthCalledWith(3, str, err, data3);
         });
 
         it("outputs 2 incremented counters", async () => {
