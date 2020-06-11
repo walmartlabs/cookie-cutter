@@ -66,6 +66,13 @@ export function parse<T>(TRoot: IClassType<T>, actual: any, base?: Partial<T>): 
         }
     }
 
+    if (isSection(actual)) {
+        throw new Error(
+            "The value of `actual` has no enumerable properties. Make sure the object being " +
+                "passed is not the output of `config.parse<T>()` (i.e. does not have the '@section' decorator)."
+        );
+    }
+
     const instance = new TRoot();
     if (verifyIsSection(instance)) {
         const config: T & ISection = new TRoot() as any;
@@ -303,8 +310,12 @@ interface ISection {
     readonly __extensible?: boolean;
 }
 
+function isSection(obj: any): obj is ISection {
+    return obj && obj.__assignedProperties;
+}
+
 function verifyIsSection(obj: any): obj is ISection {
-    if (obj && obj.__assignedProperties) {
+    if (isSection(obj)) {
         return true;
     }
 
