@@ -66,6 +66,13 @@ export function parse<T>(TRoot: IClassType<T>, actual: any, base?: Partial<T>): 
         }
     }
 
+    if (isSection(actual)) {
+        throw new Error(
+            "The value of `actual` has no enumerable properties. Make sure the object being " +
+                "passed is not the output of `config.parse<T>()` (i.e. does not have the '@section' decorator)."
+        );
+    }
+
     const instance = new TRoot();
     if (verifyIsSection(instance)) {
         const config: T & ISection = new TRoot() as any;
@@ -234,34 +241,51 @@ export const converters = {
         throw new Error(`unable to convert '${val}' of type '${typeof val}' to bytes`);
     },
     timespan: (val: any): any => converters.timespanOf(TimeSpanTargetUnit.Milliseconds)(val),
-    timespanOf: (target: TimeSpanTargetUnit): ValueConvertFn => {
+    timespanOf: (
+        target: TimeSpanTargetUnit,
+        source: TimeSpanTargetUnit = TimeSpanTargetUnit.Milliseconds
+    ): ValueConvertFn => {
         return function(val: any): any {
             if (isNullOrUndefined(val)) {
                 return val;
             }
 
-            let millis = 0;
+            if (target < TimeSpanTargetUnit.Milliseconds || target > TimeSpanTargetUnit.Days) {
+                throw new Error(`unknown target unit '${target}'`);
+            }
+
+            if (source < TimeSpanTargetUnit.Milliseconds || source > TimeSpanTargetUnit.Days) {
+                throw new Error(`unknown target unit '${source}'`);
+            }
+            //                         x  ms    s   m   h   d
+            const conversionFactors = [0, 1, 1000, 60, 60, 24];
+
+            let sourceTime = 0;
             if (isNumber(val)) {
-                millis = val;
+                sourceTime = val;
             } else if (isString(val)) {
-                millis = ms(val);
+                sourceTime = ms(val);
+                source = TimeSpanTargetUnit.Milliseconds;
             } else {
                 throw new Error(`unable to convert '${val}' of type '${typeof val}' to timespan`);
             }
 
-            switch (target) {
-                case TimeSpanTargetUnit.Milliseconds:
-                    return millis;
-                case TimeSpanTargetUnit.Seconds:
-                    return Math.floor(millis / 1000);
-                case TimeSpanTargetUnit.Minutes:
-                    return Math.floor(millis / 1000 / 60);
-                case TimeSpanTargetUnit.Hours:
-                    return Math.floor(millis / 1000 / 60 / 60);
-                case TimeSpanTargetUnit.Days:
-                    return Math.floor(millis / 1000 / 60 / 60 / 24);
-                default:
-                    throw new Error(`unknown target unit '${target}'`);
+            if (source === target) {
+                return sourceTime;
+            } else if (source > target) {
+                let convertedTime = sourceTime;
+                // skip the conversion factor for the smallest unit in the chain
+                for (let ii = target + 1; ii <= source; ii++) {
+                    convertedTime = convertedTime * conversionFactors[ii];
+                }
+                return convertedTime;
+            } else if (source < target) {
+                let convertedTime = sourceTime;
+                // skip the conversion factor for the smallest unit in the chain
+                for (let ii = source + 1; ii <= target; ii++) {
+                    convertedTime = convertedTime / conversionFactors[ii];
+                }
+                return Math.floor(convertedTime);
             }
         };
     },
@@ -286,8 +310,12 @@ interface ISection {
     readonly __extensible?: boolean;
 }
 
+function isSection(obj: any): obj is ISection {
+    return obj && obj.__assignedProperties;
+}
+
 function verifyIsSection(obj: any): obj is ISection {
-    if (obj && obj.__assignedProperties) {
+    if (isSection(obj)) {
         return true;
     }
 

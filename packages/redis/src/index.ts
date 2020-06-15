@@ -10,10 +10,18 @@ import {
     IClassType,
     IMessageEncoder,
     IMessageTypeMapper,
+    IOutputSink,
+    IPublishedMessage,
+    IInputSource,
+    IMessage,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
+import { generate } from "shortid";
+
 import { RedisOptions } from "./config";
-import { RedisClient } from "./RedisClient";
+import { RedisClient, IPELResult } from "./RedisClient";
+import { RedisStreamSink } from "./RedisStreamSink";
+import { RedisStreamSource } from "./RedisStreamSource";
 
 export interface IRedisOptions {
     readonly host: string;
@@ -21,6 +29,38 @@ export interface IRedisOptions {
     readonly db: number;
     readonly encoder: IMessageEncoder;
     readonly typeMapper: IMessageTypeMapper;
+    readonly base64Encode?: boolean;
+}
+
+export type IRedisInputStreamOptions = IRedisOptions & {
+    readonly readStream: string;
+    readonly consumerGroup: string;
+    readonly consumerId?: string;
+    readonly consumerGroupStartId?: string;
+    readonly blockTimeout?: number;
+    readonly idleTimeout?: number;
+    readonly batchSize?: number;
+};
+
+export type IRedisOutputStreamOptions = IRedisOptions & {
+    readonly writeStream: string;
+};
+
+export enum RedisMetadata {
+    OutputSinkStreamKey = "redis.stream.key",
+}
+
+export const AutoGenerateRedisStreamID = "*";
+
+export type IRedisMessage = IMessage & {
+    readonly streamId: string;
+};
+
+export enum RedisStreamMetadata {
+    StreamId = "streamId",
+    ConsumerId = "consumerId",
+    IdleTime = "idle_time",
+    NumberOfDeliveries = "num_of_deliveries",
 }
 
 export interface IRedisClient {
@@ -35,9 +75,72 @@ export interface IRedisClient {
         type: string | IClassType<T>,
         key: string
     ): Promise<T | undefined>;
+    xAddObject<T>(
+        context: SpanContext,
+        type: string | IClassType<T>,
+        streamName: string,
+        key: string,
+        body: T,
+        id?: string
+    ): Promise<string>;
+    xReadGroup(
+        context: SpanContext,
+        streamName: string,
+        consumerGroup: string,
+        consumerName: string,
+        count: number,
+        block: number,
+        id?: string
+    ): Promise<IRedisMessage[]>;
+    xGroup(
+        context: SpanContext,
+        streamName: string,
+        consumerGroup: string,
+        consumerGroupStartId: string,
+        supressAlreadyExistsError?: boolean
+    ): Promise<string>;
+    xAck(
+        context: SpanContext,
+        streamName: string,
+        consumerGroup: string,
+        streamId: string
+    ): Promise<number>;
+    xPending(
+        context: SpanContext,
+        streamName: string,
+        consumerGroup: string,
+        count: number
+    ): Promise<IPELResult[]>;
+    xClaim(
+        context: SpanContext,
+        streamName: string,
+        consumerGroup: string,
+        consumerName: string,
+        minIdleTime: number,
+        streamIds: string[]
+    ): Promise<IRedisMessage[]>;
 }
 
 export function redisClient(configuration: IRedisOptions): IRedisClient {
-    configuration = config.parse(RedisOptions, configuration);
+    configuration = config.parse(RedisOptions, configuration, { base64Encode: true });
     return new RedisClient(configuration);
+}
+
+export function redisStreamSink(
+    configuration: IRedisOutputStreamOptions
+): IOutputSink<IPublishedMessage> {
+    configuration = config.parse(RedisOptions, configuration, { base64Encode: true });
+    return new RedisStreamSink(configuration);
+}
+
+export function redisStreamSource(configuration: IRedisInputStreamOptions): IInputSource {
+    configuration = config.parse(RedisOptions, configuration, {
+        base64Encode: true,
+        consumerId: generate(),
+        consumerGroupStartId: "$",
+        batchSize: 10,
+        blockTimeout: 100,
+        idleTimeout: 30000,
+    });
+    return new RedisStreamSource(configuration);
 }

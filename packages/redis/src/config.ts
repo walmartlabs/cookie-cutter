@@ -49,4 +49,77 @@ export class RedisOptions implements IRedisOptions {
     public get typeMapper(): IMessageTypeMapper {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set writeStream(_: string) {
+        config.noop();
+    }
+    public get writeStream(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set readStream(_: string) {
+        config.noop();
+    }
+    public get readStream(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set consumerGroup(_: string) {
+        config.noop();
+    }
+    public get consumerGroup(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set consumerId(_: string) {
+        config.noop();
+    }
+    public get consumerId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set consumerGroupStartId(_: string) {
+        config.noop();
+    }
+    public get consumerGroupStartId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set blockTimeout(_: number) {
+        config.noop();
+    }
+    public get blockTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set idleTimeout(_: number) {
+        config.noop();
+    }
+    public get idleTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set batchSize(_: number) {
+        config.noop();
+    }
+    public get batchSize(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.boolean)
+    public set base64Encode(_: boolean) {
+        config.noop();
+    }
+
+    public get base64Encode(): boolean {
+        return config.noop();
+    }
 }
