@@ -24,6 +24,7 @@ import { SpanContext } from "opentracing";
 import { isNullOrUndefined } from "util";
 import { ICosmosQueryClient } from "../..";
 import { ICosmosDocument } from "../../utils";
+import { getCollectionInfo } from "../../utils/helpers";
 
 export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     extends MaterializedViewStateProvider<TState, TSnapshot>
@@ -47,11 +48,17 @@ export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     }
 
     public async get(spanContext: SpanContext, key: string): Promise<StateRef<TState>> {
-        const result = await this.client.query(spanContext, {
-            query: `SELECT c.data, c.event_type, c.sn FROM c
-                    WHERE c.stream_id=@stream_id`,
-            parameters: [{ name: "@stream_id", value: key }],
-        });
+        const { collectionId, partitionKey } = getCollectionInfo(key);
+
+        const result = await this.client.query(
+            spanContext,
+            {
+                query: `SELECT c.data, c.event_type, c.sn FROM c
+                        WHERE c.stream_id=@stream_id`,
+                parameters: [{ name: "@stream_id", value: partitionKey }],
+            },
+            collectionId
+        );
 
         if (result.length > 1) {
             throw new Error(`found multiple documents for key '${key}', this is not expected`);
