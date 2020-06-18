@@ -15,6 +15,7 @@ import * as amqp from "amqplib";
 export class AmqpSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
     private logger: ILogger;
+    private conn: amqp.Connection;
 
     constructor(private config: IAmqpConfiguration) {
         this.logger = DefaultComponentContext.logger;
@@ -22,13 +23,12 @@ export class AmqpSink
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.logger = context.logger;
+        this.conn = await amqp.connect(`amqp://${this.config.host}`);
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         const queueName = this.config.queueName;
-        const open = amqp.connect(`amqp://${this.config.host}`);
-        const conn = await open;
-        const ch = await conn.createChannel();
+        const ch = await this.conn.createChannel();
         const ok = await ch.assertQueue(queueName);
         if (!ok) {
             return;
@@ -48,6 +48,9 @@ export class AmqpSink
     }
 
     public async dispose(): Promise<void> {
+        if (this.conn) {
+            await this.conn.close();
+        }
         return;
     }
 }
