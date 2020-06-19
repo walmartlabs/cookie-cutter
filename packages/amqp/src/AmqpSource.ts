@@ -3,11 +3,11 @@ import {
     IInputSourceContext,
     MessageRef,
     IMetadata,
-    AsyncPipe,
     IMessage,
     IComponentContext,
     IRequireInitialization,
     IDisposable,
+    BoundedPriorityQueue,
 } from "@walmartlabs/cookie-cutter-core";
 import { IAmqpConfiguration } from ".";
 import { SpanContext } from "opentracing";
@@ -15,7 +15,7 @@ import * as amqp from "amqplib";
 import { MessageClass } from "./amqp_tester";
 
 export class AmqpSource implements IInputSource, IRequireInitialization, IDisposable {
-    private pipe = new AsyncPipe<MessageRef>();
+    private pipe = new BoundedPriorityQueue<MessageRef>(100);
     private conn: amqp.Connection;
 
     constructor(private config: IAmqpConfiguration) {}
@@ -43,16 +43,12 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                     payload: new MessageClass(msg.content.toString()),
                 };
                 const msgRef = new MessageRef(metadata, iMsg, new SpanContext());
-                try {
-                    await pipe.send(msgRef);
-                    ch.ack(msg);
-                } catch (e) {
-                    return;
-                }
+                await pipe.enqueue(msgRef);
+                ch.ack(msg);
             }
         }
         await ch.consume(queueName, getMsg);
-        yield* this.pipe;
+        yield* this.pipe.iterate();
     }
 
     public async dispose(): Promise<void> {
