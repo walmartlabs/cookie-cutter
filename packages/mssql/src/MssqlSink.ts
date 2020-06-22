@@ -243,7 +243,14 @@ export class MssqlSink
                 database: this.config.database,
                 result: MssqlMetricResults.Error,
             });
-            await tx.rollback();
+            try {
+                await tx.rollback();
+            } catch (e) {
+                // ignore this error, rolling back a transaction on error
+                // can fail due to various reasons and we want to ensure
+                // that the correct error is bubbled up and not a generic
+                // "failed to rollback transaction" error
+            }
             throw e;
         } finally {
             if (span && haveUnfinishedSpan) {
