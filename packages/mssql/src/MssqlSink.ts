@@ -245,7 +245,7 @@ export class MssqlSink
             });
             try {
                 await tx.rollback();
-            } catch (e) {
+            } catch {
                 // ignore this error, rolling back a transaction on error
                 // can fail due to various reasons and we want to ensure
                 // that the correct error is bubbled up and not a generic
