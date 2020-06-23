@@ -35,13 +35,11 @@ export class AmqpSink
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         const queueName = this.config.queueName;
-        // TODO: should I move this to initialize? (If there's a delay in publishing a new sink call is made so this check will be done every time)
         const ok = await this.channel.assertQueue(queueName, { durable: true });
         this.logger.info("assertQueue", ok);
 
         for (const msg of output) {
             const payload = Buffer.from(this.config.encoder.encode(msg.message));
-            this.logger.debug(payload.toString());
             this.channel.sendToQueue(queueName, Buffer.from(payload), {
                 persistent: true,
                 type: msg.message.type,
