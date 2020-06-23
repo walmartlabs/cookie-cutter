@@ -33,23 +33,24 @@ export class AmqpSink
         this.logger = context.logger;
         const options: amqp.Options.Connect = {
             protocol: "amqp",
-            hostname: this.config.host,
-            port: this.config.port,
+            hostname: this.config.server!.host,
+            port: this.config.server!.port,
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
+        const queueName = this.config.queue.queueName;
+        const durable = this.config.queue.durable;
+        const ok = await this.channel.assertQueue(queueName, { durable });
+        this.logger.info("assertQueue", ok);
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
-        const queueName = this.config.queueName;
-        const ok = await this.channel.assertQueue(queueName, { durable: true });
-        this.logger.info("assertQueue", ok);
-
         for (const msg of output) {
             const payload = Buffer.from(this.config.encoder.encode(msg.message));
-            this.channel.sendToQueue(queueName, Buffer.from(payload), {
+            this.channel.sendToQueue(this.config.queue.queueName, payload, {
                 persistent: true,
                 type: msg.message.type,
+                expiration: this.config.message ? this.config.message.expiration : undefined,
             });
         }
     }

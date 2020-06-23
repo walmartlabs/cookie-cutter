@@ -36,20 +36,18 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         this.logger = context.logger;
         const options: amqp.Options.Connect = {
             protocol: "amqp",
-            hostname: this.config.host,
-            port: this.config.port,
+            hostname: this.config.server!.host,
+            port: this.config.server!.port,
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
-        await this.channel.prefetch(1); // wait until message is acked before getting new one
+        const queueName = this.config.queue.queueName;
+        const durable = this.config.queue.durable;
+        const ok = await this.channel.assertQueue(queueName, { durable });
+        this.logger.info("assertQueue", ok);
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
-        const queueName = this.config.queueName;
-
-        const ok = await this.channel.assertQueue(queueName, { durable: true });
-        this.logger.info("assertQueue", ok);
-
         const pipe = this.pipe;
         const ch = this.channel;
         const encoder = this.config.encoder;
@@ -67,7 +65,7 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                 });
             }
         }
-        await this.channel.consume(queueName, getMsg, { noAck: false });
+        await this.channel.consume(this.config.queue.queueName, getMsg, { noAck: false });
         yield* this.pipe.iterate();
     }
 

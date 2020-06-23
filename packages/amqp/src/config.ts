@@ -6,10 +6,10 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
-import { IAmqpConfiguration } from ".";
+import { IAmqpConfiguration, IAmqpQueueConfig, IAmqpMessageConfig, IAmqpServerConfig } from ".";
 
 @config.section
-export class AmqpConfiguration implements IAmqpConfiguration {
+export class AmqpServerConfig implements AmqpServerConfig {
     @config.field(config.converters.string)
     public set host(_: string) {
         config.noop();
@@ -25,12 +25,61 @@ export class AmqpConfiguration implements IAmqpConfiguration {
     public get port(): number {
         return config.noop();
     }
+}
 
+@config.section
+export class AmqpQueueConfig implements IAmqpQueueConfig {
     @config.field(config.converters.string)
     public set queueName(_: string) {
         config.noop();
     }
     public get queueName(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.boolean)
+    public set durable(_: boolean) {
+        config.noop();
+    }
+    public get durable(): boolean {
+        return config.noop();
+    }
+}
+
+@config.section
+export class AmqpMessageConfig implements IAmqpMessageConfig {
+    @config.field(config.converters.timespan)
+    public set expiration(_: number) {
+        config.noop();
+    }
+    public get expiration(): number {
+        return config.noop();
+    }
+}
+
+@config.section
+export class AmqpConfiguration implements IAmqpConfiguration {
+    @config.field(config.converters.none)
+    public set server(_: IAmqpServerConfig) {
+        config.noop();
+    }
+    public get server(): IAmqpServerConfig {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set queue(_: IAmqpQueueConfig) {
+        config.noop();
+    }
+    public get queue(): IAmqpQueueConfig {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set message(_: IAmqpMessageConfig) {
+        config.noop();
+    }
+    public get message(): IAmqpMessageConfig {
         return config.noop();
     }
 

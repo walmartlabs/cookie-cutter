@@ -36,7 +36,7 @@ describe("AmqpSink and AmqpSource", () => {
         return input;
     }
 
-    function runConsumerApp(output: any[]): CancelablePromise<void> {
+    function runConsumerApp(output: any[], config: IAmqpConfiguration): CancelablePromise<void> {
         return Application.create()
             .logger(new ConsoleLogger())
             .input()
@@ -55,8 +55,9 @@ describe("AmqpSink and AmqpSource", () => {
 
     const numMessages = 200;
     const config: IAmqpConfiguration = {
-        host: "localhost",
-        queueName: "testQueue",
+        queue: {
+            queueName: "defaultQueueName",
+        },
         encoder: new JsonMessageEncoder(),
     };
 
@@ -82,8 +83,8 @@ describe("AmqpSink and AmqpSource", () => {
     it("consumes using 2 consumers with AmqpSource", async () => {
         const outputOne = [];
         const outputTwo = [];
-        const consumerOne = runConsumerApp(outputOne);
-        const consumerTwo = runConsumerApp(outputTwo);
+        const consumerOne = runConsumerApp(outputOne, config);
+        const consumerTwo = runConsumerApp(outputTwo, config);
         const apps = [consumerOne, consumerTwo];
         await sleep(500);
         consumerOne.cancel();
