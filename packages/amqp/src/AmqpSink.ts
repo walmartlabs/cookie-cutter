@@ -24,7 +24,12 @@ export class AmqpSink
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.logger = context.logger;
-        this.conn = await amqp.connect(`amqp://${this.config.host}`);
+        const options: amqp.Options.Connect = {
+            protocol: "amqp",
+            hostname: this.config.host,
+            port: this.config.port,
+        };
+        this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
     }
 

@@ -11,6 +11,7 @@ import { AmqpSink } from "./AmqpSink";
 
 export interface IAmqpConfiguration {
     readonly host: string;
+    readonly port?: number;
     readonly queueName: string;
     readonly encoder: IMessageEncoder;
 }

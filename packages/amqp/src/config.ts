@@ -11,6 +11,14 @@ export class AmqpConfiguration implements IAmqpConfiguration {
         return config.noop();
     }
 
+    @config.field(config.converters.number)
+    public set port(_: number) {
+        config.noop();
+    }
+    public get port(): number {
+        return config.noop();
+    }
+
     @config.field(config.converters.string)
     public set queueName(_: string) {
         config.noop();
