@@ -1,4 +1,4 @@
-import { config } from "@walmartlabs/cookie-cutter-core";
+import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
 import { IAmqpConfiguration } from ".";
 
 @config.section
@@ -16,6 +16,14 @@ export class AmqpConfiguration implements IAmqpConfiguration {
         config.noop();
     }
     public get queueName(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set encoder(_: IMessageEncoder) {
+        config.noop();
+    }
+    public get encoder(): IMessageEncoder {
         return config.noop();
     }
 }

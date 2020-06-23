@@ -1,65 +1,67 @@
 import {
     IInputSource,
-    IInputSourceContext,
     MessageRef,
     IMetadata,
-    IMessage,
     IComponentContext,
     IRequireInitialization,
     IDisposable,
     BoundedPriorityQueue,
+    ILogger,
+    DefaultComponentContext,
+    EncodedMessage,
+    IMessage,
 } from "@walmartlabs/cookie-cutter-core";
 import { IAmqpConfiguration } from ".";
 import { SpanContext } from "opentracing";
 import * as amqp from "amqplib";
-import { MessageClass } from "./amqp_tester";
 
 export class AmqpSource implements IInputSource, IRequireInitialization, IDisposable {
     private pipe = new BoundedPriorityQueue<MessageRef>(100);
+    private logger: ILogger;
     private conn: amqp.Connection;
+    private channel: amqp.Channel;
 
-    constructor(private config: IAmqpConfiguration) {}
-
-    public async initialize(_context: IComponentContext): Promise<void> {
-        this.conn = await amqp.connect(`amqp://${this.config.host}`);
+    constructor(private config: IAmqpConfiguration) {
+        this.logger = DefaultComponentContext.logger;
     }
 
-    public async *start(_context: IInputSourceContext): AsyncIterableIterator<MessageRef> {
+    public async initialize(context: IComponentContext): Promise<void> {
+        this.logger = context.logger;
+        this.conn = await amqp.connect(`amqp://${this.config.host}`);
+        this.channel = await this.conn.createChannel();
+        await this.channel.prefetch(1); // wait until message is acked before getting new one
+    }
+
+    public async *start(): AsyncIterableIterator<MessageRef> {
         const queueName = this.config.queueName;
 
-        const ch = await this.conn.createChannel();
-        const ok = await ch.assertQueue(queueName);
-
-        if (!ok) {
-            return;
-        }
+        const ok = await this.channel.assertQueue(queueName, { durable: true });
+        this.logger.info("assertQueue", ok);
 
         const pipe = this.pipe;
-        async function getMsg(msg: any) {
+        const ch = this.channel;
+        const encoder = this.config.encoder;
+        async function getMsg(msg: amqp.ConsumeMessage) {
             if (msg !== null) {
-                const metadata: IMetadata = { noMeta: true };
-                const iMsg: IMessage = {
-                    type: MessageClass.name,
-                    payload: new MessageClass(msg.content.toString()),
-                };
-                const msgRef = new MessageRef(metadata, iMsg, new SpanContext());
+                const type = msg.properties.type;
+                const metadata: IMetadata = {};
+                const codedMessage: IMessage = new EncodedMessage(encoder, type, msg.content);
+                const msgRef = new MessageRef(metadata, codedMessage, new SpanContext());
                 await pipe.enqueue(msgRef);
                 ch.ack(msg);
             }
         }
-        await ch.consume(queueName, getMsg);
+        await this.channel.consume(queueName, getMsg, { noAck: false });
         yield* this.pipe.iterate();
     }
 
     public async dispose(): Promise<void> {
         if (this.conn) {
-            await this.conn.close();
+            await this.conn.close(); // also closes channel
         }
-        return;
     }
 
     public async stop(): Promise<void> {
         this.pipe.close();
-        return;
     }
 }
