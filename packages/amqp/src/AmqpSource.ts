@@ -60,7 +60,11 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                 const codedMessage: IMessage = new EncodedMessage(encoder, type, msg.content);
                 const msgRef = new MessageRef(metadata, codedMessage, new SpanContext());
                 await pipe.enqueue(msgRef);
-                ch.ack(msg);
+                msgRef.once("released", async (_, err) => {
+                    if (!err) {
+                        ch.ack(msg);
+                    }
+                });
             }
         }
         await this.channel.consume(queueName, getMsg, { noAck: false });
