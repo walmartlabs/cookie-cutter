@@ -42,14 +42,6 @@ matrix:
           stage: test
           env:
             - YARN_GPG=no # Windows build agent will hang without this
-          
-        - name: "AMQP"
-           os: linux
-           node_js: 10
-           stage: integrate
-           services:
-             - docker
-           script: yarn build && cd packages/amqp && yarn integrate
 
         - name: "MSSQL"
           os: linux
@@ -58,6 +50,14 @@ matrix:
           services:
             - docker
           script: yarn build && cd packages/mssql && yarn integrate
+
+        - name: "AMQP"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/amqp && yarn integrate
 
         - name: "Kafka"
           os: linux
