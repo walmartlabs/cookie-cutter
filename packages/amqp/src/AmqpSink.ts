@@ -15,22 +15,28 @@ import {
     ILogger,
     IComponentContext,
     DefaultComponentContext,
+    failSpan,
+    OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
-import { IAmqpConfiguration } from ".";
+import { AmqpOpenTracingTagKeys, IAmqpConfiguration } from ".";
 import * as amqp from "amqplib";
+import { Span, Tags, Tracer } from "opentracing";
 
 export class AmqpSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
     private logger: ILogger;
+    private tracer: Tracer;
     private conn: amqp.Connection;
     private channel: amqp.Channel;
 
     constructor(private config: IAmqpConfiguration) {
         this.logger = DefaultComponentContext.logger;
+        this.tracer = DefaultComponentContext.tracer;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.logger = context.logger;
+        this.tracer = context.tracer;
         const options: amqp.Options.Connect = {
             protocol: "amqp",
             hostname: this.config.server!.host,
@@ -46,13 +52,33 @@ export class AmqpSink
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         for (const msg of output) {
-            const payload = Buffer.from(this.config.encoder.encode(msg.message));
-            this.channel.sendToQueue(this.config.queue.queueName, payload, {
-                persistent: true,
-                type: msg.message.type,
-                expiration: this.config.message ? this.config.message.expiration : undefined,
+            const span = this.tracer.startSpan("Producing Message For AMQP", {
+                childOf: msg.spanContext,
             });
+            this.spanLogAndSetTags(span, this.sink.name);
+            const payload = Buffer.from(this.config.encoder.encode(msg.message));
+            try {
+                this.channel.sendToQueue(this.config.queue.queueName, payload, {
+                    persistent: true,
+                    type: msg.message.type,
+                    expiration: this.config.message ? this.config.message.expiration : undefined,
+                });
+            } catch (e) {
+                failSpan(span, e);
+                throw e;
+            } finally {
+                span.finish();
+            }
         }
+    }
+
+    private spanLogAndSetTags(span: Span, funcName: string): void {
+        span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_PRODUCER);
+        span.setTag(Tags.COMPONENT, "cookie-cutter-amqp");
+        span.setTag(Tags.PEER_SERVICE, "RabbitMQ");
+        span.setTag(Tags.SAMPLING_PRIORITY, 1);
+        span.setTag(OpenTracingTagKeys.FunctionName, funcName);
+        span.setTag(AmqpOpenTracingTagKeys.QueueName, this.config.queue.queueName);
     }
 
     public get guarantees(): IOutputSinkGuarantees {

@@ -17,6 +17,10 @@ import { config } from "@walmartlabs/cookie-cutter-core";
 import { AmqpSource } from "./AmqpSource";
 import { AmqpSink } from "./AmqpSink";
 
+export enum AmqpOpenTracingTagKeys {
+    QueueName = "queue.name",
+}
+
 export interface IAmqpServerConfig {
     readonly host: string;
     readonly port?: number;
