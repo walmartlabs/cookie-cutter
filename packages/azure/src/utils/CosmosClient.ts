@@ -23,7 +23,7 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import * as fs from "fs";
-import { Agent, AgentOptions } from "https";
+import { Agent, AgentOptions } from "http"; // TODO change to https
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
 import * as path from "path";
 import * as tunnel from "tunnel";

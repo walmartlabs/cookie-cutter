@@ -47,7 +47,7 @@ export class BlobClient implements IRequireInitialization {
         this.containerName = config.container;
         this.storageAccount = config.storageAccount;
         const connectionString = `DefaultEndpointsProtocol=https;AccountName=${this.storageAccount};AccountKey=${config.storageAccessKey};EndpointSuffix=core.windows.net`;
-        this.blobService = BlobServiceClient.fromConnectionString(connectionString);
+        this.blobService = new BlobServiceClient(connectionString);
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
         // explicitly setting options as undefined to avoid setting it to null which causes issues.

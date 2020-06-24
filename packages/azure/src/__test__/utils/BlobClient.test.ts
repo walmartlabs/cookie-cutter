@@ -5,20 +5,15 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-jest.mock("@azure/storage-blob", () => {
-    return {
-        BlobService: jest.fn(),
-        createBlobService: jest.fn(),
-    };
-});
-
 import { NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Span, SpanContext } from "opentracing";
 import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
 
-const MockCreateBlobService: jest.Mock = BlobServiceClient.fromConnectionString as any;
+jest.mock("@azure/storage-blob");
+
+const MockBlobService = BlobServiceClient as any;
 
 describe("BlobClient", () => {
     const config: IBlobStorageConfiguration = {
@@ -33,19 +28,14 @@ describe("BlobClient", () => {
 
     describe("Proceeds with expected failure", () => {
         const err = "A DEFINED VALUE";
-        const text = "THIS BLOB OPERATION WILL FAIL";
-        const response = { statusCode: 404 };
+
+        const blobServiceTestStub = {
+            getContainerClient: jest.fn(),
+            listContainers: jest.fn(),
+        };
 
         beforeEach(() => {
-            MockCreateBlobService.mockImplementation(() => {
-                return {
-                    getBlobToText: (_container, _blob, _options, cb) =>
-                        cb(err, text, undefined, response),
-                    createBlockBlobFromText: (_container, _blob, _text, _options, cb) =>
-                        cb(err, undefined, response),
-                    doesBlobExist: (_container, _blob, cb) => cb(err, undefined, response),
-                };
-            });
+            MockBlobService.mockImplementation(() => blobServiceTestStub);
         });
 
         it("rejects on error from azure-storage for read", async () => {
@@ -73,7 +63,7 @@ describe("BlobClient", () => {
         const exists = { exists: true };
 
         beforeEach(() => {
-            MockCreateBlobService.mockImplementation(() => {
+            MockBlobService.mockImplementation(() => {
                 return {
                     getBlobToText: (_container, _blob, _options, cb) =>
                         cb(err, text, undefined, response),
@@ -94,7 +84,7 @@ describe("BlobClient", () => {
             await expect(
                 blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
-        });
+        }); 
 
         it("performs successful write for a request with specific timeout interval", async () => {
             const config: IBlobStorageConfiguration = {
