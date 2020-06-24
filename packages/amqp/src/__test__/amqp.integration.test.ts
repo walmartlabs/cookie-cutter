@@ -14,13 +14,32 @@ import {
     CapturingOutputSink,
     ParallelismMode,
     ErrorHandlingMode,
-    CancelablePromise,
     sleep,
     JsonMessageEncoder,
 } from "@walmartlabs/cookie-cutter-core";
 import { IAmqpConfiguration, amqpSink, amqpSource } from "..";
+import * as amqp from "amqplib";
+
+async function waitForServer() {
+    const options: amqp.Options.Connect = {
+        protocol: "amqp",
+        hostname: "localhost",
+    };
+    while (true) {
+        try {
+            const conn = await amqp.connect(options);
+            await conn.close();
+            break;
+        } catch (e) {
+            await sleep(500);
+        }
+    }
+}
 
 describe("AmqpSink and AmqpSource", () => {
+    beforeAll(async () => {
+        await waitForServer();
+    });
     class MessageClass {
         public constructor(public payload: string) {}
     }
@@ -34,23 +53,6 @@ describe("AmqpSink and AmqpSource", () => {
             });
         }
         return input;
-    }
-
-    function runConsumerApp(output: any[], config: IAmqpConfiguration): CancelablePromise<void> {
-        return Application.create()
-            .logger(new ConsoleLogger())
-            .input()
-            .add(amqpSource(config))
-            .done()
-            .dispatch({
-                onMessageClass(msg: MessageClass, ctx: IDispatchContext<any>) {
-                    ctx.publish(MessageClass, msg);
-                },
-            })
-            .output()
-            .published(new CapturingOutputSink(output))
-            .done()
-            .run(ErrorHandlingMode.LogAndContinue, ParallelismMode.Serial);
     }
 
     const numMessages = 200;
@@ -80,22 +82,26 @@ describe("AmqpSink and AmqpSource", () => {
         ).resolves.toBe(undefined);
     });
 
-    it("consumes using 2 consumers with AmqpSource", async () => {
+    it("consumes messages with AmqpSource", async () => {
         const outputOne = [];
-        const outputTwo = [];
-        const consumerOne = runConsumerApp(outputOne, config);
-        const consumerTwo = runConsumerApp(outputTwo, config);
-        const apps = [consumerOne, consumerTwo];
-        await sleep(500);
+        const consumerOne = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(amqpSource(config))
+            .done()
+            .dispatch({
+                onMessageClass(msg: MessageClass, ctx: IDispatchContext<any>) {
+                    ctx.publish(MessageClass, msg);
+                },
+            })
+            .output()
+            .published(new CapturingOutputSink(outputOne))
+            .done()
+            .run(ErrorHandlingMode.LogAndContinue, ParallelismMode.Serial);
+
+        await sleep(200);
         consumerOne.cancel();
-        consumerTwo.cancel();
-        await Promise.all(apps);
-        // number of messages consumed is varies slightly
-        const lowerBound = Math.round((numMessages / 2) * 0.95);
-        const upperBound = Math.round((numMessages / 2) * 1.05);
-        expect(outputOne.length).toBeGreaterThan(lowerBound);
-        expect(outputOne.length).toBeLessThan(upperBound);
-        expect(outputTwo.length).toBeGreaterThan(lowerBound);
-        expect(outputTwo.length).toBeLessThan(upperBound);
+        await consumerOne;
+        expect(outputOne.length).toBe(numMessages);
     });
 });

@@ -18,8 +18,8 @@ import { AmqpSource } from "./AmqpSource";
 import { AmqpSink } from "./AmqpSink";
 
 export interface IAmqpServerConfig {
-    host: string;
-    port?: number;
+    readonly host: string;
+    readonly port?: number;
 }
 
 export interface IAmqpQueueConfig {
@@ -28,7 +28,7 @@ export interface IAmqpQueueConfig {
 }
 
 export interface IAmqpMessageConfig {
-    expiration?: number;
+    readonly expiration?: number;
 }
 
 export interface IAmqpConfiguration {
@@ -40,7 +40,7 @@ export interface IAmqpConfiguration {
 
 export function amqpSource(configuration: IAmqpConfiguration): IInputSource {
     configuration = config.parse(AmqpConfiguration, configuration, {
-        server: { host: "localhost", port: 5672 },
+        server: { host: "localhost", port: 5672 }, // TODO: why does port not get passed to the output of parse
         queue: { queueName: "defaultQueueName", durable: true },
         encoder: new JsonMessageEncoder(),
     });

@@ -9,7 +9,7 @@ import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
 import { IAmqpConfiguration, IAmqpQueueConfig, IAmqpMessageConfig, IAmqpServerConfig } from ".";
 
 @config.section
-export class AmqpServerConfig implements AmqpServerConfig {
+export class AmqpServerConfig implements IAmqpServerConfig {
     @config.field(config.converters.string)
     public set host(_: string) {
         config.noop();
@@ -59,7 +59,7 @@ export class AmqpMessageConfig implements IAmqpMessageConfig {
 
 @config.section
 export class AmqpConfiguration implements IAmqpConfiguration {
-    @config.field(config.converters.none)
+    @config.field<IAmqpServerConfig>(AmqpServerConfig)
     public set server(_: IAmqpServerConfig) {
         config.noop();
     }
@@ -67,7 +67,7 @@ export class AmqpConfiguration implements IAmqpConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.none)
+    @config.field<IAmqpQueueConfig>(AmqpQueueConfig)
     public set queue(_: IAmqpQueueConfig) {
         config.noop();
     }
@@ -75,7 +75,7 @@ export class AmqpConfiguration implements IAmqpConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.none)
+    @config.field<IAmqpMessageConfig>(AmqpMessageConfig)
     public set message(_: IAmqpMessageConfig) {
         config.noop();
     }
