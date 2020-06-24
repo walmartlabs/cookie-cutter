@@ -36,7 +36,7 @@ export interface IAmqpMessageConfig {
 }
 
 export interface IAmqpConfiguration {
-    readonly server?: IAmqpServerConfig;
+    readonly server: IAmqpServerConfig;
     readonly queue: IAmqpQueueConfig;
     readonly message?: IAmqpMessageConfig;
     readonly encoder: IMessageEncoder;
@@ -44,7 +44,6 @@ export interface IAmqpConfiguration {
 
 export function amqpSource(configuration: IAmqpConfiguration): IInputSource {
     configuration = config.parse(AmqpConfiguration, configuration, {
-        server: { host: "localhost", port: 5672 }, // TODO: why does port not get passed to the output of parse
         queue: { queueName: "defaultQueueName", durable: true },
         encoder: new JsonMessageEncoder(),
     });
@@ -54,7 +53,6 @@ export function amqpSource(configuration: IAmqpConfiguration): IInputSource {
 
 export function amqpSink(configuration: IAmqpConfiguration): IOutputSink<IPublishedMessage> {
     configuration = config.parse(AmqpConfiguration, configuration, {
-        server: { host: "localhost", port: 5672 },
         queue: { queueName: "defaultQueueName", durable: true },
         encoder: new JsonMessageEncoder(),
     });

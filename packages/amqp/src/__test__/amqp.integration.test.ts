@@ -59,6 +59,9 @@ describe("AmqpSink and AmqpSource", () => {
 
     const numMessages = 200;
     const config: IAmqpConfiguration = {
+        server: {
+            host: "localhost",
+        },
         queue: {
             queueName: "defaultQueueName",
         },
@@ -101,7 +104,9 @@ describe("AmqpSink and AmqpSource", () => {
             .done()
             .run(ErrorHandlingMode.LogAndContinue, ParallelismMode.Serial);
 
-        await sleep(200);
+        while (outputOne.length !== numMessages) {
+            await sleep(50);
+        }
         consumerOne.cancel();
         await consumerOne;
         expect(outputOne.length).toBe(numMessages);
