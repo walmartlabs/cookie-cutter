@@ -41,7 +41,7 @@ export class BlobClient implements IRequireInitialization {
     private tracer: Tracer;
     private metrics: IMetrics;
     private spanOperationName = "Azure Blob Client Call";
-    private options: any | undefined; // TODO revisit options
+    // private options: any | undefined; // TODO revisit options
 
     constructor(config: IBlobStorageConfiguration) {
         this.containerName = config.container;
@@ -51,12 +51,10 @@ export class BlobClient implements IRequireInitialization {
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
         // explicitly setting options as undefined to avoid setting it to null which causes issues.
-        this.options = config.requestTimeout
-            ? { timeoutIntervalInMs: config.requestTimeout }
-            : undefined;
-        // TODO remove this logging statement, it's just for linting
-        // tslint:disable-next-line: no-console
-        console.log(this.options);
+        // TODO uncomment
+        // this.options = config.requestTimeout
+        //     ? { timeoutIntervalInMs: config.requestTimeout }
+        //     : undefined;
     }
 
     public async initialize(context: IComponentContext) {

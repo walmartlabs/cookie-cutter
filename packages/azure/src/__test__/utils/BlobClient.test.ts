@@ -5,15 +5,21 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+jest.mock("@azure/storage-blob", () => {
+    return {
+        BlobServiceClient: jest.fn().mockImplementation(() => {
+            return {
+                getContainerClient: () => jest.fn(), // TODO update to a useful return value
+                listContainers: () => jest.fn(), // TODO update to a useful return value
+            };
+        }),
+    };
+});
+
 import { NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
-import { BlobServiceClient } from "@azure/storage-blob";
 import { Span, SpanContext } from "opentracing";
 import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
-
-jest.mock("@azure/storage-blob");
-
-const MockBlobService = BlobServiceClient as any;
 
 describe("BlobClient", () => {
     const config: IBlobStorageConfiguration = {
@@ -28,15 +34,6 @@ describe("BlobClient", () => {
 
     describe("Proceeds with expected failure", () => {
         const err = "A DEFINED VALUE";
-
-        const blobServiceTestStub = {
-            getContainerClient: jest.fn(),
-            listContainers: jest.fn(),
-        };
-
-        beforeEach(() => {
-            MockBlobService.mockImplementation(() => blobServiceTestStub);
-        });
 
         it("rejects on error from azure-storage for read", async () => {
             const blobClient = new BlobClient(config);
@@ -57,22 +54,7 @@ describe("BlobClient", () => {
     });
 
     describe("Proceeds with expected success", () => {
-        const err = undefined;
         const text = "THIS BLOB OPERATION WILL SUCCEED";
-        const response = { statusCode: 200 };
-        const exists = { exists: true };
-
-        beforeEach(() => {
-            MockBlobService.mockImplementation(() => {
-                return {
-                    getBlobToText: (_container, _blob, _options, cb) =>
-                        cb(err, text, undefined, response),
-                    createBlockBlobFromText: (_container, _blob, _text, _options, cb) =>
-                        cb(err, undefined, response),
-                    doesBlobExist: (_container, _blob, cb) => cb(err, exists, response),
-                };
-            });
-        });
 
         it("performs a successful read", async () => {
             const blobClient = new BlobClient(config);
@@ -84,7 +66,7 @@ describe("BlobClient", () => {
             await expect(
                 blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
-        }); 
+        });
 
         it("performs successful write for a request with specific timeout interval", async () => {
             const config: IBlobStorageConfiguration = {
