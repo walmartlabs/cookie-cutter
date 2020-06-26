@@ -17,6 +17,7 @@ import {
     DefaultComponentContext,
     failSpan,
     OpenTracingTagKeys,
+    IMetadata,
 } from "@walmartlabs/cookie-cutter-core";
 import { AmqpOpenTracingTagKeys, IAmqpConfiguration } from ".";
 import * as amqp from "amqplib";
@@ -57,11 +58,13 @@ export class AmqpSink
             });
             this.spanLogAndSetTags(span, this.sink.name);
             const payload = Buffer.from(this.config.encoder.encode(msg.message));
+            const headers: IMetadata = {};
             try {
                 this.channel.sendToQueue(this.config.queue.queueName, payload, {
                     persistent: true,
                     type: msg.message.type,
                     expiration: this.config.message ? this.config.message.expiration : undefined,
+                    headers,
                 });
             } catch (e) {
                 failSpan(span, e);
