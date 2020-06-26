@@ -19,25 +19,38 @@ import {
     IMessage,
     failSpan,
     OpenTracingTagKeys,
+    IMetrics,
 } from "@walmartlabs/cookie-cutter-core";
 import { AmqpOpenTracingTagKeys, IAmqpConfiguration } from ".";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import * as amqp from "amqplib";
 
+enum AmqpMetrics {
+    MsgReceived = "cookie_cutter.amqp_consumer.input_msg_received",
+    MsgProcessed = "cookie_cutter.amqp_consumer.input_msg_processed",
+}
+enum AmqpMetricResult {
+    Success = "success",
+    Error = "error",
+}
+
 export class AmqpSource implements IInputSource, IRequireInitialization, IDisposable {
     private pipe = new BoundedPriorityQueue<MessageRef>(100);
     private logger: ILogger;
+    private metrics: IMetrics;
     private tracer: Tracer;
     private conn: amqp.Connection;
     private channel: amqp.Channel;
 
     constructor(private config: IAmqpConfiguration) {
         this.logger = DefaultComponentContext.logger;
+        this.metrics = DefaultComponentContext.metrics;
         this.tracer = DefaultComponentContext.tracer;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.logger = context.logger;
+        this.metrics = context.metrics;
         this.tracer = context.tracer;
         const options: amqp.Options.Connect = {
             protocol: "amqp",
@@ -53,37 +66,50 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
-        const pipe = this.pipe;
-        const ch = this.channel;
-        const encoder = this.config.encoder;
-        const tracer = this.tracer;
-        const queueName = this.config.queue.queueName;
-        const spanTags = this.spanLogAndSetTags;
-        async function getMsg(msg: amqp.ConsumeMessage) {
-            const span = tracer.startSpan("Consuming Message For AMQP", {
+        const getMsg = async (msg: amqp.ConsumeMessage) => {
+            const span = this.tracer.startSpan("Consuming Message For AMQP", {
                 childOf: undefined,
             });
-            spanTags(span, "getMsg", queueName);
+            this.spanLogAndSetTags(span, "getMsg", this.config.queue.queueName);
             if (msg !== null) {
-                const type = msg.properties.type;
+                this.metrics.increment(AmqpMetrics.MsgReceived, {
+                    host: this.config.server.host,
+                    queueName: this.config.queue.queueName,
+                    event_type: msg.properties.type,
+                });
                 const metadata: IMetadata = {};
-                const codedMessage: IMessage = new EncodedMessage(encoder, type, msg.content);
+                const codedMessage: IMessage = new EncodedMessage(
+                    this.config.encoder,
+                    msg.properties.type,
+                    msg.content
+                );
                 const msgRef = new MessageRef(metadata, codedMessage, new SpanContext());
-                await pipe.enqueue(msgRef);
+                await this.pipe.enqueue(msgRef);
+                let result = AmqpMetricResult.Error;
+                const ch = this.channel;
                 msgRef.once("released", async (_, err) => {
                     try {
                         if (!err) {
                             ch.ack(msg);
+                            result = AmqpMetricResult.Success;
+                        } else {
+                            failSpan(span, err);
                         }
                     } catch (e) {
                         failSpan(span, e);
                         throw e;
                     } finally {
                         span.finish();
+                        this.metrics.increment(AmqpMetrics.MsgProcessed, {
+                            host: this.config.server.host,
+                            queueName: this.config.queue.queueName,
+                            event_type: msg.properties.type,
+                            result,
+                        });
                     }
                 });
             }
-        }
+        };
         await this.channel.consume(this.config.queue.queueName, getMsg, { noAck: false });
         yield* this.pipe.iterate();
     }
