@@ -86,11 +86,10 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                 const msgRef = new MessageRef(metadata, codedMessage, new SpanContext());
                 await this.pipe.enqueue(msgRef);
                 let result = AmqpMetricResult.Error;
-                const ch = this.channel;
                 msgRef.once("released", async (_, err) => {
                     try {
                         if (!err) {
-                            ch.ack(msg);
+                            this.channel.ack(msg);
                             result = AmqpMetricResult.Success;
                         } else {
                             failSpan(span, err);
