@@ -68,22 +68,25 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         const ok = await this.channel.assertQueue(queueName, { durable });
         this.channel.prefetch(50);
         this.logger.info("assertQueue", ok);
-        this.running = true;
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
+        this.running = true;
+        // tslint:disable-next-line:no-floating-promises
         this.loopAmqpQueueUnassignedMessageCount();
         const queueName = this.config.queue.queueName;
+        const host = this.config.server.host;
         const getMsg = async (msg: amqp.ConsumeMessage) => {
+            const event_type = msg.properties.type;
             const span = this.tracer.startSpan("Consuming Message For AMQP", {
                 childOf: undefined,
             });
             this.spanLogAndSetTags(span, "getMsg", queueName);
             if (msg !== null) {
                 this.metrics.increment(AmqpMetrics.MsgReceived, {
-                    host: this.config.server.host,
+                    host,
                     queueName,
-                    event_type: msg.properties.type,
+                    event_type,
                 });
                 const metadata: IMetadata = {
                     [AmqpMetadata.QueueName]: queueName,
@@ -92,7 +95,7 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                 };
                 const codedMessage: IMessage = new EncodedMessage(
                     this.config.encoder,
-                    msg.properties.type,
+                    event_type,
                     msg.content
                 );
                 const msgRef = new MessageRef(metadata, codedMessage, new SpanContext());
@@ -112,9 +115,9 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                     } finally {
                         span.finish();
                         this.metrics.increment(AmqpMetrics.MsgProcessed, {
-                            host: this.config.server.host,
+                            host,
                             queueName,
-                            event_type: msg.properties.type,
+                            event_type,
                             result,
                         });
                     }
