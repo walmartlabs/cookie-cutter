@@ -17,8 +17,14 @@ import { config } from "@walmartlabs/cookie-cutter-core";
 import { AmqpSource } from "./AmqpSource";
 import { AmqpSink } from "./AmqpSink";
 
+export enum AmqpMetadata {
+    QueueName = "amqp.queue_name",
+    Redelivered = "amqp.redelivered",
+    Expiration = "amqp.expiration",
+}
+
 export enum AmqpOpenTracingTagKeys {
-    QueueName = "queue.name",
+    QueueName = "amqp.queue_name",
 }
 
 export interface IAmqpServerConfig {
