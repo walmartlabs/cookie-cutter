@@ -26,6 +26,8 @@ import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import * as amqp from "amqplib";
 
 enum AmqpMetrics {
+    UnassignedMessageCount = "cookie_cutter.amqp_consumer.unassigned_message_count",
+    ConsumerCount = "cookie_cutter.amqp_consumer.consumer_count",
     MsgReceived = "cookie_cutter.amqp_consumer.input_msg_received",
     MsgProcessed = "cookie_cutter.amqp_consumer.input_msg_processed",
 }
@@ -41,6 +43,8 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
     private tracer: Tracer;
     private conn: amqp.Connection;
     private channel: amqp.Channel;
+    private running: boolean;
+    private loop: NodeJS.Timer;
 
     constructor(private config: IAmqpConfiguration) {
         this.logger = DefaultComponentContext.logger;
@@ -62,10 +66,13 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         const queueName = this.config.queue.queueName;
         const durable = this.config.queue.durable;
         const ok = await this.channel.assertQueue(queueName, { durable });
+        this.channel.prefetch(50);
         this.logger.info("assertQueue", ok);
+        this.running = true;
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
+        this.loopAmqpQueueUnassignedMessageCount();
         const getMsg = async (msg: amqp.ConsumeMessage) => {
             const span = this.tracer.startSpan("Consuming Message For AMQP", {
                 childOf: undefined,
@@ -122,6 +129,26 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         span.setTag(AmqpOpenTracingTagKeys.QueueName, queueName);
     }
 
+    private loopAmqpQueueUnassignedMessageCount = async () => {
+        const queueName = this.config.queue.queueName;
+        try {
+            const queueMetadata = await this.channel.checkQueue(queueName);
+            this.metrics.gauge(AmqpMetrics.UnassignedMessageCount, queueMetadata.messageCount, {
+                host: this.config.server.host,
+                queueName,
+            });
+            this.metrics.gauge(AmqpMetrics.ConsumerCount, queueMetadata.consumerCount, {
+                host: this.config.server.host,
+                queueName,
+            });
+        } catch (e) {
+            this.logger.error("AmqpSource|Failed to checkQueue", e, { queue: queueName });
+        }
+        if (this.running) {
+            this.loop = setTimeout(this.loopAmqpQueueUnassignedMessageCount, 1000);
+        }
+    };
+
     public async dispose(): Promise<void> {
         if (this.conn) {
             await this.conn.close(); // also closes channel
@@ -129,6 +156,10 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
     }
 
     public async stop(): Promise<void> {
+        this.running = false;
+        if (this.loop) {
+            clearTimeout(this.loop);
+        }
         this.pipe.close();
     }
 }

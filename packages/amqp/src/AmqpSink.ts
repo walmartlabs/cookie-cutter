@@ -63,6 +63,7 @@ export class AmqpSink
                 this.channel.sendToQueue(this.config.queue.queueName, payload, {
                     persistent: true,
                     type: msg.message.type,
+                    contentType: this.config.encoder.mimeType,
                     expiration: this.config.message ? this.config.message.expiration : undefined,
                     headers,
                 });

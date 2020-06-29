@@ -88,8 +88,8 @@ describe("AmqpSink and AmqpSource", () => {
     });
 
     it("consumes messages with AmqpSource", async () => {
-        const outputOne = [];
-        const consumerOne = Application.create()
+        const output = [];
+        const consumer = Application.create()
             .logger(new ConsoleLogger())
             .input()
             .add(amqpSource(config))
@@ -100,15 +100,15 @@ describe("AmqpSink and AmqpSource", () => {
                 },
             })
             .output()
-            .published(new CapturingOutputSink(outputOne))
+            .published(new CapturingOutputSink(output))
             .done()
             .run(ErrorHandlingMode.LogAndContinue, ParallelismMode.Serial);
 
-        while (outputOne.length !== numMessages) {
+        while (output.length < numMessages) {
             await sleep(50);
         }
-        consumerOne.cancel();
-        await consumerOne;
-        expect(outputOne.length).toBe(numMessages);
+        consumer.cancel();
+        await consumer;
+        expect(output.length).toBe(numMessages);
     });
 });
