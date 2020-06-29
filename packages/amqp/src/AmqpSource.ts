@@ -18,7 +18,6 @@ import {
     EncodedMessage,
     IMessage,
     failSpan,
-    OpenTracingTagKeys,
     IMetrics,
 } from "@walmartlabs/cookie-cutter-core";
 import { AmqpMetadata, AmqpOpenTracingTagKeys, IAmqpConfiguration } from ".";
@@ -76,12 +75,12 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         this.loopAmqpQueueUnassignedMessageCount();
         const queueName = this.config.queue.queueName;
         const host = this.config.server.host;
-        const getMsg = async (msg: amqp.ConsumeMessage) => {
+        const onMessage = async (msg: amqp.ConsumeMessage) => {
             const event_type = msg.properties.type;
             const span = this.tracer.startSpan("Consuming Message For AMQP", {
                 childOf: undefined,
             });
-            this.spanLogAndSetTags(span, "getMsg", queueName);
+            this.spanLogAndSetTags(span, queueName);
             if (msg !== null) {
                 this.metrics.increment(AmqpMetrics.MsgReceived, {
                     host,
@@ -124,16 +123,15 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                 });
             }
         };
-        await this.channel.consume(this.config.queue.queueName, getMsg, { noAck: false });
+        await this.channel.consume(this.config.queue.queueName, onMessage, { noAck: false });
         yield* this.pipe.iterate();
     }
 
-    private spanLogAndSetTags(span: Span, funcName: string, queueName): void {
+    private spanLogAndSetTags(span: Span, queueName): void {
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_CONSUMER);
         span.setTag(Tags.COMPONENT, "cookie-cutter-amqp");
         span.setTag(Tags.PEER_SERVICE, "RabbitMQ");
         span.setTag(Tags.SAMPLING_PRIORITY, 1);
-        span.setTag(OpenTracingTagKeys.FunctionName, funcName);
         span.setTag(AmqpOpenTracingTagKeys.QueueName, queueName);
     }
 
@@ -151,9 +149,11 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                     queueName,
                 });
             } catch (e) {
-                this.logger.error("AmqpSource|Failed to checkQueue", e, { queue: queueName });
+                this.logger.warn("AmqpSource|Failed to checkQueue", { queueName });
             }
-            this.loop = setTimeout(this.loopAmqpQueueUnassignedMessageCount, 1000);
+            if (this.running) {
+                this.loop = setTimeout(this.loopAmqpQueueUnassignedMessageCount, 1000);
+            }
         }
     };
 
