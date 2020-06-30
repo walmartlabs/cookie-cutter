@@ -44,11 +44,11 @@
       "intro-outputs": {
         "title": "Outputs"
       },
-      "module-azure": {
-        "title": "Azure"
-      },
       "module-amqp": {
         "title": "Amqp"
+      },
+      "module-azure": {
+        "title": "Azure"
       },
       "module-grpc": {
         "title": "gRPC"

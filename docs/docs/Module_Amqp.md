@@ -1,11 +1,12 @@
 ---
-id: module-azure
-title: Azure
+id: module-amqp
+title: Amqp
 ---
 
 ## amqpSource
 
 The `amqpSource` function creates a new input source that receives messages from `RabbitMQ` or another message broker following the `AMQP 0-9-1` protocol.
+The example below starts consuming JSON encoded messages from queue `defaultQueueName`.
 
 ```typescript
 Application.create()
@@ -82,7 +83,7 @@ The following metadata is available in the message handler via `ctx.metadata<T>(
 
 ## amqpSink
 
-The `amqpSink` function creates an output sink that handles published messages.
+The `amqpSink` function creates an output sink that handles published messages. The example below starts publishing JSON encoded messages to queue `defaultQueueName`.
 
 ```typescript
 Application.create()
