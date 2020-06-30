@@ -14,10 +14,15 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { amqpSink } from "@walmartlabs/cookie-cutter-amqp";
 import { MessageClass } from "./model";
-import * as config from "config";
 
+// Before running this example, please adjust the code to include your AMQP Broker (RabbitMQ) connection details.
 const AMQP_CONFIG = {
-    ...config.get("amqp"),
+    server: {
+        host: "localhost",
+    },
+    queue: {
+        name: "defaultQueueName",
+    },
     encoder: new JsonMessageEncoder(),
 };
 
