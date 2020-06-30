@@ -1,4 +1,4 @@
-# Kafka Events
+# AMQP Messages
 
 This example demonstrates how to produce and consume messages from a specified queue in an AMQP Broker (RabbitMQ).
 
