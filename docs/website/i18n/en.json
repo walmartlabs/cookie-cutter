@@ -47,6 +47,9 @@
       "module-azure": {
         "title": "Azure"
       },
+      "module-amqp": {
+        "title": "Amqp"
+      },
       "module-grpc": {
         "title": "gRPC"
       },

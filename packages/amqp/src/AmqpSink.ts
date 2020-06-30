@@ -12,7 +12,6 @@ import {
     OutputSinkConsistencyLevel,
     IRequireInitialization,
     IDisposable,
-    ILogger,
     IComponentContext,
     DefaultComponentContext,
     failSpan,
@@ -24,18 +23,15 @@ import { Span, Tags, Tracer } from "opentracing";
 
 export class AmqpSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
-    private logger: ILogger;
     private tracer: Tracer;
     private conn: amqp.Connection;
     private channel: amqp.Channel;
 
     constructor(private config: IAmqpConfiguration) {
-        this.logger = DefaultComponentContext.logger;
         this.tracer = DefaultComponentContext.tracer;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
-        this.logger = context.logger;
         this.tracer = context.tracer;
         const options: amqp.Options.Connect = {
             protocol: "amqp",
@@ -46,8 +42,7 @@ export class AmqpSink
         this.channel = await this.conn.createChannel();
         const queueName = this.config.queue.queueName;
         const durable = this.config.queue.durable;
-        const ok = await this.channel.assertQueue(queueName, { durable });
-        this.logger.info("assertQueue", ok);
+        await this.channel.assertQueue(queueName, { durable });
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {

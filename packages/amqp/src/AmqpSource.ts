@@ -57,16 +57,15 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         this.tracer = context.tracer;
         const options: amqp.Options.Connect = {
             protocol: "amqp",
-            hostname: this.config.server!.host,
-            port: this.config.server!.port,
+            hostname: this.config.server.host,
+            port: this.config.server.port,
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
         const queueName = this.config.queue.queueName;
         const durable = this.config.queue.durable;
-        const ok = await this.channel.assertQueue(queueName, { durable });
+        await this.channel.assertQueue(queueName, { durable });
         this.channel.prefetch(50);
-        this.logger.info("assertQueue", ok);
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
