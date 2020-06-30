@@ -40,7 +40,7 @@ export class AmqpSink
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
-        const queueName = this.config.queue.queueName;
+        const queueName = this.config.queue.name;
         const durable = this.config.queue.durable;
         await this.channel.assertQueue(queueName, { durable });
     }
@@ -53,7 +53,7 @@ export class AmqpSink
             this.spanLogAndSetTags(span, this.sink.name);
             const payload = Buffer.from(this.config.encoder.encode(msg.message));
             try {
-                this.channel.sendToQueue(this.config.queue.queueName, payload, {
+                this.channel.sendToQueue(this.config.queue.name, payload, {
                     persistent: true,
                     type: msg.message.type,
                     contentType: this.config.encoder.mimeType,
@@ -74,7 +74,7 @@ export class AmqpSink
         span.setTag(Tags.PEER_SERVICE, "RabbitMQ");
         span.setTag(Tags.SAMPLING_PRIORITY, 1);
         span.setTag(OpenTracingTagKeys.FunctionName, funcName);
-        span.setTag(AmqpOpenTracingTagKeys.QueueName, this.config.queue.queueName);
+        span.setTag(AmqpOpenTracingTagKeys.QueueName, this.config.queue.name);
     }
 
     public get guarantees(): IOutputSinkGuarantees {

@@ -45,7 +45,7 @@
         "title": "Outputs"
       },
       "module-amqp": {
-        "title": "Amqp"
+        "title": "AMQP"
       },
       "module-azure": {
         "title": "Azure"

@@ -1,6 +1,6 @@
 ---
 id: module-amqp
-title: Amqp
+title: AMQP
 ---
 
 ## amqpSource
@@ -16,7 +16,7 @@ Application.create()
                 host: "localhost",
             },
             queue: {
-                queueName: "defaultQueueName",
+                name: "defaultQueueName",
             },
             encoder: new JsonMessageEncoder(),
         }))
@@ -33,12 +33,12 @@ The available configuration options are
 | ---- | ----------- |
 | server.host | host name to connect to |
 | _server.port_ | port to connect to (default `5672`) |
-| queue.queueName | name of queue to connect to |
+| queue.name | name of queue to connect to |
 | _queque.durable_ | if `true` (default), queue survives restarts of broker, messages are as persistent as their queue |
 | _message.expiration_ | time to live per message in milliseconds (default is no expiration) |
-| encoder | defines how the raw data received from Amqp Broker should be converted into message objects |
+| encoder | defines how the raw data received from AMQP Broker should be converted into message objects |
 
-### Consuming from Amqp Broker
+### Consuming from AMQP Broker
 
 ```typescript
 Application.create()
@@ -48,7 +48,7 @@ Application.create()
                 host: "localhost",
             },
             queue: {
-                queueName: "defaultQueueName",
+                name: "defaultQueueName",
             },
             encoder: new JsonMessageEncoder(),
         }))
@@ -68,7 +68,7 @@ The following metadata is available in the message handler via `ctx.metadata<T>(
 
 | name | description |
 | ---- | ----------- |
-| AmqpMetadata.QueueName | name of queue this message came from |
+| AmqpMetadata.name | name of queue this message came from |
 | AmqpMetadata.Redelivered | indicates that the message has been previously delivered to this or another client. |
 | AmqpMetadata.Expiration | message expiration in milliseconds as specified when publishing the message |
 
@@ -77,7 +77,7 @@ The following metadata is available in the message handler via `ctx.metadata<T>(
 | name | description | Type | Tags |
 | ---- | ----------- | ---- | ---- |
 | cookie_cutter.amqp_consumer.input_msg_received | number of messages received from the broker | `increment` | `host`, `queueName`, `event_type`, `result` |
-| cookie_cutter.amqp_consumer.input_msg_processed | number of messages consumed successfully | `increment` | `host`, `queueName`, `event_type`, `result` |
+| cookie_cutter.amqp_consumer.input_msg_processed | number of messages consumed successfully/unsuccessfully | `increment` | `host`, `queueName`, `event_type`, `result` |
 | cookie_cutter.amqp_consumer.unassigned_message_count | number of messages in the queue still not assigned to a consumer | `gauge` | `host`, `queueName` |
 | cookie_cutter.amqp_consumer.consumer_count | number of consumers for this queue | `gauge` | `host`, `queueName` |
 
@@ -94,7 +94,7 @@ Application.create()
                 host: "localhost",
             },
             queue: {
-                queueName: "defaultQueueName",
+                name: "defaultQueueName",
             },
             encoder: new JsonMessageEncoder(),
         }))
@@ -111,12 +111,12 @@ The available configuration options are
 | ---- | ----------- |
 | server.host | host name to connect to |
 | _server.port_ | port to connect to (default `5672`) |
-| queue.queueName | name of queue to connect to |
+| queue.name | name of queue to connect to |
 | _queque.durable_ | if `true` (default), queue survives restarts of broker, messages are as persistent as their queue |
 | _message.expiration_ | time to live per message in milliseconds (default is no expiration) |
-| encoder | defines how the raw data received from Amqp Broker should be converted into message objects |
+| encoder | defines how the raw data received from AMQP Broker should be converted into message objects |
 
-### Publishing to Amqp Broker
+### Publishing to AMQP Broker
 
 ```typescript
 Application.create()
@@ -131,7 +131,7 @@ Application.create()
                 host: "localhost",
             },
             queue: {
-                queueName: "defaultQueueName",
+                name: "defaultQueueName",
             },
             encoder: new JsonMessageEncoder(),
         }))

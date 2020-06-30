@@ -62,7 +62,7 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
-        const queueName = this.config.queue.queueName;
+        const queueName = this.config.queue.name;
         const durable = this.config.queue.durable;
         await this.channel.assertQueue(queueName, { durable });
         this.channel.prefetch(50);
@@ -72,7 +72,7 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         this.running = true;
         // tslint:disable-next-line:no-floating-promises
         this.loopAmqpQueueUnassignedMessageCount();
-        const queueName = this.config.queue.queueName;
+        const queueName = this.config.queue.name;
         const host = this.config.server.host;
         const onMessage = async (msg: amqp.ConsumeMessage) => {
             const event_type = msg.properties.type;
@@ -122,7 +122,7 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
                 });
             }
         };
-        await this.channel.consume(this.config.queue.queueName, onMessage, { noAck: false });
+        await this.channel.consume(this.config.queue.name, onMessage, { noAck: false });
         yield* this.pipe.iterate();
     }
 
@@ -136,7 +136,7 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
 
     private loopAmqpQueueUnassignedMessageCount = async () => {
         if (this.running) {
-            const queueName = this.config.queue.queueName;
+            const queueName = this.config.queue.name;
             try {
                 const queueMetadata = await this.channel.checkQueue(queueName);
                 this.metrics.gauge(AmqpMetrics.UnassignedMessageCount, queueMetadata.messageCount, {
