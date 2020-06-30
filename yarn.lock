@@ -110,19 +110,6 @@
     events "^3.0.0"
     tslib "^1.10.0"
 
-"@azure/storage-queue@^12.0.5":
-  version "12.0.5"
-  resolved "https://jet-tfs.pkgs.visualstudio.com/_packaging/KeplerTool/npm/registry/@azure/storage-queue/-/storage-queue-12.0.5.tgz#deeb05aa532e6c84718684391f458c1c452fa434"
-  integrity sha1-3usFqlMubIRxhoQ5H0WMHEUvpDQ=
-  dependencies:
-    "@azure/abort-controller" "^1.0.0"
-    "@azure/core-http" "^1.1.1"
-    "@azure/core-paging" "^1.1.1"
-    "@azure/core-tracing" "1.0.0-preview.8"
-    "@azure/logger" "^1.0.0"
-    "@opentelemetry/api" "^0.6.1"
-    tslib "^1.10.0"
-
 "@babel/code-frame@7.5.5":
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.5.5.tgz#bc0782f6d69f7b7d49531219699b988f669a8f9d"
@@ -7308,10 +7295,10 @@ markdown-toc@^1.2.0:
     repeat-string "^1.6.1"
     strip-color "^0.1.0"
 
-marked@~0.3.6:
-  version "0.3.19"
-  resolved "https://jet-tfs.pkgs.visualstudio.com/_packaging/KeplerTool/npm/registry/marked/-/marked-0.3.19.tgz#5d47f709c4c9fc3c216b6d46127280f40b39d790"
-  integrity sha1-XUf3CcTJ/Dwha21GEnKA9As515A=
+marked@^0.7.0, marked@~0.3.6:
+  version "0.7.0"
+  resolved "https://jet-tfs.pkgs.visualstudio.com/_packaging/KeplerTool/npm/registry/marked/-/marked-0.7.0.tgz#b64201f051d271b1edc10a04d1ae9b74bb8e5c0e"
+  integrity sha1-tkIB8FHScbHtwQoE0a6bdLuOXA4=
 
 math-random@^1.0.1:
   version "1.0.4"
