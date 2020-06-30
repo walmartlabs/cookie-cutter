@@ -1,11 +1,10 @@
 # Kafka Events
 
-This example demonstrates how to producer and consume messages from a specified queue in an AMQP Broker (RabbitMQ).
-subscribe to an event stream from Kafka and handle each message by its type with a dedicate handler function.
+This example demonstrates how to produce and consume messages from a specified queue in an AMQP Broker (RabbitMQ).
 
 ## How to Run
 
-Before running this example, please adjust the code to include your AMQP/RabbitMQ connection details.
+Before running this example, please adjust the code to include your AMQP Broker (RabbitMQ) connection details.
 
 ```bash
 yarn start:producer
