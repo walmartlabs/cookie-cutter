@@ -1,5 +1,6 @@
 /*
 Copyright (c) Walmart Inc.
+
 This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
@@ -166,12 +167,14 @@ describe("BlobClient", () => {
             const blobClient = new BlobClient(config);
             await expect(blobClient.read(span.context(), "BlobID")).resolves.toBe(text);
         });
+
         it("performs a successful write", async () => {
             const blobClient = new BlobClient(config);
             await expect(
                 blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
         });
+        
         it("performs successful write for a request with specific timeout interval", async () => {
             const config: IBlobStorageConfiguration = {
                 container: "container123",
@@ -184,6 +187,7 @@ describe("BlobClient", () => {
                 blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
         });
+
         it("performs a successful 'exists'", async () => {
             const blobClient = new BlobClient(config);
             await expect(blobClient.exists(span.context(), "BlobID")).resolves.toEqual(true);
