@@ -174,7 +174,7 @@ describe("BlobClient", () => {
                 blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
         });
-        
+
         it("performs successful write for a request with specific timeout interval", async () => {
             const config: IBlobStorageConfiguration = {
                 container: "container123",

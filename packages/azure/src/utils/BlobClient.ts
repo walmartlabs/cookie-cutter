@@ -62,7 +62,7 @@ export class BlobClient implements IRequireInitialization {
         try {
             const result = await this.blobService.createContainer(this.containerName);
             span.finish();
-            return Promise.resolve(result.containerCreateResponse)
+            return Promise.resolve(result.containerCreateResponse);
         } catch (err) {
             failSpan(span, err);
             span.finish();
@@ -143,7 +143,6 @@ export class BlobClient implements IRequireInitialization {
             span.finish();
 
             return Promise.resolve(streamToString(result.readableStreamBody));
-            
         } catch (err) {
             span.setTag(Tags.HTTP_STATUS_CODE, err.statusCode);
 
