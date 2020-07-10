@@ -23,8 +23,9 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import * as fs from "fs";
-import { Agent, AgentOptions } from "http";
+import { Agent, AgentOptions } from "https";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
+import * as http from "http";
 import * as path from "path";
 import * as tunnel from "tunnel";
 import * as url from "url";
@@ -47,6 +48,8 @@ export interface ICosmosWriteClient {
         collectionId?: string
     ): Promise<void>;
 }
+
+type AgentWithOptions = http.Agent & { options?: AgentOptions };
 
 enum CosmosMetrics {
     RUs = "cookie_cutter.cosmos_client.request_units",
@@ -75,7 +78,7 @@ export class CosmosClient
     private metrics: IMetrics;
     private tracer: Tracer;
     private readonly client: Client;
-    private readonly agent: Agent;
+    private readonly agent: AgentWithOptions;
     private spanOperationName = "Azure CosmosDB Client Call";
 
     private spInitialized: Map<string, boolean> = new Map([
@@ -116,6 +119,7 @@ export class CosmosClient
                 proxyUrl.protocol.toLowerCase() === "https:"
                     ? tunnel.httpsOverHttps(requestAgentOptions)
                     : tunnel.httpsOverHttp(requestAgentOptions);
+            this.agent.options = requestAgentOptions;
         } else {
             this.agent = new Agent(requestAgentOptions);
         }

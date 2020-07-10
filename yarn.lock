@@ -7227,7 +7227,7 @@ lru-cache@^4.0.1:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
 
-lz4@0.6.3, lz4@~0.6.0:
+lz4@~0.6.0:
   version "0.6.3"
   resolved "https://registry.yarnpkg.com/lz4/-/lz4-0.6.3.tgz#78df6bb69a36d7db6c2e849494876ba6e38e66d6"
   integrity sha512-NEs7p58fnU69P6mGl1slL5I+FVhYIUXXfZRXNBIFvmTkEsHh+TMpO1BPcQREwFpThHNC5wa61d7vQdZ0zz9aUg==
@@ -7316,10 +7316,10 @@ markdown-toc@^1.2.0:
     repeat-string "^1.6.1"
     strip-color "^0.1.0"
 
-marked@^0.7.0, marked@~0.3.6:
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/marked/-/marked-0.7.0.tgz#b64201f051d271b1edc10a04d1ae9b74bb8e5c0e"
-  integrity sha512-c+yYdCZJQrsRjTPhUx7VKkApw9bwDkNbHUKo1ovgcfDjb2kc8rLuRbIFyXL5WOEUwzSSKo3IXpph2K6DqB/KZg==
+marked@~0.3.6:
+  version "0.3.19"
+  resolved "https://pkgs.dev.azure.com/jet-tfs/_packaging/KeplerTool/npm/registry/marked/-/marked-0.3.19.tgz#5d47f709c4c9fc3c216b6d46127280f40b39d790"
+  integrity sha1-XUf3CcTJ/Dwha21GEnKA9As515A=
 
 math-random@^1.0.1:
   version "1.0.4"
