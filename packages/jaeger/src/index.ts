@@ -11,13 +11,6 @@ import { Tracer } from "opentracing";
 import * as promClient from "prom-client";
 import { PrometheusMetricsFactory, initTracer, TracingConfig, TracingOptions } from "jaeger-client";
 
-export enum LogLevel {
-    Debug = "debug",
-    Info = "info",
-    Warn = "warn",
-    Error = "error",
-}
-
 export interface IJaegerConfiguration {
     /**
      * Endpoint to collect jaeger traces
