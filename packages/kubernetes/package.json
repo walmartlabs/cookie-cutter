@@ -18,7 +18,7 @@
         "express": "4.17.1",
         "express-async-handler": "1.1.4",
         "fast-json-patch": "3.0.0-1",
-        "lodash": "4.17.15",
+        "lodash": "4.17.19",
         "opentracing": "0.14.4",
         "request": "2.88.2",
         "request-promise-native": "1.0.8"

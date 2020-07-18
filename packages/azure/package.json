@@ -15,7 +15,7 @@
     "dependencies": {
         "@azure/cosmos": "3.6.3",
         "azure-storage": "2.10.3",
-        "lodash": "4.17.15",
+        "lodash": "4.17.19",
         "opentracing": "0.14.4",
         "tunnel": "0.0.6",
         "uuid": "8.0.0"
