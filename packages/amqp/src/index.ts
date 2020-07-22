@@ -33,7 +33,7 @@ export interface IAmqpServerConfig {
 }
 
 export interface IAmqpQueueConfig {
-    readonly queueName: string;
+    readonly name: string;
     readonly durable?: boolean;
 }
 
@@ -50,7 +50,7 @@ export interface IAmqpConfiguration {
 
 export function amqpSource(configuration: IAmqpConfiguration): IInputSource {
     configuration = config.parse(AmqpConfiguration, configuration, {
-        queue: { queueName: "defaultQueueName", durable: true },
+        queue: { name: "defaultQueueName", durable: true },
         encoder: new JsonMessageEncoder(),
     });
 
@@ -59,7 +59,7 @@ export function amqpSource(configuration: IAmqpConfiguration): IInputSource {
 
 export function amqpSink(configuration: IAmqpConfiguration): IOutputSink<IPublishedMessage> {
     configuration = config.parse(AmqpConfiguration, configuration, {
-        queue: { queueName: "defaultQueueName", durable: true },
+        queue: { name: "defaultQueueName", durable: true },
         encoder: new JsonMessageEncoder(),
     });
 

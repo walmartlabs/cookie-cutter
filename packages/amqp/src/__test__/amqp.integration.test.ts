@@ -63,7 +63,7 @@ describe("AmqpSink and AmqpSource", () => {
             host: "localhost",
         },
         queue: {
-            queueName: "defaultQueueName",
+            name: "defaultQueueName",
         },
         encoder: new JsonMessageEncoder(),
     };

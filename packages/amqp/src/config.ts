@@ -30,10 +30,10 @@ export class AmqpServerConfig implements IAmqpServerConfig {
 @config.section
 export class AmqpQueueConfig implements IAmqpQueueConfig {
     @config.field(config.converters.string)
-    public set queueName(_: string) {
+    public set name(_: string) {
         config.noop();
     }
-    public get queueName(): string {
+    public get name(): string {
         return config.noop();
     }
 
