@@ -21,6 +21,7 @@
         "Modules": [
             "module-kafka",
             "module-azure",
+            "module-amqp",
             "module-grpc",
             "module-validatejs",
             "module-mssql",

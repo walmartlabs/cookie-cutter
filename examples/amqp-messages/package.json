@@ -1,0 +1,18 @@
+{
+    "name": "@examples/amqp-messages",
+    "private": true,
+    "version": "0.0.0",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
+        "@walmartlabs/cookie-cutter-amqp": "^1.3.0-alpha"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start:producer": "node dist/producer",
+        "start:consumer": "node dist/consumer",
+        "test": "echo '- no tests -'",
+        "lint": "tslint --project tsconfig.json",
+        "lint:fix": "yarn run lint --fix"
+    }
+}
