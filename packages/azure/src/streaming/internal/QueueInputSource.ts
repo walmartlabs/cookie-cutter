@@ -193,8 +193,8 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
     private loopQueueApproximateCount = async () => {
         const queue = this.readOptions.queueName;
         try {
-            const { approximateMessageCount } = await this.client.queueMetadata(undefined, queue);
-            this.metrics.gauge(QueueMetrics.ApproximateMessageCount, approximateMessageCount, {
+            const { approximateMessagesCount } = await this.client.queueMetadata(undefined, queue);
+            this.metrics.gauge(QueueMetrics.ApproximateMessageCount, approximateMessagesCount, {
                 queue,
                 storage_account: this.config.storageAccount,
             });
