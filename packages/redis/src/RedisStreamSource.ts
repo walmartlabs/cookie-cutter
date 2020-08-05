@@ -42,7 +42,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 this.spanLogAndSetTags(
                     span,
                     this.config.db,
-                    this.config.readStreams,
+                    message.streamName,
                     this.config.consumerGroup
                 );
 
@@ -228,7 +228,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private spanLogAndSetTags(
         span: Span,
         bucket: number,
-        streamNames: string[],
+        streamNames: string | string[],
         consumerGroup: string
     ): void {
         span.log({ bucket, streamNames, consumerGroup });
