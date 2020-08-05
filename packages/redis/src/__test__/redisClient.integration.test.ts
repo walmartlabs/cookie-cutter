@@ -121,7 +121,7 @@ describe("redis integration test", () => {
             payload: new TestClass("test"),
         };
 
-        const id = await ccClient.xAddObject(span, TestClass.name, "test-stream", key, value);
+        const id = await ccClient.xAddObject(span, TestClass.name, testStreamName, key, value);
 
         expect(id).not.toBeFalsy();
 
@@ -148,7 +148,7 @@ describe("redis integration test", () => {
         setTimeout(() => app.cancel(), 2000);
         await app;
 
-        const results = await asyncXRead(["streams", "test-stream", "0"]);
+        const results = await asyncXRead(["streams", testStreamName, "0"]);
         expect(results).not.toBeFalsy();
 
         const storedValue = ((results: RawReadGroupResult): Uint8Array => {
@@ -184,7 +184,7 @@ describe("redis integration test", () => {
 
         await app;
 
-        const consumerGroups = await asyncXInfo(["groups", config.readStreams]);
+        const consumerGroups = await asyncXInfo(["groups", testStreamName]);
         expect(consumerGroups.length).toEqual(1);
     });
 
