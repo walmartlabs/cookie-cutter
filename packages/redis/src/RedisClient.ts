@@ -134,10 +134,10 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         span: Span,
         funcName: string,
         bucket: number,
-        key: string,
+        keys: string | string[],
         streamNames?: string | string[]
     ): void {
-        span.log({ bucket, key, streamNames });
+        span.log({ bucket, keys, streamNames });
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
         span.setTag(Tags.COMPONENT, "cookie-cutter-redis");
         span.setTag(Tags.DB_INSTANCE, bucket);
@@ -372,14 +372,14 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         consumerName: string,
         count: number,
         block: number,
-        id: string = ">"
+        ids?: string[]
     ): Promise<IRedisMessage[]> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client xReadGroupObject Call", {
             childOf: context,
         });
 
-        this.spanLogAndSetTags(span, this.xReadGroup.name, this.config.db, id, streamNames);
+        this.spanLogAndSetTags(span, this.xReadGroup.name, this.config.db, ids, streamNames);
 
         try {
             const response = await this.client.xreadgroup([
@@ -392,7 +392,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 String(block),
                 "streams",
                 ...streamNames,
-                id,
+                ...streamNames.map(() => ">"),
             ]);
 
             // if the client returns null, early exit w/ an empty array

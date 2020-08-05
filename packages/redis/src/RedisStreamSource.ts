@@ -138,7 +138,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 this.config.consumerId,
                 this.config.batchSize,
                 this.config.blockTimeout,
-                "0" // this will retrieve all PEL messages for this consumer,
+                this.config.readStreams.map(() => "0") // this will retrieve all PEL messages for this consumer,
             );
 
             return messages;

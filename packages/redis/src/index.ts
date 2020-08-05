@@ -92,7 +92,7 @@ export interface IRedisClient {
         consumerName: string,
         count: number,
         block: number,
-        id?: string
+        ids?: string[]
     ): Promise<IRedisMessage[]>;
     xGroup(
         context: SpanContext,
