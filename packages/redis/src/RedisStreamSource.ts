@@ -153,15 +153,11 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private async getPendingMessagesForConsumerGroup(): Promise<IRedisMessage[]> {
         const span = this.tracer.startSpan(this.spanOperationName);
 
-        this.spanLogAndSetTags(
-            span,
-            this.config.db,
-            this.config.readStreams,
-            this.config.consumerGroup
-        );
         try {
             const messages = new Array<IRedisMessage>();
             for (const readStream of this.config.readStreams) {
+                this.spanLogAndSetTags(span, this.config.db, readStream, this.config.consumerGroup);
+
                 const pendingMessages = await this.client.xPending(
                     span.context(),
                     readStream,
@@ -171,7 +167,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
                 // if there are no pending messages return early w/ an empty array
                 if (pendingMessages.length < 1) {
-                    return [];
+                    continue;
                 }
 
                 const pendingMessagesIds = pendingMessages.map(({ streamId }) => streamId);
