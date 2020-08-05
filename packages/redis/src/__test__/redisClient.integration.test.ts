@@ -144,7 +144,7 @@ describe("redis integration test", () => {
         expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
     };
 
-    const runConsumerGroupTest = async (readStreams?: string[]) => {
+    const runConsumerGroupTest = async (readStreams: string[]) => {
         const app = Application.create()
             .logger(new ConsoleLogger())
             .input()
@@ -159,15 +159,160 @@ describe("redis integration test", () => {
 
         await app;
 
-        if (readStreams) {
-            for (const readStream of readStreams) {
-                const consumerGroups = await asyncXInfo(["groups", readStream]);
-                expect(consumerGroups.length).toEqual(1);
-            }
-        } else {
-            const consumerGroups = await asyncXInfo(["groups", testStreamName]);
+        for (const readStream of readStreams) {
+            const consumerGroups = await asyncXInfo(["groups", readStream]);
             expect(consumerGroups.length).toEqual(1);
         }
+    };
+
+    const runSourceTest = async (readStreams: string[]) => {
+        const config = getConfig(readStreams);
+
+        for (const readStream of readStreams) {
+            const xGroupResult = await ccClient.xGroup(
+                new SpanContext(),
+                readStream,
+                config.consumerGroup,
+                "0",
+                false
+            );
+
+            expect(xGroupResult).toEqual("OK");
+        }
+
+        for (const readStream of readStreams) {
+            const streamId = await ccClient.xAddObject(
+                new SpanContext(),
+                Foo.name,
+                readStream,
+                RedisMetadata.OutputSinkStreamKey,
+                new Foo("test")
+            );
+
+            expect(streamId).toBeTruthy();
+        }
+
+        let results = await ccClient.xReadGroup(
+            new SpanContext(),
+            config.readStreams,
+            config.consumerGroup,
+            config.consumerId,
+            1,
+            100
+        );
+
+        expect(results.length).toEqual(readStreams.length);
+
+        const app = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(redisStreamSource(config))
+            .done()
+            .dispatch({
+                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
+                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
+                },
+            })
+            .output()
+            .published(new NullOutputSink())
+            .done()
+            .run(ErrorHandlingMode.LogAndContinue);
+
+        setTimeout(() => {
+            app.cancel();
+        }, 2000);
+
+        await app;
+
+        // grab messages on consumers PEL using 0 as an ID - if there are 0 results,
+        // the above Message was ACK'd + handled successfully
+        results = await ccClient.xReadGroup(
+            new SpanContext(),
+            config.readStreams,
+            config.consumerGroup,
+            config.consumerId,
+            1,
+            100,
+            config.readStreams.map(() => "0")
+        );
+
+        expect(results.length).toBe(0);
+    };
+
+    const runIdleMessagesTest = async (readStreams: string[]) => {
+        const config = getConfig(readStreams);
+        const cfg = { ...config, idleTimeout: 0 };
+
+        for (const readStream of readStreams) {
+            const xGroupResult = await ccClient.xGroup(
+                new SpanContext(),
+                readStream,
+                config.consumerGroup,
+                "0",
+                false
+            );
+
+            expect(xGroupResult).toEqual("OK");
+        }
+
+        for (const readStream of readStreams) {
+            const streamId = await ccClient.xAddObject(
+                new SpanContext(),
+                Foo.name,
+                readStream,
+                RedisMetadata.OutputSinkStreamKey,
+                new Foo("test")
+            );
+
+            expect(streamId).toBeTruthy();
+        }
+
+        // This will add the above message to idle-test-consumer's PEL
+        let results = await ccClient.xReadGroup(
+            new SpanContext(),
+            config.readStreams,
+            config.consumerGroup,
+            "idle-test-consumer",
+            1,
+            100
+        );
+
+        expect(results.length).toEqual(readStreams.length);
+
+        const app = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(redisStreamSource(cfg))
+            .done()
+            .dispatch({
+                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
+                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
+                },
+            })
+            .output()
+            .published(new NullOutputSink())
+            .done()
+            .run(ErrorHandlingMode.LogAndContinue);
+
+        setTimeout(() => {
+            app.cancel();
+        }, 2000);
+
+        await app;
+
+        // grab messages on consumers PEL using 0 as an ID - if there are 0 results,
+        // the above Message was ACK'd + handled successfully
+        results = await ccClient.xReadGroup(
+            new SpanContext(),
+            config.readStreams,
+            config.consumerGroup,
+            "idle-test-consumer",
+            1,
+            100,
+            config.readStreams.map(() => "0")
+        );
+
+        expect(results.length).toBe(0);
     };
 
     it("does not get a value for an non-existing key", async () => {
@@ -209,151 +354,26 @@ describe("redis integration test", () => {
     });
 
     it("successfully creates a new consumer group for single stream", async () => {
-        await runConsumerGroupTest();
+        await runConsumerGroupTest([testStreamName]);
     });
 
     it("successfully creates a new consumer group for multiple streams", async () => {
         await runConsumerGroupTest(["myStream1", "myStream2"]);
     });
 
-    it("successfully processes messages from the stream ", async () => {
-        const config = getConfig();
-        const xGroupResult = await ccClient.xGroup(
-            new SpanContext(),
-            testStreamName,
-            config.consumerGroup,
-            "0",
-            false
-        );
-
-        expect(xGroupResult).toEqual("OK");
-
-        const streamId = await ccClient.xAddObject(
-            new SpanContext(),
-            Foo.name,
-            testStreamName,
-            RedisMetadata.OutputSinkStreamKey,
-            new Foo("test")
-        );
-
-        expect(streamId).toBeTruthy();
-
-        let results = await ccClient.xReadGroup(
-            new SpanContext(),
-            config.readStreams,
-            config.consumerGroup,
-            config.consumerId,
-            1,
-            100
-        );
-
-        expect(results.length).toEqual(1);
-
-        const app = Application.create()
-            .logger(new ConsoleLogger())
-            .input()
-            .add(redisStreamSource(config))
-            .done()
-            .dispatch({
-                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
-                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
-                },
-            })
-            .output()
-            .published(new NullOutputSink())
-            .done()
-            .run(ErrorHandlingMode.LogAndContinue);
-
-        setTimeout(() => {
-            app.cancel();
-        }, 2000);
-
-        await app;
-
-        // grab messages on consumers PEL using 0 as an ID - if there are 0 results,
-        // the above Message was ACK'd + handled successfully
-        results = await ccClient.xReadGroup(
-            new SpanContext(),
-            config.readStreams,
-            config.consumerGroup,
-            config.consumerId,
-            1,
-            100,
-            config.readStreams.map(() => "0")
-        );
-
-        expect(results.length).toBe(0);
+    it("successfully processes messages from a single stream", async () => {
+        await runSourceTest([testStreamName]);
     });
 
-    it("successfully processes expired idle messages from the consumer group ", async () => {
-        const config = getConfig();
-        const cfg = { ...config, idleTimeout: 0 };
+    it("successfully processes messages from multiple streams", async () => {
+        await runSourceTest(["myStream1", "myStream2"]);
+    });
 
-        const xGroupResult = await ccClient.xGroup(
-            new SpanContext(),
-            testStreamName,
-            config.consumerGroup,
-            "0",
-            false
-        );
+    it("successfully processes expired idle messages from the consumer group for a single stream ", async () => {
+        await runIdleMessagesTest([testStreamName]);
+    });
 
-        expect(xGroupResult).toEqual("OK");
-
-        const streamId = await ccClient.xAddObject(
-            new SpanContext(),
-            Foo.name,
-            testStreamName,
-            RedisMetadata.OutputSinkStreamKey,
-            new Foo("test")
-        );
-
-        expect(streamId).toBeTruthy();
-
-        // This will add the above message to idle-test-consumer's PEL
-        let results = await ccClient.xReadGroup(
-            new SpanContext(),
-            config.readStreams,
-            config.consumerGroup,
-            "idle-test-consumer",
-            1,
-            100
-        );
-
-        expect(results.length).toEqual(1);
-
-        const app = Application.create()
-            .logger(new ConsoleLogger())
-            .input()
-            .add(redisStreamSource(cfg))
-            .done()
-            .dispatch({
-                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
-                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
-                },
-            })
-            .output()
-            .published(new NullOutputSink())
-            .done()
-            .run(ErrorHandlingMode.LogAndContinue);
-
-        setTimeout(() => {
-            app.cancel();
-        }, 2000);
-
-        await app;
-
-        // grab messages on consumers PEL using 0 as an ID - if there are 0 results,
-        // the above Message was ACK'd + handled successfully
-        results = await ccClient.xReadGroup(
-            new SpanContext(),
-            config.readStreams,
-            config.consumerGroup,
-            "idle-test-consumer",
-            1,
-            100,
-            config.readStreams.map(() => "0")
-        );
-
-        expect(results.length).toBe(0);
+    it("successfully processes expired idle messages from the consumer group for multiple streams", async () => {
+        await runIdleMessagesTest(["myStream1", "myStream2"]);
     });
 });
