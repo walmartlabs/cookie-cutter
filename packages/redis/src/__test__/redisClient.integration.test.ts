@@ -51,14 +51,15 @@ interface RedisClientTypePatch {
 }
 
 describe("redis integration test", () => {
+    const testStreamName = "test-stream";
     const config: IRedisOutputStreamOptions & IRedisInputStreamOptions = {
         host: "localhost",
         port: 6379,
         db: 0,
         encoder: new JsonMessageEncoder(),
         typeMapper: new ObjectNameMessageTypeMapper(),
-        writeStream: "test-stream",
-        readStream: "test-stream",
+        writeStream: testStreamName,
+        readStreams: [testStreamName],
         consumerGroup: "test-consumer-group",
         consumerId: "test-consumer",
         batchSize: 5,
@@ -183,14 +184,14 @@ describe("redis integration test", () => {
 
         await app;
 
-        const consumerGroups = await asyncXInfo(["groups", config.readStream]);
+        const consumerGroups = await asyncXInfo(["groups", config.readStreams]);
         expect(consumerGroups.length).toEqual(1);
     });
 
     it("successfully processes messages from the stream ", async () => {
         const xGroupResult = await ccClient.xGroup(
             new SpanContext(),
-            config.readStream,
+            testStreamName,
             config.consumerGroup,
             "0",
             false
@@ -201,7 +202,7 @@ describe("redis integration test", () => {
         const streamId = await ccClient.xAddObject(
             new SpanContext(),
             Foo.name,
-            config.readStream,
+            testStreamName,
             RedisMetadata.OutputSinkStreamKey,
             new Foo("test")
         );
@@ -210,7 +211,7 @@ describe("redis integration test", () => {
 
         let results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams,
             config.consumerGroup,
             config.consumerId,
             1,
@@ -244,7 +245,7 @@ describe("redis integration test", () => {
         // the above Message was ACK'd + handled successfully
         results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams,
             config.consumerGroup,
             config.consumerId,
             1,
@@ -260,7 +261,7 @@ describe("redis integration test", () => {
 
         const xGroupResult = await ccClient.xGroup(
             new SpanContext(),
-            config.readStream,
+            testStreamName,
             config.consumerGroup,
             "0",
             false
@@ -271,7 +272,7 @@ describe("redis integration test", () => {
         const streamId = await ccClient.xAddObject(
             new SpanContext(),
             Foo.name,
-            config.readStream,
+            testStreamName,
             RedisMetadata.OutputSinkStreamKey,
             new Foo("test")
         );
@@ -281,7 +282,7 @@ describe("redis integration test", () => {
         // This will add the above message to idle-test-consumer's PEL
         let results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams,
             config.consumerGroup,
             "idle-test-consumer",
             1,
@@ -315,7 +316,7 @@ describe("redis integration test", () => {
         // the above Message was ACK'd + handled successfully
         results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams,
             config.consumerGroup,
             "idle-test-consumer",
             1,

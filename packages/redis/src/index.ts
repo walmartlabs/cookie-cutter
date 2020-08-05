@@ -33,7 +33,7 @@ export interface IRedisOptions {
 }
 
 export type IRedisInputStreamOptions = IRedisOptions & {
-    readonly readStream: string;
+    readonly readStreams: string[];
     readonly consumerGroup: string;
     readonly consumerId?: string;
     readonly consumerGroupStartId?: string;
@@ -54,6 +54,7 @@ export const AutoGenerateRedisStreamID = "*";
 
 export type IRedisMessage = IMessage & {
     readonly streamId: string;
+    readonly streamName: string;
 };
 
 export enum RedisStreamMetadata {
@@ -85,7 +86,7 @@ export interface IRedisClient {
     ): Promise<string>;
     xReadGroup(
         context: SpanContext,
-        streamName: string,
+        streamNames: string[],
         consumerGroup: string,
         consumerName: string,
         count: number,
