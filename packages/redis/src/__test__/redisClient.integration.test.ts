@@ -172,11 +172,11 @@ describe("redis integration test", () => {
         // const iterator = redisStreamSource(config).start();
     });
 
-    it("successfully adds a value to configured default redis stream through the output sink", async () => {
+    it("successfully adds a value to default configured redis stream through the output sink", async () => {
         await runSinkTest();
     });
 
-    it("successfully adds a value to a non-default redis stream through the output sink", async () => {
+    it("successfully adds a value to a non-default configured redis stream through the output sink", async () => {
         await runSinkTest("myStream");
     });
 
