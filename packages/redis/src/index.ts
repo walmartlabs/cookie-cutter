@@ -59,6 +59,7 @@ export type IRedisMessage = IMessage & {
 
 export enum RedisStreamMetadata {
     StreamId = "streamId",
+    StreamName = "streamName",
     ConsumerId = "consumerId",
     IdleTime = "idle_time",
     NumberOfDeliveries = "num_of_deliveries",

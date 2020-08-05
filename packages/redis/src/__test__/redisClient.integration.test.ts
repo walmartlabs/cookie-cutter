@@ -29,6 +29,7 @@ import {
     IRedisInputStreamOptions,
     redisStreamSource,
     RedisMetadata,
+    RedisStreamMetadata,
 } from "../index";
 import { promisify } from "util";
 import { RedisClientWithStreamOperations, RawReadGroupResult } from "../RedisProxy";
@@ -96,6 +97,49 @@ describe("redis integration test", () => {
         jest.setTimeout(5000);
     });
 
+    const runSinkTest = async (overriddenStreamName?: string) => {
+        const inputMsg = new Foo("test");
+        const app = Application.create()
+            .logger(new ConsoleLogger())
+            .input()
+            .add(new StaticInputSource([{ type: Foo.name, payload: inputMsg }]))
+            .done()
+            .dispatch({
+                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
+                    ctx.publish(Bar, new Bar(`output for ${msg.text}`), {
+                        [RedisStreamMetadata.StreamName]: overriddenStreamName,
+                    });
+                },
+            })
+            .output()
+            .published(new RedisStreamSink(config))
+            .done()
+            .run(ErrorHandlingMode.LogAndContinue);
+
+        setTimeout(() => app.cancel(), 2000);
+        await app;
+
+        const results = await asyncXRead(["streams", overriddenStreamName || testStreamName, "0"]);
+        expect(results).not.toBeFalsy();
+
+        const storedValue = ((results: RawReadGroupResult): Uint8Array => {
+            // [streamName, [streamValue]]
+            const [, [streamValue]] = results[0];
+
+            // [streamId, keyValues]
+            const [, keyValues] = streamValue;
+
+            // [RedisMetadata.OutputSinkStreamKey, data]
+            const [, data] = keyValues;
+
+            return new Uint8Array(Buffer.from(data, "base64"));
+        })(results);
+
+        const msg = config.encoder.decode(storedValue, Bar.name);
+
+        expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
+    };
+
     it("does not get a value for an non-existing key", async () => {
         const aKey = "key1";
         expect(await ccClient.getObject(new SpanContext(), Uint8Array, aKey)).toBeUndefined();
@@ -128,45 +172,12 @@ describe("redis integration test", () => {
         // const iterator = redisStreamSource(config).start();
     });
 
-    it("successfully adds a value to a redis stream through the output sink", async () => {
-        const inputMsg = new Foo("test");
-        const app = Application.create()
-            .logger(new ConsoleLogger())
-            .input()
-            .add(new StaticInputSource([{ type: Foo.name, payload: inputMsg }]))
-            .done()
-            .dispatch({
-                onFoo: async (msg: Foo, ctx: IDispatchContext) => {
-                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
-                },
-            })
-            .output()
-            .published(new RedisStreamSink(config))
-            .done()
-            .run(ErrorHandlingMode.LogAndContinue);
+    it("successfully adds a value to configured default redis stream through the output sink", async () => {
+        await runSinkTest();
+    });
 
-        setTimeout(() => app.cancel(), 2000);
-        await app;
-
-        const results = await asyncXRead(["streams", testStreamName, "0"]);
-        expect(results).not.toBeFalsy();
-
-        const storedValue = ((results: RawReadGroupResult): Uint8Array => {
-            // [streamName, [streamValue]]
-            const [, [streamValue]] = results[0];
-
-            // [streamId, keyValues]
-            const [, keyValues] = streamValue;
-
-            // [RedisMetadata.OutputSinkStreamKey, data]
-            const [, data] = keyValues;
-
-            return new Uint8Array(Buffer.from(data, "base64"));
-        })(results);
-
-        const msg = config.encoder.decode(storedValue, Bar.name);
-
-        expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
+    it("successfully adds a value to a non-default redis stream through the output sink", async () => {
+        await runSinkTest("myStream");
     });
 
     it("successfully creates a new consumer group", async () => {
