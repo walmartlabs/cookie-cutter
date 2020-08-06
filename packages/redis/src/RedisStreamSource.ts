@@ -166,7 +166,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 );
 
                 // if there are no pending messages return early w/ an empty array
-                if (pendingMessages.length < 1) {
+                if (!pendingMessages.length) {
                     continue;
                 }
 
