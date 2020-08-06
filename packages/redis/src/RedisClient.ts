@@ -367,17 +367,18 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
     public async xReadGroup(
         context: SpanContext,
-        streamNames: string[],
+        streams: { name: string; id?: string }[],
         consumerGroup: string,
         consumerName: string,
         count: number,
-        block: number,
-        ids?: string[]
+        block: number
     ): Promise<IRedisMessage[]> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client xReadGroupObject Call", {
             childOf: context,
         });
+        const streamNames = streams.map((s) => s.name);
+        const ids = streams.map((s) => s.id || ">");
 
         this.spanLogAndSetTags(span, this.xReadGroup.name, this.config.db, ids, streamNames);
 
@@ -392,7 +393,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 String(block),
                 "streams",
                 ...streamNames,
-                ...streamNames.map(() => ">"),
+                ...ids,
             ]);
 
             // if the client returns null, early exit w/ an empty array

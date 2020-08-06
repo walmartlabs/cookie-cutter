@@ -194,7 +194,7 @@ describe("redis integration test", () => {
 
         let results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStreams,
+            config.readStreams.map((name) => ({ name })),
             config.consumerGroup,
             config.consumerId,
             1,
@@ -228,12 +228,11 @@ describe("redis integration test", () => {
         // the above Message was ACK'd + handled successfully
         results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStreams,
+            config.readStreams.map((name) => ({ name, id: "0" })),
             config.consumerGroup,
             config.consumerId,
             1,
-            100,
-            config.readStreams.map(() => "0")
+            100
         );
 
         expect(results.length).toBe(0);
@@ -270,7 +269,7 @@ describe("redis integration test", () => {
         // This will add the above message to idle-test-consumer's PEL
         let results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStreams,
+            config.readStreams.map((name) => ({ name })),
             config.consumerGroup,
             "idle-test-consumer",
             1,
@@ -304,12 +303,11 @@ describe("redis integration test", () => {
         // the above Message was ACK'd + handled successfully
         results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStreams,
+            config.readStreams.map((name) => ({ name, id: "0" })),
             config.consumerGroup,
             "idle-test-consumer",
             1,
-            100,
-            config.readStreams.map(() => "0")
+            100
         );
 
         expect(results.length).toBe(0);

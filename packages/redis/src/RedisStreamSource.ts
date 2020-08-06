@@ -133,12 +133,11 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         try {
             const messages = await this.client.xReadGroup(
                 span.context(),
-                this.config.readStreams,
+                this.config.readStreams.map((name) => ({ name, id: "0" })), // this will retrieve all PEL messages for this consumer
                 this.config.consumerGroup,
                 this.config.consumerId,
                 this.config.batchSize,
-                this.config.blockTimeout,
-                this.config.readStreams.map(() => "0") // this will retrieve all PEL messages for this consumer,
+                this.config.blockTimeout
             );
 
             return messages;
@@ -205,7 +204,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         try {
             const messages = await this.client.xReadGroup(
                 span.context(),
-                this.config.readStreams,
+                this.config.readStreams.map((name) => ({ name })),
                 this.config.consumerGroup,
                 this.config.consumerId,
                 this.config.batchSize,

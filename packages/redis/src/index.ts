@@ -87,12 +87,11 @@ export interface IRedisClient {
     ): Promise<string>;
     xReadGroup(
         context: SpanContext,
-        streamNames: string[],
+        streams: { name: string; id?: string }[],
         consumerGroup: string,
         consumerName: string,
         count: number,
-        block: number,
-        ids?: string[]
+        block: number
     ): Promise<IRedisMessage[]>;
     xGroup(
         context: SpanContext,
