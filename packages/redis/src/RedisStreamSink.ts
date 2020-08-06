@@ -11,7 +11,13 @@ import {
     RetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
 
-import { redisClient, IRedisClient, RedisMetadata, IRedisOutputStreamOptions } from ".";
+import {
+    redisClient,
+    IRedisClient,
+    RedisMetadata,
+    IRedisOutputStreamOptions,
+    RedisStreamMetadata,
+} from ".";
 import { ParserError, AggregateError } from "redis";
 
 export class RedisStreamSink
@@ -29,10 +35,13 @@ export class RedisStreamSink
     async sink(output: IterableIterator<IPublishedMessage>, retry: RetrierContext): Promise<void> {
         try {
             for (const msg of output) {
+                const writeStream =
+                    msg.metadata[RedisStreamMetadata.StreamName] || this.config.writeStream;
+
                 await this.client.xAddObject(
                     msg.spanContext,
                     msg.message.type,
-                    this.config.writeStream,
+                    writeStream,
                     RedisMetadata.OutputSinkStreamKey,
                     msg.message.payload
                 );

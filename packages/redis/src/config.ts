@@ -58,11 +58,11 @@ export class RedisOptions implements IRedisOptions {
         return config.noop();
     }
 
-    @config.field(config.converters.string)
-    public set readStream(_: string) {
+    @config.field(config.converters.listOf(config.converters.string))
+    public set readStreams(_: string[]) {
         config.noop();
     }
-    public get readStream(): string {
+    public get readStreams(): string[] {
         return config.noop();
     }
 

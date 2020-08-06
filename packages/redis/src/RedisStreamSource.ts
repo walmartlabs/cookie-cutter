@@ -42,7 +42,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 this.spanLogAndSetTags(
                     span,
                     this.config.db,
-                    this.config.readStream,
+                    message.streamName,
                     this.config.consumerGroup
                 );
 
@@ -58,7 +58,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
                         await this.client.xAck(
                             span.context(),
-                            this.config.readStream,
+                            message.streamName,
                             this.config.consumerGroup,
                             message.streamId
                         );
@@ -93,18 +93,20 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         this.spanLogAndSetTags(
             span,
             this.config.db,
-            this.config.readStream,
+            this.config.readStreams,
             this.config.consumerGroup
         );
 
         try {
             // Attempt to create stream + consumer group if they don't already exist
-            await this.client.xGroup(
-                span.context(),
-                this.config.readStream,
-                this.config.consumerGroup,
-                this.config.consumerGroupStartId
-            );
+            for (const readStream of this.config.readStreams) {
+                await this.client.xGroup(
+                    span.context(),
+                    readStream,
+                    this.config.consumerGroup,
+                    this.config.consumerGroupStartId
+                );
+            }
         } catch (error) {
             failSpan(span, error);
             throw error;
@@ -125,18 +127,17 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         this.spanLogAndSetTags(
             span,
             this.config.db,
-            this.config.readStream,
+            this.config.readStreams,
             this.config.consumerGroup
         );
         try {
             const messages = await this.client.xReadGroup(
                 span.context(),
-                this.config.readStream,
+                this.config.readStreams.map((name) => ({ name, id: "0" })), // this will retrieve all PEL messages for this consumer
                 this.config.consumerGroup,
                 this.config.consumerId,
                 this.config.batchSize,
-                this.config.blockTimeout,
-                "0" // this will retrieve all PEL messages for this consumer,
+                this.config.blockTimeout
             );
 
             return messages;
@@ -151,35 +152,36 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private async getPendingMessagesForConsumerGroup(): Promise<IRedisMessage[]> {
         const span = this.tracer.startSpan(this.spanOperationName);
 
-        this.spanLogAndSetTags(
-            span,
-            this.config.db,
-            this.config.readStream,
-            this.config.consumerGroup
-        );
         try {
-            const pendingMessages = await this.client.xPending(
-                span.context(),
-                this.config.readStream,
-                this.config.consumerGroup,
-                this.config.batchSize
-            );
+            const messages = new Array<IRedisMessage>();
+            for (const readStream of this.config.readStreams) {
+                this.spanLogAndSetTags(span, this.config.db, readStream, this.config.consumerGroup);
 
-            // if there are no pending messages return early w/ an empty array
-            if (pendingMessages.length < 1) {
-                return [];
+                const pendingMessages = await this.client.xPending(
+                    span.context(),
+                    readStream,
+                    this.config.consumerGroup,
+                    this.config.batchSize
+                );
+
+                // if there are no pending messages return early w/ an empty array
+                if (!pendingMessages.length) {
+                    continue;
+                }
+
+                const pendingMessagesIds = pendingMessages.map(({ streamId }) => streamId);
+
+                const claimedMessages = await this.client.xClaim(
+                    span.context(),
+                    readStream,
+                    this.config.consumerGroup,
+                    this.config.consumerId,
+                    this.config.idleTimeout,
+                    pendingMessagesIds
+                );
+
+                messages.push(...claimedMessages);
             }
-
-            const pendingMessagesIds = pendingMessages.map(({ streamId }) => streamId);
-
-            const messages = await this.client.xClaim(
-                span.context(),
-                this.config.readStream,
-                this.config.consumerGroup,
-                this.config.consumerId,
-                this.config.idleTimeout,
-                pendingMessagesIds
-            );
 
             return messages;
         } catch (error) {
@@ -196,13 +198,13 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         this.spanLogAndSetTags(
             span,
             this.config.db,
-            this.config.readStream,
+            this.config.readStreams,
             this.config.consumerGroup
         );
         try {
             const messages = await this.client.xReadGroup(
                 span.context(),
-                this.config.readStream,
+                this.config.readStreams.map((name) => ({ name })),
                 this.config.consumerGroup,
                 this.config.consumerId,
                 this.config.batchSize,
@@ -221,10 +223,10 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private spanLogAndSetTags(
         span: Span,
         bucket: number,
-        streamName: string,
+        streamNames: string | string[],
         consumerGroup: string
     ): void {
-        span.log({ bucket, streamName, consumerGroup });
+        span.log({ bucket, streamNames, consumerGroup });
 
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
         span.setTag(Tags.COMPONENT, "cookie-cutter-redis");
