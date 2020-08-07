@@ -48,8 +48,6 @@ Application.create()
 
 ## redisStreamSource
 
-The `redisStreamSource` can be used to load or store data directly within a message handler function.
-
 The `redisStreamSource` function creates a new input source that receives messages from Redis. The example below joins the consumer group `consumer-group-1` and receives JSON encoded messages from streams `stream1`, `stream2` and `stream3`.
 
 ```typescript
