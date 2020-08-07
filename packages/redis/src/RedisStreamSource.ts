@@ -64,7 +64,10 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 });
 
                 const messageRef = new MessageRef(
-                    { [RedisStreamMetadata.StreamId]: message.streamId },
+                    {
+                        [RedisStreamMetadata.StreamId]: message.streamId,
+                        [RedisStreamMetadata.StreamName]: message.streamName,
+                    },
                     message,
                     span.context()
                 );
