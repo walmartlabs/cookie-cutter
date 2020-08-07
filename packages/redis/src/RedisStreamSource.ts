@@ -7,17 +7,26 @@ import {
     DefaultComponentContext,
     Lifecycle,
     makeLifecycle,
+    IMetrics,
     failSpan,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
-import { IRedisInputStreamOptions, IRedisClient, IRedisMessage, RedisStreamMetadata } from ".";
+import {
+    IRedisInputStreamOptions,
+    IRedisClient,
+    IRedisMessage,
+    RedisStreamMetadata,
+    RedisMetrics,
+    RedisMetricResult,
+} from ".";
 import { RedisOpenTracingTagKeys, RedisClient } from "./RedisClient";
 
 export class RedisStreamSource implements IInputSource, IRequireInitialization, IDisposable {
     private done: boolean = false;
     private client: Lifecycle<IRedisClient>;
     private tracer: Tracer = DefaultComponentContext.tracer;
+    private metrics: IMetrics;
     private spanOperationName: string = "Redis Input Source Client Call";
 
     constructor(private readonly config: IRedisInputStreamOptions) {}
@@ -35,6 +44,9 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             const newMessages = await this.getNewMessages();
             messages.push(...newMessages);
 
+            this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {
+                stream_names: this.config.readStreams,
+            });
             // Process messages to MessageRefs and yield
             for (const message of messages) {
                 const span = this.tracer.startSpan(this.spanOperationName);
@@ -45,6 +57,11 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     message.streamName,
                     this.config.consumerGroup
                 );
+
+                this.metrics.increment(RedisMetrics.MsgReceived, {
+                    stream_name: message.streamName,
+                    consumer_group: this.config.consumerGroup,
+                });
 
                 const messageRef = new MessageRef(
                     { [RedisStreamMetadata.StreamId]: message.streamId },
@@ -62,8 +79,19 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                             this.config.consumerGroup,
                             message.streamId
                         );
+
+                        this.metrics.increment(RedisMetrics.MsgProcessed, {
+                            stream_name: message.streamName,
+                            consumer_group: this.config.consumerGroup,
+                            result: RedisMetricResult.Success,
+                        });
                     } catch (e) {
                         failSpan(span, e);
+                        this.metrics.increment(RedisMetrics.MsgProcessed, {
+                            stream_name: message.streamName,
+                            consumer_group: this.config.consumerGroup,
+                            result: RedisMetricResult.Error,
+                        });
                     } finally {
                         span.finish();
                     }
@@ -84,6 +112,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
+        this.metrics = context.metrics;
 
         this.client = makeLifecycle(new RedisClient(this.config));
         await this.client.initialize(context);
@@ -164,6 +193,11 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     this.config.batchSize
                 );
 
+                this.metrics.gauge(RedisMetrics.PendingMsgSize, pendingMessages.length, {
+                    stream_name: readStream,
+                    consumer_group: this.config.consumerGroup,
+                });
+
                 // if there are no pending messages return early w/ an empty array
                 if (!pendingMessages.length) {
                     continue;
@@ -181,6 +215,10 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 );
 
                 messages.push(...claimedMessages);
+                this.metrics.increment(RedisMetrics.MsgsClaimed, claimedMessages.length, {
+                    stream_name: readStream,
+                    consumer_group: this.config.consumerGroup,
+                });
             }
 
             return messages;
