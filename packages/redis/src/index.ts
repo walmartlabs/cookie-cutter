@@ -65,6 +65,19 @@ export enum RedisStreamMetadata {
     NumberOfDeliveries = "num_of_deliveries",
 }
 
+export enum RedisMetrics {
+    MsgReceived = "cookie_cutter.redis_consumer.input_msg_received",
+    MsgProcessed = "cookie_cutter.redis_consumer.input_msg_processed",
+    MsgsClaimed = "cookie_cutter.redis_consumer.input_msgs_claimed",
+    PendingMsgSize = "cookie_cutter.redis_consumer.pending_msg_size",
+    IncomingBatchSize = "cookie_cutter.redis_consumer.incoming_batch_size",
+    MsgPublished = "cookie_cutter.redis_producer.msg_published",
+}
+export enum RedisMetricResult {
+    Success = "success",
+    Error = "error",
+}
+
 export interface IRedisClient {
     putObject<T>(
         context: SpanContext,
