@@ -99,7 +99,7 @@ The following metadata is available in the message handler via `ctx.metadata<T>(
 | cookie_cutter.redis_consumer.input_msg_processed | number of messages processed | `increment` | `stream_name`, `consumer_group`, `result`
 | cookie_cutter.redis_consumer.input_msgs_claimed | number of pending messages claimed  | `increment` | `stream_name`, `consumer_group`
 | cookie_cutter.redis_consumer.pending_msg_size | number of pending messages found | `gauge` | `stream_name`, `consumer_group`
-| cookie_cutter.redis_consumer.incoming_batch_size | number of messages received from redis server in a single fetch request | `gauge` | `stream_names`
+| cookie_cutter.redis_consumer.incoming_batch_size | number of messages received from redis server in a single fetch request | `gauge`
 
 ## redisStreamSink
 

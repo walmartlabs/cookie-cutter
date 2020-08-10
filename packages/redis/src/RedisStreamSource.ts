@@ -44,9 +44,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             const newMessages = await this.getNewMessages();
             messages.push(...newMessages);
 
-            this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {
-                stream_names: this.config.readStreams,
-            });
+            this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
             // Process messages to MessageRefs and yield
             for (const message of messages) {
                 const span = this.tracer.startSpan(this.spanOperationName);
