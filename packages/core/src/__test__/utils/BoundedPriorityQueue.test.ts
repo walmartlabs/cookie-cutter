@@ -74,6 +74,7 @@ describe("BoundedPriorityQueue", () => {
         await queue.enqueue(4, 1);
         await queue.enqueue(6, 2);
         queue.close();
+
         const buffer = [];
         for await (const item of queue.iterate()) {
             buffer.push(item);
