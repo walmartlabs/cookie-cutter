@@ -67,12 +67,12 @@ describe("BoundedPriorityQueue", () => {
 
     it("dequeues items with higher priority first", async () => {
         const queue = new BoundedPriorityQueue<number>(2);
-        queue.enqueue(1, 0);
-        queue.enqueue(3, 1);
-        queue.enqueue(5, 2);
-        queue.enqueue(2, 0);
-        queue.enqueue(4, 1);
-        queue.enqueue(6, 2);
+        await queue.enqueue(1, 0);
+        await queue.enqueue(3, 1);
+        await queue.enqueue(5, 2);
+        await queue.enqueue(2, 0);
+        await queue.enqueue(4, 1);
+        await queue.enqueue(6, 2);
         queue.close();
         const buffer = [];
         for await (const item of queue.iterate()) {
