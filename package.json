@@ -7,6 +7,7 @@
     "examples/*"
   ],
   "resolutions": {
+    "lz4": "0.6.3",
     "marked": "^0.7.0"
   },
   "engines": {
