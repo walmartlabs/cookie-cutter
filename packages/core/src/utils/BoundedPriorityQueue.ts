@@ -53,7 +53,7 @@ export class BoundedPriorityQueue<T> {
             return true;
         }
 
-        let whenNotFull = this.whenNotFullList.get(priority);
+        const whenNotFull = this.whenNotFullList.get(priority);
         if (whenNotFull) {
             await whenNotFull.promise;
         }
@@ -62,7 +62,7 @@ export class BoundedPriorityQueue<T> {
         }
 
         if (isNullOrUndefined(whenNotFull)) {
-            whenNotFull = new Future();
+            this.whenNotFullList.set(priority, new Future());
         }
         return this.enqueue(item);
     }
@@ -74,15 +74,14 @@ export class BoundedPriorityQueue<T> {
 
         for (const priority of this.sortedPriorities) {
             const queue = this.queues.get(priority)!;
-            let whenNotFull = this.whenNotFullList.get(priority);
+            const whenNotFull = this.whenNotFullList.get(priority);
             if (queue.length > 0) {
-                let count = queue.length;
                 const item = queue.shift();
                 this.total_count--;
-                if (count-- === this.capacity) {
+                if (queue.length + 1 === this.capacity) {
                     if (whenNotFull) {
                         whenNotFull.resolve();
-                        whenNotFull = undefined;
+                        this.whenNotFullList.delete(priority);
                     }
                 }
                 if (priority > 0 && queue.length === 0) {
