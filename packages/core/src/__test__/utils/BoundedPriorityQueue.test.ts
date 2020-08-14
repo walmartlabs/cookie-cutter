@@ -9,6 +9,19 @@ import { BoundedPriorityQueue } from "../../";
 import { timeout } from "../../utils";
 
 describe("BoundedPriorityQueue", () => {
+    it("enforces capacity per queue priority", async () => {
+        const queue = new BoundedPriorityQueue<number>(2);
+        await expect(queue.enqueue(1)).resolves.toBe(true);
+        await expect(queue.enqueue(2)).resolves.toBe(true);
+        await expect(queue.enqueue(3, 1)).resolves.toBe(true);
+        await expect(queue.enqueue(4, 1)).resolves.toBe(true);
+        await expect(queue.enqueue(5, 2)).resolves.toBe(true);
+        await expect(queue.enqueue(6, 2)).resolves.toBe(true);
+        await expect(timeout(queue.enqueue(7), 50)).rejects.toBeDefined();
+        await expect(timeout(queue.enqueue(8, 1), 50)).rejects.toBeDefined();
+        await expect(timeout(queue.enqueue(9, 2), 50)).rejects.toBeDefined();
+    });
+
     it("blocks adding when capacity is reached", async () => {
         const queue = new BoundedPriorityQueue<number>(3);
         await expect(queue.enqueue(1)).resolves.toBe(true);
@@ -53,14 +66,21 @@ describe("BoundedPriorityQueue", () => {
     });
 
     it("dequeues items with higher priority first", async () => {
-        const queue = new BoundedPriorityQueue<number>(3);
+        const queue = new BoundedPriorityQueue<number>(2);
         await queue.enqueue(1, 0);
-        await queue.enqueue(2, 1);
-        await queue.enqueue(3, 0);
+        await queue.enqueue(3, 1);
+        await queue.enqueue(5, 2);
+        await queue.enqueue(2, 0);
+        await queue.enqueue(4, 1);
+        await queue.enqueue(6, 2);
+        queue.close();
 
-        await expect(queue.dequeue()).resolves.toBe(2);
-        await expect(queue.dequeue()).resolves.toBe(1);
-        await expect(queue.dequeue()).resolves.toBe(3);
+        const buffer = [];
+        for await (const item of queue.iterate()) {
+            buffer.push(item);
+        }
+
+        expect(buffer).toMatchObject([5, 6, 3, 4, 1, 2]);
     });
 
     it("iterates contained items", async () => {
