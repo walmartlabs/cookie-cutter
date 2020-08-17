@@ -130,4 +130,13 @@ export class RedisOptions implements IRedisOptions {
     public get base64Encode(): boolean {
         return config.noop();
     }
+
+    @config.field(config.converters.none)
+    public set password(_: string) {
+        config.noop();
+    }
+
+    public get password(): string {
+        return config.noop();
+    }
 }

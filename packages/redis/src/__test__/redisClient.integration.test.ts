@@ -213,9 +213,6 @@ describe("redis integration test", () => {
                     ctx.publish(Bar, new Bar(`output for ${msg.text}`));
                 },
             })
-            .output()
-            .published(new NullOutputSink())
-            .done()
             .run(ErrorHandlingMode.LogAndContinue);
 
         setTimeout(() => {

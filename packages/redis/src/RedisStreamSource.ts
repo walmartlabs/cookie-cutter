@@ -26,7 +26,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private done: boolean = false;
     private client: Lifecycle<IRedisClient>;
     private tracer: Tracer = DefaultComponentContext.tracer;
-    private metrics: IMetrics;
+    private metrics: IMetrics = DefaultComponentContext.metrics;
     private spanOperationName: string = "Redis Input Source Client Call";
     private lastPendingMessagesCheck: Date | undefined;
 
@@ -34,94 +34,105 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
     public async *start(): AsyncIterableIterator<MessageRef> {
         // On initial start attempt to fetch any messages from this consumers PEL
-        let messages = await this.getPendingMessagesForConsumer();
-
+        // these are messages that were previously read with XReadGroup by
+        // this consumer group, but were not acked. This can happen on service restarts
+        const streams = this.config.readStreams.map((name) => ({ name, id: "0" }));
         while (!this.done) {
-            // Attempt to reclaim any PEL messages that have exceeded this.config.idleTimeout
-            if (
-                this.lastPendingMessagesCheck === undefined ||
-                this.lastPendingMessagesCheck.getTime() + this.config.reclaimMessageInterval <=
-                    Date.now()
-            ) {
-                const pendingMessagesForConsumerGroup = await this.getPendingMessagesForConsumerGroup();
-                messages.push(...pendingMessagesForConsumerGroup);
+            const span = this.tracer.startSpan(this.spanOperationName);
 
-                // don't update if there were pending messages, try again on next
-                // iteration until pending messages are drained
-                if (pendingMessagesForConsumerGroup.length === 0) {
-                    this.lastPendingMessagesCheck = new Date(Date.now());
+            this.spanLogAndSetTags(
+                span,
+                this.config.db,
+                this.config.readStreams,
+                this.config.consumerGroup
+            );
+
+            try {
+                const messages = await this.client.xReadGroup(
+                    span.context(),
+                    streams,
+                    this.config.consumerGroup,
+                    this.config.consumerId,
+                    this.config.batchSize,
+                    this.config.blockTimeout
+                );
+
+                if (messages.length === 0) {
+                    break;
                 }
+
+                this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
+                for (const message of messages) {
+                    // when calling XReadGroup again only get messages after this one
+                    streams.filter((s) => s.name === message.streamName)[0].id = message.streamId;
+                    yield this.createMessageRef(message, span);
+                }
+            } catch (e) {
+                failSpan(span, e);
+                throw e;
+            } finally {
+                span.finish();
             }
+        }
 
-            // Get any new messages in the consumer group to process
-            const newMessages = await this.getNewMessages();
-            messages.push(...newMessages);
+        // Now start processing new messages in the stream that have not been
+        // read before with XReadGroup
+        while (!this.done) {
+            const span = this.tracer.startSpan(this.spanOperationName);
 
-            this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
-            // Process messages to MessageRefs and yield
-            for (const message of messages) {
-                const span = this.tracer.startSpan(this.spanOperationName);
+            this.spanLogAndSetTags(
+                span,
+                this.config.db,
+                this.config.readStreams,
+                this.config.consumerGroup
+            );
 
-                this.spanLogAndSetTags(
-                    span,
-                    this.config.db,
-                    message.streamName,
-                    this.config.consumerGroup
-                );
+            try {
+                let messages = [];
 
-                this.metrics.increment(RedisMetrics.MsgReceived, {
-                    stream_name: message.streamName,
-                    consumer_group: this.config.consumerGroup,
-                });
+                // Once in a while check the PEL list for _other_ consumers
+                // to reclaim orphaned messages. This can happen if a consumer dies
+                // or permanently leaves the consumer groupe (e.g. scaling down to less instances)
+                if (
+                    this.lastPendingMessagesCheck === undefined ||
+                    this.lastPendingMessagesCheck.getTime() + this.config.reclaimMessageInterval <=
+                        Date.now()
+                ) {
+                    messages = await this.getPendingMessagesForConsumerGroup(span);
 
-                const messageRef = new MessageRef(
-                    {
-                        [RedisStreamMetadata.StreamId]: message.streamId,
-                        [RedisStreamMetadata.StreamName]: message.streamName,
-                    },
-                    message,
-                    span.context()
-                );
-
-                messageRef.once("released", async (_, error) => {
-                    try {
-                        if (error) throw error;
-
-                        await this.client.xAck(
-                            span.context(),
-                            message.streamName,
-                            this.config.consumerGroup,
-                            message.streamId
-                        );
-
-                        this.metrics.increment(RedisMetrics.MsgProcessed, {
-                            stream_name: message.streamName,
-                            consumer_group: this.config.consumerGroup,
-                            result: RedisMetricResult.Success,
-                        });
-                    } catch (e) {
-                        failSpan(span, e);
-                        this.metrics.increment(RedisMetrics.MsgProcessed, {
-                            stream_name: message.streamName,
-                            consumer_group: this.config.consumerGroup,
-                            result: RedisMetricResult.Error,
-                        });
-                    } finally {
-                        span.finish();
+                    // don't update if there were pending messages, try again on next
+                    // iteration until pending messages are drained
+                    if (messages.length === 0) {
+                        this.lastPendingMessagesCheck = new Date(Date.now());
                     }
-                });
+                } else {
+                    messages = await this.client.xReadGroup(
+                        span.context(),
+                        this.config.readStreams.map((name) => ({ name })),
+                        this.config.consumerGroup,
+                        this.config.consumerId,
+                        this.config.batchSize,
+                        this.config.blockTimeout
+                    );
+                }
 
-                yield messageRef;
+                if (messages.length > 0) {
+                    this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
+                    for (const message of messages) {
+                        yield this.createMessageRef(message, span);
+                    }
+                }
+            } catch (e) {
+                failSpan(span, e);
+                throw e;
+            } finally {
+                span.finish();
             }
-
-            // Clear messages for next iteration
-            messages = [];
         }
     }
 
     public async stop(): Promise<void> {
         this.done = true;
-        return;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -164,112 +175,92 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         }
     }
 
-    private async getPendingMessagesForConsumer(): Promise<IRedisMessage[]> {
-        const span = this.tracer.startSpan(this.spanOperationName);
+    private createMessageRef(message: IRedisMessage, span: Span): MessageRef {
+        this.metrics.increment(RedisMetrics.MsgReceived, {
+            stream_name: message.streamName,
+            consumer_group: this.config.consumerGroup,
+        });
 
-        this.spanLogAndSetTags(
-            span,
-            this.config.db,
-            this.config.readStreams,
-            this.config.consumerGroup
+        const messageRef = new MessageRef(
+            {
+                [RedisStreamMetadata.StreamId]: message.streamId,
+                [RedisStreamMetadata.StreamName]: message.streamName,
+                [RedisStreamMetadata.ConsumerId]: this.config.consumerGroup,
+            },
+            message,
+            span.context()
         );
-        try {
-            const messages = await this.client.xReadGroup(
-                span.context(),
-                this.config.readStreams.map((name) => ({ name, id: "0" })), // this will retrieve all PEL messages for this consumer
-                this.config.consumerGroup,
-                this.config.consumerId,
-                this.config.batchSize,
-                this.config.blockTimeout
-            );
 
-            return messages;
-        } catch (error) {
-            failSpan(span, error);
-            throw error;
+        messageRef.once("released", (msg, err) => this.onMessageReleased(span, msg, err));
+        return messageRef;
+    }
+
+    private async onMessageReleased(span: Span, msg: MessageRef, err: any) {
+        const streamName = msg.metadata<string>(RedisStreamMetadata.StreamName);
+        const streamId = msg.metadata<string>(RedisStreamMetadata.StreamId);
+        const consumerGroup = msg.metadata<string>(RedisStreamMetadata.ConsumerId);
+
+        try {
+            if (err) throw err;
+
+            await this.client.xAck(span.context(), streamName, consumerGroup, streamId);
+
+            this.metrics.increment(RedisMetrics.MsgProcessed, {
+                stream_name: streamName,
+                consumer_group: consumerGroup,
+                result: RedisMetricResult.Success,
+            });
+        } catch (e) {
+            failSpan(span, e);
+            this.metrics.increment(RedisMetrics.MsgProcessed, {
+                stream_name: streamName,
+                consumer_group: consumerGroup,
+                result: RedisMetricResult.Error,
+            });
         } finally {
             span.finish();
         }
     }
 
-    private async getPendingMessagesForConsumerGroup(): Promise<IRedisMessage[]> {
-        const span = this.tracer.startSpan(this.spanOperationName);
+    private async getPendingMessagesForConsumerGroup(span: Span): Promise<IRedisMessage[]> {
+        const messages = new Array<IRedisMessage>();
+        for (const readStream of this.config.readStreams) {
+            const pendingMessages = await this.client.xPending(
+                span.context(),
+                readStream,
+                this.config.consumerGroup,
+                this.config.batchSize
+            );
 
-        try {
-            const messages = new Array<IRedisMessage>();
-            for (const readStream of this.config.readStreams) {
-                this.spanLogAndSetTags(span, this.config.db, readStream, this.config.consumerGroup);
+            this.metrics.gauge(RedisMetrics.PendingMsgSize, pendingMessages.length, {
+                stream_name: readStream,
+                consumer_group: this.config.consumerGroup,
+            });
 
-                const pendingMessages = await this.client.xPending(
-                    span.context(),
-                    readStream,
-                    this.config.consumerGroup,
-                    this.config.batchSize
-                );
-
-                this.metrics.gauge(RedisMetrics.PendingMsgSize, pendingMessages.length, {
-                    stream_name: readStream,
-                    consumer_group: this.config.consumerGroup,
-                });
-
-                // if there are no pending messages return early w/ an empty array
-                if (!pendingMessages.length) {
-                    continue;
-                }
-
-                const pendingMessagesIds = pendingMessages.map(({ streamId }) => streamId);
-
-                const claimedMessages = await this.client.xClaim(
-                    span.context(),
-                    readStream,
-                    this.config.consumerGroup,
-                    this.config.consumerId,
-                    this.config.idleTimeout,
-                    pendingMessagesIds
-                );
-
-                messages.push(...claimedMessages);
-                this.metrics.increment(RedisMetrics.MsgsClaimed, claimedMessages.length, {
-                    stream_name: readStream,
-                    consumer_group: this.config.consumerGroup,
-                });
+            // if there are no pending messages return early w/ an empty array
+            if (!pendingMessages.length) {
+                continue;
             }
 
-            return messages;
-        } catch (error) {
-            failSpan(span, error);
-            throw error;
-        } finally {
-            span.finish();
-        }
-    }
+            const pendingMessagesIds = pendingMessages.map(({ streamId }) => streamId);
 
-    private async getNewMessages(): Promise<IRedisMessage[]> {
-        const span = this.tracer.startSpan(this.spanOperationName);
-
-        this.spanLogAndSetTags(
-            span,
-            this.config.db,
-            this.config.readStreams,
-            this.config.consumerGroup
-        );
-        try {
-            const messages = await this.client.xReadGroup(
+            const claimedMessages = await this.client.xClaim(
                 span.context(),
-                this.config.readStreams.map((name) => ({ name })),
+                readStream,
                 this.config.consumerGroup,
                 this.config.consumerId,
-                this.config.batchSize,
-                this.config.blockTimeout
+                this.config.idleTimeout,
+                pendingMessagesIds
             );
 
-            return messages;
-        } catch (error) {
-            failSpan(span, error);
-            throw error;
-        } finally {
-            span.finish();
+            messages.push(...claimedMessages);
+            this.metrics.increment(RedisMetrics.MsgsClaimed, claimedMessages.length, {
+                stream_name: readStream,
+                consumer_group: this.config.consumerGroup,
+            });
         }
+
+        return messages;
     }
 
     private spanLogAndSetTags(
