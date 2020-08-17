@@ -9,8 +9,6 @@ import {
     makeLifecycle,
     IMetrics,
     failSpan,
-    ILogger,
-    sleep,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
@@ -29,7 +27,6 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private client: Lifecycle<IRedisClient>;
     private tracer: Tracer = DefaultComponentContext.tracer;
     private metrics: IMetrics = DefaultComponentContext.metrics;
-    private logger: ILogger = DefaultComponentContext.logger;
     private spanOperationName: string = "Redis Input Source Client Call";
     private lastPendingMessagesCheck: Date | undefined;
 
@@ -72,8 +69,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 }
             } catch (e) {
                 failSpan(span, e);
-                this.logger.error("failed to read messages from Redis, retrying in 500ms", e);
-                await sleep(500);
+                throw e;
             } finally {
                 span.finish();
             }
@@ -128,8 +124,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 }
             } catch (e) {
                 failSpan(span, e);
-                this.logger.error("failed to read messages from Redis, retrying in 500ms", e);
-                await sleep(500);
+                throw e;
             } finally {
                 span.finish();
             }
