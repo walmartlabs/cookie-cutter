@@ -1,6 +1,5 @@
 /*
 Copyright (c) Walmart Inc.
-
 This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
@@ -14,9 +13,10 @@ import {
     IRequireInitialization,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
-import { BlobService, createBlobService, ServiceResponse } from "azure-storage";
+import { BlobServiceClient } from "@azure/storage-blob";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { IBlobStorageConfiguration } from "..";
+import { streamToString } from "./helpers";
 
 export enum BlobOpenTracingTagKeys {
     ContainerName = "blob.container_name",
@@ -34,28 +34,20 @@ enum BlobMetricResults {
 }
 
 export class BlobClient implements IRequireInitialization {
-    private blobService: BlobService;
+    private blobService: BlobServiceClient;
     private containerName: string;
     private storageAccount: string;
     private tracer: Tracer;
     private metrics: IMetrics;
     private spanOperationName = "Azure Blob Client Call";
-    private options: BlobService.CreateBlobRequestOptions | undefined;
 
     constructor(config: IBlobStorageConfiguration) {
         this.containerName = config.container;
         this.storageAccount = config.storageAccount;
-        this.blobService = createBlobService(
-            config.storageAccount,
-            config.storageAccessKey,
-            config.url
-        );
+        const connectionString = `DefaultEndpointsProtocol=https;AccountName=${this.storageAccount};AccountKey=${config.storageAccessKey};EndpointSuffix=core.windows.net`;
+        this.blobService = new BlobServiceClient(connectionString);
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
-        // explicitly setting options as undefined to avoid setting it to null which causes issues.
-        this.options = config.requestTimeout
-            ? { timeoutIntervalInMs: config.requestTimeout }
-            : undefined;
     }
 
     public async initialize(context: IComponentContext) {
@@ -66,17 +58,16 @@ export class BlobClient implements IRequireInitialization {
     public async createContainerIfNotExists(context?: SpanContext) {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.createContainerIfNotExists.name);
-        return new Promise<BlobService.ContainerResult>((resolve, reject) => {
-            this.blobService.createContainerIfNotExists(this.containerName, (error, result) => {
-                if (error) {
-                    failSpan(span, error);
-                    span.finish();
-                    return reject(error);
-                }
-                span.finish();
-                return resolve(result);
-            });
-        });
+
+        try {
+            const result = await this.blobService.createContainer(this.containerName);
+            span.finish();
+            return Promise.resolve(result.containerCreateResponse);
+        } catch (err) {
+            failSpan(span, err);
+            span.finish();
+            return Promise.reject(err);
+        }
     }
 
     private generateMetricTags(result: BlobMetricResults, statusCode?: number): IMetricTags {
@@ -99,113 +90,104 @@ export class BlobClient implements IRequireInitialization {
         span.setTag(BlobOpenTracingTagKeys.ContainerName, this.containerName);
     }
 
-    public write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void> {
+    public async write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.write.name);
-        return new Promise<void>((resolve, reject) => {
-            this.blobService.createBlockBlobFromText(
-                this.containerName,
-                blobId,
-                text,
-                this.options,
-                (err: Error, _: BlobService.BlobResult, response: ServiceResponse) => {
-                    const statusCode = response && response.statusCode;
-                    if (statusCode !== undefined) {
-                        span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
-                    }
+        const containerClient = this.blobService.getContainerClient(this.containerName);
+        const blobClient = containerClient.getBlockBlobClient(blobId);
 
-                    if (err) {
-                        this.metrics.increment(
-                            BlobMetrics.Write,
-                            this.generateMetricTags(BlobMetricResults.Error, statusCode)
-                        );
-                        failSpan(span, err);
-                        span.finish();
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            BlobMetrics.Write,
-                            this.generateMetricTags(BlobMetricResults.Success, statusCode)
-                        );
-                        span.finish();
-                        resolve();
-                    }
-                }
+        try {
+            const result = await blobClient.upload(text, Buffer.byteLength(text));
+
+            if (result?._response?.status) {
+                span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
+            }
+            this.metrics.increment(
+                BlobMetrics.Write,
+                this.generateMetricTags(BlobMetricResults.Success, result._response.status)
             );
-        });
+            span.finish();
+            return Promise.resolve();
+        } catch (err) {
+            span.setTag(Tags.HTTP_STATUS_CODE, err.statusCode);
+
+            this.metrics.increment(
+                BlobMetrics.Write,
+                this.generateMetricTags(BlobMetricResults.Error, err.statusCode)
+            );
+            failSpan(span, err);
+            span.finish();
+            return Promise.reject(err);
+        }
     }
 
-    public read(context: SpanContext, blobId: string): Promise<string> {
+    public async read(context: SpanContext, blobId: string): Promise<string> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.read.name);
-        return new Promise<string>((resolve, reject) => {
-            this.blobService.getBlobToText(
-                this.containerName,
-                blobId,
-                undefined,
-                (
-                    err: Error,
-                    text: string,
-                    _: BlobService.BlobResult,
-                    response: ServiceResponse
-                ) => {
-                    const statusCode = response && response.statusCode;
-                    if (statusCode !== undefined) {
-                        span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
-                    }
 
-                    if (err) {
-                        this.metrics.increment(
-                            BlobMetrics.Read,
-                            this.generateMetricTags(BlobMetricResults.Error, statusCode)
-                        );
-                        failSpan(span, err);
-                        span.finish();
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            BlobMetrics.Read,
-                            this.generateMetricTags(BlobMetricResults.Success, statusCode)
-                        );
-                        span.finish();
-                        resolve(text);
-                    }
-                }
+        try {
+            const blobClient = this.blobService
+                .getContainerClient(this.containerName)
+                .getBlobClient(blobId);
+
+            const result = await blobClient.download();
+
+            if (result?._response?.status) {
+                span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
+            }
+
+            this.metrics.increment(
+                BlobMetrics.Read,
+                this.generateMetricTags(BlobMetricResults.Success, result._response.status)
             );
-        });
+            span.finish();
+
+            return Promise.resolve(streamToString(result.readableStreamBody));
+        } catch (err) {
+            span.setTag(Tags.HTTP_STATUS_CODE, err.statusCode);
+
+            this.metrics.increment(
+                BlobMetrics.Read,
+                this.generateMetricTags(BlobMetricResults.Error, err.statusCode)
+            );
+            failSpan(span, err);
+            span.finish();
+            return Promise.reject(err);
+        }
     }
 
-    public exists(context: SpanContext, blobId: string): Promise<boolean> {
+    public async exists(context: SpanContext, blobId: string): Promise<boolean> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.exists.name);
-        return new Promise((resolve, reject) => {
-            this.blobService.doesBlobExist(
-                this.containerName,
-                blobId,
-                (err: Error, result: BlobService.BlobResult, response: ServiceResponse) => {
-                    const statusCode = response && response.statusCode;
-                    if (statusCode !== undefined) {
-                        span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
-                    }
 
-                    if (err) {
-                        this.metrics.increment(
-                            BlobMetrics.Exists,
-                            this.generateMetricTags(BlobMetricResults.Error, statusCode)
-                        );
-                        failSpan(span, err);
-                        span.finish();
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            BlobMetrics.Exists,
-                            this.generateMetricTags(BlobMetricResults.Success, statusCode)
-                        );
-                        span.finish();
-                        resolve(result.exists);
-                    }
+        try {
+            const containers = this.blobService.listContainers();
+            let containerItem = await containers.next();
+            while (!containerItem.done) {
+                if (containerItem?.value.name === blobId) {
+                    this.metrics.increment(
+                        BlobMetrics.Exists,
+                        this.generateMetricTags(BlobMetricResults.Success, 200)
+                    );
+                    return Promise.resolve(true);
                 }
+                containerItem = await containers.next();
+            }
+            this.metrics.increment(
+                BlobMetrics.Exists,
+                this.generateMetricTags(BlobMetricResults.Error, 404)
             );
-        });
+            return Promise.resolve(false);
+        } catch (err) {
+            span.setTag(Tags.HTTP_STATUS_CODE, err.statusCode);
+
+            this.metrics.increment(
+                BlobMetrics.Exists,
+                this.generateMetricTags(BlobMetricResults.Error, err.statusCode)
+            );
+            failSpan(span, err);
+            span.finish();
+            return Promise.reject(err);
+        }
     }
 }
