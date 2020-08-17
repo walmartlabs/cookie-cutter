@@ -11,17 +11,17 @@ import { Future } from ".";
 export class BoundedPriorityQueue<T> {
     private readonly queues: Map<number, T[]>;
     private whenNotEmpty: Future<void>;
-    private whenNotFull: Future<void>;
+    private whenNotFullList: Map<number, Future<void>>;
     private sortedPriorities: number[];
-    private count: number;
+    private total_count: number;
     private closed: boolean;
 
     constructor(private readonly capacity: number) {
-        this.count = 0;
+        this.total_count = 0;
         this.queues = new Map();
         this.sortedPriorities = [];
         this.whenNotEmpty = new Future();
-        this.whenNotFull = new Future();
+        this.whenNotFullList = new Map();
         this.closed = false;
     }
 
@@ -40,48 +40,53 @@ export class BoundedPriorityQueue<T> {
         if (queue === undefined) {
             queue = [];
             this.queues.set(priority, queue);
+            this.whenNotFullList.set(priority, new Future());
             this.sortedPriorities.push(priority);
             this.sortedPriorities = this.sortedPriorities.sort((n1, n2) => Math.sign(n2 - n1));
         }
 
-        if (this.count < this.capacity) {
+        if (queue.length < this.capacity) {
             queue.push(item);
-            if (++this.count === 1) {
+            if (++this.total_count === 1) {
                 this.whenNotEmpty.resolve();
             }
             return true;
         }
 
-        if (this.whenNotFull) {
-            await this.whenNotFull.promise;
+        const whenNotFull = this.whenNotFullList.get(priority);
+        if (whenNotFull) {
+            await whenNotFull.promise;
         }
         if (this.closed) {
             return false;
         }
 
-        if (isNullOrUndefined(this.whenNotFull)) {
-            this.whenNotFull = new Future();
+        if (isNullOrUndefined(whenNotFull)) {
+            this.whenNotFullList.set(priority, new Future());
         }
         return this.enqueue(item);
     }
 
     public async dequeue(): Promise<T> {
-        if (this.closed && this.count === 0) {
+        if (this.closed && this.total_count === 0) {
             throw new Error("queue is closed");
         }
 
         for (const priority of this.sortedPriorities) {
             const queue = this.queues.get(priority)!;
+            const whenNotFull = this.whenNotFullList.get(priority);
             if (queue.length > 0) {
                 const item = queue.shift();
-                if (this.count-- === this.capacity) {
-                    if (this.whenNotFull) {
-                        this.whenNotFull.resolve();
-                        this.whenNotFull = undefined;
+                this.total_count--;
+                if (queue.length + 1 === this.capacity) {
+                    if (whenNotFull) {
+                        whenNotFull.resolve();
+                        this.whenNotFullList.delete(priority);
                     }
                 }
                 if (priority > 0 && queue.length === 0) {
                     this.queues.delete(priority);
+                    this.whenNotFullList.delete(priority);
                     this.sortedPriorities = this.sortedPriorities.filter((p) => p !== priority);
                 }
                 return item;
@@ -97,7 +102,7 @@ export class BoundedPriorityQueue<T> {
     }
 
     public get length(): number {
-        return this.count;
+        return this.total_count;
     }
 
     public close(): void {
@@ -105,8 +110,10 @@ export class BoundedPriorityQueue<T> {
         if (this.whenNotEmpty) {
             this.whenNotEmpty.resolve();
         }
-        if (this.whenNotFull) {
-            this.whenNotFull.resolve();
+        for (const whenNotFull of this.whenNotFullList.values()) {
+            if (whenNotFull) {
+                whenNotFull.resolve();
+            }
         }
     }
 
