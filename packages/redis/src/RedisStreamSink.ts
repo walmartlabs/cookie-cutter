@@ -71,6 +71,7 @@ export class RedisStreamSink
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
+        this.metrics = context.metrics;
         this.client = makeLifecycle(redisClient(this.config));
         await this.client.initialize(context);
     }

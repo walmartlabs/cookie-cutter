@@ -417,7 +417,6 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             this.metrics.increment(RedisMetrics.XReadGroup, {
                 db,
-                streamNames,
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Success,
@@ -429,7 +428,6 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             this.metrics.increment(RedisMetrics.XReadGroup, {
                 db,
-                streamNames,
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,

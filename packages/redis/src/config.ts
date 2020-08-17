@@ -106,6 +106,14 @@ export class RedisOptions implements IRedisOptions {
         return config.noop();
     }
 
+    @config.field(config.converters.timespan)
+    public set reclaimMessageInterval(_: number) {
+        config.noop();
+    }
+    public get reclaimMessageInterval(): number {
+        return config.noop();
+    }
+
     @config.field(config.converters.number)
     public set batchSize(_: number) {
         config.noop();
