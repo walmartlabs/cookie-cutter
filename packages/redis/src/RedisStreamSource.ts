@@ -94,7 +94,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             try {
                 let messages = [];
 
-                // Once in a while check the PEL list for _other_ consumer groups
+                // Once in a while check the PEL list for _other_ consumers
                 // to reclaim orphaned messages. This can happen if a consumer dies
                 // or permanently leaves the consumer groupe (e.g. scaling down to less instances)
                 if (
