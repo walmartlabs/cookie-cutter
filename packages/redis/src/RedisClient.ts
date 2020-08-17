@@ -107,7 +107,12 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         this.typeMapper = config.typeMapper;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
-        this.client = new RedisProxy(this.config.host, this.config.port, this.config.db);
+        this.client = new RedisProxy(
+            this.config.host,
+            this.config.port,
+            this.config.db,
+            this.config.password
+        );
     }
 
     public async dispose(): Promise<void> {
