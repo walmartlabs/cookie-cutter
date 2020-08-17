@@ -34,7 +34,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
     public async *start(): AsyncIterableIterator<MessageRef> {
         // On initial start attempt to fetch any messages from this consumers PEL
-        // these are messages that were previously read with XGroupRead by
+        // these are messages that were previously read with XReadGroup by
         // this consumer group, but were not acked. This can happen on service restarts
         const streams = this.config.readStreams.map((name) => ({ name, id: "0" }));
         while (!this.done) {
@@ -63,7 +63,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
                 this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
                 for (const message of messages) {
-                    // when calling xReadGroup again only get messages after this one
+                    // when calling XReadGroup again only get messages after this one
                     streams.filter((s) => s.name === message.streamName)[0].id = message.streamId;
                     yield this.createMessageRef(message, span);
                 }
