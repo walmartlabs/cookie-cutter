@@ -45,7 +45,12 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             ) {
                 const pendingMessagesForConsumerGroup = await this.getPendingMessagesForConsumerGroup();
                 messages.push(...pendingMessagesForConsumerGroup);
-                this.lastPendingMessagesCheck = new Date(Date.now());
+
+                // don't update if there were pending messages, try again on next
+                // iteration until pending messages are drained
+                if (pendingMessagesForConsumerGroup.length === 0) {
+                    this.lastPendingMessagesCheck = new Date(Date.now());
+                }
             }
 
             // Get any new messages in the consumer group to process
