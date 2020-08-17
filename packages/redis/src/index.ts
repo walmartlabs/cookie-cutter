@@ -40,6 +40,7 @@ export type IRedisInputStreamOptions = IRedisOptions & {
     readonly blockTimeout?: number;
     readonly idleTimeout?: number;
     readonly batchSize?: number;
+    readonly reclaimMessageInterval?: number;
 };
 
 export type IRedisOutputStreamOptions = IRedisOptions & {
@@ -155,6 +156,7 @@ export function redisStreamSource(configuration: IRedisInputStreamOptions): IInp
         batchSize: 10,
         blockTimeout: 100,
         idleTimeout: 30000,
+        reclaimMessageInterval: 60000,
     });
     return new RedisStreamSource(configuration);
 }

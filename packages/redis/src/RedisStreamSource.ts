@@ -28,6 +28,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     private tracer: Tracer = DefaultComponentContext.tracer;
     private metrics: IMetrics;
     private spanOperationName: string = "Redis Input Source Client Call";
+    private lastPendingMessagesCheck: Date | undefined;
 
     constructor(private readonly config: IRedisInputStreamOptions) {}
 
@@ -36,9 +37,16 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         let messages = await this.getPendingMessagesForConsumer();
 
         while (!this.done) {
-            // Attempt to reclaim any PEL messages that have exceeded this.config.idleTimout
-            const pendingMessagesForConsumerGroup = await this.getPendingMessagesForConsumerGroup();
-            messages.push(...pendingMessagesForConsumerGroup);
+            // Attempt to reclaim any PEL messages that have exceeded this.config.idleTimeout
+            if (
+                this.lastPendingMessagesCheck === undefined ||
+                this.lastPendingMessagesCheck.getTime() + this.config.reclaimMessageInterval <=
+                    Date.now()
+            ) {
+                const pendingMessagesForConsumerGroup = await this.getPendingMessagesForConsumerGroup();
+                messages.push(...pendingMessagesForConsumerGroup);
+                this.lastPendingMessagesCheck = new Date(Date.now());
+            }
 
             // Get any new messages in the consumer group to process
             const newMessages = await this.getNewMessages();
