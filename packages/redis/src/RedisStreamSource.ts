@@ -224,7 +224,12 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             this.logger.info(
                 "acking stream=" + streamName + " id=" + streamId + " group=" + consumerGroup
             );
-            const count = await this.client.xAck(span.context(), streamName, consumerGroup, streamId);
+            const count = await this.client.xAck(
+                span.context(),
+                streamName,
+                consumerGroup,
+                streamId
+            );
             if (count !== 1) {
                 throw new Error("xAck returned 0");
             }
