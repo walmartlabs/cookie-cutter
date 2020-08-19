@@ -51,29 +51,11 @@ describe("XReadGroup response parsing", () => {
     it("parses single stream result", () => {
         const data: RawReadGroupResult = [
             [
-                "test-scan",
+                "stream-1",
                 [
-                    [
-                        "1597844517517-0",
-                        [
-                            "redis.stream.key",
-                            '{"transactionStart":{"timestamp":1596935544115,"cartId":"12343","registerId":"50"}}',
-                        ],
-                    ],
-                    [
-                        "1597844517952-0",
-                        [
-                            "redis.stream.key",
-                            '{"transactionStart":{"timestamp":1596935544115,"cartId":"12343","registerId":"50"}}',
-                        ],
-                    ],
-                    [
-                        "1597844518432-0",
-                        [
-                            "redis.stream.key",
-                            '{"transactionStart":{"timestamp":1596935544115,"cartId":"12343","registerId":"50"}}',
-                        ],
-                    ],
+                    ["1597844517517-0", ["redis.stream.key", '{"foo": "bar"}']],
+                    ["1597844517952-0", ["redis.stream.key", '{"fizz": "buzz"}']],
+                    ["1597844518432-0", ["redis.stream.key", '{"bar": "foo"}']],
                 ],
             ],
         ] as any;
