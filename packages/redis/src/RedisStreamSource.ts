@@ -218,10 +218,10 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         const consumerGroup = msg.metadata<string>(RedisStreamMetadata.ConsumerId);
 
         try {
-            this.logger.info("released " + streamId + " with err = " + !isNullOrUndefined(err));
+            this.logger.debug("released " + streamId + " with err = " + !isNullOrUndefined(err));
             if (err) throw err;
 
-            this.logger.info(
+            this.logger.debug(
                 "acking stream=" + streamName + " id=" + streamId + " group=" + consumerGroup
             );
             const count = await this.client.xAck(
@@ -240,7 +240,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 result: RedisMetricResult.Success,
             });
         } catch (e) {
-            this.logger.info("failed to ack " + e);
+            this.logger.debug("failed to ack " + e);
             failSpan(span, e);
             this.metrics.increment(RedisMetrics.MsgProcessed, {
                 stream_name: streamName,
