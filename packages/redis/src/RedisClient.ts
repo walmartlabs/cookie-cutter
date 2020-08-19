@@ -62,24 +62,25 @@ function formatXPendingResults(results: RawPELResult): IPELResult[] {
     }));
 }
 
-function extractXReadGroupValues(
+export function extractXReadGroupValues(
     results: RawReadGroupResult
 ): { streamName: string; streamId: string; data: string; type: string }[] {
     return results.reduce((acc, curr) => {
         // streamName, streamValue
-        const [streamName, [streamValue = []]] = curr;
+        const [streamName, streamValues = []] = curr;
+        for (const streamValue of streamValues) {
+            // [streamId, keyValues]
+            const [streamId, keyValues = []] = streamValue;
 
-        // [streamId, keyValues]
-        const [streamId, keyValues = []] = streamValue;
+            if (keyValues.length < 1) {
+                return acc;
+            }
 
-        if (keyValues.length < 1) {
-            return acc;
+            // [RedisMetadata.OutputSinkStreamKey, serializedProto, type, typeName]
+            const [, data, , type] = keyValues;
+
+            acc.push({ streamName, streamId, data, type });
         }
-
-        // [RedisMetadata.OutputSinkStreamKey, serializedProto, type, typeName]
-        const [, data, , type] = keyValues;
-
-        acc.push({ streamName, streamId, data, type });
         return acc;
     }, []);
 }
