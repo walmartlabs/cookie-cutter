@@ -13,7 +13,7 @@ import {
 import { SpanContext } from "opentracing";
 import * as util from "util";
 import { IRedisOptions } from "..";
-import { RedisClient as CCRedisClient, extractXReadGroupValues } from "../RedisClient";
+import { RedisClient as CCRedisClient, parseRawReadGroupResult } from "../RedisClient";
 import { RawReadGroupResult } from "../RedisProxy";
 (util as any).promisify = jest.fn((fn) => fn);
 const mockOn = jest.fn();
@@ -45,6 +45,7 @@ jest.mock("redis", () => {
     return { RedisClient: mockRedisClient };
 });
 import { RedisClient } from "redis";
+
 const mockClient: jest.Mock = RedisClient as any;
 
 describe("XReadGroup response parsing", () => {
@@ -60,7 +61,7 @@ describe("XReadGroup response parsing", () => {
             ],
         ] as any;
 
-        const messages = extractXReadGroupValues(data);
+        const messages = parseRawReadGroupResult(data);
         expect(messages).toHaveLength(3);
     });
 });
@@ -224,7 +225,13 @@ describe("Unit test the redis client", () => {
         const value = "testValue";
         const type = "testType";
 
-        await redisClient.xAddObject(span, type, "test-stream", key, value);
+        await redisClient.xAddObject(
+            span,
+            type,
+            "test-stream",
+            { payload: key, typeName: "type" },
+            value
+        );
 
         expect(mockXAdd.mock.calls.length).toEqual(1);
     });
@@ -247,8 +254,14 @@ describe("Unit test the redis client", () => {
             throw testError;
         });
 
-        await expect(redisClient.xAddObject(span, type, "test-stream", key, value)).rejects.toThrow(
-            testError
-        );
+        await expect(
+            redisClient.xAddObject(
+                span,
+                type,
+                "test-stream",
+                { payload: key, typeName: "type" },
+                value
+            )
+        ).rejects.toThrow(testError);
     });
 });

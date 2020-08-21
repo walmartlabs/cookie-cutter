@@ -27,14 +27,14 @@ export interface IRedisOptions {
     readonly host: string;
     readonly port: number;
     readonly db: number;
+    readonly password?: string;
     readonly encoder: IMessageEncoder;
     readonly typeMapper: IMessageTypeMapper;
     readonly base64Encode?: boolean;
-    readonly password?: string;
 }
 
 export type IRedisInputStreamOptions = IRedisOptions & {
-    readonly readStreams: string[];
+    readonly streams: string[];
     readonly consumerGroup: string;
     readonly consumerId?: string;
     readonly consumerGroupStartId?: string;
@@ -45,26 +45,20 @@ export type IRedisInputStreamOptions = IRedisOptions & {
 };
 
 export type IRedisOutputStreamOptions = IRedisOptions & {
-    readonly writeStream: string;
+    readonly stream: string;
+    readonly payloadKey?: string;
+    readonly typeNameKey?: string;
 };
 
-export enum RedisMetadata {
-    OutputSinkStreamKey = "redis.stream.key",
-}
-
-export const AutoGenerateRedisStreamID = "*";
-
 export type IRedisMessage = IMessage & {
-    readonly streamId: string;
+    readonly messageId: string;
     readonly streamName: string;
 };
 
 export enum RedisStreamMetadata {
-    StreamId = "streamId",
-    StreamName = "streamName",
-    ConsumerId = "consumerId",
-    IdleTime = "idle_time",
-    NumberOfDeliveries = "num_of_deliveries",
+    MessageId = "redis.messageId",
+    Stream = "redis.stream",
+    ConsumerId = "redis.consumerId",
 }
 
 export enum RedisMetrics {
@@ -75,6 +69,7 @@ export enum RedisMetrics {
     IncomingBatchSize = "cookie_cutter.redis_consumer.incoming_batch_size",
     MsgPublished = "cookie_cutter.redis_producer.msg_published",
 }
+
 export enum RedisMetricResult {
     Success = "success",
     Error = "error",
@@ -96,7 +91,10 @@ export interface IRedisClient {
         context: SpanContext,
         type: string | IClassType<T>,
         streamName: string,
-        key: string,
+        keys: {
+            payload: string;
+            typeName: string;
+        },
         body: T,
         id?: string
     ): Promise<string>;
@@ -119,7 +117,7 @@ export interface IRedisClient {
         context: SpanContext,
         streamName: string,
         consumerGroup: string,
-        streamId: string
+        id: string
     ): Promise<number>;
     xPending(
         context: SpanContext,
@@ -133,7 +131,7 @@ export interface IRedisClient {
         consumerGroup: string,
         consumerName: string,
         minIdleTime: number,
-        streamIds: string[]
+        ids: string[]
     ): Promise<IRedisMessage[]>;
 }
 
@@ -145,7 +143,11 @@ export function redisClient(configuration: IRedisOptions): IRedisClient {
 export function redisStreamSink(
     configuration: IRedisOutputStreamOptions
 ): IOutputSink<IPublishedMessage> {
-    configuration = config.parse(RedisOptions, configuration, { base64Encode: true });
+    configuration = config.parse(RedisOptions, configuration, {
+        base64Encode: true,
+        payloadKey: "redis.stream.key",
+        typeNameKey: "redis.stream.type",
+    });
     return new RedisStreamSink(configuration);
 }
 
@@ -158,6 +160,8 @@ export function redisStreamSource(configuration: IRedisInputStreamOptions): IInp
         blockTimeout: 100,
         idleTimeout: 30000,
         reclaimMessageInterval: 60000,
+        payloadKey: "redis.stream.key",
+        typeNameKey: "redis.stream.type",
     });
     return new RedisStreamSource(configuration);
 }

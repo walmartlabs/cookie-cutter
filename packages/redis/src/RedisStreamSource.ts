@@ -22,7 +22,6 @@ import {
     RedisMetricResult,
 } from ".";
 import { RedisOpenTracingTagKeys, RedisClient } from "./RedisClient";
-import { isNullOrUndefined } from "util";
 
 export class RedisStreamSource implements IInputSource, IRequireInitialization, IDisposable {
     private done: boolean = false;
@@ -39,19 +38,18 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         // On initial start attempt to fetch any messages from this consumers PEL
         // these are messages that were previously read with XReadGroup by
         // this consumer group, but were not acked. This can happen on service restarts
-        const streams = this.config.readStreams.map((name) => ({ name, id: "0" }));
+        let streams = this.config.streams.map((name) => ({ name, id: "0" }));
         while (!this.done) {
             const span = this.tracer.startSpan(this.spanOperationName);
 
             this.spanLogAndSetTags(
                 span,
                 this.config.db,
-                this.config.readStreams,
+                this.config.streams,
                 this.config.consumerGroup
             );
 
             try {
-                this.logger.debug("xReadGroup for pending messages for same consumerId");
                 const messages = await this.client.xReadGroup(
                     span.context(),
                     streams,
@@ -65,11 +63,10 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     break;
                 }
 
-                this.logger.debug("got " + messages.length + " pending messages");
                 this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
                 for (const message of messages) {
                     // when calling XReadGroup again only get messages after this one
-                    streams.filter((s) => s.name === message.streamName)[0].id = message.streamId;
+                    streams.filter((s) => s.name === message.streamName)[0].id = message.messageId;
                     yield this.createMessageRef(message, span);
                 }
             } catch (e) {
@@ -82,13 +79,14 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
         // Now start processing new messages in the stream that have not been
         // read before with XReadGroup
+        streams = this.config.streams.map((name) => ({ name, id: ">" }));
         while (!this.done) {
             const span = this.tracer.startSpan(this.spanOperationName);
 
             this.spanLogAndSetTags(
                 span,
                 this.config.db,
-                this.config.readStreams,
+                this.config.streams,
                 this.config.consumerGroup
             );
 
@@ -99,25 +97,23 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 // to reclaim orphaned messages. This can happen if a consumer dies
                 // or permanently leaves the consumer groupe (e.g. scaling down to less instances)
                 if (
-                    this.lastPendingMessagesCheck === undefined ||
-                    this.lastPendingMessagesCheck.getTime() + this.config.reclaimMessageInterval <=
-                        Date.now()
+                    this.config.reclaimMessageInterval &&
+                    (this.lastPendingMessagesCheck === undefined ||
+                        this.lastPendingMessagesCheck.getTime() +
+                            this.config.reclaimMessageInterval <=
+                            Date.now())
                 ) {
-                    this.logger.debug("xPending for orphaned messages");
                     messages = await this.getPendingMessagesForConsumerGroup(span);
 
                     // don't update if there were pending messages, try again on next
                     // iteration until pending messages are drained
                     if (messages.length === 0) {
                         this.lastPendingMessagesCheck = new Date(Date.now());
-                    } else {
-                        this.logger.debug("got " + messages.length + " orphaned messages");
                     }
                 } else {
-                    this.logger.debug("xReadGroup for new messages");
                     messages = await this.client.xReadGroup(
                         span.context(),
-                        this.config.readStreams.map((name) => ({ name })),
+                        streams,
                         this.config.consumerGroup,
                         this.config.consumerId,
                         this.config.batchSize,
@@ -149,28 +145,20 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         this.metrics = context.metrics;
         this.logger = context.logger;
 
-        this.logger.debug("initializing redis", {
-            idleTimeout: this.config.idleTimeout,
-            blockTimeout: this.config.blockTimeout,
-            reclaimMessageInterval: this.config.reclaimMessageInterval,
-            batchSize: this.config.batchSize,
-        });
-
         this.client = makeLifecycle(new RedisClient(this.config));
         await this.client.initialize(context);
 
         const span = this.tracer.startSpan(this.spanOperationName);
-
         this.spanLogAndSetTags(
             span,
             this.config.db,
-            this.config.readStreams,
+            this.config.streams,
             this.config.consumerGroup
         );
 
         try {
             // Attempt to create stream + consumer group if they don't already exist
-            for (const readStream of this.config.readStreams) {
+            for (const readStream of this.config.streams) {
                 await this.client.xGroup(
                     span.context(),
                     readStream,
@@ -200,8 +188,8 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
         const messageRef = new MessageRef(
             {
-                [RedisStreamMetadata.StreamId]: message.streamId,
-                [RedisStreamMetadata.StreamName]: message.streamName,
+                [RedisStreamMetadata.MessageId]: message.messageId,
+                [RedisStreamMetadata.Stream]: message.streamName,
                 [RedisStreamMetadata.ConsumerId]: this.config.consumerGroup,
             },
             message,
@@ -213,40 +201,31 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
     }
 
     private async onMessageReleased(span: Span, msg: MessageRef, err: Error) {
-        const streamName = msg.metadata<string>(RedisStreamMetadata.StreamName);
-        const streamId = msg.metadata<string>(RedisStreamMetadata.StreamId);
-        const consumerGroup = msg.metadata<string>(RedisStreamMetadata.ConsumerId);
+        const stream = msg.metadata<string>(RedisStreamMetadata.Stream);
+        const messageId = msg.metadata<string>(RedisStreamMetadata.MessageId);
+        const consumerId = msg.metadata<string>(RedisStreamMetadata.ConsumerId);
 
         try {
-            this.logger.debug("released " + streamId + " with err = " + !isNullOrUndefined(err));
             if (err) throw err;
 
-            this.logger.debug(
-                "acking stream=" + streamName + " id=" + streamId + " group=" + consumerGroup
-            );
-            const count = await this.client.xAck(
-                span.context(),
-                streamName,
-                consumerGroup,
-                streamId
-            );
+            const count = await this.client.xAck(span.context(), stream, consumerId, messageId);
             if (count !== 1) {
-                throw new Error("xAck returned 0");
+                throw new Error("not found in PEL");
             }
 
             this.metrics.increment(RedisMetrics.MsgProcessed, {
-                stream_name: streamName,
-                consumer_group: consumerGroup,
+                stream_name: stream,
+                consumer_group: consumerId,
                 result: RedisMetricResult.Success,
             });
         } catch (e) {
-            this.logger.debug("failed to ack " + e);
             failSpan(span, e);
             this.metrics.increment(RedisMetrics.MsgProcessed, {
-                stream_name: streamName,
-                consumer_group: consumerGroup,
+                stream_name: stream,
+                consumer_group: consumerId,
                 result: RedisMetricResult.Error,
             });
+            this.logger.error("failed to ack message", err, { messageId, stream, consumerId });
         } finally {
             span.finish();
         }
@@ -254,7 +233,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
     private async getPendingMessagesForConsumerGroup(span: Span): Promise<IRedisMessage[]> {
         const messages = new Array<IRedisMessage>();
-        for (const readStream of this.config.readStreams) {
+        for (const readStream of this.config.streams) {
             const pendingMessages = await this.client.xPending(
                 span.context(),
                 readStream,
@@ -272,7 +251,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 continue;
             }
 
-            const pendingMessagesIds = pendingMessages.map(({ streamId }) => streamId);
+            const pendingMessagesIds = pendingMessages.map(({ messageId }) => messageId);
 
             const claimedMessages = await this.client.xClaim(
                 span.context(),

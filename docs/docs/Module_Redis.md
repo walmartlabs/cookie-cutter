@@ -89,7 +89,7 @@ The following metadata is available in the message handler via `ctx.metadata<T>(
 | name                     | description |
 |--------------------------|-------------|
 | RedisMetadata.StreamName | the name of the stream the messages was received from |
-| RedisMetadata.StreamId | the stream id of the message that was received |
+| RedisMetadata.MessageId | the id of the message that was received |
 
 ### Metrics
 
