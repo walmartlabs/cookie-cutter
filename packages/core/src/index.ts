@@ -27,7 +27,7 @@ export const Application = {
     create(): IApplicationBuilder {
         // this needs to be loaded first so it can setup
         // wrappers for some node types
-        require("wtfnode");
+        // require("wtfnode");
 
         return new ApplicationBuilder();
     },

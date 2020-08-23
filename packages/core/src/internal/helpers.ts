@@ -36,20 +36,20 @@ export async function* roundRobinIterators<T>(
     yield* pipe.iterate();
 }
 
-export function dumpOpenHandles(logger: ILogger): void {
-    const wtf = require("wtfnode");
-    const util = require("util");
-    wtf.setLogger("info", (...args: any[]) => {
-        logger.info(util.format.apply(util, args));
-    });
-    wtf.setLogger("warn", (...args: any[]) => {
-        logger.warn(util.format.apply(util, args));
-    });
-    wtf.setLogger("error", (...args: any[]) => {
-        logger.error(util.format.apply(util, args));
-    });
+export function dumpOpenHandles(_: ILogger): void {
+    // const wtf = require("wtfnode");
+    // const util = require("util");
+    // wtf.setLogger("info", (...args: any[]) => {
+    //     logger.info(util.format.apply(util, args));
+    // });
+    // wtf.setLogger("warn", (...args: any[]) => {
+    //     logger.warn(util.format.apply(util, args));
+    // });
+    // wtf.setLogger("error", (...args: any[]) => {
+    //     logger.error(util.format.apply(util, args));
+    // });
 
-    wtf.dump();
+    // wtf.dump();
 }
 
 export function isUnderTest(): boolean {
