@@ -97,18 +97,19 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     }
 
     public async dispose() {
-        return this.asyncQuit();
+        await this.asyncQuit();
+        this.client.unref();
     }
 
-    public async set(key: string, value: string | Buffer) {
+    public set(key: string, value: string | Buffer): Promise<"OK"> {
         return this.asyncSet(key, value);
     }
 
-    public async get(key: string): Promise<string | undefined> {
+    public get(key: string): Promise<string | undefined> {
         return this.asyncGet(key);
     }
 
-    public async xadd(
+    public xadd(
         streamName: string,
         id: string,
         ...args: (string | Buffer)[]
@@ -116,23 +117,23 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         return this.asyncXAdd(streamName, id, ...args);
     }
 
-    public async xgroup(args: string[]): Promise<"OK"> {
+    public xgroup(args: string[]): Promise<"OK"> {
         return this.asyncXGroup(args);
     }
 
-    public async xack(streamName: string, consumerGroup: string, id: string): Promise<number> {
+    public xack(streamName: string, consumerGroup: string, id: string): Promise<number> {
         return this.asyncXAck([streamName, consumerGroup, id]);
     }
 
-    public async xreadgroup(args: string[]): Promise<RawReadGroupResult> {
+    public xreadgroup(args: string[]): Promise<RawReadGroupResult> {
         return this.asyncXReadGroup(args);
     }
 
-    public async xpending(args: string[]): Promise<RawPELResult> {
+    public xpending(args: string[]): Promise<RawPELResult> {
         return this.asyncXPending(args);
     }
 
-    public async xclaim(args: string[]): Promise<RawXClaimResult> {
+    public xclaim(args: string[]): Promise<RawXClaimResult> {
         return this.asyncXClaim(args);
     }
 }

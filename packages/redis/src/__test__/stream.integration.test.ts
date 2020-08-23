@@ -8,6 +8,7 @@ import {
     IPublishedMessage,
     MessageRef,
     ErrorHandlingMode,
+    ConsoleLogger,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     redisStreamSink,
@@ -16,6 +17,7 @@ import {
     IRedisInputStreamOptions,
 } from "..";
 import { RepublishMessageDispatcher } from "./utils";
+import { dumpOpenHandles } from "@walmartlabs/cookie-cutter-core/dist/internal/helpers"
 
 const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStreamOptions>][] = [
     // ["base64_on", { base64Encode: true }],
@@ -148,6 +150,8 @@ describe("Redis Streams", () => {
             expect(actualStream1).toMatchObject(expectedStream1);
             expect(actualStream2).toMatchObject(expectedStream2);
             console.log("test done");
+            await sleep(5000);
+            dumpOpenHandles(new ConsoleLogger());
         });
     }
 
