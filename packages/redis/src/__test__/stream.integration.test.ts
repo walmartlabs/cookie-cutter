@@ -40,7 +40,7 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
 
 describe("Redis Streams", () => {
     beforeAll(() => {
-        jest.setTimeout(60000);
+        jest.setTimeout(90000);
     });
 
     for (const [id, cfg] of RoundTripTestConfigurationPermutations) {
@@ -143,7 +143,6 @@ describe("Redis Streams", () => {
 
             expect(actualStream1).toMatchObject(expectedStream1);
             expect(actualStream2).toMatchObject(expectedStream2);
-            await sleep(5000);
         });
     }
 
@@ -216,7 +215,7 @@ describe("Redis Streams", () => {
                 .run(ErrorHandlingMode.LogAndContinue);
 
             while (errors === 0) {
-                await sleep(50);
+                await sleep(500);
             }
 
             consumer.cancel();
@@ -249,7 +248,7 @@ describe("Redis Streams", () => {
                 .run();
 
             while (captured.length !== input.length) {
-                await sleep(50);
+                await sleep(500);
             }
 
             consumer.cancel();
