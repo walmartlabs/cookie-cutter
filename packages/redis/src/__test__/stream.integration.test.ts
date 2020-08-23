@@ -44,7 +44,7 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
 
 describe("Redis Streams", () => {
     beforeAll(() => {
-        jest.setTimeout(30000);
+        jest.setTimeout(60000);
         jest.useFakeTimers();
     });
 
@@ -133,6 +133,7 @@ describe("Redis Streams", () => {
             consumer.cancel();
             await consumer;
             console.log("consumer done");
+            console.log("got", captured.length);
 
             // split into streams as ordering is only guaranteed within the same stream
             // ... all messages that have a field `fizz` are sent to stream2
@@ -154,6 +155,7 @@ describe("Redis Streams", () => {
             expect(actualStream2).toMatchObject(expectedStream2);
             console.log("test done");
             await sleep(5000);
+            console.log("got", captured.length);
             dumpOpenHandles(new ConsoleLogger());
         });
     }
