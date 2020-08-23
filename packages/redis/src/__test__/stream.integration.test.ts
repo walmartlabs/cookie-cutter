@@ -4,7 +4,6 @@ import {
     JsonMessageEncoder,
     ObjectNameMessageTypeMapper,
     CapturingOutputSink,
-    timeout,
     sleep,
     IPublishedMessage,
     MessageRef,
@@ -41,7 +40,7 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
 
 describe("Redis Streams", () => {
     beforeAll(() => {
-        jest.setTimeout(20000);
+        jest.setTimeout(60000);
     });
 
     for (const [id, cfg] of RoundTripTestConfigurationPermutations) {
@@ -119,18 +118,12 @@ describe("Redis Streams", () => {
                 .run();
 
             await producer;
-            await timeout(
-                new Promise(async (resolve) => {
-                    while (captured.length !== input.length) {
-                        await sleep(50);
-                    }
+            while (captured.length !== input.length) {
+                await sleep(50);
+            }
 
-                    consumer.cancel();
-                    await consumer;
-                    resolve();
-                }),
-                50000
-            );
+            consumer.cancel();
+            await consumer;
 
             // split into streams as ordering is only guaranteed within the same stream
             // ... all messages that have a field `fizz` are sent to stream2
@@ -221,18 +214,12 @@ describe("Redis Streams", () => {
                 })
                 .run(ErrorHandlingMode.LogAndContinue);
 
-            await timeout(
-                new Promise(async (resolve) => {
-                    while (errors === 0) {
-                        await sleep(50);
-                    }
+            while (errors === 0) {
+                await sleep(50);
+            }
 
-                    consumer.cancel();
-                    await consumer;
-                    resolve();
-                }),
-                50000
-            );
+            consumer.cancel();
+            await consumer;
 
             // Step 3) start a new consumer, it should receive the same messages again
             const captured: IPublishedMessage[] = [];
@@ -260,18 +247,12 @@ describe("Redis Streams", () => {
                 .done()
                 .run();
 
-            await timeout(
-                new Promise(async (resolve) => {
-                    while (captured.length !== input.length) {
-                        await sleep(50);
-                    }
+            while (captured.length !== input.length) {
+                await sleep(50);
+            }
 
-                    consumer.cancel();
-                    await consumer;
-                    resolve();
-                }),
-                50000
-            );
+            consumer.cancel();
+            await consumer;
 
             const actual = captured.map((m) => m.message);
             const expected = input.map((m) => m.payload);
