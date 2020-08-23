@@ -26,7 +26,7 @@ const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStream
     // ["base64_off", { base64Encode: false }],
     // ["batching_off", { batchSize: 1 }],
     // ["batching_on", { batchSize: 10 }],
-    ["reclaim_on", { reclaimMessageInterval: 500, idleTimeout: 1500 }],
+    ["reclaim_on", { reclaimMessageInterval: 500, idleTimeout: 5000 }],
     // ["reclaim_off", { reclaimMessageInterval: null, idleTimeout: 100 }],
     // ["blocking_low", { blockTimeout: 10 }],
     // ["blocking_high", { blockTimeout: 500 }],
@@ -45,7 +45,6 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
 describe("Redis Streams", () => {
     beforeAll(() => {
         jest.setTimeout(60000);
-        jest.useFakeTimers();
     });
 
     for (const [id, cfg] of RoundTripTestConfigurationPermutations) {

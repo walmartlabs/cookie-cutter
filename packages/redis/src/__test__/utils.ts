@@ -5,14 +5,16 @@ import {
     IMessageDispatcher,
     IMessage,
     IDispatchContext,
+    Lifecycle,
+    makeLifecycle,
 } from "@walmartlabs/cookie-cutter-core";
 
-export function createRedisClient(): IRedisClient {
-    return redisClient({
+export function createRedisClient(): Lifecycle<IRedisClient> {
+    return makeLifecycle(redisClient({
         host: "localhost",
         encoder: new JsonMessageEncoder(),
         typeMapper: new ObjectNameMessageTypeMapper(),
-    });
+    }));
 }
 
 export class RepublishMessageDispatcher implements IMessageDispatcher {
