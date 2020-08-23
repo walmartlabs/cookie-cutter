@@ -118,8 +118,10 @@ describe("Redis Streams", () => {
                 .run();
 
             await producer;
+            console.log("producer done");
             while (captured.length !== input.length) {
-                await sleep(50);
+                await sleep(500);
+                console.log("got", captured.length);
             }
 
             consumer.cancel();
