@@ -43,45 +43,45 @@ matrix:
           env:
             - YARN_GPG=no # Windows build agent will hang without this
 
-        - name: "MSSQL"
-          os: linux
-          node_js: 10
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/mssql && yarn integrate
+        # - name: "MSSQL"
+        #   os: linux
+        #   node_js: 10
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/mssql && yarn integrate
 
-        - name: "AMQP"
-          os: linux
-          node_js: 10
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/amqp && yarn integrate
+        # - name: "AMQP"
+        #   os: linux
+        #   node_js: 10
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/amqp && yarn integrate
 
-        - name: "Kafka"
-          os: linux
-          node_js: 10
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/kafka && yarn integrate
+        # - name: "Kafka"
+        #   os: linux
+        #   node_js: 10
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/kafka && yarn integrate
 
-        - name: "Prometheus"
-          os: linux
-          node_js: 10
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/prometheus && yarn integrate
+        # - name: "Prometheus"
+        #   os: linux
+        #   node_js: 10
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/prometheus && yarn integrate
 
-        - name: "S3"
-          os: linux
-          node_js: 10
-          stage: integrate
-          services:
-            - docker
-          script: yarn build && cd packages/s3 && yarn integrate
+        # - name: "S3"
+        #   os: linux
+        #   node_js: 10
+        #   stage: integrate
+        #   services:
+        #     - docker
+        #   script: yarn build && cd packages/s3 && yarn integrate
 
         - name: "Redis"
           os: linux

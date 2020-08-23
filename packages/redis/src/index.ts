@@ -25,8 +25,8 @@ import { RedisStreamSource } from "./RedisStreamSource";
 
 export interface IRedisOptions {
     readonly host: string;
-    readonly port: number;
-    readonly db: number;
+    readonly port?: number;
+    readonly db?: number;
     readonly password?: string;
     readonly encoder: IMessageEncoder;
     readonly typeMapper: IMessageTypeMapper;
@@ -136,7 +136,11 @@ export interface IRedisClient {
 }
 
 export function redisClient(configuration: IRedisOptions): IRedisClient {
-    configuration = config.parse(RedisOptions, configuration, { base64Encode: true });
+    configuration = config.parse(RedisOptions, configuration, {
+        port: 6379,
+        db: 0,
+        base64Encode: true,
+    });
     return new RedisClient(configuration);
 }
 
@@ -144,6 +148,8 @@ export function redisStreamSink(
     configuration: IRedisOutputStreamOptions
 ): IOutputSink<IPublishedMessage> {
     configuration = config.parse(RedisOptions, configuration, {
+        port: 6379,
+        db: 0,
         base64Encode: true,
         payloadKey: "redis.stream.key",
         typeNameKey: "redis.stream.type",
@@ -153,6 +159,8 @@ export function redisStreamSink(
 
 export function redisStreamSource(configuration: IRedisInputStreamOptions): IInputSource {
     configuration = config.parse(RedisOptions, configuration, {
+        port: 6379,
+        db: 0,
         base64Encode: true,
         consumerId: generate(),
         consumerGroupStartId: "$",
