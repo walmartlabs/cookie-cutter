@@ -31,11 +31,11 @@ const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStream
 ];
 
 const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStreamOptions>][] = [
-    ["dynamic_consumer_id", { reclaimMessageInterval: 50, idleTimeout: 100 }],
-    [
-        "static_consumer_id",
-        { consumerId: "consumer-123", reclaimMessageInterval: null, idleTimeout: 100 },
-    ],
+    // ["dynamic_consumer_id", { reclaimMessageInterval: 50, idleTimeout: 100 }],
+    // [
+    //     "static_consumer_id",
+    //     { consumerId: "consumer-123", reclaimMessageInterval: null, idleTimeout: 100 },
+    // ],
 ];
 
 describe("Redis Streams", () => {
