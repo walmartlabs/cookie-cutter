@@ -93,7 +93,9 @@ export class ApplicationBuilder implements IApplicationBuilder {
         const promise: any = this.internalRun(source, behaviorOrErrorHandling, parallelism);
         promise.cancel = async () => {
             try {
+                this.activeLogger.info("stopping source");
                 await source.stop();
+                this.activeLogger.info("source stopped");
             } catch (e) {
                 this.activeLogger.error("Failed to cancel application", e);
             }
