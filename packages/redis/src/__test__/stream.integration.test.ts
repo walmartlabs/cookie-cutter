@@ -22,7 +22,7 @@ const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStream
     ["base64_off", { base64Encode: false }],
     ["batching_off", { batchSize: 1 }],
     ["batching_on", { batchSize: 10 }],
-    ["reclaim_on", { reclaimMessageInterval: 50, idleTimeout: 100 }],
+    ["reclaim_on", { reclaimMessageInterval: 50, idleTimeout: 500 }],
     ["reclaim_off", { reclaimMessageInterval: null, idleTimeout: 100 }],
     ["blocking_low", { blockTimeout: 10 }],
     ["blocking_high", { blockTimeout: 500 }],
