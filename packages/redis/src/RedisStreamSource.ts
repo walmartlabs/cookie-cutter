@@ -121,6 +121,10 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                         this.config.batchSize,
                         this.config.blockTimeout
                     );
+                    
+                    // this variable ensures that we don't get stuck in the reclaim
+                    // loop due to bad timing ... ensure that at least on XReadGroup
+                    // command gets interleaved after each check for pending messages
                     didXReadGroup = true;
                 }
 
