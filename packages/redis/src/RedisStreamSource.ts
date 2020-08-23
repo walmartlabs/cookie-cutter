@@ -134,12 +134,9 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 span.finish();
             }
         }
-
-        console.log("iterator done");
     }
 
     public async stop(): Promise<void> {
-        console.log("stopping source");
         this.done = true;
     }
 
@@ -179,7 +176,6 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
     public async dispose(): Promise<void> {
         if (this.client) {
-            console.log("disposing client");
             await this.client.dispose();
         }
     }

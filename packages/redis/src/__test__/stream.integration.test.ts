@@ -1,5 +1,3 @@
-require("wtfnode");
-
 import {
     Application,
     StaticInputSource,
@@ -10,7 +8,6 @@ import {
     IPublishedMessage,
     MessageRef,
     ErrorHandlingMode,
-    ConsoleLogger,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     redisStreamSink,
@@ -19,7 +16,6 @@ import {
     IRedisInputStreamOptions,
 } from "..";
 import { RepublishMessageDispatcher } from "./utils";
-import { dumpOpenHandles } from "@walmartlabs/cookie-cutter-core/dist/internal/helpers"
 
 const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStreamOptions>][] = [
     ["base64_on", { base64Encode: true }],
@@ -122,17 +118,12 @@ describe("Redis Streams", () => {
                 .run();
 
             await producer;
-            console.log("producer done");
             while (captured.length !== input.length) {
                 await sleep(500);
-                console.log("got", captured.length);
             }
 
-            console.log("cancelling consumer");
             consumer.cancel();
             await consumer;
-            console.log("consumer done");
-            console.log("got", captured.length);
 
             // split into streams as ordering is only guaranteed within the same stream
             // ... all messages that have a field `fizz` are sent to stream2
@@ -152,10 +143,7 @@ describe("Redis Streams", () => {
 
             expect(actualStream1).toMatchObject(expectedStream1);
             expect(actualStream2).toMatchObject(expectedStream2);
-            console.log("test done");
             await sleep(5000);
-            console.log("got", captured.length);
-            dumpOpenHandles(new ConsoleLogger());
         });
     }
 
