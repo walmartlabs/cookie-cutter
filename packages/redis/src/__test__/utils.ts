@@ -10,11 +10,13 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 
 export function createRedisClient(): Lifecycle<IRedisClient> {
-    return makeLifecycle(redisClient({
-        host: "localhost",
-        encoder: new JsonMessageEncoder(),
-        typeMapper: new ObjectNameMessageTypeMapper(),
-    }));
+    return makeLifecycle(
+        redisClient({
+            host: "localhost",
+            encoder: new JsonMessageEncoder(),
+            typeMapper: new ObjectNameMessageTypeMapper(),
+        })
+    );
 }
 
 export class RepublishMessageDispatcher implements IMessageDispatcher {

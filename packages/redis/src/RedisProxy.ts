@@ -109,11 +109,7 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         return this.asyncGet(key);
     }
 
-    public xadd(
-        streamName: string,
-        id: string,
-        ...args: (string | Buffer)[]
-    ): Promise<string> {
+    public xadd(streamName: string, id: string, ...args: (string | Buffer)[]): Promise<string> {
         return this.asyncXAdd(streamName, id, ...args);
     }
 
