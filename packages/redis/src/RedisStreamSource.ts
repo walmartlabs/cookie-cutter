@@ -134,6 +134,8 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 span.finish();
             }
         }
+
+        this.logger.info("iterator done");
     }
 
     public async stop(): Promise<void> {

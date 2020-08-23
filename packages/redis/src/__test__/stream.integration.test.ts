@@ -124,8 +124,10 @@ describe("Redis Streams", () => {
                 console.log("got", captured.length);
             }
 
+            console.log("cancelling consumer");
             consumer.cancel();
             await consumer;
+            console.log("consumer done");
 
             // split into streams as ordering is only guaranteed within the same stream
             // ... all messages that have a field `fizz` are sent to stream2
@@ -145,6 +147,7 @@ describe("Redis Streams", () => {
 
             expect(actualStream1).toMatchObject(expectedStream1);
             expect(actualStream2).toMatchObject(expectedStream2);
+            console.log("test done");
         });
     }
 
