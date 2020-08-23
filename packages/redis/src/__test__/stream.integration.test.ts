@@ -120,6 +120,9 @@ describe("Redis Streams", () => {
             await producer;
             while (captured.length !== input.length) {
                 await sleep(500);
+                if (id === "reclaim_on") {
+                    console.log("captured", captured.length);
+                }
             }
 
             consumer.cancel();
