@@ -44,7 +44,8 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
 
 describe("Redis Streams", () => {
     beforeAll(() => {
-        jest.setTimeout(60000);
+        jest.setTimeout(30000);
+        jest.useFakeTimers();
     });
 
     for (const [id, cfg] of RoundTripTestConfigurationPermutations) {
