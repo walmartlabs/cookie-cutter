@@ -80,6 +80,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
         // Now start processing new messages in the stream that have not been
         // read before with XReadGroup
         streams = this.config.streams.map((name) => ({ name, id: ">" }));
+        let didXReadGroup = true;
         while (!this.done) {
             const span = this.tracer.startSpan(this.spanOperationName);
 
@@ -97,7 +98,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 // to reclaim orphaned messages. This can happen if a consumer dies
                 // or permanently leaves the consumer groupe (e.g. scaling down to less instances)
                 if (
-                    this.config.reclaimMessageInterval &&
+                    this.config.reclaimMessageInterval && didXReadGroup &&
                     (this.lastPendingMessagesCheck === undefined ||
                         this.lastPendingMessagesCheck.getTime() +
                             this.config.reclaimMessageInterval <=
@@ -109,6 +110,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     // iteration until pending messages are drained
                     if (messages.length === 0) {
                         this.lastPendingMessagesCheck = new Date(Date.now());
+                        didXReadGroup = false;
                     }
                 } else {
                     messages = await this.client.xReadGroup(
@@ -119,6 +121,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                         this.config.batchSize,
                         this.config.blockTimeout
                     );
+                    didXReadGroup = true;
                 }
 
                 if (messages.length > 0) {
