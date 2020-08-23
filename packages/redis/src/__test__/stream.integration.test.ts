@@ -1,3 +1,5 @@
+require("wtfnode");
+
 import {
     Application,
     StaticInputSource,
