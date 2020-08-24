@@ -255,10 +255,10 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             const args: (string | Buffer)[] = [streamName];
             if (!isNullOrUndefined(maxStreamLength)) {
-                args.push(...["MAXLEN", "~", maxStreamLength.toString()]);
+                args.push("MAXLEN", "~", maxStreamLength.toString());
             }
 
-            args.push(...[id, keys.payload, storableValue, keys.typeName, typeName]);
+            args.push(id, keys.payload, storableValue, keys.typeName, typeName);
 
             const insertedId = await this.client.xadd.call(this.client, args);
             this.metrics!.increment(RedisClientMetrics.XAdd, {
