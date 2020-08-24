@@ -29,8 +29,7 @@ export enum RedisClientMetrics {
     XAdd = "cookie_cutter.redis_client.xadd",
     XRead = "cookie_cutter.redis_client.xread",
     XReadGroup = "cookie_cutter.redis_client.xreadgroup",
-    XGroupCreate = "cookie_cutter.redis_client.xgroup.create",
-    XGroupAlreadyExists = "cookie_cutter.redis_client.xgroup.already_exists",
+    XGroup = "cookie_cutter.redis_client.xgroup",
     XAck = "cookie_cutter.redis_client.xack",
     XPending = "cookie_cutter.redis_client.xpending",
     XClaim = "cookie_cutter.redis_client.xclaim",
@@ -303,7 +302,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroupStartId,
                 "mkstream",
             ]);
-            this.metrics.increment(RedisClientMetrics.XGroupCreate, {
+            this.metrics.increment(RedisClientMetrics.XGroup, {
                 db,
                 streamName,
                 consumerGroup,
@@ -313,7 +312,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         } catch (err) {
             const alreadyExistsErrorMessage = "BUSYGROUP Consumer Group name already exists";
             if (suppressAlreadyExistsError && err.message === alreadyExistsErrorMessage) {
-                this.metrics.increment(RedisClientMetrics.XGroupCreate, {
+                this.metrics.increment(RedisClientMetrics.XGroup, {
                     db,
                     streamName,
                     consumerGroup,
@@ -324,7 +323,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             }
 
             failSpan(span, err);
-            this.metrics.increment(RedisClientMetrics.XGroupCreate, {
+            this.metrics.increment(RedisClientMetrics.XGroup, {
                 db,
                 streamName,
                 consumerGroup,
