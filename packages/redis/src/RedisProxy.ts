@@ -12,26 +12,10 @@ import {
     ILogger,
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
-import { ClientOpts, RedisClient, Callback } from "redis";
+import { RedisClient, Callback } from "redis";
 import { promisify } from "util";
 
-export enum RedisLogMessages {
-    Connected = "Redis Connected",
-    Error = "Redis Error",
-    Ready = "Redis Ready",
-    Reconnecting = "Redis Reconnecting",
-    End = "Redis End",
-}
-
-export enum RedisEvents {
-    Connected = "connected",
-    Error = "error",
-    Ready = "ready",
-    Reconnecting = "reconnecting",
-    End = "end",
-}
-
-// [[streamName, [[streamId, [key, value, key, value ...]]]]]
+// [[streamName, [[id, [key, value, key, value ...]]]]]
 export type RawReadGroupResult = [[string, [[string, string[]]]]];
 
 export type RawXClaimResult = [[string, string[]]];
@@ -39,7 +23,7 @@ export type RawXClaimResult = [[string, string[]]];
 export type RawPELResult = [[string, string, number, number]];
 
 interface IRedisCommandPatches {
-    xadd: (key: string, id: string, ...args: (string | Buffer)[] | Callback<string>[]) => boolean;
+    xadd: (args: (string | Buffer)[], cb: Callback<string>) => boolean;
     xreadgroup: (args: string[], cb: Callback<RawReadGroupResult>) => boolean;
     xgroup: (args: string[], cb: Callback<"OK">) => boolean;
     xack: (args: string[], cb: Callback<number>) => boolean;
@@ -50,19 +34,14 @@ interface IRedisCommandPatches {
 
 export type RedisClientWithStreamOperations = RedisClient & IRedisCommandPatches;
 
-export type RedisOptionArray = [string, string];
-
 export class RedisProxy implements IRequireInitialization, IDisposable {
-    private client: RedisClientWithStreamOperations;
-    private logger: ILogger;
+    private readonly client: RedisClientWithStreamOperations;
+
+    private logger: ILogger = DefaultComponentContext.logger;
     private asyncGet: (key: string) => Promise<string>;
     private asyncSet: (key: string, value: string | Buffer) => Promise<"OK">;
     private asyncQuit: () => Promise<any>;
-    private asyncXAdd: (
-        streamName: string,
-        id: string,
-        ...keyValues: (string | Buffer)[]
-    ) => Promise<string>;
+    private asyncXAdd: (args: (string | Buffer)[]) => Promise<string>;
     private asyncXReadGroup: (args: string[]) => Promise<RawReadGroupResult>;
     private asyncXGroup: (args: string[]) => Promise<"OK">;
     private asyncXAck: (args: string[]) => Promise<number>;
@@ -70,33 +49,32 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     private asyncXClaim: (args: string[]) => Promise<RawXClaimResult>;
 
     constructor(host: string, port: number, db: number, password?: string) {
-        this.logger = DefaultComponentContext.logger;
-        const opts: ClientOpts = {
+        // Redis ^2.8.0 includes all of the stream operations available on the the client.
+        // However, @types/redis@2.8 does not currently include typings of the stream operations.
+        // As proof, we can see redis@3.0.0 lists redis-commands@^1.5.0 as a dependency (https://www.runpkg.com/?redis@3.0.2/package.json)
+        // If we then look at redis-commands@1.5.0, we can see the available commands (including all stream commands) in the commands.json file (https://www.runpkg.com/?redis-commands@1.5.0/commands.json)
+        this.client = new RedisClient({
             host,
             port,
             db,
             password,
-        };
-        // Redis ^2.8.0 includes all of the stream operations available on the the client.
-        // However, @types/redis@3.0.2 does not currently include typings of the stream operations.
-        // As proof, we can see redis@2.8.0 lists redis-commands@^1.5.0 as a dependency (https://www.runpkg.com/?redis@3.0.2/package.json)
-        // If we then look at redis-commands@1.5.0, we can see the available commands (including all stream commands) in the commands.json file (https://www.runpkg.com/?redis-commands@1.5.0/commands.json)
-        this.client = new RedisClient(opts) as RedisClientWithStreamOperations;
-        this.client.on(RedisEvents.Connected, () => {
-            this.logger.info(RedisLogMessages.Connected);
+        }) as RedisClientWithStreamOperations;
+
+        this.client.on("connected", () => {
+            this.logger.debug("Connection to Redis established");
         });
-        this.client.on(RedisEvents.Error, (err) => {
-            this.logger.error(RedisLogMessages.Error, err);
+        this.client.on("error", (err) => {
+            this.logger.error("Redis Error", err);
             throw err;
         });
-        this.client.on(RedisEvents.Ready, () => {
-            this.logger.info(RedisLogMessages.Ready);
+        this.client.on("ready", () => {
+            this.logger.debug("Redis connection is ready");
         });
-        this.client.on(RedisEvents.Reconnecting, () => {
-            this.logger.info(RedisLogMessages.Reconnecting);
+        this.client.on("reconnecting", () => {
+            this.logger.debug("Reconnecting to Redis");
         });
-        this.client.on(RedisEvents.End, () => {
-            this.logger.info(RedisLogMessages.End);
+        this.client.on("end", () => {
+            this.logger.debug("Disconnected from Redis");
         });
 
         this.asyncGet = promisify(this.client.get).bind(this.client);
@@ -115,46 +93,39 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     }
 
     public async dispose() {
-        return this.asyncQuit();
+        await this.asyncQuit();
+        this.client.unref();
     }
 
-    public async set(key: string, value: string | Buffer) {
+    public set(key: string, value: string | Buffer): Promise<"OK"> {
         return this.asyncSet(key, value);
     }
 
-    public async get(key: string): Promise<string | undefined> {
+    public get(key: string): Promise<string | undefined> {
         return this.asyncGet(key);
     }
 
-    public async xadd(
-        streamName: string,
-        id: string,
-        ...args: (string | Buffer)[]
-    ): Promise<string> {
-        return this.asyncXAdd(streamName, id, ...args);
+    public xadd(args: (string | Buffer)[]): Promise<string> {
+        return this.asyncXAdd(args);
     }
 
-    public async xgroup(args: string[]): Promise<"OK"> {
+    public xgroup(args: string[]): Promise<"OK"> {
         return this.asyncXGroup(args);
     }
 
-    public async xack(
-        streamName: string,
-        consumerGroup: string,
-        streamId: string
-    ): Promise<number> {
-        return this.asyncXAck([streamName, consumerGroup, streamId]);
+    public xack(streamName: string, consumerGroup: string, id: string): Promise<number> {
+        return this.asyncXAck([streamName, consumerGroup, id]);
     }
 
-    public async xreadgroup(args: string[]): Promise<RawReadGroupResult> {
+    public xreadgroup(args: string[]): Promise<RawReadGroupResult> {
         return this.asyncXReadGroup(args);
     }
 
-    public async xpending(args: string[]): Promise<RawPELResult> {
+    public xpending(args: string[]): Promise<RawPELResult> {
         return this.asyncXPending(args);
     }
 
-    public async xclaim(args: string[]): Promise<RawXClaimResult> {
+    public xclaim(args: string[]): Promise<RawXClaimResult> {
         return this.asyncXClaim(args);
     }
 }

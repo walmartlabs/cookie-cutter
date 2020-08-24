@@ -51,18 +51,18 @@ export class RedisOptions implements IRedisOptions {
     }
 
     @config.field(config.converters.string)
-    public set writeStream(_: string) {
+    public set stream(_: string) {
         config.noop();
     }
-    public get writeStream(): string {
+    public get stream(): string {
         return config.noop();
     }
 
     @config.field(config.converters.listOf(config.converters.string))
-    public set readStreams(_: string[]) {
+    public set streams(_: string[]) {
         config.noop();
     }
-    public get readStreams(): string[] {
+    public get streams(): string[] {
         return config.noop();
     }
 
@@ -137,6 +137,33 @@ export class RedisOptions implements IRedisOptions {
     }
 
     public get password(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set payloadKey(_: string) {
+        config.noop();
+    }
+
+    public get payloadKey(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set typeNameKey(_: string) {
+        config.noop();
+    }
+
+    public get typeNameKey(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set maxStreamLength(_: number) {
+        config.noop();
+    }
+
+    public get maxStreamLength(): number {
         return config.noop();
     }
 }
