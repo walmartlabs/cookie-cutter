@@ -137,11 +137,19 @@ export class QueueClient implements IRequireInitialization {
                 retryOptions: retryOperations,
             };
         }
-        this.queueService = new QueueServiceClient(
-            config.url,
-            sharedKeyCredential,
-            storagePipelineOptions
-        );
+
+        if (config.url) {
+            this.queueService = QueueServiceClient.fromConnectionString(
+                config.url,
+                storagePipelineOptions
+            );
+        } else {
+            this.queueService = new QueueServiceClient(
+                config.url,
+                sharedKeyCredential,
+                storagePipelineOptions
+            );
+        }
     }
 
     public async initialize(context: IComponentContext) {
@@ -226,10 +234,10 @@ export class QueueClient implements IRequireInitialization {
                 const { sizeKb, isTooBig } = this.isMessageTooBig(text);
                 span.log({ sizeKb });
                 if (isTooBig) {
-                    const error: Error & { code?: number } = new Error(
+                    const error: Error & { statusCode?: number } = new Error(
                         `Queue Message too big, must be less than 64kb, is: ${sizeKb}`
                     );
-                    error.code = 413;
+                    error.statusCode = 413;
                     failSpan(span, error);
                     span.finish();
                     this.metrics.increment(
@@ -248,10 +256,10 @@ export class QueueClient implements IRequireInitialization {
                     const result = await queueClient.sendMessage(text, options);
 
                     if (result.errorCode) {
-                        const error: Error & { code?: number } = new Error(
+                        const error: Error & { statusCode?: number } = new Error(
                             "Queue creation failed."
                         );
-                        error.code = parseInt(result.errorCode, 10);
+                        error.statusCode = parseInt(result.errorCode, 10);
                         failSpan(span, error);
                     }
                     span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
@@ -284,7 +292,8 @@ export class QueueClient implements IRequireInitialization {
             });
 
         return attemptWrite().catch((err) => {
-            const isQueueNotFoundError = err && err.code && err.code === QUEUE_NOT_FOUND_ERROR_CODE;
+            const isQueueNotFoundError =
+                err && err.statusCode && err.statusCode === QUEUE_NOT_FOUND_ERROR_CODE;
             if (isQueueNotFoundError && this.config.createQueueIfNotExists) {
                 return this.createQueueIfNotExists(spanContext, queueName).then(attemptWrite);
             } else {
@@ -359,7 +368,12 @@ export class QueueClient implements IRequireInitialization {
 
                 resolve(
                     result.receivedMessageItems.reduce((messages, result) => {
-                        const messageObj = this.config.preprocessor.process(result.messageText);
+                        const messageObj = this.config.preprocessor
+                            ? this.config.preprocessor.process(result.messageText)
+                            : (JSON.parse(result.messageText) as {
+                                  headers: Record<string, string>;
+                                  payload: unknown;
+                              });
 
                         if (
                             !messageObj.headers ||

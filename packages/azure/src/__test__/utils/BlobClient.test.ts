@@ -9,15 +9,17 @@ import { NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext } from "opentracing";
 import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
-import { BlobServiceClient } from "@azure/storage-blob";
+import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 import { streamToString } from "../../utils/helpers";
 
 const MockBlobServiceClient: jest.Mock = BlobServiceClient as any;
+const MockStorageSharedKeyCredential: jest.Mock = StorageSharedKeyCredential as any;
 const MockStreamToString: jest.Mock = streamToString as any;
 
 jest.mock("@azure/storage-blob", () => {
     return {
         BlobServiceClient: jest.fn().mockImplementation(() => jest.fn()),
+        StorageSharedKeyCredential: jest.fn().mockImplementation(() => jest.fn()),
     };
 });
 
@@ -43,7 +45,6 @@ describe("BlobClient", () => {
 
     describe("Proceeds with expected failure", () => {
         const errorMessage = "A DEFINED VALUE";
-        const err = new Error(errorMessage);
 
         beforeAll(() => {
             MockBlobServiceClient.mockImplementation(() => {
@@ -67,14 +68,11 @@ describe("BlobClient", () => {
                             }),
                         };
                     }),
-                    listContainers: jest.fn(() => {
-                        return {
-                            next: jest.fn(() => {
-                                throw new Error("A DEFINED VALUE");
-                            }),
-                        };
-                    }),
                 };
+            });
+
+            MockStorageSharedKeyCredential.mockImplementation(() => {
+                return "credential";
             });
         });
 
@@ -91,8 +89,28 @@ describe("BlobClient", () => {
         });
 
         it("rejects on error from azure-storage for 'exists'", async () => {
+            MockBlobServiceClient.mockImplementation(() => {
+                return {
+                    getContainerClient: jest.fn(() => {
+                        return {
+                            getBlobClient: jest.fn(() => {
+                                return {
+                                    exists: jest.fn(() => failure),
+                                };
+                            }),
+                        };
+                    }),
+                };
+            });
+
             const blobClient = new BlobClient(config);
-            await expect(blobClient.exists(span.context(), "BlobID")).rejects.toMatchObject(err);
+
+            expect.assertions(1);
+            try {
+                await blobClient.exists(span.context(), "BlobID");
+            } catch (error) {
+                expect(error).toBe(errorMessage);
+            }
         });
     });
 
@@ -138,18 +156,6 @@ describe("BlobClient", () => {
                             }),
                         };
                     }),
-                    listContainers: jest.fn(() => {
-                        return {
-                            next: jest.fn(() => {
-                                return {
-                                    value: {
-                                        name: "BlobID",
-                                    },
-                                    done: false,
-                                };
-                            }),
-                        };
-                    }),
                 };
             });
         });
@@ -189,6 +195,20 @@ describe("BlobClient", () => {
         });
 
         it("performs a successful 'exists'", async () => {
+            MockBlobServiceClient.mockImplementation(() => {
+                return {
+                    getContainerClient: jest.fn(() => {
+                        return {
+                            getBlobClient: jest.fn(() => {
+                                return {
+                                    exists: jest.fn(() => Promise.resolve(true)),
+                                };
+                            }),
+                        };
+                    }),
+                };
+            });
+
             const blobClient = new BlobClient(config);
             await expect(blobClient.exists(span.context(), "BlobID")).resolves.toEqual(true);
         });

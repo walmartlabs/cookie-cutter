@@ -164,7 +164,7 @@ describe("QueueClient", () => {
         });
 
         it("should retry on 404s if configured to", async () => {
-            const error = new Error("something bad happend") && { code: 404 };
+            const error = new Error("something bad happend") && { statusCode: 404 };
             sendMessage.mockImplementationOnce(() => {
                 return Promise.reject(error);
             });
@@ -181,18 +181,18 @@ describe("QueueClient", () => {
             expect(result).toBeDefined();
         });
         it("should not retry on 404s if not configured to", async () => {
-            const error = new Error("something bad happend") && { code: 404 };
+            const error = new Error("something bad happend") && { statusCode: 404 };
             sendMessage.mockImplementationOnce(() => {
                 return Promise.reject(error);
             });
             const result = client.write(span.context(), payload, headers);
-            await expect(result).rejects.toMatchObject({ code: 404 });
+            await expect(result).rejects.toMatchObject({ statusCode: 404 });
             expect(create).not.toBeCalled();
             expect(sendMessage).toBeCalledTimes(1);
         });
 
         it("should not retry on other errors (even if configured to)", async () => {
-            const error = new Error("something bad happend") && { code: 401 };
+            const error = new Error("something bad happend") && { statusCode: 401 };
             sendMessage.mockImplementationOnce(() => {
                 return Promise.reject(error);
             });
@@ -201,7 +201,7 @@ describe("QueueClient", () => {
                 createQueueIfNotExists: true,
             });
             const result = configuredClient.write(span.context(), payload, headers);
-            await expect(result).rejects.toMatchObject({ code: 401 });
+            await expect(result).rejects.toMatchObject({ statusCode: 401 });
             expect(create).not.toBeCalled();
             expect(sendMessage).toBeCalledTimes(1);
         });

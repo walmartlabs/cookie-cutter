@@ -13,7 +13,7 @@ import {
     IRequireInitialization,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
-import { BlobServiceClient } from "@azure/storage-blob";
+import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { IBlobStorageConfiguration } from "..";
 import { streamToString } from "./helpers";
@@ -42,10 +42,21 @@ export class BlobClient implements IRequireInitialization {
     private spanOperationName = "Azure Blob Client Call";
 
     constructor(config: IBlobStorageConfiguration) {
+        if (config.url) {
+            this.blobService = BlobServiceClient.fromConnectionString(config.url);
+        } else {
+            const sharedKeyCredential = new StorageSharedKeyCredential(
+                this.storageAccount,
+                config.storageAccessKey
+            );
+            this.blobService = new BlobServiceClient(
+                `https://${this.storageAccount}.blob.core.windows.net`,
+                sharedKeyCredential
+            );
+        }
+
         this.containerName = config.container;
         this.storageAccount = config.storageAccount;
-        const connectionString = `DefaultEndpointsProtocol=https;AccountName=${this.storageAccount};AccountKey=${config.storageAccessKey};EndpointSuffix=core.windows.net`;
-        this.blobService = new BlobServiceClient(connectionString);
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
     }
@@ -58,12 +69,16 @@ export class BlobClient implements IRequireInitialization {
     public async createContainerIfNotExists(context?: SpanContext) {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.createContainerIfNotExists.name);
-
         try {
             const result = await this.blobService.createContainer(this.containerName);
             span.finish();
             return Promise.resolve(result.containerCreateResponse);
         } catch (err) {
+            // if the container exists, do not throw an error
+            if (err.statusCode === 409) {
+                span.finish();
+                return Promise.resolve();
+            }
             failSpan(span, err);
             span.finish();
             return Promise.reject(err);
@@ -161,23 +176,17 @@ export class BlobClient implements IRequireInitialization {
         this.spanLogAndSetTags(span, this.exists.name);
 
         try {
-            const containers = this.blobService.listContainers();
-            let containerItem = await containers.next();
-            while (!containerItem.done) {
-                if (containerItem?.value.name === blobId) {
-                    this.metrics.increment(
-                        BlobMetrics.Exists,
-                        this.generateMetricTags(BlobMetricResults.Success, 200)
-                    );
-                    return Promise.resolve(true);
-                }
-                containerItem = await containers.next();
-            }
+            const blobClient = this.blobService
+                .getContainerClient(this.containerName)
+                .getBlobClient(blobId);
+            const exists = await blobClient.exists();
+
             this.metrics.increment(
                 BlobMetrics.Exists,
-                this.generateMetricTags(BlobMetricResults.Error, 404)
+                this.generateMetricTags(BlobMetricResults.Success, 200)
             );
-            return Promise.resolve(false);
+
+            return Promise.resolve(exists);
         } catch (err) {
             span.setTag(Tags.HTTP_STATUS_CODE, err.statusCode);
 
