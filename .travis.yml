@@ -43,6 +43,14 @@ matrix:
           env:
             - YARN_GPG=no # Windows build agent will hang without this
 
+        - name: "AZURE"
+          os: windows
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/azure && yarn integrate
+
         - name: "MSSQL"
           os: linux
           node_js: 10
