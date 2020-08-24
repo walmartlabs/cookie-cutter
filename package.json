@@ -2,7 +2,9 @@
   "private": true,
   "workspaces": [
     "packages/core",
-    "packages/redis"
+    "packages/*",
+    "docs/website",
+    "examples/*"
   ],
   "resolutions": {
     "lz4": "0.6.3",
