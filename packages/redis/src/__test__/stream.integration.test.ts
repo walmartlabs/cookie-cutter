@@ -8,16 +8,23 @@ import {
     IPublishedMessage,
     MessageRef,
     ErrorHandlingMode,
+    IMetrics,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     redisStreamSink,
     redisStreamSource,
     RedisStreamMetadata,
     IRedisInputStreamOptions,
+    IRedisOutputStreamOptions,
 } from "..";
 import { RepublishMessageDispatcher } from "./utils";
+import { RedisClientMetrics } from "../RedisClient";
+import { RedisMetrics } from "../RedisStreamSource";
 
-const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStreamOptions>][] = [
+const RoundTripTestConfigurationPermutations: [
+    string,
+    Partial<IRedisInputStreamOptions & IRedisOutputStreamOptions>
+][] = [
     ["base64_on", { base64Encode: true }],
     ["base64_off", { base64Encode: false }],
     ["batching_off", { batchSize: 1 }],
@@ -27,6 +34,7 @@ const RoundTripTestConfigurationPermutations: [string, Partial<IRedisInputStream
     ["blocking_low", { blockTimeout: 10 }],
     ["blocking_high", { blockTimeout: 500 }],
     ["with_consumer_id", { consumerId: "consumer-1234" }],
+    ["with_max_stream_length", { maxStreamLength: 100 }],
     ["default", {}],
 ];
 
@@ -92,6 +100,12 @@ describe("Redis Streams", () => {
                 .done()
                 .run();
 
+            const metrics: IMetrics = {
+                increment: jest.fn(),
+                gauge: jest.fn(),
+                timing: jest.fn(),
+            };
+
             const captured: IPublishedMessage[] = [];
             const consumer = Application.create()
                 .input()
@@ -111,6 +125,7 @@ describe("Redis Streams", () => {
                     })
                 )
                 .done()
+                .metrics(metrics)
                 .dispatch(new RepublishMessageDispatcher())
                 .output()
                 .published(new CapturingOutputSink(captured))
@@ -143,6 +158,32 @@ describe("Redis Streams", () => {
 
             expect(actualStream1).toMatchObject(expectedStream1);
             expect(actualStream2).toMatchObject(expectedStream2);
+
+            expect(metrics.increment).toHaveBeenCalledWith(
+                RedisClientMetrics.XAck,
+                expect.anything()
+            );
+            expect(metrics.increment).toHaveBeenCalledWith(
+                RedisClientMetrics.XReadGroup,
+                expect.anything()
+            );
+            expect(metrics.increment).toHaveBeenCalledWith(
+                RedisClientMetrics.XGroupCreate,
+                expect.anything()
+            );
+            expect(metrics.increment).toHaveBeenCalledWith(
+                RedisMetrics.MsgReceived,
+                expect.anything()
+            );
+            expect(metrics.increment).toHaveBeenCalledWith(
+                RedisMetrics.MsgProcessed,
+                expect.anything()
+            );
+            expect(metrics.gauge).toHaveBeenCalledWith(
+                RedisMetrics.IncomingBatchSize,
+                expect.anything(),
+                expect.anything()
+            );
         });
     }
 
@@ -221,6 +262,12 @@ describe("Redis Streams", () => {
             consumer.cancel();
             await consumer;
 
+            const metrics: IMetrics = {
+                increment: jest.fn(),
+                gauge: jest.fn(),
+                timing: jest.fn(),
+            };
+
             // Step 3) start a new consumer, it should receive the same messages again
             const captured: IPublishedMessage[] = [];
             consumer = Application.create()
@@ -241,6 +288,7 @@ describe("Redis Streams", () => {
                     })
                 )
                 .done()
+                .metrics(metrics)
                 .dispatch(new RepublishMessageDispatcher())
                 .output()
                 .published(new CapturingOutputSink(captured))
@@ -257,6 +305,25 @@ describe("Redis Streams", () => {
             const actual = captured.map((m) => m.message);
             const expected = input.map((m) => m.payload);
             expect(actual).toMatchObject(expected);
+
+            // if the consumer id is not stable the client is supposed
+            // to "steal" messages from old/dead consumers with
+            // the XPending + XClaim mechanism
+            if (id === "dynamic_consumer_id") {
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    RedisClientMetrics.XPending,
+                    expect.anything()
+                );
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    RedisClientMetrics.XClaim,
+                    expect.anything()
+                );
+                expect(metrics.increment).toHaveBeenCalledWith(
+                    RedisMetrics.MsgsClaimed,
+                    expect.anything(),
+                    expect.anything()
+                );
+            }
         });
     }
 });

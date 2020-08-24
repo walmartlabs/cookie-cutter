@@ -14,6 +14,7 @@ import {
     IPublishedMessage,
     IInputSource,
     IMessage,
+    ObjectNameMessageTypeMapper,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { generate } from "shortid";
@@ -29,7 +30,7 @@ export interface IRedisOptions {
     readonly db?: number;
     readonly password?: string;
     readonly encoder: IMessageEncoder;
-    readonly typeMapper: IMessageTypeMapper;
+    readonly typeMapper?: IMessageTypeMapper;
     readonly base64Encode?: boolean;
 }
 
@@ -46,6 +47,7 @@ export type IRedisInputStreamOptions = IRedisOptions & {
 
 export type IRedisOutputStreamOptions = IRedisOptions & {
     readonly stream: string;
+    readonly maxStreamLength?: number;
     readonly payloadKey?: string;
     readonly typeNameKey?: string;
 };
@@ -59,20 +61,6 @@ export enum RedisStreamMetadata {
     MessageId = "redis.messageId",
     Stream = "redis.stream",
     ConsumerId = "redis.consumerId",
-}
-
-export enum RedisMetrics {
-    MsgReceived = "cookie_cutter.redis_consumer.input_msg_received",
-    MsgProcessed = "cookie_cutter.redis_consumer.input_msg_processed",
-    MsgsClaimed = "cookie_cutter.redis_consumer.input_msgs_claimed",
-    PendingMsgSize = "cookie_cutter.redis_consumer.pending_msg_size",
-    IncomingBatchSize = "cookie_cutter.redis_consumer.incoming_batch_size",
-    MsgPublished = "cookie_cutter.redis_producer.msg_published",
-}
-
-export enum RedisMetricResult {
-    Success = "success",
-    Error = "error",
 }
 
 export interface IRedisClient {
@@ -96,7 +84,8 @@ export interface IRedisClient {
             typeName: string;
         },
         body: T,
-        id?: string
+        id?: string,
+        maxStreamLength?: number
     ): Promise<string>;
     xReadGroup(
         context: SpanContext,
@@ -140,6 +129,7 @@ export function redisClient(configuration: IRedisOptions): IRedisClient {
         port: 6379,
         db: 0,
         base64Encode: true,
+        typeMapper: new ObjectNameMessageTypeMapper(),
     });
     return new RedisClient(configuration);
 }
@@ -153,6 +143,7 @@ export function redisStreamSink(
         base64Encode: true,
         payloadKey: "redis.stream.key",
         typeNameKey: "redis.stream.type",
+        typeMapper: new ObjectNameMessageTypeMapper(),
     });
     return new RedisStreamSink(configuration);
 }
@@ -170,6 +161,7 @@ export function redisStreamSource(configuration: IRedisInputStreamOptions): IInp
         reclaimMessageInterval: 60000,
         payloadKey: "redis.stream.key",
         typeNameKey: "redis.stream.type",
+        typeMapper: new ObjectNameMessageTypeMapper(),
     });
     return new RedisStreamSource(configuration);
 }

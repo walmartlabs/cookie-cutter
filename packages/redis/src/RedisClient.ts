@@ -19,11 +19,11 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { isString } from "util";
+import { isString, isNullOrUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 import { RedisProxy, RawReadGroupResult, RawPELResult, RawXClaimResult } from "./RedisProxy";
 
-enum RedisMetrics {
+export enum RedisClientMetrics {
     Get = "cookie_cutter.redis_client.get",
     Set = "cookie_cutter.redis_client.set",
     XAdd = "cookie_cutter.redis_client.xadd",
@@ -169,14 +169,14 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         const storableValue = this.config.base64Encode ? buf.toString("base64") : buf;
         try {
             await this.client.set(key, storableValue);
-            this.metrics.increment(RedisMetrics.Set, {
+            this.metrics.increment(RedisClientMetrics.Set, {
                 type,
                 db,
                 result: RedisMetricResults.Success,
             });
         } catch (e) {
             failSpan(span, e);
-            this.metrics.increment(RedisMetrics.Set, {
+            this.metrics.increment(RedisClientMetrics.Set, {
                 type,
                 db,
                 result: RedisMetricResults.Error,
@@ -210,7 +210,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 data = msg.payload;
             }
 
-            this.metrics.increment(RedisMetrics.Get, {
+            this.metrics.increment(RedisClientMetrics.Get, {
                 type,
                 db,
                 result: RedisMetricResults.Success,
@@ -218,7 +218,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             return data;
         } catch (e) {
             failSpan(span, e);
-            this.metrics.increment(RedisMetrics.Get, {
+            this.metrics.increment(RedisClientMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
                 error: e,
@@ -238,7 +238,8 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             typeName: string;
         },
         body: T,
-        id: string = "*"
+        id: string = "*",
+        maxStreamLength?: number
     ): Promise<string> {
         const db = this.config.db;
         const span = this.tracer!.startSpan("Redis Client xAddObject Call", { childOf: context });
@@ -253,15 +254,15 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             const buf = Buffer.from(encodedBody);
             const storableValue = this.config.base64Encode ? buf.toString("base64") : buf;
 
-            const insertedId = await this.client.xadd(
-                streamName,
-                id,
-                keys.payload,
-                storableValue,
-                keys.typeName,
-                typeName
-            );
-            this.metrics!.increment(RedisMetrics.XAdd, {
+            const args: (string | Buffer)[] = [streamName];
+            if (!isNullOrUndefined(maxStreamLength)) {
+                args.push(...["MAXLEN", "~", maxStreamLength.toString()]);
+            }
+
+            args.push(...[id, keys.payload, storableValue, keys.typeName, typeName]);
+
+            const insertedId = await this.client.xadd.call(this.client, args);
+            this.metrics!.increment(RedisClientMetrics.XAdd, {
                 type,
                 db,
                 streamName,
@@ -271,7 +272,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             return insertedId;
         } catch (e) {
             failSpan(span, e);
-            this.metrics!.increment(RedisMetrics.XAdd, {
+            this.metrics!.increment(RedisClientMetrics.XAdd, {
                 type,
                 db,
                 streamName,
@@ -302,7 +303,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroupStartId,
                 "mkstream",
             ]);
-            this.metrics.increment(RedisMetrics.XGroupCreate, {
+            this.metrics.increment(RedisClientMetrics.XGroupCreate, {
                 db,
                 streamName,
                 consumerGroup,
@@ -312,7 +313,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         } catch (err) {
             const alreadyExistsErrorMessage = "BUSYGROUP Consumer Group name already exists";
             if (suppressAlreadyExistsError && err.message === alreadyExistsErrorMessage) {
-                this.metrics.increment(RedisMetrics.XGroupCreate, {
+                this.metrics.increment(RedisClientMetrics.XGroupCreate, {
                     db,
                     streamName,
                     consumerGroup,
@@ -323,7 +324,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             }
 
             failSpan(span, err);
-            this.metrics.increment(RedisMetrics.XGroupCreate, {
+            this.metrics.increment(RedisClientMetrics.XGroupCreate, {
                 db,
                 streamName,
                 consumerGroup,
@@ -348,7 +349,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         this.spanLogAndSetTags(span, this.xAck.name, this.config.db, undefined, streamName);
         try {
             const response = await this.client.xack(streamName, consumerGroup, id);
-            this.metrics.increment(RedisMetrics.XAck, {
+            this.metrics.increment(RedisClientMetrics.XAck, {
                 db,
                 streamName,
                 consumerGroup,
@@ -357,7 +358,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             return response;
         } catch (err) {
             failSpan(span, err);
-            this.metrics.increment(RedisMetrics.XAck, {
+            this.metrics.increment(RedisClientMetrics.XAck, {
                 db,
                 streamName,
                 consumerGroup,
@@ -421,7 +422,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 }
             );
 
-            this.metrics.increment(RedisMetrics.XReadGroup, {
+            this.metrics.increment(RedisClientMetrics.XReadGroup, {
                 db,
                 consumerGroup,
                 consumerName,
@@ -432,7 +433,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         } catch (error) {
             failSpan(span, error);
 
-            this.metrics.increment(RedisMetrics.XReadGroup, {
+            this.metrics.increment(RedisClientMetrics.XReadGroup, {
                 db,
                 consumerGroup,
                 consumerName,
@@ -462,7 +463,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 "+",
                 String(count),
             ]);
-            this.metrics.increment(RedisMetrics.XPending, {
+            this.metrics.increment(RedisClientMetrics.XPending, {
                 db,
                 streamName,
                 consumerGroup,
@@ -471,7 +472,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             return parseRawPELResult(results);
         } catch (err) {
             failSpan(span, err);
-            this.metrics.increment(RedisMetrics.XPending, {
+            this.metrics.increment(RedisClientMetrics.XPending, {
                 db,
                 streamName,
                 consumerGroup,
@@ -519,7 +520,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 return { messageId, streamName, ...this.encoder.decode(new Uint8Array(buf), type) };
             });
 
-            this.metrics.increment(RedisMetrics.XClaim, {
+            this.metrics.increment(RedisClientMetrics.XClaim, {
                 db,
                 streamName,
                 consumerGroup,
@@ -530,7 +531,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             return messages;
         } catch (error) {
             failSpan(span, error);
-            this.metrics.increment(RedisMetrics.XClaim, {
+            this.metrics.increment(RedisClientMetrics.XClaim, {
                 db,
                 streamName,
                 consumerGroup,

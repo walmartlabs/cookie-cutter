@@ -13,15 +13,21 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
-import {
-    IRedisInputStreamOptions,
-    IRedisClient,
-    IRedisMessage,
-    RedisStreamMetadata,
-    RedisMetrics,
-    RedisMetricResult,
-} from ".";
+import { IRedisInputStreamOptions, IRedisClient, IRedisMessage, RedisStreamMetadata } from ".";
 import { RedisOpenTracingTagKeys, RedisClient } from "./RedisClient";
+
+export enum RedisMetrics {
+    MsgReceived = "cookie_cutter.redis_consumer.input_msg_received",
+    MsgProcessed = "cookie_cutter.redis_consumer.input_msg_processed",
+    MsgsClaimed = "cookie_cutter.redis_consumer.input_msgs_claimed",
+    PendingMsgSize = "cookie_cutter.redis_consumer.pending_msg_size",
+    IncomingBatchSize = "cookie_cutter.redis_consumer.incoming_batch_size",
+}
+
+export enum RedisMetricResult {
+    Success = "success",
+    Error = "error",
+}
 
 export class RedisStreamSource implements IInputSource, IRequireInitialization, IDisposable {
     private done: boolean = false;
@@ -124,7 +130,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     );
 
                     // this variable ensures that we don't get stuck in the reclaim
-                    // loop due to bad timing ... ensure that at least on XReadGroup
+                    // loop due to bad timing ... ensure that at least one XReadGroup
                     // command gets interleaved after each check for pending messages
                     didXReadGroup = true;
                 }

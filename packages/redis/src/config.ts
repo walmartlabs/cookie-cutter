@@ -157,4 +157,13 @@ export class RedisOptions implements IRedisOptions {
     public get typeNameKey(): string {
         return config.noop();
     }
+
+    @config.field(config.converters.none)
+    public set maxStreamLength(_: number) {
+        config.noop();
+    }
+
+    public get maxStreamLength(): number {
+        return config.noop();
+    }
 }
