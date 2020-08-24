@@ -13,7 +13,8 @@ import {
 import { SpanContext } from "opentracing";
 import * as util from "util";
 import { IRedisOptions } from "..";
-import { RedisClient as CCRedisClient } from "../RedisClient";
+import { RedisClient as CCRedisClient, extractXReadGroupValues } from "../RedisClient";
+import { RawReadGroupResult } from "../RedisProxy";
 (util as any).promisify = jest.fn((fn) => fn);
 const mockOn = jest.fn();
 const mockGet = jest.fn();
@@ -45,6 +46,24 @@ jest.mock("redis", () => {
 });
 import { RedisClient } from "redis";
 const mockClient: jest.Mock = RedisClient as any;
+
+describe("XReadGroup response parsing", () => {
+    it("parses single stream result", () => {
+        const data: RawReadGroupResult = [
+            [
+                "stream-1",
+                [
+                    ["1597844517517-0", ["redis.stream.key", '{"foo": "bar"}']],
+                    ["1597844517952-0", ["redis.stream.key", '{"fizz": "buzz"}']],
+                    ["1597844518432-0", ["redis.stream.key", '{"bar": "foo"}']],
+                ],
+            ],
+        ] as any;
+
+        const messages = extractXReadGroupValues(data);
+        expect(messages).toHaveLength(3);
+    });
+});
 
 // Note that an integration test is far more important than this unit test,
 // and should be created before this expands usage beyond a single service.

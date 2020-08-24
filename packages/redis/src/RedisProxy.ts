@@ -69,12 +69,13 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     private asyncXPending: (args: string[]) => Promise<RawPELResult>;
     private asyncXClaim: (args: string[]) => Promise<RawXClaimResult>;
 
-    constructor(host: string, port: number, db: number) {
+    constructor(host: string, port: number, db: number, password?: string) {
         this.logger = DefaultComponentContext.logger;
         const opts: ClientOpts = {
             host,
             port,
             db,
+            password,
         };
         // Redis ^2.8.0 includes all of the stream operations available on the the client.
         // However, @types/redis@3.0.2 does not currently include typings of the stream operations.

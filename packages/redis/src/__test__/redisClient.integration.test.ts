@@ -29,6 +29,7 @@ import {
     IRedisInputStreamOptions,
     redisStreamSource,
     RedisMetadata,
+    RedisStreamMetadata,
 } from "../index";
 import { promisify } from "util";
 import { RedisClientWithStreamOperations, RawReadGroupResult } from "../RedisProxy";
@@ -51,21 +52,25 @@ interface RedisClientTypePatch {
 }
 
 describe("redis integration test", () => {
-    const config: IRedisOutputStreamOptions & IRedisInputStreamOptions = {
+    const testStreamName = "test-stream";
+    const getConfig = (
+        readStreams?: string[]
+    ): IRedisOutputStreamOptions & IRedisInputStreamOptions => ({
         host: "localhost",
         port: 6379,
         db: 0,
         encoder: new JsonMessageEncoder(),
         typeMapper: new ObjectNameMessageTypeMapper(),
-        writeStream: "test-stream",
-        readStream: "test-stream",
+        writeStream: testStreamName,
+        readStreams: readStreams || [testStreamName],
         consumerGroup: "test-consumer-group",
         consumerId: "test-consumer",
         batchSize: 5,
         idleTimeout: 5000,
         blockTimeout: 5000,
         base64Encode: true,
-    };
+    });
+
     let ccClient: Lifecycle<IRedisClient>;
     let client: RedisClientWithStreamOperations & RedisClientTypePatch;
     let asyncXRead;
@@ -75,10 +80,11 @@ describe("redis integration test", () => {
 
     beforeAll(async () => {
         jest.setTimeout(10000);
-        ccClient = makeLifecycle(redisClient(config));
+        ccClient = makeLifecycle(redisClient(getConfig()));
         await ccClient.initialize(DefaultComponentContext);
 
-        client = new RedisClient(config) as RedisClientWithStreamOperations & RedisClientTypePatch;
+        client = new RedisClient(getConfig()) as RedisClientWithStreamOperations &
+            RedisClientTypePatch;
         asyncXRead = promisify(client.xread).bind(client);
         asyncXInfo = promisify(client.xinfo).bind(client);
         asyncFlushAll = promisify(client.flushall).bind(client);
@@ -95,39 +101,7 @@ describe("redis integration test", () => {
         jest.setTimeout(5000);
     });
 
-    it("does not get a value for an non-existing key", async () => {
-        const aKey = "key1";
-        expect(await ccClient.getObject(new SpanContext(), Uint8Array, aKey)).toBeUndefined();
-    });
-
-    it("successfully sets and gets a value for a given key", async () => {
-        const span = new SpanContext();
-        const aKey = "key2";
-        const msg: IMessage = {
-            type: TestClass.name,
-            payload: new TestClass("test contents"),
-        };
-        expect(await ccClient.putObject(span, TestClass, msg.payload, aKey)).toBeUndefined();
-        const outputPayload = await ccClient.getObject(span, TestClass, aKey);
-        expect(outputPayload).toMatchObject(msg.payload);
-    });
-
-    it("RedisClient successfully xadds a value into a stream and returns the id", async () => {
-        const span = new SpanContext();
-        const key = "test";
-        const value: IMessage = {
-            type: TestClass.name,
-            payload: new TestClass("test"),
-        };
-
-        const id = await ccClient.xAddObject(span, TestClass.name, "test-stream", key, value);
-
-        expect(id).not.toBeFalsy();
-
-        // const iterator = redisStreamSource(config).start();
-    });
-
-    it("successfully adds a value to a redis stream through the output sink", async () => {
+    const runSinkTest = async (streamName?: string) => {
         const inputMsg = new Foo("test");
         const app = Application.create()
             .logger(new ConsoleLogger())
@@ -136,18 +110,20 @@ describe("redis integration test", () => {
             .done()
             .dispatch({
                 onFoo: async (msg: Foo, ctx: IDispatchContext) => {
-                    ctx.publish(Bar, new Bar(`output for ${msg.text}`));
+                    ctx.publish(Bar, new Bar(`output for ${msg.text}`), {
+                        [RedisStreamMetadata.StreamName]: streamName,
+                    });
                 },
             })
             .output()
-            .published(new RedisStreamSink(config))
+            .published(new RedisStreamSink(getConfig()))
             .done()
             .run(ErrorHandlingMode.LogAndContinue);
 
         setTimeout(() => app.cancel(), 2000);
         await app;
 
-        const results = await asyncXRead(["streams", "test-stream", "0"]);
+        const results = await asyncXRead(["streams", streamName || testStreamName, "0"]);
         expect(results).not.toBeFalsy();
 
         const storedValue = ((results: RawReadGroupResult): Uint8Array => {
@@ -163,16 +139,16 @@ describe("redis integration test", () => {
             return new Uint8Array(Buffer.from(data, "base64"));
         })(results);
 
-        const msg = config.encoder.decode(storedValue, Bar.name);
+        const msg = getConfig().encoder.decode(storedValue, Bar.name);
 
         expect(msg.payload.text).toEqual(`output for ${inputMsg.text}`);
-    });
+    };
 
-    it("successfully creates a new consumer group", async () => {
+    const runConsumerGroupTest = async (readStreams: string[]) => {
         const app = Application.create()
             .logger(new ConsoleLogger())
             .input()
-            .add(redisStreamSource(config))
+            .add(redisStreamSource(getConfig(readStreams)))
             .done()
             .dispatch({})
             .run(ErrorHandlingMode.LogAndContinue);
@@ -183,41 +159,49 @@ describe("redis integration test", () => {
 
         await app;
 
-        const consumerGroups = await asyncXInfo(["groups", config.readStream]);
-        expect(consumerGroups.length).toEqual(1);
-    });
+        for (const readStream of readStreams) {
+            const consumerGroups = await asyncXInfo(["groups", readStream]);
+            expect(consumerGroups.length).toEqual(1);
+        }
+    };
 
-    it("successfully processes messages from the stream ", async () => {
-        const xGroupResult = await ccClient.xGroup(
-            new SpanContext(),
-            config.readStream,
-            config.consumerGroup,
-            "0",
-            false
-        );
+    const runSourceTest = async (readStreams: string[]) => {
+        const config = getConfig(readStreams);
 
-        expect(xGroupResult).toEqual("OK");
+        for (const readStream of readStreams) {
+            const xGroupResult = await ccClient.xGroup(
+                new SpanContext(),
+                readStream,
+                config.consumerGroup,
+                "0",
+                false
+            );
 
-        const streamId = await ccClient.xAddObject(
-            new SpanContext(),
-            Foo.name,
-            config.readStream,
-            RedisMetadata.OutputSinkStreamKey,
-            new Foo("test")
-        );
+            expect(xGroupResult).toEqual("OK");
+        }
 
-        expect(streamId).toBeTruthy();
+        for (const readStream of readStreams) {
+            const streamId = await ccClient.xAddObject(
+                new SpanContext(),
+                Foo.name,
+                readStream,
+                RedisMetadata.OutputSinkStreamKey,
+                new Foo("test")
+            );
+
+            expect(streamId).toBeTruthy();
+        }
 
         let results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams.map((name) => ({ name })),
             config.consumerGroup,
             config.consumerId,
             1,
             100
         );
 
-        expect(results.length).toEqual(1);
+        expect(results.length).toEqual(readStreams.length);
 
         const app = Application.create()
             .logger(new ConsoleLogger())
@@ -229,9 +213,6 @@ describe("redis integration test", () => {
                     ctx.publish(Bar, new Bar(`output for ${msg.text}`));
                 },
             })
-            .output()
-            .published(new NullOutputSink())
-            .done()
             .run(ErrorHandlingMode.LogAndContinue);
 
         setTimeout(() => {
@@ -244,51 +225,55 @@ describe("redis integration test", () => {
         // the above Message was ACK'd + handled successfully
         results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams.map((name) => ({ name, id: "0" })),
             config.consumerGroup,
             config.consumerId,
             1,
-            100,
-            "0"
+            100
         );
 
         expect(results.length).toBe(0);
-    });
+    };
 
-    it("successfully processes expired idle messages from the consumer group ", async () => {
+    const runIdleMessagesTest = async (readStreams: string[]) => {
+        const config = getConfig(readStreams);
         const cfg = { ...config, idleTimeout: 0 };
 
-        const xGroupResult = await ccClient.xGroup(
-            new SpanContext(),
-            config.readStream,
-            config.consumerGroup,
-            "0",
-            false
-        );
+        for (const readStream of readStreams) {
+            const xGroupResult = await ccClient.xGroup(
+                new SpanContext(),
+                readStream,
+                config.consumerGroup,
+                "0",
+                false
+            );
 
-        expect(xGroupResult).toEqual("OK");
+            expect(xGroupResult).toEqual("OK");
+        }
 
-        const streamId = await ccClient.xAddObject(
-            new SpanContext(),
-            Foo.name,
-            config.readStream,
-            RedisMetadata.OutputSinkStreamKey,
-            new Foo("test")
-        );
+        for (const readStream of readStreams) {
+            const streamId = await ccClient.xAddObject(
+                new SpanContext(),
+                Foo.name,
+                readStream,
+                RedisMetadata.OutputSinkStreamKey,
+                new Foo("test")
+            );
 
-        expect(streamId).toBeTruthy();
+            expect(streamId).toBeTruthy();
+        }
 
         // This will add the above message to idle-test-consumer's PEL
         let results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams.map((name) => ({ name })),
             config.consumerGroup,
             "idle-test-consumer",
             1,
             100
         );
 
-        expect(results.length).toEqual(1);
+        expect(results.length).toEqual(readStreams.length);
 
         const app = Application.create()
             .logger(new ConsoleLogger())
@@ -315,14 +300,75 @@ describe("redis integration test", () => {
         // the above Message was ACK'd + handled successfully
         results = await ccClient.xReadGroup(
             new SpanContext(),
-            config.readStream,
+            config.readStreams.map((name) => ({ name, id: "0" })),
             config.consumerGroup,
             "idle-test-consumer",
             1,
-            100,
-            "0"
+            100
         );
 
         expect(results.length).toBe(0);
+    };
+
+    it("does not get a value for an non-existing key", async () => {
+        const aKey = "key1";
+        expect(await ccClient.getObject(new SpanContext(), Uint8Array, aKey)).toBeUndefined();
+    });
+
+    it("successfully sets and gets a value for a given key", async () => {
+        const span = new SpanContext();
+        const aKey = "key2";
+        const msg: IMessage = {
+            type: TestClass.name,
+            payload: new TestClass("test contents"),
+        };
+        expect(await ccClient.putObject(span, TestClass, msg.payload, aKey)).toBeUndefined();
+        const outputPayload = await ccClient.getObject(span, TestClass, aKey);
+        expect(outputPayload).toMatchObject(msg.payload);
+    });
+
+    it("RedisClient successfully xadds a value into a stream and returns the id", async () => {
+        const span = new SpanContext();
+        const key = "test";
+        const value: IMessage = {
+            type: TestClass.name,
+            payload: new TestClass("test"),
+        };
+
+        const id = await ccClient.xAddObject(span, TestClass.name, testStreamName, key, value);
+
+        expect(id).not.toBeFalsy();
+    });
+
+    it("successfully adds a value to default configured redis stream through the output sink", async () => {
+        await runSinkTest();
+    });
+
+    it("successfully adds a value to a non-default configured redis stream through the output sink", async () => {
+        await runSinkTest("myStream");
+    });
+
+    it("successfully creates a new consumer group for single stream", async () => {
+        await runConsumerGroupTest([testStreamName]);
+    });
+
+    it("successfully creates a new consumer group for multiple streams", async () => {
+        await runConsumerGroupTest(["myStream1", "myStream2"]);
+    });
+
+    it("successfully processes messages from a single stream", async () => {
+        await runSourceTest([testStreamName]);
+    });
+
+    it("successfully processes messages from multiple streams", async () => {
+        await runSourceTest(["myStream1", "myStream2"]);
+    });
+
+    it("successfully processes expired idle messages from the consumer group for a single stream ", async () => {
+        await runIdleMessagesTest([testStreamName]);
+    });
+
+    it("successfully processes expired idle messages from the consumer group for multiple streams", async () => {
+        await runIdleMessagesTest(["myStream1", "myStream2"]);
     });
 });

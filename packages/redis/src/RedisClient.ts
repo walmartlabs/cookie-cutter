@@ -62,24 +62,25 @@ function formatXPendingResults(results: RawPELResult): IPELResult[] {
     }));
 }
 
-function extractXReadGroupValues(
+export function extractXReadGroupValues(
     results: RawReadGroupResult
-): { streamId: string; data: string; type: string }[] {
+): { streamName: string; streamId: string; data: string; type: string }[] {
     return results.reduce((acc, curr) => {
         // streamName, streamValue
-        const [, [streamValue = []]] = curr;
+        const [streamName, streamValues = []] = curr;
+        for (const streamValue of streamValues) {
+            // [streamId, keyValues]
+            const [streamId, keyValues = []] = streamValue;
 
-        // [streamId, keyValues]
-        const [streamId, keyValues = []] = streamValue;
+            if (keyValues.length < 1) {
+                return acc;
+            }
 
-        if (keyValues.length < 1) {
-            return acc;
+            // [RedisMetadata.OutputSinkStreamKey, serializedProto, type, typeName]
+            const [, data, , type] = keyValues;
+
+            acc.push({ streamName, streamId, data, type });
         }
-
-        // [RedisMetadata.OutputSinkStreamKey, serializedProto, type, typeName]
-        const [, data, , type] = keyValues;
-
-        acc.push({ streamId, data, type });
         return acc;
     }, []);
 }
@@ -107,7 +108,12 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         this.typeMapper = config.typeMapper;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
-        this.client = new RedisProxy(this.config.host, this.config.port, this.config.db);
+        this.client = new RedisProxy(
+            this.config.host,
+            this.config.port,
+            this.config.db,
+            this.config.password
+        );
     }
 
     public async dispose(): Promise<void> {
@@ -134,10 +140,10 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         span: Span,
         funcName: string,
         bucket: number,
-        key: string,
-        streamName?: string
+        keys: string | string[],
+        streamNames?: string | string[]
     ): void {
-        span.log({ bucket, key, streamName });
+        span.log({ bucket, keys, streamNames });
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
         span.setTag(Tags.COMPONENT, "cookie-cutter-redis");
         span.setTag(Tags.DB_INSTANCE, bucket);
@@ -367,19 +373,20 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
     public async xReadGroup(
         context: SpanContext,
-        streamName: string,
+        streams: { name: string; id?: string }[],
         consumerGroup: string,
         consumerName: string,
         count: number,
-        block: number,
-        id: string = ">"
+        block: number
     ): Promise<IRedisMessage[]> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client xReadGroupObject Call", {
             childOf: context,
         });
+        const streamNames = streams.map((s) => s.name);
+        const ids = streams.map((s) => s.id || ">");
 
-        this.spanLogAndSetTags(span, this.xReadGroup.name, this.config.db, id, streamName);
+        this.spanLogAndSetTags(span, this.xReadGroup.name, this.config.db, ids, streamNames);
 
         try {
             const response = await this.client.xreadgroup([
@@ -391,8 +398,8 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 "block",
                 String(block),
                 "streams",
-                streamName,
-                id,
+                ...streamNames,
+                ...ids,
             ]);
 
             // if the client returns null, early exit w/ an empty array
@@ -400,17 +407,22 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             const results = extractXReadGroupValues(response);
 
-            const messages: IRedisMessage[] = results.map(({ streamId, data, type }) => {
-                const buf = this.config.base64Encode
-                    ? Buffer.from(data, "base64")
-                    : Buffer.from(data);
+            const messages: IRedisMessage[] = results.map(
+                ({ streamName, streamId, data, type }) => {
+                    const buf = this.config.base64Encode
+                        ? Buffer.from(data, "base64")
+                        : Buffer.from(data);
 
-                return { streamId, ...this.encoder.decode(new Uint8Array(buf), type) };
-            });
+                    return {
+                        streamId,
+                        streamName,
+                        ...this.encoder.decode(new Uint8Array(buf), type),
+                    };
+                }
+            );
 
             this.metrics.increment(RedisMetrics.XReadGroup, {
                 db,
-                streamName,
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Success,
@@ -422,7 +434,6 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             this.metrics.increment(RedisMetrics.XReadGroup, {
                 db,
-                streamName,
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
@@ -510,7 +521,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                     ? Buffer.from(data, "base64")
                     : Buffer.from(data);
 
-                return { streamId, ...this.encoder.decode(new Uint8Array(buf), type) };
+                return { streamId, streamName, ...this.encoder.decode(new Uint8Array(buf), type) };
             });
 
             this.metrics.increment(RedisMetrics.XClaim, {

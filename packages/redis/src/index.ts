@@ -30,16 +30,18 @@ export interface IRedisOptions {
     readonly encoder: IMessageEncoder;
     readonly typeMapper: IMessageTypeMapper;
     readonly base64Encode?: boolean;
+    readonly password?: string;
 }
 
 export type IRedisInputStreamOptions = IRedisOptions & {
-    readonly readStream: string;
+    readonly readStreams: string[];
     readonly consumerGroup: string;
     readonly consumerId?: string;
     readonly consumerGroupStartId?: string;
     readonly blockTimeout?: number;
     readonly idleTimeout?: number;
     readonly batchSize?: number;
+    readonly reclaimMessageInterval?: number;
 };
 
 export type IRedisOutputStreamOptions = IRedisOptions & {
@@ -54,13 +56,28 @@ export const AutoGenerateRedisStreamID = "*";
 
 export type IRedisMessage = IMessage & {
     readonly streamId: string;
+    readonly streamName: string;
 };
 
 export enum RedisStreamMetadata {
     StreamId = "streamId",
+    StreamName = "streamName",
     ConsumerId = "consumerId",
     IdleTime = "idle_time",
     NumberOfDeliveries = "num_of_deliveries",
+}
+
+export enum RedisMetrics {
+    MsgReceived = "cookie_cutter.redis_consumer.input_msg_received",
+    MsgProcessed = "cookie_cutter.redis_consumer.input_msg_processed",
+    MsgsClaimed = "cookie_cutter.redis_consumer.input_msgs_claimed",
+    PendingMsgSize = "cookie_cutter.redis_consumer.pending_msg_size",
+    IncomingBatchSize = "cookie_cutter.redis_consumer.incoming_batch_size",
+    MsgPublished = "cookie_cutter.redis_producer.msg_published",
+}
+export enum RedisMetricResult {
+    Success = "success",
+    Error = "error",
 }
 
 export interface IRedisClient {
@@ -85,12 +102,11 @@ export interface IRedisClient {
     ): Promise<string>;
     xReadGroup(
         context: SpanContext,
-        streamName: string,
+        streams: { name: string; id?: string }[],
         consumerGroup: string,
         consumerName: string,
         count: number,
-        block: number,
-        id?: string
+        block: number
     ): Promise<IRedisMessage[]>;
     xGroup(
         context: SpanContext,
@@ -141,6 +157,7 @@ export function redisStreamSource(configuration: IRedisInputStreamOptions): IInp
         batchSize: 10,
         blockTimeout: 100,
         idleTimeout: 30000,
+        reclaimMessageInterval: 60000,
     });
     return new RedisStreamSource(configuration);
 }
