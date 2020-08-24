@@ -65,7 +65,7 @@ describe("Blob Client", () => {
             expect(result).toBe(content);
         });
 
-        it("writes content to a new blob", async() => {
+        it("writes content to a new blob", async () => {
             const content = `blob-content-${Date.now()}`;
             const newBlobId = "newBlobId";
             await client.write(spanContext, content, newBlobId);
