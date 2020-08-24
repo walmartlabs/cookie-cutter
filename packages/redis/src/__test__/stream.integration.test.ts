@@ -168,7 +168,7 @@ describe("Redis Streams", () => {
                 expect.anything()
             );
             expect(metrics.increment).toHaveBeenCalledWith(
-                RedisClientMetrics.XGroupCreate,
+                RedisClientMetrics.XGroup,
                 expect.anything()
             );
             expect(metrics.increment).toHaveBeenCalledWith(
