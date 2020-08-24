@@ -56,29 +56,27 @@ describe("Redis Streams", () => {
             const input: MessageRef[] = [];
             for (let i = 0; i < 25; i++) {
                 input.push(
-                    ...[
-                        new MessageRef(
-                            { [RedisStreamMetadata.Stream]: `roundtrip-test-1-${id}` },
-                            {
-                                type: "type-1",
-                                payload: { foo: "bar-" + i },
-                            }
-                        ),
-                        new MessageRef(
-                            { [RedisStreamMetadata.Stream]: `roundtrip-test-2-${id}` },
-                            {
-                                type: "type-2",
-                                payload: { fizz: "buzz-" + i },
-                            }
-                        ),
-                        new MessageRef(
-                            {},
-                            {
-                                type: "type-1",
-                                payload: { foo: "buzz-" + i },
-                            }
-                        ),
-                    ]
+                    new MessageRef(
+                        { [RedisStreamMetadata.Stream]: `roundtrip-test-1-${id}` },
+                        {
+                            type: "type-1",
+                            payload: { foo: "bar-" + i },
+                        }
+                    ),
+                    new MessageRef(
+                        { [RedisStreamMetadata.Stream]: `roundtrip-test-2-${id}` },
+                        {
+                            type: "type-2",
+                            payload: { fizz: "buzz-" + i },
+                        }
+                    ),
+                    new MessageRef(
+                        {},
+                        {
+                            type: "type-1",
+                            payload: { foo: "buzz-" + i },
+                        }
+                    )
                 );
             }
 
@@ -116,12 +114,11 @@ describe("Redis Streams", () => {
                         host: "localhost",
                         streams: [`roundtrip-test-1-${id}`, `roundtrip-test-2-${id}`],
                         typeMapper: new ObjectNameMessageTypeMapper(),
+                        ...cfg,
 
                         // important for unit test, as consumer might not be
                         // ready to receive before producer starts sending messages
                         consumerGroupStartId: "0",
-
-                        ...cfg,
                     })
                 )
                 .done()
@@ -235,12 +232,11 @@ describe("Redis Streams", () => {
                         host: "localhost",
                         streams: [`failed-ack-test-${id}`],
                         typeMapper: new ObjectNameMessageTypeMapper(),
+                        ...cfg,
 
                         // important for unit test, as consumer might not be
                         // ready to receive before producer starts sending messages
                         consumerGroupStartId: "0",
-
-                        ...cfg,
                     })
                 )
                 .done()
