@@ -6,6 +6,14 @@
 !/.yarnignore
 /**/prometheus/config/targets.json
 
+/**/az_storage_emulator.msi
+/**/cosmos.msi
+/**/nssm.zip
+/**/nssm
+/**/.vagrant
+/**/SQLLocalDB.MSI
+/**/service_loop.txt
+
 /docs/website/build
 /yarn-error.log
 /**/package-lock.json
