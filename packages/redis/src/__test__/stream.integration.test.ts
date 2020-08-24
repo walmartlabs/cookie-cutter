@@ -275,12 +275,11 @@ describe("Redis Streams", () => {
                         host: "localhost",
                         streams: [`failed-ack-test-${id}`],
                         typeMapper: new ObjectNameMessageTypeMapper(),
+                        ...cfg,
 
                         // important for unit test, as consumer might not be
                         // ready to receive before producer starts sending messages
                         consumerGroupStartId: "0",
-
-                        ...cfg,
                     })
                 )
                 .done()
