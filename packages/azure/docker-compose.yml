@@ -15,3 +15,10 @@ services:
       - "10255:10255"
       - "10256:10256"
       - "10350:10350"
+
+  storage:
+    image: microsoft/azure-storage-emulator
+    ports:
+       - 10000:10000
+       - 10001:10001
+       - 10002:10002
