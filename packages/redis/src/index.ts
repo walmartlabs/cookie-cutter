@@ -41,8 +41,8 @@ export type IRedisInputStreamOptions = IRedisOptions & {
     readonly consumerGroupStartId?: string;
     readonly blockTimeout?: number;
     readonly batchSize?: number;
-    readonly idleTimeout: number | undefined | null;
-    readonly reclaimMessageInterval: number | undefined | null;
+    readonly idleTimeout?: number | null;
+    readonly reclaimMessageInterval?: number | null;
 };
 
 export type IRedisOutputStreamOptions = IRedisOptions & {
