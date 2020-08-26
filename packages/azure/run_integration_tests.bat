@@ -1,3 +1,3 @@
 docker-compose up -d;
-yarn run integration-test; 
+jest --config=../../jest.integration.config.js --rootDir=.
 docker-compose down;
