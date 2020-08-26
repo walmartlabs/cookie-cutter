@@ -15,11 +15,11 @@ stages:
 
 matrix:
     include:
-        - name: "Linux Node 10 (Lint + Test)"
-          os: linux
-          node_js: 10
-          stage: smoke
-          script: yarn build && yarn lint && yarn test
+        # - name: "Linux Node 10 (Lint + Test)"
+        #   os: linux
+        #   node_js: 10
+        #   stage: smoke
+        #   script: yarn build && yarn lint && yarn test
 
         # - name: "Audit Dependencies"
         #   os: linux
