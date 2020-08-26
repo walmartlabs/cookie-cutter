@@ -51,7 +51,7 @@ matrix:
             - YARN_GPG=no # Windows build agent will hang without this
           services:
             - docker
-          script: yarn build && cd packages/azure && yarn integrate
+          script: yarn integrate
 
         # - name: "MSSQL"
         #   os: linux
