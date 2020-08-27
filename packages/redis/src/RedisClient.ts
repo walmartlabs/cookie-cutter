@@ -71,16 +71,17 @@ export function parseRawReadGroupResult(
             // [messageId, keyValues]
             const [messageId, keyValues = []] = streamValue;
 
-            if (keyValues?.length < 1) {
-                if (isNullOrUndefined(keyValues)) {
-                    // tslint:disable:no-console
-                    console.log(
-                        "detected bad item in redis stream",
-                        JSON.stringify(results),
-                        isNull(keyValues),
-                        isUndefined(keyValues)
-                    );
-                }
+            if (isNullOrUndefined(keyValues)) {
+                // tslint:disable:no-console
+                console.log(
+                    "detected bad item in redis stream",
+                    JSON.stringify(results),
+                    isNull(keyValues),
+                    isUndefined(keyValues)
+                );
+            }
+
+            if (isNullOrUndefined(keyValues) || keyValues?.length < 1) {
                 return acc;
             }
 
