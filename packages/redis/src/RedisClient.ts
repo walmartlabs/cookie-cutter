@@ -19,7 +19,7 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { isString, isNullOrUndefined } from "util";
+import { isString, isNullOrUndefined, isNull, isUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 import { RedisProxy, RawReadGroupResult, RawPELResult, RawXClaimResult } from "./RedisProxy";
 
@@ -71,7 +71,16 @@ export function parseRawReadGroupResult(
             // [messageId, keyValues]
             const [messageId, keyValues = []] = streamValue;
 
-            if (keyValues.length < 1) {
+            if (keyValues?.length < 1) {
+                if (isNullOrUndefined(keyValues)) {
+                    // tslint:disable:no-console
+                    console.log(
+                        "detected bad item in redis stream",
+                        JSON.stringify(results),
+                        isNull(keyValues),
+                        isUndefined(keyValues)
+                    );
+                }
                 return acc;
             }
 
