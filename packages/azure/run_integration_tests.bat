@@ -1,10 +1,16 @@
+choco install curl
+
+curl 'https://go.microsoft.com/fwlink/?linkid=717179&clcid=0x409' --output az_storage_emulator.msi
+curl 'https://aka.ms/cosmosdb-emulator' --output cosmos.msi
+curl 'https://nssm.cc/release/nssm-2.24.zip' --output nssm.zip
+curl 'https://go.microsoft.com/fwlink/?LinkID=866658' --output SQLLocalDB.MSI
+
+
 # Cosmos DB emulator
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-(New-Object System.Net.WebClient).DownloadFile('https://aka.ms/cosmosdb-emulator', 'cosmos.msi')
 Start-Process -wait C:\cosmos.msi -ArgumentList "/quiet"
 
 # Service Manager
-(New-Object System.Net.WebClient).DownloadFile('https://nssm.cc/release/nssm-2.24.zip', 'nssm.zip')
 Expand-Archive C:\nssm.zip -DestinationPath C:\nssm -Force
 
 # Cosmos as a service
@@ -17,11 +23,9 @@ Set-ItemProperty -Name 'FailureActions' -Path 'HKLM:\HKEY_LOCAL_MACHINE\SYSTEM\C
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 
 # SQL DB
-(New-Object System.Net.WebClient).DownloadFile('https://download.microsoft.com/download/8/D/D/8DD7BDBA-CEF7-4D8E-8C16-D9F69527F909/ENU/x64/SqlLocalDB.MSI', 'C:\SqlLocalDB.MSI')
 Start-Process -wait msiexec -ArgumentList "/i","C:\SqlLocalDB.MSI","/qn","IACCEPTSQLLOCALDBLICENSETERMS=YES"
 
 # Azure storage emulator
-(New-Object System.Net.WebClient).DownloadFile('https://go.microsoft.com/fwlink/?linkid=717179&clcid=0x409', 'C:\az_storage_emulator.msi')
 Start-Process -wait C:\az_storage_emulator.msi -ArgumentList "/quiet"
 
 $vm_ip = (Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily "IPv4").IPAddress
