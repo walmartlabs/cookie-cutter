@@ -1,7 +1,7 @@
 function printAndLog
 {
     param([string]$argstring = "unknown")
-    Write-Output $argstring
+    Write-Host $argstring
     Add-Content C:\vagrant\service_loop.txt $argstring
 }
 
