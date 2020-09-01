@@ -10,7 +10,6 @@ import {
     IMessageEnricher,
     IMessageMetricAnnotator,
     IServiceRegistry,
-    MessageProcessingMetrics,
     MessageRef,
 } from "../../model";
 import { IRetrier, sleep } from "../../utils";
@@ -28,14 +27,6 @@ export class RpcMessageProcessor extends ConcurrentMessageProcessor {
 
     protected get name(): string {
         return RpcMessageProcessor.name;
-    }
-
-    protected reportStatistics() {
-        super.reportStatistics();
-        this.metrics.gauge(
-            MessageProcessingMetrics.ConcurrentHandlers,
-            super.currentlyInflight.length
-        );
     }
 
     protected async processingLoop(
