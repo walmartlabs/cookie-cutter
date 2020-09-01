@@ -1,6 +1,7 @@
 ECHO "Installing Curl"
 
 choco install curl -y
+choco install yarn -y
 
 ECHO "Starting Downloads"
 
@@ -53,5 +54,9 @@ set AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=d
 set AZURE_STORAGE_ACCESS_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 
 ECHO "Starting tests"
+
+
+yarn install
+yarn build
 
 jest --config=../../jest.integration.config.js --rootDir=.
