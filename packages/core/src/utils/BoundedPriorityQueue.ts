@@ -64,7 +64,7 @@ export class BoundedPriorityQueue<T> {
         if (isNullOrUndefined(whenNotFull)) {
             this.whenNotFullList.set(priority, new Future());
         }
-        return this.enqueue(item);
+        return this.enqueue(item, priority);
     }
 
     public async dequeue(): Promise<T> {
