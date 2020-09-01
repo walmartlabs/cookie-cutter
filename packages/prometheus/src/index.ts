@@ -140,13 +140,8 @@ class PrometheusMetrics
      * @param {IMetricTags} tags The tag values to associate with this observation
      */
     public timing(key: string, value: number, tags?: IMetricTags): void {
-        const str = "Prometheus Histogram Error";
-        if (value < 0) {
-            const err = "Observing a negative value is not allowed for Histograms.";
-            this.logger.error(str, new Error(err), { key, value, tags });
-            return;
-        }
         if (this.containsLeLabel(tags)) {
+            const str = "Prometheus Histogram Error";
             const err = "The 'le' label is reserved for system use in histograms.";
             this.logger.error(str, new Error(err), { key, value, tags });
             return;
