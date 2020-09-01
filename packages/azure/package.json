@@ -31,8 +31,7 @@
         "build": "tsc",
         "postbuild": "node postbuild.js",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integration-test": "jest --config=../../jest.integration.config.js --rootDir=.",
-        "integrate": "run_integration_tests.ps1",
+        "integrate": "jest --config=../../jest.integration.config.js --rootDir=.",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }

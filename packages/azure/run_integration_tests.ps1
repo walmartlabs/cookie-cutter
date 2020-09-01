@@ -3,6 +3,9 @@ ECHO "Installing Curl"
 choco install curl -y
 choco install yarn -y
 
+yarn install
+yarn build
+
 ECHO "Starting Downloads"
 
 curl -o az_storage_emulator.msi 'https://go.microsoft.com/fwlink/?linkid=717179&clcid=0x409' 
@@ -55,8 +58,5 @@ set AZURE_STORAGE_ACCESS_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq
 
 ECHO "Starting tests"
 
-
-yarn install
-yarn build
-
-jest --config=../../jest.integration.config.js --rootDir=.
+cd packages/azure
+yarn integrate
