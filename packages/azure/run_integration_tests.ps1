@@ -13,11 +13,11 @@ ECHO "Downloads Completed"
 
 # Cosmos DB emulator
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Start-Process -wait C:\cosmos.msi -ArgumentList "/quiet"
-s
+Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
+
 
 # Service Manager
-Expand-Archive C:\nssm.zip -DestinationPath C:\nssm -Force
+Expand-Archive .\nssm.zip -DestinationPath C:\nssm -Force
 
 # Cosmos as a service
 C:\nssm\nssm-2.24\win64\nssm.exe install cosmosdbemulator "C:\service_startup.cmd"
@@ -31,12 +31,12 @@ Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 ECHO  "Started Cosmos Process"
 
 # SQL DB
-Start-Process -wait msiexec -ArgumentList "/i","C:\SqlLocalDB.MSI","/qn","IACCEPTSQLLOCALDBLICENSETERMS=YES"
+Start-Process -wait msiexec -ArgumentList "/i",".\SqlLocalDB.MSI","/qn","IACCEPTSQLLOCALDBLICENSETERMS=YES"
 
 ECHO  "Started SQL DB"
 
 # Azure storage emulator
-Start-Process -wait C:\az_storage_emulator.msi -ArgumentList "/quiet"
+Start-Process -wait .\az_storage_emulator.msi -ArgumentList "/quiet"
 
 $vm_ip = (Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily "IPv4").IPAddress
 $storage_emulator_config_path = "C:\Program Files (x86)\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe.config"
