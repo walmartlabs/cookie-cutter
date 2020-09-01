@@ -5,12 +5,12 @@ function printAndLog
     Add-Content C:\vagrant\service_loop.txt $argstring
 }
 
-choco install curl
+choco install curl -y
 
-curl 'https://go.microsoft.com/fwlink/?linkid=717179&clcid=0x409' --output az_storage_emulator.msi
-curl 'https://aka.ms/cosmosdb-emulator' --output cosmos.msi
-curl 'https://nssm.cc/release/nssm-2.24.zip' --output nssm.zip
-curl 'https://go.microsoft.com/fwlink/?LinkID=866658' --output SQLLocalDB.MSI
+curl -o az_storage_emulator.msi 'https://go.microsoft.com/fwlink/?linkid=717179&clcid=0x409' 
+curl -o cosmos.msi 'https://aka.ms/cosmosdb-emulator'
+curl -o nssm.zip 'https://nssm.cc/release/nssm-2.24.zip'
+curl -o SQLLocalDB.MSI 'https://go.microsoft.com/fwlink/?LinkID=866658'
 
 printAndLog -argstring "Downloads Completed"
 
