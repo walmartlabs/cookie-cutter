@@ -30,6 +30,10 @@ function validateKeys(storageAccessKey: string) {
     if (!storageAccessKey) {
         throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
     }
+    if (!url) {
+        console.log(`url: ${url}`);
+        throw new Error("AZURE_STORAGE_CONNECTION_STRING env is incorrectly set");
+    }
 }
 
 beforeAll(async () => {
