@@ -120,10 +120,6 @@ export class QueueClient implements IRequireInitialization {
         this.logger = DefaultComponentContext.logger;
 
         const { retryCount, retryInterval } = config;
-        const sharedKeyCredential = new StorageSharedKeyCredential(
-            config.storageAccount,
-            config.storageAccessKey
-        );
 
         let storagePipelineOptions: StoragePipelineOptions;
 
@@ -144,6 +140,11 @@ export class QueueClient implements IRequireInitialization {
                 storagePipelineOptions
             );
         } else {
+            const sharedKeyCredential = new StorageSharedKeyCredential(
+                config.storageAccount,
+                config.storageAccessKey
+            );
+
             this.queueService = new QueueServiceClient(
                 config.url,
                 sharedKeyCredential,

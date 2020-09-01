@@ -25,6 +25,9 @@ function validateKeys(storageAccessKey: string) {
     if (!storageAccessKey) {
         throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
     }
+    if (!url) {
+        throw new Error("AZURE_STORAGE_CONNECTION_STRING env is not set");
+    }
 }
 
 const spanContext = new SpanContext();
