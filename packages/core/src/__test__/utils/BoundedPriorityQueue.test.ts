@@ -149,7 +149,9 @@ describe("BoundedPriorityQueue", () => {
         const queue = new BoundedPriorityQueue<number>(1);
         await queue.enqueue(1, 0);
         await queue.enqueue(2, 1);
+        // tslint:disable-next-line:no-floating-promises
         queue.enqueue(3, 1);
+        // tslint:disable-next-line:no-floating-promises
         queue.enqueue(4, 1);
 
         const buffer = [];
