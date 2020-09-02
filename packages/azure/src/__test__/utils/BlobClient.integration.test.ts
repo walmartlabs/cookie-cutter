@@ -14,9 +14,6 @@ const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
 const blobId = "defaultBlobId";
 const url = process.env.AZURE_STORAGE_CONNECTION_STRING;
 
-if (!storageAccessKey) {
-    throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
-}
 if (!url) {
     throw new Error("AZURE_STORAGE_CONNECTION_STRING env is not set");
 }
