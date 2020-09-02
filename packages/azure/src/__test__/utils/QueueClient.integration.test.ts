@@ -12,15 +12,13 @@ import { JsonMessageEncoder, EventSourcedMetadata } from "@walmartlabs/cookie-cu
 
 const storageAccount = "devstoreaccount1";
 const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
-const url = process.env.AZURE_STORAGE_CONNECTION_STRING;
+const url =
+    process.env.AZURE_STORAGE_CONNECTION_STRING ??
+    "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;";
 const queueName = "testqueue";
 const encoder = new JsonMessageEncoder();
 const spanContext = new SpanContext();
 
-if (!url) {
-    console.log(`url: ${url}`);
-    throw new Error("AZURE_STORAGE_CONNECTION_STRING env is incorrectly set");
-}
 const client = new QueueClient({
     url,
     storageAccount,
@@ -29,7 +27,6 @@ const client = new QueueClient({
     encoder,
     createQueueIfNotExists: true,
 });
-
 
 describe("Blob Client", () => {
     describe("Queue Creation", () => {
