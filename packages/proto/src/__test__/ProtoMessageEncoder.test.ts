@@ -61,7 +61,7 @@ describe("ProtoMessageEncoder", () => {
         expect(decodedMsg).toMatchObject(msg);
     });
 
-    it("returns correct Uint8Array from ", async () => {
+    it("returns correct Uint8Array from CosmosDB buffer", async () => {
         const root = await loadTestProto();
         const encoder = new ProtoMessageEncoder(pbjsStaticModuleRegistry(root), false);
         const encodedData = msg;
