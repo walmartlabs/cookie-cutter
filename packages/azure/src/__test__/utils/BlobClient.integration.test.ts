@@ -14,6 +14,15 @@ const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
 const blobId = "defaultBlobId";
 const url = process.env.AZURE_STORAGE_CONNECTION_STRING;
 
+if (!storageAccessKey) {
+    throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
+}
+if (!url) {
+    throw new Error("AZURE_STORAGE_CONNECTION_STRING env is not set");
+}
+
+// tslint:disable-next-line: no-console
+console.log(JSON.stringify(process.env));
 const client = new BlobClient({
     url,
     storageAccount,
@@ -21,20 +30,9 @@ const client = new BlobClient({
     container,
 });
 
-function validateKeys(storageAccessKey: string) {
-    if (!storageAccessKey) {
-        throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
-    }
-    if (!url) {
-        throw new Error("AZURE_STORAGE_CONNECTION_STRING env is not set");
-    }
-}
-
 const spanContext = new SpanContext();
 
 beforeAll(async () => {
-    validateKeys(storageAccessKey);
-
     await client.createContainerIfNotExists();
 
     await client.write(spanContext, "content", blobId);

@@ -17,6 +17,13 @@ const queueName = "testqueue";
 const encoder = new JsonMessageEncoder();
 const spanContext = new SpanContext();
 
+if (!storageAccessKey) {
+    throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
+}
+if (!url) {
+    console.log(`url: ${url}`);
+    throw new Error("AZURE_STORAGE_CONNECTION_STRING env is incorrectly set");
+}
 const client = new QueueClient({
     url,
     storageAccount,
@@ -26,19 +33,6 @@ const client = new QueueClient({
     createQueueIfNotExists: true,
 });
 
-function validateKeys(storageAccessKey: string) {
-    if (!storageAccessKey) {
-        throw new Error("STORAGE_ACCESS_KEY env is incorrectly set");
-    }
-    if (!url) {
-        console.log(`url: ${url}`);
-        throw new Error("AZURE_STORAGE_CONNECTION_STRING env is incorrectly set");
-    }
-}
-
-beforeAll(async () => {
-    validateKeys(storageAccessKey);
-});
 
 describe("Blob Client", () => {
     describe("Queue Creation", () => {
