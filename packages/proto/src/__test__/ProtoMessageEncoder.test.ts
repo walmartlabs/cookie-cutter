@@ -7,9 +7,10 @@ LICENSE file in the root directory of this source tree.
 
 import { pbjsStaticModuleRegistry, ProtoMessageEncoder } from "..";
 import { loadTestProto } from "./helper";
+import { IMessage } from "@walmartlabs/cookie-cutter-core";
 
 describe("ProtoMessageEncoder", () => {
-    const msg = {
+    const msg: IMessage = {
         type: "cookiecutter.test.SampleMessage",
         payload: {
             id: 2,
@@ -57,6 +58,18 @@ describe("ProtoMessageEncoder", () => {
         const decodedMsg = encoder.decode(base64Decoded, msg.type);
 
         expect(base64Decoded).toMatchObject(encodedMsg);
+        expect(decodedMsg).toMatchObject(msg);
+    });
+
+    it("returns correct Uint8Array from ", async () => {
+        const root = await loadTestProto();
+        const encoder = new ProtoMessageEncoder(pbjsStaticModuleRegistry(root), false);
+        const encodedData = msg;
+        const bufferOfEncodedData = encoder.encode(encodedData);
+        // in cosmosdb 'val: <buffer>' becomes: 'val: { type: "Buffer", data: <buffer> }'
+        const cosmosEncodedData = { type: "Buffer", data: bufferOfEncodedData };
+        const buffer = encoder.fromJsonEmbedding(cosmosEncodedData);
+        const decodedMsg = encoder.decode(buffer, msg.type);
         expect(decodedMsg).toMatchObject(msg);
     });
 });

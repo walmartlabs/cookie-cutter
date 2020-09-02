@@ -26,7 +26,7 @@ export class ProtoMessageEncoder implements IMessageEncoder, IEncodedMessageEmbe
     }
 
     public fromJsonEmbedding(embedding: any): Uint8Array {
-        return isString(embedding) ? Buffer.from(embedding, "base64") : (embedding as Uint8Array);
+        return isString(embedding) ? Buffer.from(embedding, "base64") : embedding.data;
     }
 
     public encode(msg: IMessage): Uint8Array {
