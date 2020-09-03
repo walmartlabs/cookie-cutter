@@ -7,9 +7,10 @@ LICENSE file in the root directory of this source tree.
 
 import { pbjsStaticModuleRegistry, ProtoMessageEncoder } from "..";
 import { loadTestProto } from "./helper";
+import { IMessage } from "@walmartlabs/cookie-cutter-core";
 
 describe("ProtoMessageEncoder", () => {
-    const msg = {
+    const msg: IMessage = {
         type: "cookiecutter.test.SampleMessage",
         payload: {
             id: 2,
@@ -58,5 +59,24 @@ describe("ProtoMessageEncoder", () => {
 
         expect(base64Decoded).toMatchObject(encodedMsg);
         expect(decodedMsg).toMatchObject(msg);
+    });
+
+    it("preserves backwards compatibility for decoding before IEncodedMessageEmbedder was implemented", async () => {
+        const root = await loadTestProto();
+        const encoder = new ProtoMessageEncoder(pbjsStaticModuleRegistry(root), false);
+
+        // this is how it used to get serialized before `toJsonEmbedding` was available
+        const json = JSON.stringify(encoder.encode(msg));
+        const obj = JSON.parse(json);
+
+        // since IEncodedMessageEmbedder was added the code will always
+        // invoke `fromJsonEmbedding`, even if `toJsonEmbedding` was not
+        // invoked when the data was saved
+        const buffer = encoder.fromJsonEmbedding(obj);
+
+        // the message should properly decode based on the buffer
+        // returned from `fromJsonEmbedding`
+        const decoded = encoder.decode(buffer, msg.type);
+        expect(decoded).toMatchObject(msg);
     });
 });
