@@ -61,15 +61,22 @@ describe("ProtoMessageEncoder", () => {
         expect(decodedMsg).toMatchObject(msg);
     });
 
-    it("returns correct Uint8Array from CosmosDB buffer", async () => {
+    it("preserves backwards compatibility for decoding before IEncodedMessageEmbedder was implemented", async () => {
         const root = await loadTestProto();
         const encoder = new ProtoMessageEncoder(pbjsStaticModuleRegistry(root), false);
-        const encodedData = msg;
-        const bufferOfEncodedData = encoder.encode(encodedData);
-        // in cosmosdb 'val: <buffer>' becomes: 'val: { type: "Buffer", data: <buffer> }'
-        const cosmosEncodedData = { type: "Buffer", data: bufferOfEncodedData };
-        const buffer = encoder.fromJsonEmbedding(cosmosEncodedData);
-        const decodedMsg = encoder.decode(buffer, msg.type);
-        expect(decodedMsg).toMatchObject(msg);
+
+        // this is how it used to get serialized before `toJsonEmbedding` was available
+        const json = JSON.stringify(encoder.encode(msg));
+        const obj = JSON.parse(json);
+
+        // since IEncodedMessageEmbedder was added the code will always
+        // invoke `fromJsonEmbedding`, even if `toJsonEmbedding` was not
+        // invoked when the data was saved
+        const buffer = encoder.fromJsonEmbedding(obj);
+
+        // the message should properly decode based on the buffer
+        // returned from `fromJsonEmbedding`
+        const decoded = encoder.decode(buffer, msg.type);
+        expect(decoded).toMatchObject(msg);
     });
 });
