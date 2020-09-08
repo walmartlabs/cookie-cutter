@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "jaeger-client": "^3.18.0",
+        "jaeger-client": "^3.18.1",
         "opentracing": "0.14.4",
         "prom-client": "~11.3.0"
     },

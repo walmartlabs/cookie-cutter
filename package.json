@@ -8,7 +8,8 @@
   ],
   "resolutions": {
     "lz4": "0.6.3",
-    "marked": "^0.7.0"
+    "marked": "^0.7.0",
+    "bl": "^4.0.3"
   },
   "engines": {
     "node": ">=10.0.0"
@@ -17,17 +18,17 @@
     "@types/expect": "24.3.0",
     "@types/jest": "25.2.1",
     "@types/long": "4.0.1",
-    "@types/node": "8.10.59",
+    "@types/node": "10.17.30",
     "glob": "7.1.6",
     "jest": "25.5.4",
     "jest-junit": "10.0.0",
     "prettier": "1.19.1",
     "semver": "7.3.2",
     "ts-jest": "25.5.1",
-    "tslint": "6.1.2",
+    "tslint": "6.1.3",
     "tslint-config-prettier": "1.18.0",
     "tslint-plugin-prettier": "2.3.0",
-    "typescript": "3.8.3"
+    "typescript": "3.9.4"
   },
   "scripts": {
     "build": "yarn workspaces run build",

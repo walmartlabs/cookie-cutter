@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@instana/collector": "1.97.0",
+        "@instana/collector": "1.106.2",
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
