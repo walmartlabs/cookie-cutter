@@ -408,7 +408,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                         }
                     }
                 } catch (e) {
-                    this.logger.error("Unable to retrieve watermarks", e);
+                    this.logger.warn("Unable to retrieve watermarks", e);
                 }
             }
         } finally {
