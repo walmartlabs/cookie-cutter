@@ -22,7 +22,7 @@
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.2.0",
         "@types/node-fetch": "2.5.7",
-        "node-fetch": "2.6.0"
+        "node-fetch": "2.6.1"
     },
     "scripts": {
         "build": "tsc",
