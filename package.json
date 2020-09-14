@@ -9,7 +9,8 @@
   "resolutions": {
     "lz4": "0.6.3",
     "marked": "^0.7.0",
-    "bl": "^4.0.3"
+    "bl": "^4.0.3",
+    "node-fetch": "^2.6.1"
   },
   "engines": {
     "node": ">=10.0.0"
