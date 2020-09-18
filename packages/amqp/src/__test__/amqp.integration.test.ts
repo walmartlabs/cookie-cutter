@@ -26,6 +26,8 @@ async function waitForServer() {
     const options: amqp.Options.Connect = {
         protocol: "amqp",
         hostname: "localhost",
+        username: "test",
+        password: "test",
     };
     while (true) {
         try {

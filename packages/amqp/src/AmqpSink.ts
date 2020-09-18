@@ -37,6 +37,8 @@ export class AmqpSink
             protocol: "amqp",
             hostname: this.config.server!.host,
             port: this.config.server!.port,
+            username: this.config.server.username,
+            password: this.config.server.password,
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
