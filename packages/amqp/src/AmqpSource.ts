@@ -55,13 +55,21 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
         this.logger = context.logger;
         this.metrics = context.metrics;
         this.tracer = context.tracer;
-        const options: amqp.Options.Connect = {
+        let options: amqp.Options.Connect = {
             protocol: "amqp",
             hostname: this.config.server.host,
             port: this.config.server.port,
-            username: this.config.server.username,
-            password: this.config.server.password,
         };
+
+        // specify username and password only when provided in config to avoid overwriting the defaults
+        if (this.config.server.username) {
+            options = {
+                ...options,
+                username: this.config.server.username,
+                password: this.config.server.password, 
+            };
+        }
+
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
         const queueName = this.config.queue.name;
