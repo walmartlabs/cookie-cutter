@@ -25,6 +25,22 @@ export class AmqpServerConfig implements IAmqpServerConfig {
     public get port(): number {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set username(_: string) {
+        config.noop();
+    }
+    public get username(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set password(_: string) {
+        config.noop();
+    }
+    public get password(): string {
+        return config.noop();
+    }
 }
 
 @config.section
