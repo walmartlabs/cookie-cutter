@@ -26,7 +26,7 @@ async function waitForServer() {
     const options: amqp.Options.Connect = {
         protocol: "amqp",
         hostname: "localhost",
-        username: "test-user",
+        username: "test",
         password: "test",
     };
     while (true) {
@@ -63,6 +63,8 @@ describe("AmqpSink and AmqpSource", () => {
     const config: IAmqpConfiguration = {
         server: {
             host: "localhost",
+            username: "test",
+            password: "test",
         },
         queue: {
             name: "defaultQueueName",

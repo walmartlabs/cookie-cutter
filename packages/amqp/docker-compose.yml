@@ -4,3 +4,6 @@ services:
     image: rabbitmq:latest
     ports:
       - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=test
+      - RABBITMQ_DEFAULT_PASS=test

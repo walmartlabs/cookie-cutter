@@ -20,7 +20,6 @@ import {
 import { AmqpOpenTracingTagKeys, IAmqpConfiguration } from ".";
 import * as amqp from "amqplib";
 import { Span, Tags, Tracer } from "opentracing";
-import { getAmqpConnectionConfig } from "./utils";
 
 export class AmqpSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
@@ -33,8 +32,15 @@ export class AmqpSink
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
-        this.tracer = context.tracer;
-        const options: amqp.Options.Connect = getAmqpConnectionConfig(this.config.server);
+        this.tracer = context.tracer; 
+        // note: username and password are set to default amqp credentials(guest) by underlying library if not set or set to undefined
+        const options: amqp.Options.Connect = {
+            protocol: "amqp",
+            hostname: this.config.server.host,
+            port: this.config.server.port,
+            username: this.config.server.username,
+            password: this.config.server.password,
+        };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
         const queueName = this.config.queue.name;
