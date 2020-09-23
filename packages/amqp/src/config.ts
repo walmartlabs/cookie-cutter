@@ -41,6 +41,14 @@ export class AmqpServerConfig implements IAmqpServerConfig {
     public get password(): string {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set vhost(_: string) {
+        config.noop();
+    }
+    public get vhost(): string {
+        return config.noop();
+    }
 }
 
 @config.section
