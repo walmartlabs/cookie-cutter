@@ -32,6 +32,7 @@ export interface IAmqpServerConfig {
     readonly port?: number;
     readonly username?: string;
     readonly password?: string;
+    readonly vhost?: string;
 }
 
 export interface IAmqpQueueConfig {

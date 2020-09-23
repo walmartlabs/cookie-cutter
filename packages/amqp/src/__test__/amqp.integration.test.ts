@@ -28,6 +28,7 @@ async function waitForServer() {
         hostname: "localhost",
         username: "test",
         password: "test",
+        vhost: "test",
     };
     while (true) {
         try {
@@ -65,6 +66,7 @@ describe("AmqpSink and AmqpSource", () => {
             host: "localhost",
             username: "test",
             password: "test",
+            vhost: "test",
         },
         queue: {
             name: "defaultQueueName",
