@@ -7,11 +7,11 @@ yarn build
 
 ECHO "Provisioning"
 
-PowerShell -executionpolicy unrestricted -command C:\vagrant\provision.ps1
+PowerShell -executionpolicy unrestricted -command .\src\azureemulator\provision.ps1
 
 ECHO "Emu Startup"
 
-PowerShell -executionpolicy unrestricted -command C:\vagrant\start_emulators.ps1
+PowerShell -executionpolicy unrestricted -command .\src\azureemulator\start_emulators.ps1
 
 ECHO "Starting tests"
 
