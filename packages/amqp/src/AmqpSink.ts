@@ -33,10 +33,14 @@ export class AmqpSink
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
+        // note: username and password are set to default amqp credentials(guest) by underlying library if not set or set to undefined
         const options: amqp.Options.Connect = {
             protocol: "amqp",
-            hostname: this.config.server!.host,
-            port: this.config.server!.port,
+            hostname: this.config.server.host,
+            port: this.config.server.port,
+            username: this.config.server.username,
+            password: this.config.server.password,
+            vhost: this.config.server.vhost,
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();

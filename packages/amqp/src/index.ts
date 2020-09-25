@@ -30,6 +30,9 @@ export enum AmqpOpenTracingTagKeys {
 export interface IAmqpServerConfig {
     readonly host: string;
     readonly port?: number;
+    readonly username?: string;
+    readonly password?: string;
+    readonly vhost?: string;
 }
 
 export interface IAmqpQueueConfig {

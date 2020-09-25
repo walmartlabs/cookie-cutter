@@ -12,16 +12,18 @@ import {
     IMetrics,
 } from "@walmartlabs/cookie-cutter-core";
 
-import {
-    redisClient,
-    IRedisClient,
-    RedisMetadata,
-    IRedisOutputStreamOptions,
-    RedisStreamMetadata,
-    RedisMetrics,
-    RedisMetricResult,
-} from ".";
+import { IRedisClient, IRedisOutputStreamOptions, RedisStreamMetadata } from ".";
 import { ParserError, AggregateError } from "redis";
+import { RedisClient } from "./RedisClient";
+
+export enum RedisMetrics {
+    MsgPublished = "cookie_cutter.redis_producer.msg_published",
+}
+
+export enum RedisMetricResult {
+    Success = "success",
+    Error = "error",
+}
 
 export class RedisStreamSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
@@ -37,18 +39,22 @@ export class RedisStreamSink
     }
 
     async sink(output: IterableIterator<IPublishedMessage>, retry: RetrierContext): Promise<void> {
-        let writeStream = this.config.writeStream;
+        let writeStream = this.config.stream;
         try {
             for (const msg of output) {
-                writeStream =
-                    msg.metadata[RedisStreamMetadata.StreamName] || this.config.writeStream;
+                writeStream = msg.metadata[RedisStreamMetadata.Stream] || this.config.stream;
 
                 await this.client.xAddObject(
                     msg.spanContext,
                     msg.message.type,
                     writeStream,
-                    RedisMetadata.OutputSinkStreamKey,
-                    msg.message.payload
+                    {
+                        payload: this.config.payloadKey,
+                        typeName: this.config.typeNameKey,
+                    },
+                    msg.message.payload,
+                    undefined,
+                    this.config.maxStreamLength
                 );
 
                 this.metrics.increment(RedisMetrics.MsgPublished, {
@@ -72,7 +78,7 @@ export class RedisStreamSink
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.metrics = context.metrics;
-        this.client = makeLifecycle(redisClient(this.config));
+        this.client = makeLifecycle(new RedisClient(this.config));
         await this.client.initialize(context);
     }
 

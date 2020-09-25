@@ -59,6 +59,9 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
             protocol: "amqp",
             hostname: this.config.server.host,
             port: this.config.server.port,
+            username: this.config.server.username,
+            password: this.config.server.password,
+            vhost: this.config.server.vhost,
         };
         this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
