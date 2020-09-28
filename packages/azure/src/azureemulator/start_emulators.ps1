@@ -2,7 +2,7 @@ function printAndLog
 {
     param([string]$argstring = "unknown")
     Write-Output $argstring
-    Add-Content .\service_loop.txt $argstring
+    Add-Content C:\vagrant\service_loop.txt $argstring
 }
 
 printAndLog -argstring "--------------------------------"
