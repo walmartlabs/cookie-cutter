@@ -91,7 +91,7 @@ export class KubernetesWatchSource extends KubernetesBase
             return;
         }
 
-        this.logger.info(`Starting watch`, {
+        this.logger.debug(`Starting watch`, {
             queryPath: this.queryPath,
             queryParams: this.queryParams,
             reconnectTimeout: this.reconnectTimeout,
@@ -152,7 +152,7 @@ export class KubernetesWatchSource extends KubernetesBase
 
         watchPromise.then(
             (resp) => {
-                this.logger.info(resp, {
+                this.logger.debug(resp, {
                     queryPath: this.queryPath,
                     queryParams: this.queryParams,
                 });
