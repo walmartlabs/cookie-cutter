@@ -7,13 +7,11 @@ yarn build
 
 ECHO "Provisioning"
 
-Get-Location
-
-PowerShell -executionpolicy unrestricted -command .\src\azureemulator\provision.ps1
+PowerShell -executionpolicy unrestricted -command packages\azure\src\azureemulator\provision.ps1
 
 ECHO "Emu Startup"
 
-PowerShell -executionpolicy unrestricted -command .\src\azureemulator\start_emulators.ps1
+PowerShell -executionpolicy unrestricted -command packages\azure\src\azureemulator\start_emulators.ps1
 
 Start-Sleep -s 15
 ECHO "Starting tests"
