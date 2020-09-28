@@ -39,9 +39,6 @@ $storage_emulator_config_path = "C:\Program Files (x86)\Microsoft SDKs\Azure\Sto
 
 Start-Sleep -s 60    
 
-ECHO "Start-CosmosDbEmulator"
-Start-Process "C:\Program Files\Azure Cosmos DB Emulator\CosmosDB.Emulator.exe" -ArgumentList "/noexplorer","/allownetworkaccess","/computeport=0","/key=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==","/nofirewall","/noui","/disableratelimiting" -ErrorAction Stop -PassThru
-    
 ECHO "SqlLocalDB.exe create MSSQLLocalDB"
 Start-Process -wait "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\SqlLocalDB.exe" -ArgumentList "create","MSSQLLocalDB"
 
@@ -50,6 +47,9 @@ Start-Process -wait "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\SqlLoc
 
 ECHO "AzureStorageEmulator.exe start"
 Start-Process -wait "C:\Program Files (x86)\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe"  -ArgumentList "start"
+
+ECHO "Start-CosmosDbEmulator"
+Start-Process "C:\Program Files\Azure Cosmos DB Emulator\CosmosDB.Emulator.exe" -ArgumentList "/noexplorer","/allownetworkaccess","/computeport=0","/key=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==","/nofirewall","/noui","/disableratelimiting" -ErrorAction Stop -PassThru
 
 
 
