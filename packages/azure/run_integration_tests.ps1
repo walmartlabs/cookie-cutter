@@ -1,3 +1,5 @@
+Remove-Item –path 'C:\Program Files\Azure Cosmos DB Emulator' –recurse
+
 choco install yarn -y
 
 ECHO "Yarn Install && Yarn Build"
