@@ -12,15 +12,7 @@
 (New-Object System.Net.WebClient).DownloadFile('https://aka.ms/cosmosdb-emulator', '.\cosmos.msi')
 Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 
-# Service Manager
-(New-Object System.Net.WebClient).DownloadFile('https://nssm.cc/release/nssm-2.24.zip', '.\nssm.zip')
-Expand-Archive .\nssm.zip -DestinationPath .\nssm -Force
-
-# Cosmos as a service
-.\nssm\nssm-2.24\win64\nssm.exe install cosmosdbemulator ".\service_startup.cmd"
-.\nssm\nssm-2.24\win64\nssm.exe set cosmosdbemulator Start SERVICE_DELAYED_AUTO_START
-.\nssm\nssm-2.24\win64\nssm.exe set cosmosdbemulator Type SERVICE_INTERACTIVE_PROCESS
-.\nssm\nssm-2.24\win64\nssm.exe start cosmosdbemulator
+Microsoft.Azure.Cosmos.Emulator.exe
 
 Set-ItemProperty -Name 'FailureActions' -Path 'HKLM:\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\cosmosdbemulator' -Value ([byte[]](0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3,0x0,0x0,0x0,0x14,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0x60,0xea,0x0,0x0,0x1,0x0,0x0,0x0,0x60,0xea,0x0,0x0,0x1,0x0,0x0,0x0,0x60,0xea,0x0,0x0))
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
