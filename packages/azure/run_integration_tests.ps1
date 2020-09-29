@@ -1,13 +1,11 @@
-Remove-Item –path 'C:\Program Files\Azure Cosmos DB Emulator' –recurse
+# choco install yarn -y
 
-choco install yarn -y
+# ECHO "Yarn Install && Yarn Build"
 
-ECHO "Yarn Install && Yarn Build"
+# yarn install
+# yarn build
 
-yarn install
-yarn build
-
-ECHO "Provisioning"
+# ECHO "Provisioning"
 
 # Cosmos DB emulator
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
