@@ -418,7 +418,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                     // until a fix for kafkajs is available / the root cause of the problem is confirmed
                     if (
                         e &&
-                        e.toString().contains("server is not the leader for that topic-partition")
+                        e.toString().includes("server is not the leader for that topic-partition")
                     ) {
                         this.brokerMetadataErrors++;
                     }
