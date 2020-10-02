@@ -18,7 +18,6 @@ Get-CosmosDbEmulatorStatus
 ECHO "Starting Cosmos DB Emulator"
 Start-CosmosDbEmulator
 
-Start-Sleep -s 60    
 
 Get-CosmosDbEmulatorStatus
 
