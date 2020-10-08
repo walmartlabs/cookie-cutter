@@ -1,5 +1,6 @@
 # choco install yarn -y
 
+choco install curl
 # ECHO "Yarn Install && Yarn Build"
 
 # yarn install
@@ -16,14 +17,16 @@ Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 Get-CosmosDbEmulatorStatus
 
-lodctr /R
+cd "$env:ProgramFiles\Azure Cosmos DB Emulator"
+.\Microsoft.Azure.Cosmos.Emulator.exe /startwprtraces
+.\Microsoft.Azure.Cosmos.Emulator.exe
 
-ECHO "Starting Cosmos DB Emulator"
-Start-CosmosDbEmulator
 
+.\Microsoft.Azure.Cosmos.Emulator.exe /stopwprtraces
 
-Get-CosmosDbEmulatorStatus
+dir
 
+#curl https://bashupload.com/docdbemulator_000001.etl --data-binary @docdbemulator_000001.etl
 # Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 
 # SQL DB
