@@ -19,8 +19,8 @@ Get-CosmosDbEmulatorStatus
 
 cd "$env:ProgramFiles\Azure Cosmos DB Emulator"
 .\Microsoft.Azure.Cosmos.Emulator.exe /startwprtraces
-.\Microsoft.Azure.Cosmos.Emulator.exe
-
+Start-CosmosDbEmulator
+Get-CosmosDbEmulatorStatus
 
 .\Microsoft.Azure.Cosmos.Emulator.exe /stopwprtraces
 
