@@ -144,4 +144,24 @@ describe("BoundedPriorityQueue", () => {
         await enqueuePromise;
         await dequeuePromise;
     });
+
+    it("keeps priority through subsequent attempts to enqueue", async () => {
+        const queue = new BoundedPriorityQueue<number>(1);
+        await queue.enqueue(1, 0);
+        await queue.enqueue(2, 1);
+        // tslint:disable-next-line:no-floating-promises
+        queue.enqueue(3, 1);
+        // tslint:disable-next-line:no-floating-promises
+        queue.enqueue(4, 1);
+
+        const buffer = [];
+        for await (const item of queue.iterate()) {
+            buffer.push(item);
+            if (buffer.length === 4) {
+                queue.close();
+            }
+        }
+
+        expect(buffer).toMatchObject([2, 3, 4, 1]);
+    });
 });

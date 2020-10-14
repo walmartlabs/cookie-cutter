@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-timer",
-    "version": "1.2.0",
+    "version": "1.3.0-rc.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,10 +16,10 @@
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0"
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-rc"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.2.0"
+        "@walmartlabs/cookie-cutter-core": "^1.3.0-rc"
     },
     "scripts": {
         "build": "tsc",

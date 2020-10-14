@@ -230,6 +230,11 @@ describe("Primitive Values", () => {
         expect(actual.mode).toBe(Mode.Advanced);
     });
 
+    it("allows overwriting default values with <null>", () => {
+        const actual = config.parse(Config, { num: null }, { num: 5 });
+        expect(actual.num).toBeNull();
+    });
+
     it("converts string -> number", () => {
         const actual = config.parse(
             Config,

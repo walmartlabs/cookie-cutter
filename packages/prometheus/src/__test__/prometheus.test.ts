@@ -234,11 +234,13 @@ describe("Prometheus", () => {
             expect(mockError).toHaveBeenNthCalledWith(4, str, err, data4);
         });
 
-        it("does not create/observe a Histogram when given a negative observation value", async () => {
+        it("creates a Histogram when given a negative observation value and bucket", async () => {
             const key1 = "key1";
             const key2 = "key2";
             const port = nextPort();
-            const prom = makeLifecycle(prometheus(prometheusConfiguration(port)));
+            const prom = makeLifecycle(
+                prometheus({ ...prometheusConfiguration(port), defaultHistogramBuckets: [-5, 15] })
+            );
             await prom.initialize({ ...DefaultComponentContext, logger: mockLogger });
             prom.timing(key1, -10);
             prom.timing(key2, 20);
@@ -246,19 +248,19 @@ describe("Prometheus", () => {
             prom.timing(key2, 0);
             const dataSplit = (await getMetrics(port)).split("\n");
             await prom.dispose();
-            expect(dataSplit[0]).toBe("# TYPE test_key2 histogram");
-            expect(dataSplit[1].startsWith('test_key2_bucket{le="10"} 1')).toBe(true);
-            expect(dataSplit[2].startsWith('test_key2_bucket{le="20"} 2')).toBe(true);
-            expect(dataSplit[3].startsWith('test_key2_bucket{le="+Inf"} 2')).toBe(true);
-            expect(dataSplit[4].startsWith("test_key2_sum 20")).toBe(true);
-            expect(dataSplit[5].startsWith("test_key2_count 2")).toBe(true);
-            expect(mockError).toHaveBeenCalledTimes(2);
-            const str = "Prometheus Histogram Error";
-            const err = new Error("Observing a negative value is not allowed for Histograms.");
-            const data1 = { key: key1, value: -10, tags: undefined };
-            const data2 = { key: key2, value: -10, tags: undefined };
-            expect(mockError).toHaveBeenNthCalledWith(1, str, err, data1);
-            expect(mockError).toHaveBeenNthCalledWith(2, str, err, data2);
+            expect(dataSplit[0]).toBe("# TYPE test_key1 histogram");
+            expect(dataSplit[1].startsWith('test_key1_bucket{le="-5"} 1')).toBe(true);
+            expect(dataSplit[2].startsWith('test_key1_bucket{le="15"} 1')).toBe(true);
+            expect(dataSplit[3].startsWith('test_key1_bucket{le="+Inf"} 1')).toBe(true);
+            expect(dataSplit[4].startsWith("test_key1_sum -10")).toBe(true);
+            expect(dataSplit[5].startsWith("test_key1_count 1")).toBe(true);
+            expect(dataSplit[7]).toBe("# TYPE test_key2 histogram");
+            expect(dataSplit[8].startsWith('test_key2_bucket{le="-5"} 1')).toBe(true);
+            expect(dataSplit[9].startsWith('test_key2_bucket{le="15"} 2')).toBe(true);
+            expect(dataSplit[10].startsWith('test_key2_bucket{le="+Inf"} 3')).toBe(true);
+            expect(dataSplit[11].startsWith("test_key2_sum 10")).toBe(true);
+            expect(dataSplit[12].startsWith("test_key2_count 3")).toBe(true);
+            expect(mockError).toHaveBeenCalledTimes(0);
         });
 
         it("outputs 2 histograms with observations", async () => {

@@ -22,7 +22,7 @@ describe("CosmosStateAggregationSource", () => {
     interface ITestSetup {
         readonly source: CosmosStateAggregationSource<any>;
         readonly logSpy: jest.SpyInstance<void, []>;
-        readonly querySpy: jest.SpyInstance<Promise<any[]>, [SpanContext, ICosmosQuery]>;
+        readonly querySpy: jest.SpyInstance<Promise<any[]>, [SpanContext, ICosmosQuery, string?]>;
         readonly snapshotSpy: jest.SpyInstance<
             Promise<[number, any]>,
             [SpanContext, string, number?]

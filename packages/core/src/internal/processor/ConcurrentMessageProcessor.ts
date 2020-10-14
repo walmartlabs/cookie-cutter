@@ -59,9 +59,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
     }
 
     protected reportStatistics() {
+        this.metrics.gauge(MessageProcessingMetrics.InputQueue, this.inputQueue.length);
         this.metrics.gauge(
-            MessageProcessingMetrics.InputQueue,
-            this.inputQueue.length + super.currentlyInflight.length
+            MessageProcessingMetrics.ConcurrentHandlers,
+            super.currentlyInflight.length
         );
         this.metrics.gauge(MessageProcessingMetrics.OutputQueue, this.outputQueue.length);
     }
@@ -252,8 +253,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             if (sequence % this.config.yieldForIOMessageCount === 0) {
                 await waitForPendingIO();
             }
-        } catch (e) {
-            throw new Error("failed to process message");
         } finally {
             if (dispatchError) {
                 if (handlingInputSpan) {
