@@ -94,17 +94,6 @@ export interface IQueueMessage {
     payload: unknown;
 }
 
-const QUEUE_NOT_FOUND_ERROR_CODE = 404;
-
-export class EnvelopeQueueMessagePreprocessor implements IQueueMessagePreprocessor {
-    public process(payload: string): IQueueMessage {
-        return JSON.parse(payload) as {
-            headers: Record<string, string>;
-            payload: unknown;
-        };
-    }
-}
-
 export interface IQueueMessage {
     headers: Record<string, string>;
     payload: unknown;
