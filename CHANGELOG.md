@@ -1,3 +1,46 @@
+# 1.3
+
+## core
+
+- fixed bug where BoundedPriorityQueue could de-prioritize elements under certain circumstances which could lead to out-of-order processing
+- deprecated support for Node v8
+
+## kafka
+
+- detect stale broker metadata and crash kafkajs client; this seems to be a bug in kafkajs where the metadata can get stale and all reconnect attempts of kafkajs will fail.
+
+## prometheus
+
+- allow negative values for histograms
+
+## kubernetes
+
+- less verbose logging
+
+## amqp
+
+- new module with sink and source for AMQP compatible message buses
+
+## protobuf
+
+- support embedding encoded protobuf data as base64 in JSON documents
+
+## redis
+
+- support multiple streams for source and sink
+- added missing metrics
+- fix messages getting lost when receiving in batches
+
+## azure
+
+- support accessing multiple cosmos collection from within the same service
+- added support for dead letter queues for Azure Queues
+
+## mssql
+
+- fixed sink swallows actual error message when a transaction fails to commit
+
+
 # 1.2
 
 ## core
