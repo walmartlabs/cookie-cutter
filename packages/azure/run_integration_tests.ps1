@@ -6,7 +6,7 @@ $app = Get-WmiObject -Class Win32_Product | Where-Object {
 $app.Uninstall()
 
 Remove-Item –path %ProgramFiles%\Azure Cosmos DB Emulator –recurse
-Remote-Item -path %LOCALAPPDATA%\CosmosDBEmulator –recurse
+Remove-Item -path %LOCALAPPDATA%\CosmosDBEmulator –recurse
 
 
 choco install curl
