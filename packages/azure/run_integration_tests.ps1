@@ -24,7 +24,7 @@ Get-CosmosDbEmulatorStatus
 
 .\Microsoft.Azure.Cosmos.Emulator.exe /stopwprtraces
 
-dir
+netstat -abn
 
 #curl https://bashupload.com/docdbemulator_000001.etl --data-binary @docdbemulator_000001.etl
 # Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
