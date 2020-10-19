@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-kafka",
-    "version": "1.3.0-beta.3",
+    "version": "1.4.0-beta.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -23,7 +23,7 @@
         "uuid": "8.3.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.3.0-beta",
+        "@walmartlabs/cookie-cutter-core": "^1.4.0-beta",
         "ip": "1.1.5"
     },
     "scripts": {

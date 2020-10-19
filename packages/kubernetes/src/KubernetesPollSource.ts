@@ -83,7 +83,7 @@ export class KubernetesPollSource extends KubernetesBase
         }
 
         while (this.running) {
-            this.logger.info(`Starting poll watch`, {
+            this.logger.debug(`Starting poll watch`, {
                 queryPath: this.queryPath,
                 queryParams: this.queryParams,
                 reconnectTimeout: this.reconnectTimeout,
@@ -160,7 +160,7 @@ export class KubernetesPollSource extends KubernetesBase
                 }
             }
 
-            this.logger.info(`Finished poll watch`, {
+            this.logger.debug(`Finished poll watch`, {
                 queryPath: this.queryPath,
                 queryParams: this.queryParams,
                 reconnectTimeout: this.reconnectTimeout,

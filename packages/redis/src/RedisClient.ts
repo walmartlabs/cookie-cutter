@@ -35,6 +35,10 @@ export enum RedisClientMetrics {
     XClaim = "cookie_cutter.redis_client.xclaim",
 }
 
+enum MetricLabels {
+    Type = "type",
+}
+
 enum RedisMetricResults {
     Success = "success",
     Error = "error",
@@ -179,14 +183,14 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         try {
             await this.client.set(key, storableValue);
             this.metrics.increment(RedisClientMetrics.Set, {
-                type,
+                [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Success,
             });
         } catch (e) {
             failSpan(span, e);
             this.metrics.increment(RedisClientMetrics.Set, {
-                type,
+                [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Error,
                 error: e,
@@ -220,7 +224,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             }
 
             this.metrics.increment(RedisClientMetrics.Get, {
-                type,
+                [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Success,
             });
@@ -253,8 +257,8 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         const db = this.config.db;
         const span = this.tracer!.startSpan("Redis Client xAddObject Call", { childOf: context });
         this.spanLogAndSetTags(span, this.xAddObject.name, db, keys.payload, streamName);
+        const typeName = this.getTypeName(type);
         try {
-            const typeName = this.getTypeName(type);
             const encodedBody = this.encoder.encode({
                 type: typeName,
                 payload: body,
@@ -272,7 +276,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             const insertedId = await this.client.xadd.call(this.client, args);
             this.metrics!.increment(RedisClientMetrics.XAdd, {
-                type,
+                [MetricLabels.Type]: typeName,
                 db,
                 streamName,
                 result: RedisMetricResults.Success,
@@ -282,7 +286,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         } catch (e) {
             failSpan(span, e);
             this.metrics!.increment(RedisClientMetrics.XAdd, {
-                type,
+                [MetricLabels.Type]: typeName,
                 db,
                 streamName,
                 result: RedisMetricResults.Error,
