@@ -1,4 +1,13 @@
 # choco install yarn -y
+$app = Get-WmiObject -Class Win32_Product | Where-Object { 
+    $_.Name -match "Azure Cosmos DB Emulator" 
+}
+
+$app.Uninstall()
+
+Remove-Item –path %ProgramFiles%\Azure Cosmos DB Emulator –recurse
+Remote-Item -path %LOCALAPPDATA%\CosmosDBEmulator –recurse
+
 
 choco install curl
 # ECHO "Yarn Install && Yarn Build"
