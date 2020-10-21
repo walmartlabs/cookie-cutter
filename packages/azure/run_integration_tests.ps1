@@ -1,15 +1,14 @@
 # choco install yarn -y
-$app = Get-WmiObject -Class Win32_Product | Where-Object { 
-    $_.Name -match "Azure Cosmos DB Emulator" 
-}
 
-$app.Uninstall()
+stop-process -name Microsoft.Azure.Cosmos.* -ErrorAction SilentlyContinue
+stop-process -name CosmosDb.Emulator -ErrorAction SilentlyContinue
 
-Remove-Item –path %ProgramFiles%\Azure Cosmos DB Emulator –recurse
-Remove-Item -path %LOCALAPPDATA%\CosmosDBEmulator –recurse
+Remove-Item "$env:ProgramFiles\Azure Cosmos DB Emulator" -Force  -Recurse -ErrorAction SilentlyContinue
+Remove-Item "$env:LOCALAPPDATA\CosmosDBEmulator" -Force  -Recurse -ErrorAction SilentlyContinue
 
+ECHO "Cleared env"
 
-choco install curl
+choco install curl -y
 # ECHO "Yarn Install && Yarn Build"
 
 # yarn install
@@ -18,26 +17,22 @@ choco install curl
 # ECHO "Provisioning"
 
 # Cosmos DB emulator
+ECHO "Starting Download of CosmosDb Emulator"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-(New-Object System.Net.WebClient).DownloadFile('https://aka.ms/cosmosdb-emulator', '.\cosmos.msi')
-Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
+choco install curl -y
+curl 'https://aka.ms/cosmosdb-emulator' -o '.\cosmos.msi'
+
 
 
 Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 Get-CosmosDbEmulatorStatus
 
-cd "$env:ProgramFiles\Azure Cosmos DB Emulator"
-.\Microsoft.Azure.Cosmos.Emulator.exe /startwprtraces
 Start-CosmosDbEmulator
 Get-CosmosDbEmulatorStatus
 
-.\Microsoft.Azure.Cosmos.Emulator.exe /stopwprtraces
-
 netstat -abn
 
-#curl https://bashupload.com/docdbemulator_000001.etl --data-binary @docdbemulator_000001.etl
 # Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
-
 # SQL DB
 # (New-Object System.Net.WebClient).DownloadFile('https://download.microsoft.com/download/8/D/D/8DD7BDBA-CEF7-4D8E-8C16-D9F69527F909/ENU/x64/SqlLocalDB.MSI', '.\SqlLocalDB.MSI')
 # Start-Process -wait msiexec -ArgumentList "/i",".\SqlLocalDB.MSI","/qn","IACCEPTSQLLOCALDBLICENSETERMS=YES"
