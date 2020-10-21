@@ -19,8 +19,11 @@ choco install curl -y
 # Cosmos DB emulator
 ECHO "Starting Download of CosmosDb Emulator"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-choco install curl -y
 curl 'https://aka.ms/cosmosdb-emulator' -o '.\cosmos.msi'
+
+ECHO "Installing"
+Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
+
 
 
 
