@@ -40,6 +40,7 @@ interface IBufferToJSON {
 
 export class QueueInputSource implements IInputSource, IRequireInitialization {
     private readonly client: QueueClient & IRequireInitialization;
+    private readonly deadLetterClient: (QueueClient & IRequireInitialization) | undefined;
     private readonly readOptions: IQueueReadOptions;
     private readonly encoder: IMessageEncoder;
     private metrics: IMetrics;
@@ -57,6 +58,21 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
         this.metrics = DefaultComponentContext.metrics;
         this.tracer = DefaultComponentContext.tracer;
         this.logger = DefaultComponentContext.logger;
+        if (config.deadLetterQueue) {
+            const deadLetterConfig: IQueueConfiguration = {
+                createQueueIfNotExists: config.createQueueIfNotExists,
+                encoder: config.encoder,
+                queueName: config.deadLetterQueue.queueName,
+                storageAccessKey: config.storageAccessKey,
+                storageAccount: config.storageAccount,
+                largeItemBlobContainer: config.largeItemBlobContainer,
+                preprocessor: config.preprocessor,
+                retryCount: config.deadLetterQueue.retryCount || config.retryCount,
+                retryInterval: config.deadLetterQueue.retryInterval || config.retryInterval,
+                url: config.url,
+            };
+            this.deadLetterClient = QueueClientWithLargeItemSupport.create(deadLetterConfig);
+        }
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -64,6 +80,9 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
         this.logger = context.logger;
         this.tracer = context.tracer;
         await this.client.initialize(context);
+        if (this.deadLetterClient) {
+            await this.deadLetterClient.initialize(context);
+        }
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
@@ -106,6 +125,36 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                     [QueueMetadata.QueueName]: message.headers[QueueMetadata.QueueName],
                     [QueueMetadata.PopReceipt]: message.headers[QueueMetadata.PopReceipt],
                 };
+
+                if (
+                    this.deadLetterClient &&
+                    metadata[QueueMetadata.DequeueCount] >
+                        this.config.deadLetterQueue.maxDequeueCount
+                ) {
+                    try {
+                        await this.deadLetterClient.write(
+                            spanContext,
+                            payload,
+                            { [EventSourcedMetadata.EventType]: event_type },
+                            {
+                                visibilityTimeout: this.config.deadLetterQueue.visibilityTimeout,
+                                messageTimeToLive: this.config.deadLetterQueue.messageTimeToLive,
+                            }
+                        );
+                        await this.client.markAsProcessed(
+                            spanContext,
+                            message.headers[QueueMetadata.MessageId],
+                            message.headers[QueueMetadata.PopReceipt],
+                            message.headers[QueueMetadata.QueueName]
+                        );
+                    } catch (e) {
+                        span.log({ reprocess: true });
+                        failSpan(span, e);
+                    } finally {
+                        span.finish();
+                    }
+                    continue;
+                }
 
                 const msgRef = new MessageRef(metadata, msg, span.context());
                 msgRef.once("released", async (_msg: MessageRef, _value?: any, error?: Error) => {

@@ -31,10 +31,21 @@ import * as url from "url";
 import * as uuid from "uuid";
 import { isSequenceConflict } from ".";
 import { ICosmosConfiguration, ICosmosQuery, ICosmosQueryClient } from "..";
+import { getCollectionInfo } from "./helpers";
 
 export interface ICosmosWriteClient {
-    upsert(document: any, partitionKey: string, currentSn: number): Promise<void>;
-    bulkInsert(documents: any[], partitionKey: string, validateSn: boolean): Promise<void>;
+    upsert(
+        document: any,
+        partitionKey: string,
+        currentSn: number,
+        collectionId?: string
+    ): Promise<void>;
+    bulkInsert(
+        documents: any[],
+        partitionKey: string,
+        validateSn: boolean,
+        collectionId?: string
+    ): Promise<void>;
 }
 
 enum CosmosMetrics {
@@ -133,13 +144,13 @@ export class CosmosClient
         }
     }
 
-    private async container(): Promise<Container> {
+    private async container(collectionId?: string): Promise<Container> {
         return await this.client
             .database(this.config.databaseId)
-            .container(this.config.collectionId);
+            .container(collectionId ?? this.config.collectionId);
     }
 
-    private async initializeStoredProcedure(sprocID: string): Promise<void> {
+    private async initializeStoredProcedure(sprocID: string, collectionId?: string): Promise<void> {
         const sprocPath = SPROCS.get(sprocID);
         if (!sprocPath) {
             throw new Error(
@@ -149,7 +160,7 @@ export class CosmosClient
 
         const file = fs.readFileSync(path.resolve(__dirname, sprocPath));
         const sprocBody = file.toString();
-        const container = await this.container();
+        const container = await this.container(collectionId);
         const query = {
             query: "SELECT * FROM collection c WHERE c.id = @id",
             parameters: [{ name: "@id", value: sprocID }],
@@ -219,14 +230,15 @@ export class CosmosClient
         sprocID: string,
         partitionKey: string,
         documents: any[],
-        parameters: any[]
+        parameters: any[],
+        collectionId?: string
     ): Promise<void> {
         const spans: Span[] = [];
         let requestCharge = 0;
         try {
-            const container = await this.container();
+            const container = await this.container(collectionId);
             if (!this.spInitialized.get(sprocID)) {
-                throw new Error(`Stored Procedure wasn't correctly registered - id: ${sprocID}`);
+                await this.initializeStoredProcedure(sprocID, collectionId);
             }
             let docTraceId = uuid.v4();
             for (const doc of documents) {
@@ -279,29 +291,42 @@ export class CosmosClient
         }
     }
 
-    public async upsert(document: any, partitionKey: string, currentSn: number): Promise<void> {
-        await this.executeSproc(UPSERT_SPROC_ID, partitionKey, [document], [document, currentSn]);
+    public async upsert(document: any, key: string, currentSn: number): Promise<void> {
+        const { collectionId, partitionKey } = getCollectionInfo(key);
+
+        await this.executeSproc(
+            UPSERT_SPROC_ID,
+            partitionKey,
+            [document],
+            [document, currentSn],
+            collectionId
+        );
     }
 
-    public async bulkInsert(
-        documents: any[],
-        partitionKey: string,
-        validateSn: boolean
-    ): Promise<void> {
+    public async bulkInsert(documents: any[], key: string, validateSn: boolean): Promise<void> {
+        const { collectionId, partitionKey } = getCollectionInfo(key);
+
         if (documents && documents.length >= 1) {
-            await this.executeSproc(BULK_INSERT_SPROC_ID, partitionKey, documents, [
+            await this.executeSproc(
+                BULK_INSERT_SPROC_ID,
+                partitionKey,
                 documents,
-                validateSn,
-            ]);
+                [documents, validateSn],
+                collectionId
+            );
         }
     }
 
-    public async query(spanContext: SpanContext, query: ICosmosQuery): Promise<any[]> {
+    public async query(
+        spanContext: SpanContext,
+        query: ICosmosQuery,
+        collectionId?: string
+    ): Promise<any[]> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: spanContext });
         this.spanLogAndSetTags(span, this.query.name, undefined, query.query);
         let requestCharge = 0;
         try {
-            const container = await this.container();
+            const container = await this.container(collectionId);
             const iterator = container.items.query(query, {
                 populateQueryMetrics: true,
             });

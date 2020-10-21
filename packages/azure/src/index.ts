@@ -42,7 +42,7 @@ export interface ICosmosQuery {
 }
 
 export interface ICosmosQueryClient {
-    query(spanContext: SpanContext, query: ICosmosQuery): Promise<any[]>;
+    query(spanContext: SpanContext, query: ICosmosQuery, collectionId?: string): Promise<any[]>;
 }
 
 export function cosmosQueryClient(configuration: ICosmosConfiguration): ICosmosQueryClient {
