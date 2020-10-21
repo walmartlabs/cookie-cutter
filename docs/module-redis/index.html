@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Redis · Cookie Cutter</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="The Redis module allows services to write to a Redis store or retrieve data from there."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Redis · Cookie Cutter"/><meta property="og:type" content="website"/><meta property="og:url" content="https://walmartlabs.github.io/cookie-cutter/"/><meta property="og:description" content="The Redis module allows services to write to a Redis store or retrieve data from there."/><meta property="og:image" content="https://walmartlabs.github.io/cookie-cutter/img/docusaurus.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://walmartlabs.github.io/cookie-cutter/img/docusaurus.png"/><link rel="shortcut icon" href="/cookie-cutter/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/vs.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cookie-cutter/js/scrollSpy.js"></script><link rel="stylesheet" href="/cookie-cutter/css/main.css"/><script src="/cookie-cutter/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cookie-cutter/"><img class="logo" src="/cookie-cutter/img/cookie.svg" alt="Cookie Cutter"/><h2 class="headerTitleWithLogo">Cookie Cutter</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/cookie-cutter/docs/intro-getting-started" target="_self">Introduction</a></li><li class="siteNavGroupActive"><a href="/cookie-cutter/docs/intro-inputs" target="_self">API</a></li><li class=""><a href="/cookie-cutter/help" target="_self">Help</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Modules</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Introduction</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-inputs">Inputs</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-message-handling">Message Handling</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-outputs">Outputs</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/versioning-contribution">Versioning and Contribution Guide</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Components</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-dispatch-context">Dispatch Context</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-state">State</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-metrics">Metrics</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-tracing">Tracing</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-logging">Logging</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-validation">Validation</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-encoding">Encoding</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-config">Config</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-testing">Testing</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Modules</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-kafka">Kafka</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-azure">Azure</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-grpc">gRPC</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-validatejs">ValidateJS</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-mssql">MSSQL</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-timer">Timer</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-statsd">StatsD</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-protobuf">Protobuf</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-prometheus">Prometheus</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cookie-cutter/docs/module-redis">Redis</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-s3">S3</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Redis · Cookie Cutter</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="The Redis module allows services to write to a Redis store or retrieve data from there."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Redis · Cookie Cutter"/><meta property="og:type" content="website"/><meta property="og:url" content="https://walmartlabs.github.io/cookie-cutter/"/><meta property="og:description" content="The Redis module allows services to write to a Redis store or retrieve data from there."/><meta property="og:image" content="https://walmartlabs.github.io/cookie-cutter/img/docusaurus.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://walmartlabs.github.io/cookie-cutter/img/docusaurus.png"/><link rel="shortcut icon" href="/cookie-cutter/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/vs.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cookie-cutter/js/scrollSpy.js"></script><link rel="stylesheet" href="/cookie-cutter/css/main.css"/><script src="/cookie-cutter/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cookie-cutter/"><img class="logo" src="/cookie-cutter/img/cookie.svg" alt="Cookie Cutter"/><h2 class="headerTitleWithLogo">Cookie Cutter</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/cookie-cutter/docs/intro-getting-started" target="_self">Introduction</a></li><li class="siteNavGroupActive"><a href="/cookie-cutter/docs/intro-inputs" target="_self">API</a></li><li class=""><a href="/cookie-cutter/help" target="_self">Help</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Modules</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Introduction</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-inputs">Inputs</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-message-handling">Message Handling</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/intro-outputs">Outputs</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/versioning-contribution">Versioning and Contribution Guide</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Components</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-dispatch-context">Dispatch Context</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-state">State</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-metrics">Metrics</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-tracing">Tracing</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-logging">Logging</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-validation">Validation</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-encoding">Encoding</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-config">Config</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/comp-testing">Testing</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Modules</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-kafka">Kafka</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-azure">Azure</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-amqp">AMQP</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-grpc">gRPC</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-validatejs">ValidateJS</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-mssql">MSSQL</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-timer">Timer</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-statsd">StatsD</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-protobuf">Protobuf</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-prometheus">Prometheus</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cookie-cutter/docs/module-redis">Redis</a></li><li class="navListItem"><a class="navItem" href="/cookie-cutter/docs/module-s3">S3</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -82,10 +82,12 @@
 </thead>
 <tbody>
 <tr><td>host</td><td>the HTTP endpoint to connect to</td></tr>
-<tr><td>port</td><td>the port to connect to. Default is 6379</td></tr>
-<tr><td>db</td><td>index of the database to connect to</td></tr>
+<tr><td><em>port</em></td><td>the port to connect to. Default is 6379</td></tr>
+<tr><td><em>db</em></td><td>index of the database to connect to. Default is 0</td></tr>
+<tr><td><em>password</em></td><td>the password to use to connect to Redis. Default is no password</td></tr>
 <tr><td><em>encoder</em></td><td>the encoder to use when converting the payload to a byte array. This defaults to the <code>NullMessageEncoder</code> which only supports Buffers (=byte arrays) being published</td></tr>
 <tr><td><em>typeMapper</em></td><td>only required if correct type information needs to be emitted</td></tr>
+<tr><td><em>base64Encode</em></td><td>determines if buffers should be stored in base64 encoding. Default is true</td></tr>
 </tbody>
 </table>
 <h3><a class="anchor" aria-hidden="true" id="metrics"></a><a href="#metrics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics</h3>
@@ -96,6 +98,120 @@
 <tbody>
 <tr><td>cookie_cutter.redis_client.get</td><td>A call to get a value</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
 <tr><td>cookie_cutter.redis_client.set</td><td>A call to set a value</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xadd</td><td>A call to add a value to a stream</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xread</td><td>A call to read from a stream</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xreadgroup</td><td>A call to read from a a stream as part of a consumer group</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xgroup</td><td>A call to create a consumer group</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xack</td><td>A call to acknowledge a message in a stream</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xpending</td><td>A call to query pending messages list of a stream</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_client.xclaim</td><td>A call to claim a pending message of a stream</td><td><code>increment</code></td><td><code>type</code>, <code>db</code>, <code>result</code></td></tr>
 </tbody>
 </table>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cookie-cutter/docs/module-prometheus"><span class="arrow-prev">← </span><span>Prometheus</span></a><a class="docs-next button" href="/cookie-cutter/docs/module-s3"><span>S3</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#client">Client</a><ul class="toc-headings"><li><a href="#configuration">Configuration</a></li><li><a href="#metrics">Metrics</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cookie-cutter/" class="nav-home"><img src="/cookie-cutter/img/cookie.svg" alt="Cookie Cutter" width="66" height="58"/></a><div><h5>Docs</h5><a href="/cookie-cutter/docs/intro-getting-started.html">Introduction</a><a href="/cookie-cutter/docs/module-kafka.html">Kafka</a></div><div><h5>More</h5><a href="/cookie-cutter/blog">Blog</a></div></section><section class="copyright">Copyright © 2020 Walmart Inc.</section></footer></div></body></html>
+<h2><a class="anchor" aria-hidden="true" id="redisstreamsource"></a><a href="#redisstreamsource" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>redisStreamSource</h2>
+<p>The <code>redisStreamSource</code> function creates a new input source that receives messages from Redis. The example below joins the consumer group <code>consumer-group-1</code> and receives JSON encoded messages from streams <code>stream1</code>, <code>stream2</code> and <code>stream3</code>.</p>
+<pre><code class="hljs css language-typescript">    Application.create()
+        .input()
+        .add(redisStreamSource({
+            host: <span class="hljs-string">"localhost"</span>,
+            streams: [<span class="hljs-string">"stream1"</span>, <span class="hljs-string">"stream2"</span>, <span class="hljs-string">"stream3"</span>],
+            consumerGroup: <span class="hljs-string">"consumer-group-1"</span>,
+        }))
+        .done()
+        <span class="hljs-comment">// ...</span>
+        .run();
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="configuration-1"></a><a href="#configuration-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>host</td><td>the HTTP endpoint to connect to</td></tr>
+<tr><td><em>port</em></td><td>the port to connect to. Default is 6379</td></tr>
+<tr><td><em>db</em></td><td>index of the database to connect to</td></tr>
+<tr><td><em>password</em></td><td>the password to use to connect to Redis. Default is no password</td></tr>
+<tr><td><em>typeMapper</em></td><td>only required if correct type information needs to be emitted</td></tr>
+<tr><td>encoder</td><td>the encoder to use when converting the payload to a byte array.</td></tr>
+<tr><td>streams</td><td>a list of stream names to consume from</td></tr>
+<tr><td>consumerGroup</td><td>the name of the consumer group to join</td></tr>
+<tr><td><em>consumerId</em></td><td>the id of consumer to use, the default value is a generated guid</td></tr>
+<tr><td><em>consumerGroupStartId</em></td><td>the ID of the last item in the stream to consider already delivered, the default value is <code>$</code> (the ID of the last item in the stream)</td></tr>
+<tr><td><em>blockTimeout</em></td><td>the number of milliseconds we want to block before timing out, the default values is 100 ms</td></tr>
+<tr><td><em>idleTimeout</em></td><td>the minimum number of milliseconds of idle time a pending message should have before we try to claim it, the default value is 30000 ms (30s)</td></tr>
+<tr><td><em>batchSize</em></td><td>the number of messages receive at a time when consuming streams, the default values is 10</td></tr>
+<tr><td><em>reclaimMessageInterval</em></td><td>defines how often a client is checking for pending messages from dead consumers and tries to reclaim then</td></tr>
+<tr><td><em>base64Encode</em></td><td>determines if buffers should be stored in base64 encoding. Default is true</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="metadata"></a><a href="#metadata" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metadata</h3>
+<p>The following metadata is available in the message handler via <code>ctx.metadata&lt;T&gt;(key)</code></p>
+<table>
+<thead>
+<tr><th>name</th><th>description</th></tr>
+</thead>
+<tbody>
+<tr><td>RedisMetadata.Stream</td><td>the name of the stream the messages was received from</td></tr>
+<tr><td>RedisMetadata.MessageId</td><td>the id of the message that was received</td></tr>
+<tr><td>RedisMetadata.ConsumerId</td><td>the id of the consumer group</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="metrics-1"></a><a href="#metrics-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Description</th><th>Type</th><th>Tags</th></tr>
+</thead>
+<tbody>
+<tr><td>cookie_cutter.redis_consumer.input_msg_received</td><td>number of messages received from redis server</td><td><code>increment</code></td><td><code>stream_name</code>, <code>consumer_group</code></td></tr>
+<tr><td>cookie_cutter.redis_consumer.input_msg_processed</td><td>number of messages processed</td><td><code>increment</code></td><td><code>stream_name</code>, <code>consumer_group</code>, <code>result</code></td></tr>
+<tr><td>cookie_cutter.redis_consumer.input_msgs_claimed</td><td>number of pending messages claimed</td><td><code>increment</code></td><td><code>stream_name</code>, <code>consumer_group</code></td></tr>
+<tr><td>cookie_cutter.redis_consumer.pending_msg_size</td><td>number of pending messages found</td><td><code>gauge</code></td><td><code>stream_name</code>, <code>consumer_group</code></td></tr>
+<tr><td>cookie_cutter.redis_consumer.incoming_batch_size</td><td>number of messages received from redis server in a single fetch request</td><td><code>gauge</code></td></tr>
+</tbody>
+</table>
+<h2><a class="anchor" aria-hidden="true" id="redisstreamsink"></a><a href="#redisstreamsink" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>redisStreamSink</h2>
+<p>The 'redisStreamSink' function creates an output sink that handles published messages.</p>
+<pre><code class="hljs css language-typescript">Application.create()
+    .output()
+        .published(redisStreamSink({
+            host: <span class="hljs-string">"localhost"</span>,
+            stream: <span class="hljs-string">"streamName"</span>,
+        }))
+        .done()
+    <span class="hljs-comment">// ...</span>
+    .run();
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="configuration-2"></a><a href="#configuration-2" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>host</td><td>the HTTP endpoint to connect to</td></tr>
+<tr><td><em>port</em></td><td>the port to connect to. Default is 6379</td></tr>
+<tr><td><em>db</em></td><td>index of the database to connect to</td></tr>
+<tr><td>encoder</td><td>the encoder to use when converting the payload to a byte array.</td></tr>
+<tr><td><em>typeMapper</em></td><td>only required if correct type information needs to be emitted</td></tr>
+<tr><td>stream</td><td>the name of the stream to publish to if no other stream name was specified in the message handler</td></tr>
+<tr><td>maxStreamLength</td><td>if defined will limit the length of a stream by truncating it when new messages are published. Default is off</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="metadata-1"></a><a href="#metadata-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metadata</h3>
+<p>The following metadata is available in the message handler via <code>ctx.publish</code></p>
+<table>
+<thead>
+<tr><th>name</th><th>description</th></tr>
+</thead>
+<tbody>
+<tr><td>RedisStreamMetadata.Stream</td><td>the name of the stream to publish to</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="metrics-2"></a><a href="#metrics-2" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Description</th><th>Type</th><th>Tags</th></tr>
+</thead>
+<tbody>
+<tr><td>cookie_cutter.redis_producer.msg_published</td><td>the number of messages sent to redis server</td><td><code>increment</code></td><td><code>stream_name</code>, <code>result</code></td></tr>
+</tbody>
+</table>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cookie-cutter/docs/module-prometheus"><span class="arrow-prev">← </span><span>Prometheus</span></a><a class="docs-next button" href="/cookie-cutter/docs/module-s3"><span>S3</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#client">Client</a><ul class="toc-headings"><li><a href="#configuration">Configuration</a></li><li><a href="#metrics">Metrics</a></li></ul></li><li><a href="#redisstreamsource">redisStreamSource</a><ul class="toc-headings"><li><a href="#configuration-1">Configuration</a></li><li><a href="#metadata">Metadata</a></li><li><a href="#metrics-1">Metrics</a></li></ul></li><li><a href="#redisstreamsink">redisStreamSink</a><ul class="toc-headings"><li><a href="#configuration-2">Configuration</a></li><li><a href="#metadata-1">Metadata</a></li><li><a href="#metrics-2">Metrics</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cookie-cutter/" class="nav-home"><img src="/cookie-cutter/img/cookie.svg" alt="Cookie Cutter" width="66" height="58"/></a><div><h5>Docs</h5><a href="/cookie-cutter/docs/intro-getting-started.html">Introduction</a><a href="/cookie-cutter/docs/module-kafka.html">Kafka</a></div><div><h5>More</h5><a href="/cookie-cutter/blog">Blog</a></div></section><section class="copyright">Copyright © 2020 Walmart Inc.</section></footer></div></body></html>
