@@ -98,7 +98,12 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                 };
                 const event_type = headers[EventSourcedMetadata.EventType];
                 let protoOrJsonPayload = payload;
-                if (payload.type && payload.type === "Buffer" && isArray(payload.data)) {
+                if (
+                    !isEmbeddable(this.encoder) &&
+                    payload.type &&
+                    payload.type === "Buffer" &&
+                    isArray(payload.data)
+                ) {
                     protoOrJsonPayload = payload.data;
                 }
                 const msg = this.decode(protoOrJsonPayload, event_type);
