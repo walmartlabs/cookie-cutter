@@ -11,5 +11,4 @@ Vagrant.configure("2") do |config|
     pmv.memory = 8192
     pmv.cpus = 2
   end
-  config.vm.provision "file", source: "test_file.txt", destination: "test_file.txt"
 end
