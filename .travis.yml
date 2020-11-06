@@ -44,7 +44,7 @@ matrix:
         #     - YARN_GPG=no # Windows build agent will hang without this
 
         - name: "AZURE"
-          install: travis_wait
+          install: travis_wait 30 choco install curl -y
           os: windows
           node_js: 10
           stage: integrate
