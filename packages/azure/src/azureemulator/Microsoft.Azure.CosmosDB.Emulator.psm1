@@ -595,7 +595,7 @@ function Stop-CosmosDbEmulator {
 
         [Parameter(Mandatory = $false)]
         [UInt32]
-        $Timeout = 240
+        $Timeout = 1200
     )
 
     if (!(Test-Path $Emulator)) {
