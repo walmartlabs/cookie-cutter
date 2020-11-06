@@ -4,7 +4,7 @@
 
 # Azure Cosmos DB Emulator management functions
 
-# Plamen
+# Plamen; AND CI STOPPED TRIGGERING
 
 using namespace System.ServiceProcess
 
