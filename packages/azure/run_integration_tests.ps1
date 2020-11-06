@@ -24,16 +24,6 @@ ECHO "Starting Download of CosmosDb Emulator"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 curl 'https://aka.ms/cosmosdb-emulator' -o '.\cosmos.msi'
 
-
-Get-ChildItem -Path "C:\Program Files\Azure Cosmos DB Emulator\PSModules"
-
-# Copy file
-Copy-Item "$PSScriptRoot\src\azureemulator\Microsoft.Azure.CosmosDB.Emulator.psm1" -Destination "C:\Program Files\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator\Microsoft.Azure.CosmosDB.Emulator.psm1"
-
-Get-ChildItem -Path "C:\Program Files\Azure Cosmos DB Emulator\PSModules"
-
-Get-Content -Path "C:\Program Files\Azure Cosmos DB Emulator\PSModules" | Out-Printer
-
 ECHO "Installing"
 Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 
@@ -41,6 +31,16 @@ Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 
 
 Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
+
+Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+
+# Copy file
+Copy-Item "$PSScriptRoot\src\azureemulator\Microsoft.Azure.CosmosDB.Emulator.psm1" -Destination "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator.psm1"
+
+Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+
+Get-Content -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator.psm1" | Out-Printer
+
 Get-CosmosDbEmulatorStatus
 
 Start-CosmosDbEmulator
