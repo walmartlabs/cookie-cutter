@@ -15,6 +15,8 @@ choco install curl -y
 # yarn build
 
 # ECHO "Provisioning"
+ECHO $PSScriptRoot
+Get-ChildItem -Path $PSScriptRoot
 
 # Cosmos DB emulator
 ECHO "Starting Download of CosmosDb Emulator"
