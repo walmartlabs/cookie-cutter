@@ -32,18 +32,26 @@ Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 
 Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
-Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+ECHO "Get-ChildItem -Path"
+Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
 # Copy file
-Copy-Item "$PSScriptRoot\src\azureemulator\Microsoft.Azure.CosmosDB.Emulator.psm1" -Destination "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator.psm1"
+ECHO "Copy-Item"
+Copy-Item "$PSScriptRoot\src\azureemulator\Microsoft.Azure.CosmosDB.Emulator.psm1" -Destination "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator\Microsoft.Azure.CosmosDB.Emulator.psm1"
 
-Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+ECHO "Get-ChildItem -Path"
+Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
-Get-Content -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator.psm1" | Out-Printer
+ECHO "Get-Content -Path"
+Get-Content -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator\Microsoft.Azure.CosmosDB.Emulator.psm1"
 
+ECHO "Get-CosmosDbEmulatorStatus"
 Get-CosmosDbEmulatorStatus
 
+ECHO "Start-CosmosDbEmulator"
 Start-CosmosDbEmulator
+
+ECHO "Get-CosmosDbEmulatorStatus"
 Get-CosmosDbEmulatorStatus
 
 netstat -abn
