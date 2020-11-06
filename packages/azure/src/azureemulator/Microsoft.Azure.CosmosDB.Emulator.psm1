@@ -571,7 +571,8 @@ function Start-CosmosDbEmulator {
         return;
     }
 
-    [void](Wait-CosmosDbEmulator -Status Running -Timeout $Timeout)
+    # [void](Wait-CosmosDbEmulator -Status Running -Timeout $Timeout)
+    [void](Wait-CosmosDbEmulator -Status Running)
 }
 
 <#
@@ -628,7 +629,8 @@ function Stop-CosmosDbEmulator {
         return
     }
 
-    [void](Wait-CosmosDbEmulator -Status Stopped -Timeout $Timeout)
+    # [void](Wait-CosmosDbEmulator -Status Stopped -Timeout $Timeout)
+    [void](Wait-CosmosDbEmulator -Status Stopped)
 }
 
 <#
