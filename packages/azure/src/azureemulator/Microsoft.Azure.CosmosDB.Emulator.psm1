@@ -767,7 +767,7 @@ function Wait-CosmosDbEmulator {
     until ($complete.Invoke())
 
     # Write-Error "The emulator failed to reach ${Status} status within ${Timeout} seconds"
-    Write-Error "The emulator failed to reach ${Status} status within ${NewTimeout} seconds"
+    Write-Error "The emulator failed to reach ${Status} status within ${NewTimeout} seconds (NEW LINE)"
     $false
 }
 
