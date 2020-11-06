@@ -414,7 +414,7 @@ function Start-CosmosDbEmulator {
 
         [Parameter(Mandatory = $false)]
         [Uint32]
-        $Timeout = 480,
+        $Timeout = 2400,
 
         [Parameter(Mandatory = $false)]
         [switch]
