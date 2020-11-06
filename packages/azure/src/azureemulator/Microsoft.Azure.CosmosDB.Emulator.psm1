@@ -571,8 +571,8 @@ function Start-CosmosDbEmulator {
         return;
     }
 
-    # [void](Wait-CosmosDbEmulator -Status Running -Timeout $Timeout)
-    [void](Wait-CosmosDbEmulator -Status Running)
+    [void](Wait-CosmosDbEmulator -Status Running -Timeout $Timeout)
+    # [void](Wait-CosmosDbEmulator -Status Running)
 }
 
 <#
@@ -629,8 +629,8 @@ function Stop-CosmosDbEmulator {
         return
     }
 
-    # [void](Wait-CosmosDbEmulator -Status Stopped -Timeout $Timeout)
-    [void](Wait-CosmosDbEmulator -Status Stopped)
+    [void](Wait-CosmosDbEmulator -Status Stopped -Timeout $Timeout)
+    # [void](Wait-CosmosDbEmulator -Status Stopped)
 }
 
 <#
@@ -719,7 +719,7 @@ function Wait-CosmosDbEmulator {
     Write-Debug "Timeout"
     Write-Debug $Timeout
 
-    $NewTimeout = 1200
+    # $NewTimeout = 1200
 
     $complete = if ($Timeout -gt 0) {
         $start = [DateTimeOffset]::Now
@@ -767,7 +767,7 @@ function Wait-CosmosDbEmulator {
     until ($complete.Invoke())
 
     # Write-Error "The emulator failed to reach ${Status} status within ${Timeout} seconds"
-    Write-Error "The emulator failed to reach ${Status} status within ${NewTimeout} seconds (NEW LINE)"
+    Write-Error "The emulator failed to reach ${Status} status within ${Timeout} seconds (NEW LINE)"
     $false
 }
 

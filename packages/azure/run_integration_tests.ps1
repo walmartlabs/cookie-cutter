@@ -31,9 +31,6 @@ Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 ECHO "Get-ChildItem -Path"
 Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
-ECHO "Import-Module"
-Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
-
 ECHO "Get-ChildItem -Path"
 Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
@@ -43,6 +40,9 @@ Copy-Item "$PSScriptRoot\src\azureemulator\Microsoft.Azure.CosmosDB.Emulator.psm
 
 ECHO "Get-ChildItem -Path"
 Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
+
+ECHO "Import-Module"
+Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
 ECHO "Get-Content -Path"
 Get-Content -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator\Microsoft.Azure.CosmosDB.Emulator.psm1"
