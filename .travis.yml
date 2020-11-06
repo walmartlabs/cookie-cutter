@@ -51,7 +51,7 @@ matrix:
             - YARN_GPG=no # Windows build agent will hang without this
           script: |
                   PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
-                  travis_wait PowerShell -File packages/azure/run_integration_tests.ps1
+                  travis_wait 60 PowerShell -File packages/azure/run_integration_tests.ps1
 
 
         # - name: "MSSQL"
