@@ -716,15 +716,9 @@ function Wait-CosmosDbEmulator {
         $Timeout = 0
     )
 
-    Write-Debug "Timeout"
-    Write-Debug $Timeout
-
-    # $NewTimeout = 1200
-
     $complete = if ($Timeout -gt 0) {
         $start = [DateTimeOffset]::Now
-        # $stop = $start.AddSeconds($Timeout)
-        $stop = $start.AddSeconds($NewTimeout)
+        $stop = $start.AddSeconds($Timeout)
         {
             $result -eq $Status -or [DateTimeOffset]::Now -ge $stop
         }
