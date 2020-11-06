@@ -28,8 +28,10 @@ ECHO "Installing"
 Start-Process -wait .\cosmos.msi -ArgumentList "/quiet"
 
 
+ECHO "Get-ChildItem -Path"
+Get-ChildItem -Path "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
-
+ECHO "Import-Module"
 Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
 
 ECHO "Get-ChildItem -Path"
