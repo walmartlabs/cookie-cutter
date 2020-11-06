@@ -44,13 +44,15 @@ matrix:
         #     - YARN_GPG=no # Windows build agent will hang without this
 
         - name: "AZURE"
-          install: travis_wait 30 choco install curl -y
           os: windows
           node_js: 10
           stage: integrate
           env:
             - YARN_GPG=no # Windows build agent will hang without this
-          script: PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine" && PowerShell -File packages/azure/run_integration_tests.ps1
+          script: |
+                  PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
+                  travis_wait PowerShell -File packages/azure/run_integration_tests.ps1
+
 
         # - name: "MSSQL"
         #   os: linux
