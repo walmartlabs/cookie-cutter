@@ -978,4 +978,3 @@ Export-ModuleMember Get-CosmosDbEmulatorCertificate, Get-CosmosDbEmulatorStatus,
 # OmfKkWbCfTLzfU3UIdMGZn43N0/pf9IRJIk2sLPV9+MiD/g6p4CcgD4MXBP2R7xi
 # G+giBjS2iidVnX1gQCoUuQXE/2tNoEqGhHYth6V77DKJbskIAbk=
 # SIG # End signature block
-
