@@ -18,6 +18,7 @@ choco install curl -y
 ECHO $PSScriptRoot
 Get-ChildItem -Path $PSScriptRoot
 
+
 # Cosmos DB emulator
 ECHO "Starting Download of CosmosDb Emulator"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
