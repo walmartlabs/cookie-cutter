@@ -62,3 +62,4 @@ node ./packages/azure/storage_index.js
 
 Write-Host "Launching Queue Client"
 node ./packages/azure/queue_index.js
+
