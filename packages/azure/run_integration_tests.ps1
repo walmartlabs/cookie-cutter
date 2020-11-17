@@ -21,7 +21,7 @@ Write-Host "Current Emulator Status"
 Get-CosmosDbEmulatorStatus
 
 Write-Host "Launching Cosmos Client"
-node index.js
+node ./packages/azure/index.js
 
 Write-Host "Set-NetFirewallProfile"
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
@@ -58,7 +58,7 @@ Write-Host  "AzureStorageEmulator.exe status"
 Start-Process -Wait "C:\Program Files (x86)\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe"  -ArgumentList "status", "-inprocess"
 
 Write-Host "Launching Storage Client"
-node storage_index.js
+node ./packages/azure/storage_index.js
 
 Write-Host "Launching Queue Client"
-node queue_index.js
+node ./packages/azure/queue_index.js
