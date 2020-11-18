@@ -63,3 +63,9 @@ node ./packages/azure/storage_index.js
 Write-Host "Launching Queue Client"
 node ./packages/azure/queue_index.js
 
+Write-Host "Yarn integrate"
+cd packages/azure
+yarn integrate
+
+
+
