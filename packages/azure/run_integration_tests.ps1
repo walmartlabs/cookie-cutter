@@ -66,6 +66,3 @@ node ./packages/azure/queue_index.js
 Write-Host "Yarn integrate"
 cd packages/azure
 yarn integrate
-
-
-
