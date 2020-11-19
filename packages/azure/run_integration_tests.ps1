@@ -63,11 +63,50 @@ node ./packages/azure/storage_index.js
 Write-Host "Launching Queue Client"
 node ./packages/azure/queue_index.js
 
-Write-Host "Yarn integrate"
-cd packages/azure
-pwd
-yarn
-yarn build
-pwd
-yarn integrate
+Write-Host "\n Yarn integrate part"
 
+Write-Host "\n Get-ChildItem ."
+Get-ChildItem .
+
+Write-Host "\n cd packages/azure"
+cd packages/azure
+
+Write-Host "\n Get-ChildItem ."
+Get-ChildItem .
+
+Write-Host "\n cd .. && pwd"
+cd ..
+$pwd_res = pwd
+Write-Host "$pwd_res"
+
+Write-Host "\n yarn"
+yarn
+
+Start-Sleep -s 60
+
+Write-Host "\n yarn build"
+yarn build
+
+Start-Sleep -s 60
+
+Write-Host "\n cd .. && pwd"
+cd ..
+$pwd_res = pwd
+Write-Host "$pwd_res"
+
+Write-Host "\n Get-ChildItem ."
+Get-ChildItem .
+
+Write-Host "\n cd .. && pwd"
+cd ..
+$pwd_res = pwd
+Write-Host "$pwd_res"
+
+Write-Host "\n Get-ChildItem ."
+Get-ChildItem .
+
+Write-Host "\n cd packages/azure"
+cd packages/azure
+
+Write-Host "\n yarn integrate"
+yarn integrate
