@@ -74,11 +74,6 @@ cd packages/azure
 Write-Host "\n Get-ChildItem ."
 Get-ChildItem .
 
-Write-Host "\n cd .. && pwd"
-cd ..
-$pwd_res = pwd
-Write-Host "$pwd_res"
-
 Write-Host "\n yarn"
 yarn
 
