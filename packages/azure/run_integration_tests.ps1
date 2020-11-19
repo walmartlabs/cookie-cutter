@@ -68,6 +68,19 @@ Write-Host "\n Yarn integrate part"
 Write-Host "\n Get-ChildItem ."
 Get-ChildItem .
 
+Write-Host "\n cd packages/core"
+cd packages/core
+
+Write-Host "\n yarn"
+yarn
+
+Start-Sleep -s 60
+
+Write-Host "\n yarn build"
+yarn build
+
+Start-Sleep -s 60
+
 Write-Host "\n cd packages/azure"
 cd packages/azure
 
