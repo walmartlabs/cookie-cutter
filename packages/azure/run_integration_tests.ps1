@@ -104,7 +104,7 @@ Write-Host "\n cd packages/azure"
 cd packages/azure
 
 Write-Host "\n Get-ChildItem ."
-Get-ChildItem "C:\Users\travis\build\walmartlabs\cookie-cutter\packages/azure/node_modules/@walmartlabs"
+Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\packages/azure/node_modules/@walmartlabs"
 
 Write-Host "\n yarn integrate"
 yarn integrate
