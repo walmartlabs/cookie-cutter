@@ -10,7 +10,7 @@ Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Az
 Write-Host "Current Emulator Status"
 Get-CosmosDbEmulatorStatus
 
-New-Variable Key -Scope Global -Option Constant -Value "$env:MASTER_KEY"
+New-Variable Key -Scope Global -Option Constant -Value "$env:COSMOS_SECRET_KEY"
 New-Variable Timeout -Scope Global -Option Constant -Value 3600
 New-Variable PartitionCount -Scope Global -Option Constant -Value 10
 
@@ -117,7 +117,10 @@ Write-Host "\n cd packages/azure"
 cd packages/azure
 
 Write-Host "\n Get-ChildItem ."
-Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\packages/azure/node_modules/@walmartlabs"
+Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\packages\azure\node_modules\@walmartlabs"
+
+Write-Host "\n Get-ChildItem ."
+Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\node_modules\@walmartlabs"
 
 Write-Host "\n yarn integrate"
 yarn integrate
