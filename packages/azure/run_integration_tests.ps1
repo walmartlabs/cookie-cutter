@@ -1,5 +1,24 @@
 $StartTime = Get-Date
 
+$value = $env:RUNNING_IN_CI
+if ($value -ne 1)
+{
+    Write-Host "NOT RUNNING IN CI"
+    # Test COSMOS_SECRET_KEY from https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21
+    $env:COSMOS_SECRET_KEY = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+    # Test Storage Creds from https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator
+    $env:AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+    $env:AZURE_STORAGE_ACCESS_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+    $env:AZURE_STORAGE_ACCOUNT = "devstoreaccount1"
+    $env:NODE_TLS_REJECT_UNAUTHORIZED = "0" # Only HTTPS supported by CosmosClient so we need to disable this
+
+    # Required for curl to work, throws "curl : The request was aborted: Could not create SSL/TLS secure channel."
+    Write-Host "Set Security Protocol to Tls12"
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $protocol = [Net.ServicePointManager]::SecurityProtocol
+    Write-Host "Protocol: $protocol"
+}
+
 $protocol = [Net.ServicePointManager]::SecurityProtocol
 Write-Host "Protocol: $protocol"
 $d1 = Get-Date
@@ -69,8 +88,16 @@ $d2 = Get-Date
 $epoch = (New-TimeSpan -Start $d1 -End $d2).TotalSeconds
 Write-Host "Seconds: $epoch"
 
+if ($value -ne 1) 
+{
+    $vm_ip = (Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily "IPv4").IPAddress
+    Write-Host "Configure IP from 127.0.0.1 to $vm_ip"
+    $storage_emulator_config_path = "C:\Program Files (x86)\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe.config"
+    ((Get-Content -path $storage_emulator_config_path -Raw) -replace '127.0.0.1', $vm_ip ) | Set-Content -Path $storage_emulator_config_path
+}
+
 $vm_ip = (Get-NetIPAddress -InterfaceAlias "Ethernet" -AddressFamily "IPv4").IPAddress
-Write-Host "Configure IP from 127.0.0.1 to $vm_ip"
+Write-Host "Do Not Configure IP from 127.0.0.1 to $vm_ip"
 
 $d1 = Get-Date
 Write-Host "Create MSSQLLocalDB"
@@ -116,64 +143,67 @@ Write-Host "Emulators Setup Took: $epoch seconds"
 # Write-Host "Launching Queue Client"
 # node ./packages/azure/queue_index.js
 
-Write-Host "\n Yarn integrate part"
+if ($value -eq 1)
+{
+    Write-Host "NOT RUNNING IN CI"
+    Write-Host "\n Yarn integrate part"
 
-Write-Host "\n Get-ChildItem ."
-Get-ChildItem .
+    Write-Host "\n Get-ChildItem ."
+    Get-ChildItem .
 
-Write-Host "\n cd packages/core"
-cd packages/core
+    Write-Host "\n cd packages/core"
+    cd packages/core
 
-Write-Host "\n yarn"
-yarn
+    Write-Host "\n yarn"
+    yarn
 
-Start-Sleep -s 60
+    Start-Sleep -s 60
 
-Write-Host "\n yarn build"
-yarn build
+    Write-Host "\n yarn build"
+    yarn build
 
-Start-Sleep -s 60
+    Start-Sleep -s 60
 
-Write-Host "\n cd packages/azure"
-cd packages/azure
+    Write-Host "\n cd ../azure"
+    cd ../azure
 
-Write-Host "\n Get-ChildItem ."
-Get-ChildItem .
+    Write-Host "\n Get-ChildItem ."
+    Get-ChildItem .
 
-Write-Host "\n yarn"
-yarn
+    Write-Host "\n yarn"
+    yarn
 
-Start-Sleep -s 60
+    Start-Sleep -s 60
 
-Write-Host "\n yarn build"
-yarn build
+    Write-Host "\n yarn build"
+    yarn build
 
-Start-Sleep -s 60
+    Start-Sleep -s 60
 
-Write-Host "\n cd .. && pwd"
-cd ..
-$pwd_res = pwd
-Write-Host "$pwd_res"
+    Write-Host "\n cd .. && pwd"
+    cd ..
+    $pwd_res = pwd
+    Write-Host "$pwd_res"
 
-Write-Host "\n Get-ChildItem ."
-Get-ChildItem .
+    Write-Host "\n Get-ChildItem ."
+    Get-ChildItem .
 
-Write-Host "\n cd .. && pwd"
-cd ..
-$pwd_res = pwd
-Write-Host "$pwd_res"
+    Write-Host "\n cd .. && pwd"
+    cd ..
+    $pwd_res = pwd
+    Write-Host "$pwd_res"
 
-Write-Host "\n Get-ChildItem ."
-Get-ChildItem .
+    Write-Host "\n Get-ChildItem ."
+    Get-ChildItem .
 
-Write-Host "\n cd packages/azure"
-cd packages/azure
+    Write-Host "\n cd packages/azure"
+    cd packages/azure
 
-# Write-Host "\n Get-ChildItem ."
-# Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\packages\azure\node_modules\@walmartlabs"
+    Write-Host "\n Get-ChildItem ."
+    Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\node_modules\@walmartlabs"
 
-Write-Host "\n Get-ChildItem ."
-Get-ChildItem -Path "C:\Users\travis\build\walmartlabs\cookie-cutter\node_modules\@walmartlabs"
+    Write-Host "\n yarn integrate"
+    yarn integrate
 
-Write-Host "\n yarn integrate"
-yarn integrate
+    Start-Sleep -s 60
+}
