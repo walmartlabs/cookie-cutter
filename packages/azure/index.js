@@ -1,7 +1,7 @@
 const { CosmosClient } = require("@azure/cosmos");
  
 const endpoint = "https://localhost:8081";
-const key = process.env.MASTER_KEY;
+const key = process.env.COSMOS_SECRET_KEY;
 const client = new CosmosClient({ endpoint, key });
  
 async function main() {

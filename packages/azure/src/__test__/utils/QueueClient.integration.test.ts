@@ -10,11 +10,9 @@ import { QueueClient, IQueueMessage } from "../../utils";
 import { SpanContext } from "opentracing";
 import { JsonMessageEncoder, EventSourcedMetadata } from "@walmartlabs/cookie-cutter-core";
 
-const storageAccount = "devstoreaccount1";
+const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
 const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
-const url =
-    process.env.AZURE_STORAGE_CONNECTION_STRING ??
-    "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;";
+const url = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const queueName = "testqueue";
 const encoder = new JsonMessageEncoder();
 const spanContext = new SpanContext();
