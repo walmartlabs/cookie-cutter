@@ -57,7 +57,6 @@ matrix:
             - RUNNING_IN_CI="1"
           script: |
                   PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
-                #   PowerShell -File packages/azure/emulators/start_emulators.ps1
                   PowerShell -File packages/azure/start_emulators.ps1
                   PowerShell -File packages/azure/run_integration_tests.ps1
 
