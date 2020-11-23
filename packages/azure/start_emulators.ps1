@@ -11,7 +11,7 @@ $StartTime = Get-Date
 if ($env:RUNNING_IN_CI -eq 1) 
 {
     Write-Host "Running in CI"
-    # Env Vars Required in CI (not required in the Windows VM but required when running intergration tests locally)
+    # Env Vars required and set in CI (not required in the Windows VM but required when running intergration tests locally)
     Write-Host "NODE_TLS_REJECT_UNAUTHORIZED: $env:NODE_TLS_REJECT_UNAUTHORIZED"
     Write-Host "AZURE_STORAGE_CONNECTION_STRING: $env:AZURE_STORAGE_CONNECTION_STRING"
     Write-Host "AZURE_STORAGE_ACCESS_KEY: $env:AZURE_STORAGE_ACCESS_KEY"

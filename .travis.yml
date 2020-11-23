@@ -15,33 +15,33 @@ stages:
 
 matrix:
     include:
-        # - name: "Linux Node 10 (Lint + Test)"
-        #   os: linux
-        #   node_js: 10
-        #   stage: smoke
-        #   script: yarn build && yarn lint && yarn test
+        - name: "Linux Node 10 (Lint + Test)"
+          os: linux
+          node_js: 10
+          stage: smoke
+          script: yarn build && yarn lint && yarn test
 
-        # - name: "Audit Dependencies"
-        #   os: linux
-        #   node_js: 10
-        #   stage: smoke
-        #   if: type = cron
-        #   script: yarn audit
+        - name: "Audit Dependencies"
+          os: linux
+          node_js: 10
+          stage: smoke
+          if: type = cron
+          script: yarn audit
 
-        # - name: "Linux Node 12"
-        #   os: linux
-        #   node_js: 12
-        #   stage: test
-        # - name: "OSX Node 10"
-        #   os: osx
-        #   node_js: 10
-        #   stage: test
-        # - name: "Windows Node 10"
-        #   os: windows
-        #   node_js: 10
-        #   stage: test
-        #   env:
-        #     - YARN_GPG=no # Windows build agent will hang without this
+        - name: "Linux Node 12"
+          os: linux
+          node_js: 12
+          stage: test
+        - name: "OSX Node 10"
+          os: osx
+          node_js: 10
+          stage: test
+        - name: "Windows Node 10"
+          os: windows
+          node_js: 10
+          stage: test
+          env:
+            - YARN_GPG=no # Windows build agent will hang without this
 
         - name: "AZURE"
           os: windows
@@ -60,54 +60,53 @@ matrix:
                   PowerShell -File packages/azure/start_emulators.ps1
                   PowerShell -File packages/azure/run_integration_tests.ps1
 
+        - name: "MSSQL"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/mssql && yarn integrate
 
-        # - name: "MSSQL"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/mssql && yarn integrate
+        - name: "AMQP"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/amqp && yarn integrate
 
-        # - name: "AMQP"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/amqp && yarn integrate
+        - name: "Kafka"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/kafka && yarn integrate
 
-        # - name: "Kafka"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/kafka && yarn integrate
+        - name: "Prometheus"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/prometheus && yarn integrate
 
-        # - name: "Prometheus"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/prometheus && yarn integrate
+        - name: "S3"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/s3 && yarn integrate
 
-        # - name: "S3"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/s3 && yarn integrate
-
-        # - name: "Redis"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/redis && yarn integrate
+        - name: "Redis"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/redis && yarn integrate
 
         - name: "Publish to NPM"
           os: linux

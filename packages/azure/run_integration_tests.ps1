@@ -6,3 +6,5 @@ Write-Host "Integrate azure"
 cd ../azure
 yarn build
 yarn integrate
+
+Start-Sleep -s 60
