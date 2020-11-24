@@ -31,7 +31,7 @@
         "build": "tsc",
         "postbuild": "node postbuild.js",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "jest --config=../../jest.integration.config.js --rootDir=.",
+        "integrate": "if [[ $RUNNING_IN_CI != 1 ]]; then sh setup_env_vars_locally.sh; cd vm; st=$(vagrant status); vagrant up; if [[ ! $st =~ \"running\" ]]; then sleep 30s; fi; cd ..; fi; jest --config=../../jest.integration.config.js --rootDir=.",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }

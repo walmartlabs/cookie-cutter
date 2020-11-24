@@ -2,7 +2,7 @@
 
 ## Introduction
 
-These scripts will allow you to set up emulators for Cosmos DB and azure storage locally. This can be used for local testing or running integration tests on a non-windows environment. The Azure Cosmos Emulator provides a local environment that emulates the Azure Cosmos DB service for development purposes. The Microsoft Azure storage emulator is a tool that emulates the Azure Blob, Queue, and Table services for local development purposes.
+The scripts contained here set up emulators for Cosmos DB and Azure Storage in a Windows VM. This can be used for local testing or running integration tests on a non-windows environment. The Azure Cosmos Emulator provides a local environment that emulates the Azure Cosmos DB service for development purposes. The Microsoft Azure Storage Emulator is a tool that emulates the Azure Blob, Queue, and Table services for local development purposes.
 
 ## Pre-requisites
 
@@ -10,9 +10,15 @@ These scripts will allow you to set up emulators for Cosmos DB and azure storage
 
     `brew install vagrant`
 
-## Setup
+## Running integration tests
 
-* `setup_env_vars_locally.sh` - to export all the variables needed for running integration testing locally.
+Simply run `yarn integrate`. The command will run setup steps and then run the tests.
+
+When starting up or reloading the VM, the emulators get downloaded, installed and spun up, which may take around 10 minutes.
+
+## Setup Details
+
+* `setup_env_vars_locally.sh` - exports all the variables needed for running integration testing locally.
 
 * `vagrant up` - sets up the Windows VM.
 
@@ -22,11 +28,15 @@ These scripts will allow you to set up emulators for Cosmos DB and azure storage
 
 * `vagrant rdp` - start an RDP client for a remote desktop session with the guest.
 
+* `start_emulators.ps1` - PowerShell script that downloads and sets up the emulators in the VM
+
+* `run_integration_tests.ps1` - PowerShell script that sets up and runs integration tests in CI
+
 More details on [Vagrant](https://www.vagrantup.com/docs/cli)
 
-When starting up or reloading the VM, the emulators get downloaded, installed and spun up, which may take around 10 minutes.
-
 ## Environment Variables
+
+The following environment variables are set by the `yarn integrate` command:
 
     export NODE_TLS_REJECT_UNAUTHORIZED="0"
     
