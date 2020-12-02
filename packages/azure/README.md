@@ -28,7 +28,7 @@ When starting the VM for the first time, the emulators get downloaded, installed
 
 * `vagrant up --provision` - sets up the Windows VM and forces running the provision script even if VM is already up.
 
-* `vagrant destroy` - stops the VM and remove all associated files.
+* `vagrant destroy` - stops the VM and all resources that were created during the machine creation process.
 
 * `vagrant rdp` - start an RDP client for a remote desktop session with the guest.
 
