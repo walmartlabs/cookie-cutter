@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Export Env Variables
+# Export Env Variables Locally
 
 # Test COSMOS_SECRET_KEY from https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21
 export COSMOS_SECRET_KEY="C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
@@ -10,3 +10,9 @@ export AZURE_STORAGE_ACCESS_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFs
 export AZURE_STORAGE_ACCOUNT="devstoreaccount1"
 # Only HTTPS supported by CosmosClient so we need to disable this
 export NODE_TLS_REJECT_UNAUTHORIZED="0"
+
+echo "COSMOS_SECRET_KEY = $COSMOS_SECRET_KEY"
+echo "AZURE_STORAGE_CONNECTION_STRING = $AZURE_STORAGE_CONNECTION_STRING"
+echo "AZURE_STORAGE_ACCESS_KEY = $AZURE_STORAGE_ACCESS_KEY"
+echo "AZURE_STORAGE_ACCOUNT = $AZURE_STORAGE_ACCOUNT"
+echo "NODE_TLS_REJECT_UNAUTHORIZED = $NODE_TLS_REJECT_UNAUTHORIZED"
