@@ -22,7 +22,7 @@ then
     if [[ ! $1 =~ "keep" ]]
     then
         cd vm
-        vagrant suspend
+        vagrant destroy -f
         cd ..
     fi
 fi

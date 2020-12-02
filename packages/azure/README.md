@@ -13,12 +13,12 @@ The scripts contained here set up emulators for Cosmos DB and Azure Storage in a
 ## Running integration tests
 
 `yarn integrate`
-  - start/resume VM, run setup steps, run tests and suspend VM.
+  - start VM, run setup steps, run tests and destroy VM.
 
 `yarn integrate --keep`
- - will not suspend VM after running the tests. Speeds up test reruns.
+ - keeps the VM on after running the tests. Speeds up test reruns.
 
-When starting the VM, the emulators get downloaded, installed and spun up, which may take 10-15 minutes.
+When starting the VM for the first time, the emulators get downloaded, installed and spun up, which may take 10-15 minutes.
 
 ## Setup Details
 
@@ -27,8 +27,6 @@ When starting the VM, the emulators get downloaded, installed and spun up, which
 * `start_emulators.ps1` - provision script which downloads, installs an spins up emulators.
 
 * `vagrant up --provision` - sets up the Windows VM and forces running the provision script even if VM is already up.
-
-* `vagrant suspend` - suspends the VM.
 
 * `vagrant destroy` - stops the VM and remove all associated files.
 
