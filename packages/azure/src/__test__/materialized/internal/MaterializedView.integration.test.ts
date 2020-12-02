@@ -11,28 +11,49 @@ import {
     MessageRef,
     SequenceConflictError,
     StateRef,
+    createRetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { CosmosOutputSink, CosmosStateProvider } from "../../../materialized/internal";
 import { CosmosClient } from "../../../utils";
 import { DummyState } from "../../dummystate";
+import { setup, teardown } from "../../integrationSetup";
 
-const url = "https://carrot.documents.azure.com:443/";
+const url = "https://localhost:8081";
 const key = process.env.COSMOS_SECRET_KEY;
-const databaseId = "tanvir-test-occ";
-const collectionId = "occ";
-const newCollectedId = "occ2";
+const databaseId = "materialized-view-integration-test";
+const collectionId = "data";
+const newCollectionId = "data2";
 const encoder = new JsonMessageEncoder();
+const retrier = createRetrierContext(1);
 const sink = new CosmosOutputSink({ url, key, databaseId, collectionId, encoder });
 const client = new CosmosClient({ url, key, databaseId, collectionId, encoder });
 const newSink = new CosmosOutputSink({
     url,
     key,
     databaseId,
-    collectionId: newCollectedId,
+    collectionId: newCollectionId,
     encoder,
 });
 
-describe.skip("Materialized Views", () => {
+function validateKeys(key: string) {
+    if (!key) {
+        throw new Error("COSMOS_SECRET_KEY env is not set");
+    }
+}
+
+beforeAll(async () => {
+    validateKeys(key);
+    await setup([
+        { databaseId, collectionId },
+        { databaseId, collectionId: newCollectionId },
+    ]);
+});
+
+afterAll(async () => {
+    await teardown([databaseId]);
+});
+
+describe("Materialized Views", () => {
     const spanContext = {};
     describe("CosmosOutputSink and CosmosStateProvider", () => {
         it("creates a new materialized view document and retrieves it", async () => {
@@ -196,12 +217,14 @@ describe.skip("Materialized Views", () => {
             );
 
             const state = new CosmosStateProvider(DummyState, client, new JsonMessageEncoder());
-            const stateRef = await state.get(undefined, `@unknown/${streamId}`);
-            expect(stateRef).toMatchObject({
-                state: new DummyState(),
-                key: streamId,
-                seqNum: 0,
-            });
+
+            expect.assertions(2);
+            try {
+                await state.get(undefined, `@unknown/${streamId}`);
+            } catch (error) {
+                expect(error.code).toBe(404);
+                expect(error.body.message).toContain("Resource Not Found");
+            }
         });
 
         it("retrieves a document in a given collection", async () => {
@@ -225,10 +248,10 @@ describe.skip("Materialized Views", () => {
             );
 
             const state = new CosmosStateProvider(DummyState, client, new JsonMessageEncoder());
-            const stateRef = await state.get(undefined, `occ2/${streamId}`);
+            const stateRef = await state.get(undefined, `@${newCollectionId}/${streamId}`);
             expect(stateRef).toMatchObject({
                 state: new DummyState({ value: "foo" }),
-                key: streamId,
+                key: `@${newCollectionId}/${streamId}`,
                 seqNum: currentSn + 1,
             });
         });
@@ -266,7 +289,8 @@ describe.skip("Materialized Views", () => {
                 [originalPayload, currentSn],
                 [updatedPayload, 999],
             ];
-            let err: Error;
+
+            expect.assertions(2);
             try {
                 for (const [payload, sn] of requests) {
                     await sink.sink(
@@ -281,15 +305,18 @@ describe.skip("Materialized Views", () => {
                                 original: new MessageRef({}, null),
                             },
                         ]),
-                        undefined
+                        retrier
                     );
                 }
             } catch (e) {
-                err = e;
+                expect(e).toBeInstanceOf(SequenceConflictError);
+                expect(e.details).toMatchObject({
+                    key: streamId,
+                    newSn: 1000,
+                    expectedSn: 999,
+                    actualSn: 1,
+                });
             }
-            expect(err).toMatchObject(
-                new SequenceConflictError({ key: streamId, newSn: 0, expectedSn: 0, actualSn: 0 })
-            );
         });
         it("fails to upsert a document for sequence number conflict with SN being less than existing doc's sn", async () => {
             const currentTime = new Date();
@@ -301,7 +328,8 @@ describe.skip("Materialized Views", () => {
                 [originalPayload, currentSn],
                 [updatedPayload, 1],
             ];
-            let err: Error;
+
+            expect.assertions(2);
             try {
                 for (const [payload, sn] of requests) {
                     await sink.sink(
@@ -316,15 +344,18 @@ describe.skip("Materialized Views", () => {
                                 original: new MessageRef({}, null),
                             },
                         ]),
-                        undefined
+                        retrier
                     );
                 }
             } catch (e) {
-                err = e;
+                expect(e).toBeInstanceOf(SequenceConflictError);
+                expect(e.details).toMatchObject({
+                    key: streamId,
+                    newSn: 2,
+                    expectedSn: 1,
+                    actualSn: 11,
+                });
             }
-            expect(err).toMatchObject(
-                new SequenceConflictError({ key: streamId, newSn: 0, expectedSn: 0, actualSn: 0 })
-            );
         });
 
         it("upserts for one of two requests executed in parallel with the same originalSn", async () => {

@@ -25,6 +25,7 @@ import {
 import * as fs from "fs";
 import { Agent, AgentOptions } from "https";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
+import * as http from "http";
 import * as path from "path";
 import * as tunnel from "tunnel";
 import * as url from "url";
@@ -48,6 +49,8 @@ export interface ICosmosWriteClient {
     ): Promise<void>;
 }
 
+type AgentWithOptions = http.Agent & { options?: AgentOptions };
+
 enum CosmosMetrics {
     RUs = "cookie_cutter.cosmos_client.request_units",
     Sproc = "cookie_cutter.cosmos_client.execute_sproc",
@@ -61,7 +64,6 @@ enum CosmosMetricResults {
 }
 
 export const RETRY_AFTER_MS = Constants.HttpHeaders.RetryAfterInMilliseconds;
-
 export const BULK_INSERT_SPROC_ID = "bulkInsertSproc";
 export const UPSERT_SPROC_ID = "upsertSproc";
 
@@ -75,7 +77,7 @@ export class CosmosClient
     private metrics: IMetrics;
     private tracer: Tracer;
     private readonly client: Client;
-    private readonly agent: Agent;
+    private readonly agent: AgentWithOptions;
     private spanOperationName = "Azure CosmosDB Client Call";
 
     private spInitialized: Map<string, boolean> = new Map([
@@ -116,6 +118,7 @@ export class CosmosClient
                 proxyUrl.protocol.toLowerCase() === "https:"
                     ? tunnel.httpsOverHttps(requestAgentOptions)
                     : tunnel.httpsOverHttp(requestAgentOptions);
+            this.agent.options = requestAgentOptions;
         } else {
             this.agent = new Agent(requestAgentOptions);
         }
@@ -161,6 +164,7 @@ export class CosmosClient
         const file = fs.readFileSync(path.resolve(__dirname, sprocPath));
         const sprocBody = file.toString();
         const container = await this.container(collectionId);
+
         const query = {
             query: "SELECT * FROM collection c WHERE c.id = @id",
             parameters: [{ name: "@id", value: sprocID }],
@@ -299,7 +303,7 @@ export class CosmosClient
             partitionKey,
             [document],
             [document, currentSn],
-            collectionId
+            collectionId ?? this.config.collectionId
         );
     }
 
@@ -312,7 +316,7 @@ export class CosmosClient
                 partitionKey,
                 documents,
                 [documents, validateSn],
-                collectionId
+                collectionId ?? this.config.collectionId
             );
         }
     }

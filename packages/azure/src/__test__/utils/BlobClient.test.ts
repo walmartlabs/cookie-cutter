@@ -5,20 +5,32 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-jest.mock("azure-storage", () => {
-    return {
-        BlobService: jest.fn(),
-        createBlobService: jest.fn(),
-    };
-});
-
 import { NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
-import { createBlobService } from "azure-storage";
 import { Span, SpanContext } from "opentracing";
 import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
+import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
+import { streamToString } from "../../utils/helpers";
 
-const MockCreateBlobService: jest.Mock = createBlobService as any;
+const MockBlobServiceClient: jest.Mock = BlobServiceClient as any;
+const MockStorageSharedKeyCredential: jest.Mock = StorageSharedKeyCredential as any;
+const MockStreamToString: jest.Mock = streamToString as any;
+
+jest.mock("@azure/storage-blob", () => {
+    return {
+        BlobServiceClient: jest.fn().mockImplementation(() => jest.fn()),
+        StorageSharedKeyCredential: jest.fn().mockImplementation(() => jest.fn()),
+    };
+});
+
+jest.mock("../../utils/helpers", () => {
+    return {
+        streamToString: jest.fn().mockImplementation(() => jest.fn()),
+    };
+});
+
+const success = Promise.resolve("A DEFINED VALUE");
+const failure = Promise.reject("A DEFINED VALUE");
 
 describe("BlobClient", () => {
     const config: IBlobStorageConfiguration = {
@@ -32,58 +44,131 @@ describe("BlobClient", () => {
         .startSpan("unit-test", { childOf: context });
 
     describe("Proceeds with expected failure", () => {
-        const err = "A DEFINED VALUE";
-        const text = "THIS BLOB OPERATION WILL FAIL";
-        const response = { statusCode: 404 };
+        const errorMessage = "A DEFINED VALUE";
 
-        beforeEach(() => {
-            MockCreateBlobService.mockImplementation(() => {
+        beforeAll(() => {
+            MockBlobServiceClient.mockImplementation(() => {
                 return {
-                    getBlobToText: (_container, _blob, _options, cb) =>
-                        cb(err, text, undefined, response),
-                    createBlockBlobFromText: (_container, _blob, _text, _options, cb) =>
-                        cb(err, undefined, response),
-                    doesBlobExist: (_container, _blob, cb) => cb(err, undefined, response),
+                    createContainer: jest.fn(),
+                    getContainerClient: jest.fn(() => {
+                        return {
+                            getBlobClient: jest.fn(() => {
+                                return {
+                                    download: jest.fn(() => failure),
+                                    upload: jest.fn(() => failure),
+                                    write: jest.fn(() => success),
+                                    exists: jest.fn(() => success),
+                                };
+                            }),
+                            getBlockBlobClient: jest.fn(() => {
+                                return {
+                                    upload: jest.fn(() => failure),
+                                    download: jest.fn(() => success),
+                                };
+                            }),
+                        };
+                    }),
                 };
+            });
+
+            MockStorageSharedKeyCredential.mockImplementation(() => {
+                return "credential";
             });
         });
 
         it("rejects on error from azure-storage for read", async () => {
             const blobClient = new BlobClient(config);
-            await expect(blobClient.read(span.context(), "BlobID")).rejects.toMatch(err);
+            await expect(blobClient.read(span.context(), "BlobID")).rejects.toMatch(errorMessage);
         });
 
         it("rejects on error from azure-storage for write", async () => {
             const blobClient = new BlobClient(config);
             await expect(
                 blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
-            ).rejects.toMatch(err);
+            ).rejects.toMatch(errorMessage);
         });
 
         it("rejects on error from azure-storage for 'exists'", async () => {
+            MockBlobServiceClient.mockImplementation(() => {
+                return {
+                    getContainerClient: jest.fn(() => {
+                        return {
+                            getBlobClient: jest.fn(() => {
+                                return {
+                                    exists: jest.fn(() => failure),
+                                };
+                            }),
+                        };
+                    }),
+                };
+            });
+
             const blobClient = new BlobClient(config);
-            await expect(blobClient.exists(span.context(), "BlobID")).rejects.toMatch(err);
+
+            expect.assertions(1);
+            try {
+                await blobClient.exists(span.context(), "BlobID");
+            } catch (error) {
+                expect(error).toBe(errorMessage);
+            }
         });
     });
 
     describe("Proceeds with expected success", () => {
-        const err = undefined;
         const text = "THIS BLOB OPERATION WILL SUCCEED";
-        const response = { statusCode: 200 };
-        const exists = { exists: true };
 
-        beforeEach(() => {
-            MockCreateBlobService.mockImplementation(() => {
+        beforeAll(() => {
+            MockStreamToString.mockImplementation(() => {
+                return text;
+            });
+            MockBlobServiceClient.mockImplementation(() => {
                 return {
-                    getBlobToText: (_container, _blob, _options, cb) =>
-                        cb(err, text, undefined, response),
-                    createBlockBlobFromText: (_container, _blob, _text, _options, cb) =>
-                        cb(err, undefined, response),
-                    doesBlobExist: (_container, _blob, cb) => cb(err, exists, response),
+                    createContainer: jest.fn(),
+                    getContainerClient: jest.fn(() => {
+                        return {
+                            getBlobClient: jest.fn(() => {
+                                return {
+                                    download: jest.fn(() =>
+                                        Promise.resolve({
+                                            _response: {
+                                                status: 200,
+                                            },
+                                            readableStreamBody: text,
+                                        })
+                                    ),
+                                    upload: jest.fn(() => success),
+                                    write: jest.fn(() => success),
+                                    exists: jest.fn(() => success),
+                                };
+                            }),
+                            getBlockBlobClient: jest.fn(() => {
+                                return {
+                                    upload: jest.fn(() =>
+                                        Promise.resolve({
+                                            _response: {
+                                                status: 200,
+                                            },
+                                            readableStreamBody: text,
+                                        })
+                                    ),
+                                    download: jest.fn(() => success),
+                                };
+                            }),
+                        };
+                    }),
                 };
             });
         });
 
+        const config: IBlobStorageConfiguration = {
+            container: "container123",
+            storageAccount: "myAccount",
+            storageAccessKey: "myKey",
+        };
+        const context = new SpanContext();
+        const span: Span = new NullTracerBuilder()
+            .create()
+            .startSpan("unit-test", { childOf: context });
         it("performs a successful read", async () => {
             const blobClient = new BlobClient(config);
             await expect(blobClient.read(span.context(), "BlobID")).resolves.toBe(text);
@@ -110,6 +195,20 @@ describe("BlobClient", () => {
         });
 
         it("performs a successful 'exists'", async () => {
+            MockBlobServiceClient.mockImplementation(() => {
+                return {
+                    getContainerClient: jest.fn(() => {
+                        return {
+                            getBlobClient: jest.fn(() => {
+                                return {
+                                    exists: jest.fn(() => Promise.resolve(true)),
+                                };
+                            }),
+                        };
+                    }),
+                };
+            });
+
             const blobClient = new BlobClient(config);
             await expect(blobClient.exists(span.context(), "BlobID")).resolves.toEqual(true);
         });
