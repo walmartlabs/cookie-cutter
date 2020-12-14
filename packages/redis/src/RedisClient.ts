@@ -11,6 +11,7 @@ import {
     IClassType,
     IComponentContext,
     IDisposable,
+    ILogger,
     IMessage,
     IMessageEncoder,
     IMessageTypeMapper,
@@ -19,7 +20,7 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { isString, isNullOrUndefined, isNull, isUndefined } from "util";
+import { isString, isNullOrUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 import { RedisProxy, RawReadGroupResult, RawPELResult, RawXClaimResult } from "./RedisProxy";
 
@@ -67,31 +68,19 @@ function parseRawPELResult(results: RawPELResult): IPELResult[] {
 
 export function parseRawReadGroupResult(
     results: RawReadGroupResult
-): { streamName: string; messageId: string; data: string; type: string }[] {
+): { streamName: string; messageId: string; data?: string; type?: string }[] {
     return results.reduce((acc, curr) => {
-        // streamName, streamValue
         const [streamName, streamValues = []] = curr;
         for (const streamValue of streamValues) {
-            // [messageId, keyValues]
             const [messageId, keyValues = []] = streamValue;
 
-            if (isNullOrUndefined(keyValues)) {
-                // tslint:disable:no-console
-                console.log(
-                    "detected bad item in redis stream",
-                    JSON.stringify(results),
-                    isNull(keyValues),
-                    isUndefined(keyValues)
-                );
-            }
-
             if (isNullOrUndefined(keyValues) || keyValues?.length < 1) {
-                return acc;
+                acc.push({ streamName, messageId });
+                continue;
             }
 
             // [RedisMetadata.OutputSinkStreamKey, serializedProto, type, typeName]
             const [, data, , type] = keyValues;
-
             acc.push({ streamName, messageId, data, type });
         }
         return acc;
@@ -114,6 +103,8 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     private readonly client: RedisProxy;
     private readonly encoder: IMessageEncoder;
     private readonly typeMapper: IMessageTypeMapper;
+
+    private logger: ILogger = DefaultComponentContext.logger;
     private tracer: Tracer = DefaultComponentContext.tracer;
     private metrics: IMetrics = DefaultComponentContext.metrics;
 
@@ -135,6 +126,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
+        this.logger = context.logger;
         await this.client.initialize(context);
     }
 
@@ -420,8 +412,23 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             if (!response) return [];
 
             const results = parseRawReadGroupResult(response);
+            const validMessages = results.filter((item) => !isNullOrUndefined(item.data));
+            const invalidMessages = results.filter((item) => isNullOrUndefined(item.data));
 
-            const messages: IRedisMessage[] = results.map(
+            for (const { streamName, messageId } of invalidMessages) {
+                this.logger.error("detected bad message in redis stream", {
+                    streamName,
+                    messageId,
+                });
+
+                try {
+                    await this.xAck(span.context(), streamName, consumerGroup, messageId);
+                } catch (e) {
+                    this.logger.error("failed to ack bad message", { streamName, messageId });
+                }
+            }
+
+            const messages: IRedisMessage[] = validMessages.map(
                 ({ streamName, messageId, data, type }) => {
                     const buf = this.config.base64Encode
                         ? Buffer.from(data, "base64")
