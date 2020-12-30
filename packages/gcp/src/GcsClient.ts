@@ -77,7 +77,7 @@ export class GcsClient implements IGcsClient, IRequireInitialization {
             this.metrics.increment(GCSMetrics.Put, {
                 bucket,
                 result: GCSMetricResults.Error,
-                error: e,
+                error: e instanceof Error ? e.message : "",
             });
             throw e;
         } finally {
