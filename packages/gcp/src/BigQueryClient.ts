@@ -81,7 +81,7 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
             this.metrics.increment(BigQueryMetrics.Put, {
                 datasetTable,
                 result: BigQueryMetricResults.Error,
-                error: e,
+                error: e instanceof Error ? e.message : "",
             });
             throw e;
         } finally {
