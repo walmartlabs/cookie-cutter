@@ -94,9 +94,9 @@ export class BlobClient implements IBlobClient {
         });
     }
 
-    public write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void> {
+    public writeAsText(context: SpanContext, text: Buffer | string, blobId: string): Promise<void> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
-        this.spanLogAndSetTags(span, this.write.name);
+        this.spanLogAndSetTags(span, this.writeAsText.name);
         return new Promise<void>((resolve, reject) => {
             this.blobService.createBlockBlobFromText(
                 this.containerName,
@@ -307,10 +307,14 @@ export class BlobClient implements IBlobClient {
         });
     }
 
-    public async writeLargeObject(obj: any, blobId: string, context: SpanContext): Promise<void> {
+    public async writeAsLargeText(
+        text: string,
+        blobId: string,
+        context: SpanContext
+    ): Promise<void> {
         const filepath: string = path.join(this.localStoragePath!, `${blobId}.json`);
         try {
-            await fsPromises.writeFile(filepath, JSON.stringify(obj));
+            await fsPromises.writeFile(filepath, text);
             await this.writeFromLocalFile(filepath, blobId, context);
         } finally {
             await fsPromises.unlink(filepath);

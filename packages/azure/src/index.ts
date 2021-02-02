@@ -69,7 +69,7 @@ export interface IBlobClientPaginationToken {
 
 export interface IBlobClient extends IRequireInitialization {
     createContainerIfNotExists(context?: SpanContext): Promise<BlobService.ContainerResult>;
-    write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
+    writeAsText(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
     readAsText(context: SpanContext, blobId: string): Promise<string>;
     exists(context: SpanContext, blobId: string): Promise<boolean>;
     deleteFolderIfExists(folderId: string, context: SpanContext): Promise<boolean>;
@@ -79,7 +79,7 @@ export interface IBlobClient extends IRequireInitialization {
         context: SpanContext
     ): Promise<string[]>;
     deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean>;
-    writeLargeObject(obj: any, blobId: string, context: SpanContext): Promise<void>;
+    writeAsLargeText(text: string, blobId: string, context: SpanContext): Promise<void>;
 }
 
 export function createBlobClient(configuration: IBlobStorageConfiguration): IBlobClient {
