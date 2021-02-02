@@ -54,17 +54,20 @@ export function cosmosQueryClient(configuration: ICosmosConfiguration): ICosmosQ
 
 export interface IBlobClient extends IRequireInitialization {
     createContainerIfNotExists(context?: SpanContext): Promise<BlobService.ContainerResult>;
+
     writeAsText(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
     readAsText(context: SpanContext, blobId: string): Promise<string>;
+    writeAsLargeText(text: string, blobId: string, context: SpanContext): Promise<void>;
+    // TODO: Add a method for reading large text
+
     exists(context: SpanContext, blobId: string): Promise<boolean>;
     deleteFolderIfExists(folderId: string, context: SpanContext): Promise<boolean>;
+    deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean>;
     listAllBlobs(
         prefix: string,
         continuationToken: IBlobClientPaginationToken,
         context: SpanContext
     ): Promise<string[]>;
-    deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean>;
-    writeAsLargeText(text: string, blobId: string, context: SpanContext): Promise<void>;
 }
 
 export function createBlobClient(configuration: IBlobStorageConfiguration): IBlobClient {
