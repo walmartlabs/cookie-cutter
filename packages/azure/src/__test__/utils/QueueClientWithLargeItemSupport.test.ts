@@ -37,8 +37,8 @@ describe("QueueClientWithLargeItemSupport", () => {
         };
         const blob = {
             initialize: mocks.blobInit,
-            read: mocks.blobRead,
-            write: mocks.blobWrite,
+            readAsText: mocks.blobRead,
+            writeAsText: mocks.blobWrite,
             createContainerIfNotExists: mocks.createContainerIfNotExists,
         };
         const queue = {
@@ -75,7 +75,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             const { client, blob, queue } = buildClient();
             await client.write(context, payload, headers);
             expect(queue.write).toBeCalled();
-            expect(blob.write).not.toBeCalled();
+            expect(blob.writeAsText).not.toBeCalled();
         });
         it("should write to blob if error is 413", async () => {
             const { client, blob, queue } = buildClient();
@@ -85,7 +85,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             await client.initialize(({ tracer } as unknown) as IComponentContext);
             await client.write(context, payload, headers);
             expect(queue.write).toBeCalledTimes(2);
-            expect(blob.write).toBeCalled();
+            expect(blob.writeAsText).toBeCalled();
         });
     });
     describe("read", () => {
@@ -94,7 +94,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             queue.read.mockResolvedValue([messageQueueResult]);
             const result = await client.read(context);
             expect(result[0]).toMatchObject(messageQueueResult);
-            expect(blob.read).not.toBeCalled();
+            expect(blob.readAsText).not.toBeCalled();
         });
         it("should read from blob if blob header", async () => {
             const { client, queue, blob } = buildClient();
@@ -108,9 +108,9 @@ describe("QueueClientWithLargeItemSupport", () => {
                 payload: null,
             };
             queue.read.mockResolvedValue([messageResult]);
-            blob.read.mockResolvedValue(messageQueueResult.messageText);
+            blob.readAsText.mockResolvedValue(messageQueueResult.messageText);
             const result = await client.read(context);
-            expect(blob.read).toBeCalled();
+            expect(blob.readAsText).toBeCalled();
             expect(result[0]).toMatchObject(messageQueueResult);
         });
         it("should read mixed", async () => {
@@ -125,9 +125,9 @@ describe("QueueClientWithLargeItemSupport", () => {
                 payload: null,
             };
             queue.read.mockResolvedValue([messageResult, messageQueueResult]);
-            blob.read.mockResolvedValue(messageQueueResult.messageText);
+            blob.readAsText.mockResolvedValue(messageQueueResult.messageText);
             const result = await client.read(context);
-            expect(blob.read).toBeCalledTimes(1);
+            expect(blob.readAsText).toBeCalledTimes(1);
             expect(result).toMatchObject([messageQueueResult, messageQueueResult]);
         });
     });

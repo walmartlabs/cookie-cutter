@@ -21,15 +21,15 @@ import { makeAzureError, makeIterableIterator, makeReturnString } from "../../he
 const MockBlobClient: jest.Mock = BlobClient as any;
 
 describe("BlobStorageSnapshotOutputSink", () => {
-    let read: jest.Mock;
-    let write: jest.Mock;
+    let readAsText: jest.Mock;
+    let writeAsText: jest.Mock;
     beforeEach(() => {
-        read = jest.fn();
-        write = jest.fn();
+        readAsText = jest.fn();
+        writeAsText = jest.fn();
         MockBlobClient.mockImplementation(() => {
             return {
-                read,
-                write,
+                readAsText,
+                writeAsText,
             };
         });
     });
@@ -50,21 +50,21 @@ describe("BlobStorageSnapshotOutputSink", () => {
         const seqNum = 29;
         const error500 = makeAzureError(500, "OtherCode");
         function setUpOutputSinkOne(createsReturnObject: any): BlobStorageSnapshotOutputSink {
-            write.mockReturnValueOnce(createsReturnObject);
+            writeAsText.mockReturnValueOnce(createsReturnObject);
             return new BlobStorageSnapshotOutputSink(config);
         }
         function setUpOutputSinkTwo(getsReturnObject: any): BlobStorageSnapshotOutputSink {
-            write.mockReturnValueOnce(Promise.resolve());
-            read.mockReturnValueOnce(getsReturnObject);
+            writeAsText.mockReturnValueOnce(Promise.resolve());
+            readAsText.mockReturnValueOnce(getsReturnObject);
             return new BlobStorageSnapshotOutputSink(config);
         }
         function setUpOutputSinkThree(
             getsReturnObject: any,
             createsReturnObject
         ): BlobStorageSnapshotOutputSink {
-            write.mockReturnValueOnce(Promise.resolve());
-            read.mockReturnValueOnce(getsReturnObject);
-            write.mockReturnValueOnce(createsReturnObject);
+            writeAsText.mockReturnValueOnce(Promise.resolve());
+            readAsText.mockReturnValueOnce(getsReturnObject);
+            writeAsText.mockReturnValueOnce(createsReturnObject);
             return new BlobStorageSnapshotOutputSink(config);
         }
         it("throws any error generated when writing snapshot", async () => {
@@ -72,8 +72,8 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, seqNum, somePayload))
             ).rejects.toMatchObject(error500);
-            expect(write).toHaveBeenCalledTimes(1);
-            expect(read).toHaveBeenCalledTimes(0);
+            expect(writeAsText).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(0);
         });
         it("creates lister file and data file for very first snapshot of stream", async () => {
             const atSn = seqNum + 1;
@@ -84,14 +84,14 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, seqNum, somePayload))
             ).resolves.toBe(undefined);
-            expect(write).toHaveBeenCalledWith(
+            expect(writeAsText).toHaveBeenCalledWith(
                 span,
                 JSON.stringify(somePayload),
                 `${testKey}-${atSn}`
             );
-            expect(write).toHaveBeenCalledWith(span, JSON.stringify([atSn]), testKey);
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledWith(span, JSON.stringify([atSn]), testKey);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("throws error when trying to read the lister file and the container is not found", async () => {
             const error = makeAzureError(404, "ContainerNotFound");
@@ -99,16 +99,16 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, seqNum, somePayload))
             ).rejects.toMatchObject(error);
-            expect(write).toHaveBeenCalledTimes(1);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("throws any other error generated when reading lister file", async () => {
             const outputSink = setUpOutputSinkTwo(Promise.reject(error500));
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, seqNum, somePayload))
             ).rejects.toMatchObject(error500);
-            expect(write).toHaveBeenCalledTimes(1);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("throws any error generated when writing lister file", async () => {
             const outputSink = setUpOutputSinkThree(
@@ -118,17 +118,17 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, seqNum, somePayload))
             ).rejects.toMatchObject(error500);
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
     });
     describe("Handles expected failure", () => {
         const atSn = 30;
         const seqNum = atSn - 1;
         function setUpOutputSink(returnObject: any): BlobStorageSnapshotOutputSink {
-            write.mockReturnValueOnce(Promise.resolve());
-            read.mockReturnValueOnce(returnObject);
-            write.mockReturnValueOnce(Promise.resolve());
+            writeAsText.mockReturnValueOnce(Promise.resolve());
+            readAsText.mockReturnValueOnce(returnObject);
+            writeAsText.mockReturnValueOnce(Promise.resolve());
             return new BlobStorageSnapshotOutputSink(config);
         }
         it("overwrites lister file if it's malformed", async () => {
@@ -136,32 +136,32 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, seqNum, somePayload))
             ).resolves.toBe(undefined);
-            expect(write).toHaveBeenCalledWith(
+            expect(writeAsText).toHaveBeenCalledWith(
                 span,
                 JSON.stringify(somePayload),
                 `${testKey}-${atSn}`
             );
-            expect(write).toHaveBeenCalledWith(span, JSON.stringify([atSn]), testKey);
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledWith(span, JSON.stringify([atSn]), testKey);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
     });
     describe("Proceeds with expected success", () => {
         const sequenceList = [20, 40, 60, 80];
         const emptySequenceList: number[] = [];
         function setUpOutputSink(returnObject: any) {
-            write.mockReturnValueOnce(Promise.resolve());
-            read.mockReturnValueOnce(Promise.resolve(returnObject));
-            write.mockReturnValueOnce(Promise.resolve());
+            writeAsText.mockReturnValueOnce(Promise.resolve());
+            readAsText.mockReturnValueOnce(Promise.resolve(returnObject));
+            writeAsText.mockReturnValueOnce(Promise.resolve());
             return new BlobStorageSnapshotOutputSink(config);
         }
         function commonExpects(atSn: number) {
-            expect(write).toHaveBeenCalledWith(
+            expect(writeAsText).toHaveBeenCalledWith(
                 span,
                 JSON.stringify(somePayload),
                 `${testKey}-${atSn}`
             );
-            expect(read).toHaveBeenCalledWith(span, testKey);
+            expect(readAsText).toHaveBeenCalledWith(span, testKey);
         }
         it("adds the input sequences to an empty list of sequences", async () => {
             const atSn = 30;
@@ -170,9 +170,9 @@ describe("BlobStorageSnapshotOutputSink", () => {
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
             commonExpects(atSn);
-            expect(write).toHaveBeenCalledWith(span, JSON.stringify([atSn]), testKey);
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledWith(span, JSON.stringify([atSn]), testKey);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("adds an input sequence that is smaller than all sequences", async () => {
             const atSn = 10;
@@ -181,13 +181,13 @@ describe("BlobStorageSnapshotOutputSink", () => {
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
             commonExpects(atSn);
-            expect(write).toHaveBeenCalledWith(
+            expect(writeAsText).toHaveBeenCalledWith(
                 span,
                 JSON.stringify([atSn, 20, 40, 60, 80]),
                 testKey
             );
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("skips updating lister file when input sequence is exact match to an existing sequence", async () => {
             const atSn = 20;
@@ -196,8 +196,8 @@ describe("BlobStorageSnapshotOutputSink", () => {
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
             commonExpects(atSn);
-            expect(write).toHaveBeenCalledTimes(1);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("adds an input sequence that is within the range of sequences", async () => {
             const atSn = 50;
@@ -206,13 +206,13 @@ describe("BlobStorageSnapshotOutputSink", () => {
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
             commonExpects(atSn);
-            expect(write).toHaveBeenCalledWith(
+            expect(writeAsText).toHaveBeenCalledWith(
                 span,
                 JSON.stringify([20, 40, atSn, 60, 80]),
                 testKey
             );
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("adds an input sequence that is larger than all sequences", async () => {
             const atSn = 90;
@@ -221,13 +221,13 @@ describe("BlobStorageSnapshotOutputSink", () => {
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
             commonExpects(atSn);
-            expect(write).toHaveBeenCalledWith(
+            expect(writeAsText).toHaveBeenCalledWith(
                 span,
                 JSON.stringify([20, 40, 60, 80, atSn]),
                 testKey
             );
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
     });
     describe("Handles writing only every N snapshots", () => {
@@ -243,9 +243,9 @@ describe("BlobStorageSnapshotOutputSink", () => {
         function setUpOutputSink(
             config: IBlobStorageConfiguration & IBlobStorageSnapshotOutputSinkConfiguration
         ): BlobStorageSnapshotOutputSink {
-            write.mockReturnValueOnce(Promise.resolve());
-            read.mockReturnValueOnce(makeReturnString(sequenceList));
-            write.mockReturnValueOnce(Promise.resolve());
+            writeAsText.mockReturnValueOnce(Promise.resolve());
+            readAsText.mockReturnValueOnce(makeReturnString(sequenceList));
+            writeAsText.mockReturnValueOnce(Promise.resolve());
             return new BlobStorageSnapshotOutputSink(config);
         }
         it("writes the snapshot for frequency of 10", async () => {
@@ -254,8 +254,8 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
-            expect(write).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(writeAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
         it("skips the snapshot for frequency of 10", async () => {
             const atSn = 81;
@@ -263,8 +263,8 @@ describe("BlobStorageSnapshotOutputSink", () => {
             await expect(
                 outputSink.sink(makeIterableIterator(testKey, atSn - 1, somePayload))
             ).resolves.toBe(undefined);
-            expect(write).toHaveBeenCalledTimes(0);
-            expect(read).toHaveBeenCalledTimes(0);
+            expect(writeAsText).toHaveBeenCalledTimes(0);
+            expect(readAsText).toHaveBeenCalledTimes(0);
         });
     });
 });

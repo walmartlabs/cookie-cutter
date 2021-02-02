@@ -80,7 +80,7 @@ export class QueueClientWithLargeItemSupport {
                 continue;
             }
             const path = message.headers[PATH_HEADER];
-            const document = await this.blobClient.read(spanContext, path);
+            const document = await this.blobClient.readAsText(spanContext, path);
             const { headers, payload } = JSON.parse(document);
             hydratedResults.push({
                 ...message,
@@ -103,7 +103,11 @@ export class QueueClientWithLargeItemSupport {
         });
         const queueName = (options && options.queueName) || this.queueClient.defaultQueue;
         const path = `${queueName}/${v4()}`;
-        await this.blobClient.write(span.context(), JSON.stringify({ headers, payload }), path);
+        await this.blobClient.writeAsText(
+            span.context(),
+            JSON.stringify({ headers, payload }),
+            path
+        );
         const headersWithPath = {
             ...(headers || {}),
             [PATH_HEADER]: path,
