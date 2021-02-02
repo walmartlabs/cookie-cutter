@@ -11,6 +11,7 @@ import {
     IComponentContext,
     IMetrics,
     IMetricTags,
+    IRequireInitialization,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";
@@ -43,7 +44,7 @@ enum BlobMetricResults {
     Error = "error",
 }
 
-export class BlobClient implements IBlobClient {
+export class BlobClient implements IBlobClient, IRequireInitialization {
     private blobService: BlobService;
     private containerName: string;
     private storageAccount: string;
