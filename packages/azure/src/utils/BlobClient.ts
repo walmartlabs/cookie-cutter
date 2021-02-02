@@ -24,7 +24,7 @@ import {
 } from "..";
 
 import * as path from "path";
-import * as fs from "fs";
+import { promises as fsPromises } from "fs";
 
 export enum BlobOpenTracingTagKeys {
     ContainerName = "blob.container_name",
@@ -310,11 +310,14 @@ export class BlobClient implements IBlobClient {
         });
     }
 
-    public writeLargeObject(obj: any, blobId: string, context: SpanContext): Promise<void> {
-        const filepath: string = path.join(this.localStoragePath!, "temp.json");
-        fs.writeFileSync(filepath, JSON.stringify(obj));
-
-        return this.writeFromLocalFile(filepath, blobId, context);
+    public async writeLargeObject(obj: any, blobId: string, context: SpanContext): Promise<void> {
+        const filepath: string = path.join(this.localStoragePath!, `${blobId}.json`);
+        try {
+            await fsPromises.writeFile(filepath, JSON.stringify(obj));
+            await this.writeFromLocalFile(filepath, blobId, context);
+        } finally {
+            await fsPromises.unlink(filepath);
+        }
     }
 
     private writeFromLocalFile(
