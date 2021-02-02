@@ -5,13 +5,13 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
+import { config, IMessageEncoder, IRequireInitialization } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { BlobStorageConfiguration, CosmosConfiguration } from "./config";
 import * as es from "./event-sourced";
 import * as ma from "./materialized";
 import * as st from "./streaming";
-import { BlobClient, CosmosClient } from "./utils";
+import { BlobClient, CosmosClient, IBlobClientPaginationToken } from "./utils";
 import { BlobService } from "azure-storage";
 
 export const EventSourced = es;
@@ -52,17 +52,7 @@ export function cosmosQueryClient(configuration: ICosmosConfiguration): ICosmosQ
     return new CosmosClient(configuration);
 }
 
-export enum BlobStorageLocation {
-    PRIMARY = 0,
-    SECONDARY = 1,
-}
-
-export interface IBlobClientPaginationToken {
-    nextMarker: string;
-    targetLocation?: BlobStorageLocation;
-}
-
-export interface IBlobClient {
+export interface IBlobClient extends IRequireInitialization {
     createContainerIfNotExists(context?: SpanContext): Promise<BlobService.ContainerResult>;
     writeAsText(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
     readAsText(context: SpanContext, blobId: string): Promise<string>;

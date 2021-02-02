@@ -16,33 +16,10 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import {
-    BlobStorageLocation,
-    IBlobClient,
-    IBlobClientPaginationToken,
-    IBlobStorageConfiguration,
-} from "..";
+import { IBlobClient, IBlobStorageConfiguration } from "..";
 
 import * as path from "path";
 import { promises as fsPromises } from "fs";
-
-export enum BlobOpenTracingTagKeys {
-    ContainerName = "blob.container_name",
-}
-
-enum BlobMetrics {
-    Write = "cookie_cutter.azure_blob_client.write",
-    Read = "cookie_cutter.azure_blob_client.read",
-    Exists = "cookie_cutter.azure_blob_client.exists",
-    DeleteFolder = "cookie_cutter.azure_blob_client.delete_folder",
-    DeleteBlob = "cookie_cutter.azure_blob_client.delete_blob",
-    ListAllBlobs = "cookie_cutter.azure_blob_client.list_all_blobs",
-}
-
-enum BlobMetricResults {
-    Success = "success",
-    Error = "error",
-}
 
 export class BlobClient implements IBlobClient, IRequireInitialization {
     private blobService: BlobService;
@@ -410,4 +387,32 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
             targetLocation,
         };
     }
+}
+
+enum BlobMetricResults {
+    Success = "success",
+    Error = "error",
+}
+
+export enum BlobOpenTracingTagKeys {
+    ContainerName = "blob.container_name",
+}
+
+enum BlobMetrics {
+    Write = "cookie_cutter.azure_blob_client.write",
+    Read = "cookie_cutter.azure_blob_client.read",
+    Exists = "cookie_cutter.azure_blob_client.exists",
+    DeleteFolder = "cookie_cutter.azure_blob_client.delete_folder",
+    DeleteBlob = "cookie_cutter.azure_blob_client.delete_blob",
+    ListAllBlobs = "cookie_cutter.azure_blob_client.list_all_blobs",
+}
+
+export enum BlobStorageLocation {
+    PRIMARY = 0,
+    SECONDARY = 1,
+}
+
+export interface IBlobClientPaginationToken {
+    nextMarker: string;
+    targetLocation?: BlobStorageLocation;
 }
