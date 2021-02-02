@@ -16,10 +16,10 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { IBlobStorageConfiguration } from "..";
+import { IBlobClient, IBlobStorageConfiguration } from "..";
 
-import path = require("path");
-const fs: any = require("fs");
+import * as path from "path";
+import * as fs from "fs";
 
 export enum BlobOpenTracingTagKeys {
     ContainerName = "blob.container_name",
@@ -39,7 +39,7 @@ enum BlobMetricResults {
     Error = "error",
 }
 
-export class BlobClient implements IRequireInitialization {
+export class BlobClient implements IBlobClient {
     private blobService: BlobService;
     private containerName: string;
     private storageAccount: string;
@@ -125,9 +125,9 @@ export class BlobClient implements IRequireInitialization {
         });
     }
 
-    public read(context: SpanContext, blobId: string): Promise<string> {
+    public readAsText(context: SpanContext, blobId: string): Promise<string> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
-        this.spanLogAndSetTags(span, this.read.name);
+        this.spanLogAndSetTags(span, this.readAsText.name);
         return new Promise<string>((resolve, reject) => {
             this.blobService.getBlobToText(
                 this.containerName,

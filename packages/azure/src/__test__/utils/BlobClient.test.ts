@@ -18,13 +18,14 @@ import { Span, SpanContext } from "opentracing";
 import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
 
-const MockCreateBlobService: jest.Mock = createBlobService as any;
+const createBlobServiceMock: jest.Mock = createBlobService as any;
 
 describe("BlobClient", () => {
     const config: IBlobStorageConfiguration = {
         container: "container123",
         storageAccount: "myAccount",
         storageAccessKey: "myKey",
+        localStoragePath: "path1",
     };
     const context = new SpanContext();
     const span: Span = new NullTracerBuilder()
@@ -37,7 +38,7 @@ describe("BlobClient", () => {
         const response = { statusCode: 404 };
 
         beforeEach(() => {
-            MockCreateBlobService.mockImplementation(() => {
+            createBlobServiceMock.mockImplementation(() => {
                 return {
                     getBlobToText: (_container, _blob, _options, cb) =>
                         cb(err, text, undefined, response),
@@ -73,7 +74,7 @@ describe("BlobClient", () => {
         const exists = { exists: true };
 
         beforeEach(() => {
-            MockCreateBlobService.mockImplementation(() => {
+            createBlobServiceMock.mockImplementation(() => {
                 return {
                     getBlobToText: (_container, _blob, _options, cb) =>
                         cb(err, text, undefined, response),
