@@ -5,19 +5,14 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import {
-    config,
-    IMessageEncoder,
-    IComponentContext,
-    IRequireInitialization,
-} from "@walmartlabs/cookie-cutter-core";
+import { config, IMessageEncoder, IRequireInitialization } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { BlobStorageConfiguration, CosmosConfiguration } from "./config";
 import * as es from "./event-sourced";
 import * as ma from "./materialized";
 import * as st from "./streaming";
 import { BlobClient, CosmosClient } from "./utils";
-import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";
+import { BlobService } from "azure-storage";
 
 export const EventSourced = es;
 export const Materialized = ma;

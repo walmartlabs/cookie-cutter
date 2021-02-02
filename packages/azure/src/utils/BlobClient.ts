@@ -11,7 +11,6 @@ import {
     IComponentContext,
     IMetrics,
     IMetricTags,
-    IRequireInitialization,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";

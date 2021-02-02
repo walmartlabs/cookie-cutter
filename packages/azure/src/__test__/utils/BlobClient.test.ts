@@ -51,13 +51,13 @@ describe("BlobClient", () => {
 
         it("rejects on error from azure-storage for read", async () => {
             const blobClient = new BlobClient(config);
-            await expect(blobClient.read(span.context(), "BlobID")).rejects.toMatch(err);
+            await expect(blobClient.readAsText(span.context(), "BlobID")).rejects.toMatch(err);
         });
 
         it("rejects on error from azure-storage for write", async () => {
             const blobClient = new BlobClient(config);
             await expect(
-                blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
+                blobClient.writeAsText(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).rejects.toMatch(err);
         });
 
@@ -87,13 +87,13 @@ describe("BlobClient", () => {
 
         it("performs a successful read", async () => {
             const blobClient = new BlobClient(config);
-            await expect(blobClient.read(span.context(), "BlobID")).resolves.toBe(text);
+            await expect(blobClient.readAsText(span.context(), "BlobID")).resolves.toBe(text);
         });
 
         it("performs a successful write", async () => {
             const blobClient = new BlobClient(config);
             await expect(
-                blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
+                blobClient.writeAsText(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
         });
 
@@ -106,7 +106,7 @@ describe("BlobClient", () => {
             };
             const blobClient = new BlobClient(config);
             await expect(
-                blobClient.write(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
+                blobClient.writeAsText(span.context(), "CONTENTS TO BE WRITTEN", "BlobID")
             ).resolves.toBe(undefined);
         });
 
