@@ -16,7 +16,12 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { IBlobClient, IBlobStorageConfiguration } from "..";
+import {
+    BlobStorageLocation,
+    IBlobClient,
+    IBlobClientPaginationToken,
+    IBlobStorageConfiguration,
+} from "..";
 
 import * as path from "path";
 import * as fs from "fs";
@@ -214,7 +219,7 @@ export class BlobClient implements IBlobClient {
 
     public async listAllBlobs(
         prefix: string,
-        continuationToken: common.ContinuationToken,
+        paginationToken: IBlobClientPaginationToken,
         context: SpanContext
     ): Promise<string[]> {
         const span: Span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
@@ -224,7 +229,7 @@ export class BlobClient implements IBlobClient {
             this.blobService.listBlobsSegmentedWithPrefix(
                 this.containerName,
                 prefix,
-                continuationToken,
+                BlobClient.getContinuationToken(paginationToken),
                 async (
                     err: Error,
                     result: BlobService.ListBlobsResult,
@@ -256,7 +261,7 @@ export class BlobClient implements IBlobClient {
                         if (result.continuationToken) {
                             moreNames = await this.listAllBlobs(
                                 prefix,
-                                result.continuationToken,
+                                BlobClient.getPaginationToken(result.continuationToken),
                                 context
                             );
                         }
@@ -372,5 +377,33 @@ export class BlobClient implements IBlobClient {
         span.setTag(Tags.PEER_SERVICE, "AzureBlobStorage");
         span.setTag(OpenTracingTagKeys.FunctionName, funcName);
         span.setTag(BlobOpenTracingTagKeys.ContainerName, this.containerName);
+    }
+
+    private static getContinuationToken(
+        token: IBlobClientPaginationToken
+    ): common.ContinuationToken {
+        const targetLocation: common.util.constants.StorageLocation =
+            common.util.constants.StorageLocation[
+                BlobStorageLocation[
+                    token.targetLocation
+                ] as keyof typeof common.util.constants.StorageLocation
+            ];
+        return {
+            nextMarker: token.nextMarker,
+            targetLocation,
+        };
+    }
+
+    private static getPaginationToken(token: common.ContinuationToken): IBlobClientPaginationToken {
+        const targetLocation: BlobStorageLocation =
+            BlobStorageLocation[
+                common.util.constants.StorageLocation[
+                    token.targetLocation
+                ] as keyof typeof BlobStorageLocation
+            ];
+        return {
+            nextMarker: token.nextMarker,
+            targetLocation,
+        };
     }
 }

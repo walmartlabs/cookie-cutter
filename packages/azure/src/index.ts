@@ -57,6 +57,16 @@ export function cosmosQueryClient(configuration: ICosmosConfiguration): ICosmosQ
     return new CosmosClient(configuration);
 }
 
+export enum BlobStorageLocation {
+    PRIMARY = 0,
+    SECONDARY = 1,
+}
+
+export interface IBlobClientPaginationToken {
+    nextMarker: string;
+    targetLocation?: BlobStorageLocation;
+}
+
 export interface IBlobClient extends IRequireInitialization {
     createContainerIfNotExists(context?: SpanContext): Promise<BlobService.ContainerResult>;
     write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
@@ -65,7 +75,7 @@ export interface IBlobClient extends IRequireInitialization {
     deleteFolderIfExists(folderSubPath: string, context: SpanContext): Promise<boolean>;
     listAllBlobs(
         prefix: string,
-        continuationToken: common.ContinuationToken,
+        continuationToken: IBlobClientPaginationToken,
         context: SpanContext
     ): Promise<string[]>;
     deleteBlobIfExists(blobSubPath: string, context: SpanContext): Promise<boolean>;
