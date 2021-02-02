@@ -204,14 +204,11 @@ export class BlobClient implements IBlobClient {
         });
     }
 
-    public async deleteFolderIfExists(
-        folderSubPath: string,
-        context: SpanContext
-    ): Promise<boolean> {
-        const blobSubPaths: string[] = await this.listAllBlobs(folderSubPath, null, context);
+    public async deleteFolderIfExists(folderId: string, context: SpanContext): Promise<boolean> {
+        const blobIds: string[] = await this.listAllBlobs(folderId, null, context);
         const deleteResults: boolean[] = [];
-        for (const blobSubPath of blobSubPaths) {
-            deleteResults.push(await this.deleteBlobIfExists(blobSubPath, context));
+        for (const blobId of blobIds) {
+            deleteResults.push(await this.deleteBlobIfExists(blobId, context));
         }
 
         return deleteResults.some((e) => e === true);
@@ -273,14 +270,14 @@ export class BlobClient implements IBlobClient {
         });
     }
 
-    public async deleteBlobIfExists(blobSubPath: string, context: SpanContext): Promise<boolean> {
+    public async deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean> {
         const span: Span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.deleteBlobIfExists.name);
 
         return new Promise<boolean>((resolve, reject) => {
             this.blobService.deleteBlobIfExists(
                 this.containerName,
-                blobSubPath,
+                blobId,
                 (err: Error, result: boolean, response: ServiceResponse) => {
                     const statusCode: number = response && response.statusCode;
                     if (statusCode !== undefined) {

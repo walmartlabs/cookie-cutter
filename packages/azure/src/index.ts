@@ -72,13 +72,13 @@ export interface IBlobClient extends IRequireInitialization {
     write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
     readAsText(context: SpanContext, blobId: string): Promise<string>;
     exists(context: SpanContext, blobId: string): Promise<boolean>;
-    deleteFolderIfExists(folderSubPath: string, context: SpanContext): Promise<boolean>;
+    deleteFolderIfExists(folderId: string, context: SpanContext): Promise<boolean>;
     listAllBlobs(
         prefix: string,
         continuationToken: IBlobClientPaginationToken,
         context: SpanContext
     ): Promise<string[]>;
-    deleteBlobIfExists(blobSubPath: string, context: SpanContext): Promise<boolean>;
+    deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean>;
     writeLargeObject(obj: any, blobId: string, context: SpanContext): Promise<void>;
 }
 
