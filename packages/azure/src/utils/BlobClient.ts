@@ -16,7 +16,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { BlobService, createBlobService, ServiceResponse, common } from "azure-storage";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { IBlobClient, IBlobStorageConfiguration } from "..";
+import { IBlobStorageConfiguration, IBlobClient } from "..";
 
 import * as path from "path";
 import { promises as fsPromises } from "fs";
