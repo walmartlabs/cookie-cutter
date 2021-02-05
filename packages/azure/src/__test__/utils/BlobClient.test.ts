@@ -269,6 +269,7 @@ describe("BlobClient", () => {
             });
 
             const blobClient: BlobClient = new BlobClient(config);
+            /* tslint:disable-next-line:no-floating-promises */
             expect(
                 blobClient.listAllBlobs(blobFolderPrefix, null, span.context())
             ).resolves.toEqual([`${blobFolderPrefix}/a`, `${blobFolderPrefix}/b`]);
@@ -312,6 +313,7 @@ describe("BlobClient", () => {
                 );
 
             const blobClient: BlobClient = new BlobClient(config);
+            /* tslint:disable-next-line:no-floating-promises */
             expect(
                 blobClient.listAllBlobs(blobFolderPrefix, null, span.context())
             ).resolves.toEqual([
@@ -334,6 +336,7 @@ describe("BlobClient", () => {
             });
 
             const blobClient: BlobClient = new BlobClient(config);
+            /* tslint:disable-next-line:no-floating-promises */
             expect(
                 blobClient.listAllBlobs("BlobFolderPrefix", null, span.context())
             ).rejects.toEqual(error);
