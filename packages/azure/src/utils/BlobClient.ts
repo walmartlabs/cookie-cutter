@@ -182,7 +182,7 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
     }
 
     public async deleteFolderIfExists(folderId: string, context: SpanContext): Promise<boolean> {
-        const blobIds: string[] = await this.listAllBlobs(folderId, null, context);
+        const blobIds: string[] = await this.listAllBlobs(folderId, context);
         const deleteResults: boolean[] = [];
         for (const blobId of blobIds) {
             deleteResults.push(await this.deleteBlobIfExists(blobId, context));
@@ -191,60 +191,8 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         return deleteResults.some((e) => e === true);
     }
 
-    public async listAllBlobs(
-        prefix: string,
-        paginationToken: IBlobClientPaginationToken,
-        context: SpanContext
-    ): Promise<string[]> {
-        const span: Span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
-        this.spanLogAndSetTags(span, this.listAllBlobs.name);
-
-        return new Promise<string[]>((resolve, reject) => {
-            this.blobService.listBlobsSegmentedWithPrefix(
-                this.containerName,
-                prefix,
-                BlobClient.getContinuationToken(paginationToken),
-                async (
-                    err: Error,
-                    result: BlobService.ListBlobsResult,
-                    response: ServiceResponse
-                ) => {
-                    const statusCode: number = response && response.statusCode;
-                    if (statusCode !== undefined) {
-                        span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
-                    }
-
-                    if (err) {
-                        this.metrics.increment(
-                            BlobMetrics.ListAllBlobs,
-                            this.generateMetricTags(BlobMetricResults.Error, statusCode)
-                        );
-
-                        failSpan(span, err);
-                        span.finish();
-                        reject(err);
-                    } else {
-                        this.metrics.increment(
-                            BlobMetrics.ListAllBlobs,
-                            this.generateMetricTags(BlobMetricResults.Success, statusCode)
-                        );
-                        span.finish();
-
-                        const names: string[] = result.entries.map((e) => e.name);
-                        let moreNames: string[] = [];
-                        if (result.continuationToken) {
-                            moreNames = await this.listAllBlobs(
-                                prefix,
-                                BlobClient.getPaginationToken(result.continuationToken),
-                                context
-                            );
-                        }
-
-                        resolve(names.concat(moreNames));
-                    }
-                }
-            );
-        });
+    public async listAllBlobs(prefix: string, context: SpanContext): Promise<string[]> {
+        return this.listAllBlobsHelper(prefix, null, context);
     }
 
     public async deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean> {
@@ -340,6 +288,62 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         });
     }
 
+    private async listAllBlobsHelper(
+        prefix: string,
+        paginationToken: common.ContinuationToken,
+        context: SpanContext
+    ): Promise<string[]> {
+        const span: Span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
+        this.spanLogAndSetTags(span, this.listAllBlobs.name);
+
+        return new Promise<string[]>((resolve, reject) => {
+            this.blobService.listBlobsSegmentedWithPrefix(
+                this.containerName,
+                prefix,
+                paginationToken,
+                async (
+                    err: Error,
+                    result: BlobService.ListBlobsResult,
+                    response: ServiceResponse
+                ) => {
+                    const statusCode: number = response && response.statusCode;
+                    if (statusCode !== undefined) {
+                        span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
+                    }
+
+                    if (err) {
+                        this.metrics.increment(
+                            BlobMetrics.ListAllBlobs,
+                            this.generateMetricTags(BlobMetricResults.Error, statusCode)
+                        );
+
+                        failSpan(span, err);
+                        span.finish();
+                        reject(err);
+                    } else {
+                        this.metrics.increment(
+                            BlobMetrics.ListAllBlobs,
+                            this.generateMetricTags(BlobMetricResults.Success, statusCode)
+                        );
+                        span.finish();
+
+                        const names: string[] = result.entries.map((e) => e.name);
+                        let moreNames: string[] = [];
+                        if (result.continuationToken) {
+                            moreNames = await this.listAllBlobsHelper(
+                                prefix,
+                                result.continuationToken,
+                                context
+                            );
+                        }
+
+                        resolve(names.concat(moreNames));
+                    }
+                }
+            );
+        });
+    }
+
     private generateMetricTags(result: BlobMetricResults, statusCode?: number): IMetricTags {
         const tags: { [key: string]: any } = {
             container_name: this.containerName,
@@ -359,34 +363,6 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         span.setTag(OpenTracingTagKeys.FunctionName, funcName);
         span.setTag(BlobOpenTracingTagKeys.ContainerName, this.containerName);
     }
-
-    private static getContinuationToken(
-        token: IBlobClientPaginationToken
-    ): common.ContinuationToken {
-        const targetLocation: common.util.constants.StorageLocation =
-            common.util.constants.StorageLocation[
-                BlobStorageLocation[
-                    token.targetLocation
-                ] as keyof typeof common.util.constants.StorageLocation
-            ];
-        return {
-            nextMarker: token.nextMarker,
-            targetLocation,
-        };
-    }
-
-    private static getPaginationToken(token: common.ContinuationToken): IBlobClientPaginationToken {
-        const targetLocation: BlobStorageLocation =
-            BlobStorageLocation[
-                common.util.constants.StorageLocation[
-                    token.targetLocation
-                ] as keyof typeof BlobStorageLocation
-            ];
-        return {
-            nextMarker: token.nextMarker,
-            targetLocation,
-        };
-    }
 }
 
 enum BlobMetricResults {
@@ -405,14 +381,4 @@ enum BlobMetrics {
     DeleteFolder = "cookie_cutter.azure_blob_client.delete_folder",
     DeleteBlob = "cookie_cutter.azure_blob_client.delete_blob",
     ListAllBlobs = "cookie_cutter.azure_blob_client.list_all_blobs",
-}
-
-export enum BlobStorageLocation {
-    PRIMARY = 0,
-    SECONDARY = 1,
-}
-
-export interface IBlobClientPaginationToken {
-    nextMarker: string;
-    targetLocation?: BlobStorageLocation;
 }

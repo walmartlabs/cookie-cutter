@@ -270,9 +270,10 @@ describe("BlobClient", () => {
 
             const blobClient: BlobClient = new BlobClient(config);
             /* tslint:disable-next-line:no-floating-promises */
-            expect(
-                blobClient.listAllBlobs(blobFolderPrefix, null, span.context())
-            ).resolves.toEqual([`${blobFolderPrefix}/a`, `${blobFolderPrefix}/b`]);
+            expect(blobClient.listAllBlobs(blobFolderPrefix, span.context())).resolves.toEqual([
+                `${blobFolderPrefix}/a`,
+                `${blobFolderPrefix}/b`,
+            ]);
         });
 
         test("listAllBlobs() returns list of all blobs with multiple fetches (using continuationToken)", async () => {
@@ -314,9 +315,7 @@ describe("BlobClient", () => {
 
             const blobClient: BlobClient = new BlobClient(config);
             /* tslint:disable-next-line:no-floating-promises */
-            expect(
-                blobClient.listAllBlobs(blobFolderPrefix, null, span.context())
-            ).resolves.toEqual([
+            expect(blobClient.listAllBlobs(blobFolderPrefix, span.context())).resolves.toEqual([
                 `${blobFolderPrefix}/a`,
                 `${blobFolderPrefix}/b`,
                 `${blobFolderPrefix}/c`,
@@ -337,9 +336,9 @@ describe("BlobClient", () => {
 
             const blobClient: BlobClient = new BlobClient(config);
             /* tslint:disable-next-line:no-floating-promises */
-            expect(
-                blobClient.listAllBlobs("BlobFolderPrefix", null, span.context())
-            ).rejects.toEqual(error);
+            expect(blobClient.listAllBlobs("BlobFolderPrefix", span.context())).rejects.toEqual(
+                error
+            );
         });
     });
 });

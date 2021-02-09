@@ -11,7 +11,7 @@ import { BlobStorageConfiguration, CosmosConfiguration } from "./config";
 import * as es from "./event-sourced";
 import * as ma from "./materialized";
 import * as st from "./streaming";
-import { BlobClient, CosmosClient, IBlobClientPaginationToken } from "./utils";
+import { BlobClient, CosmosClient } from "./utils";
 import { BlobService } from "azure-storage";
 
 export const EventSourced = es;
@@ -63,11 +63,7 @@ export interface IBlobClient extends IRequireInitialization {
     exists(context: SpanContext, blobId: string): Promise<boolean>;
     deleteFolderIfExists(folderId: string, context: SpanContext): Promise<boolean>;
     deleteBlobIfExists(blobId: string, context: SpanContext): Promise<boolean>;
-    listAllBlobs(
-        prefix: string,
-        continuationToken: IBlobClientPaginationToken,
-        context: SpanContext
-    ): Promise<string[]>;
+    listAllBlobs(prefix: string, context: SpanContext): Promise<string[]>;
 }
 
 export function createBlobClient(configuration: IBlobStorageConfiguration): IBlobClient {
