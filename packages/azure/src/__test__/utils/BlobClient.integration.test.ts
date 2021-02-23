@@ -32,7 +32,7 @@ beforeAll(async () => {
 describe("Blob Client", () => {
     describe("reads", () => {
         it("retrieves a known blob", async () => {
-            const result = await client.read(spanContext, blobId);
+            const result = await client.readAsText(spanContext, blobId);
 
             expect(result).toBe("content");
         });
@@ -40,7 +40,7 @@ describe("Blob Client", () => {
         it("retrieves an unknown blob", async () => {
             expect.assertions(1);
             try {
-                await client.read(spanContext, "unknownBlobId");
+                await client.readAsText(spanContext, "unknownBlobId");
             } catch (error) {
                 expect(error.statusCode).toBe(404);
             }
@@ -52,7 +52,7 @@ describe("Blob Client", () => {
             const content = `blob-content-${Date.now()}`;
             await client.write(spanContext, content, blobId);
 
-            const result = await client.read(spanContext, blobId);
+            const result = await client.readAsText(spanContext, blobId);
 
             expect(result).toBe(content);
         });
@@ -62,7 +62,7 @@ describe("Blob Client", () => {
             const newBlobId = "newBlobId";
             await client.write(spanContext, content, newBlobId);
 
-            const result = await client.read(spanContext, newBlobId);
+            const result = await client.readAsText(spanContext, newBlobId);
 
             expect(result).toBe(content);
         });

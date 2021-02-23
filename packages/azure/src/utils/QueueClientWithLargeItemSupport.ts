@@ -80,7 +80,7 @@ export class QueueClientWithLargeItemSupport {
                 continue;
             }
             const path = message.headers[PATH_HEADER];
-            const document = await this.blobClient.read(spanContext, path);
+            const document = await this.blobClient.readAsText(spanContext, path);
             const { headers, payload } = JSON.parse(document);
             hydratedResults.push({
                 ...message,

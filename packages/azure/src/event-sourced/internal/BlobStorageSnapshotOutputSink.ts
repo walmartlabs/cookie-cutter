@@ -50,7 +50,7 @@ export class BlobStorageSnapshotOutputSink
             );
             let sequenceList: number[] = [];
             try {
-                const listerResponse = await this.client.read(item.spanContext, listerName);
+                const listerResponse = await this.client.readAsText(item.spanContext, listerName);
                 if (listerResponse) {
                     sequenceList = JSON.parse(listerResponse) as number[];
                     if (!(sequenceList && Array.isArray(sequenceList))) {
