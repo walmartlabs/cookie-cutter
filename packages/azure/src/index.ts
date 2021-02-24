@@ -12,7 +12,6 @@ import * as es from "./event-sourced";
 import * as ma from "./materialized";
 import * as st from "./streaming";
 import { BlobClient, CosmosClient } from "./utils";
-import { BlobService } from "azure-storage";
 
 export const EventSourced = es;
 export const Materialized = ma;
@@ -27,12 +26,10 @@ export interface ICosmosConfiguration {
 }
 
 export interface IBlobStorageConfiguration {
-    readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly container: string;
-    readonly requestTimeout?: number;
-    readonly localStoragePath?: string;
+    readonly url?: string;
 }
 
 export interface ICosmosQuery {
@@ -53,16 +50,16 @@ export function cosmosQueryClient(configuration: ICosmosConfiguration): ICosmosQ
 }
 
 export interface IBlobClient extends IRequireInitialization {
-    createContainerIfNotExists(context?: SpanContext): Promise<BlobService.ContainerResult>;
+    createContainerIfNotExists(context?: SpanContext): Promise<boolean>;
 
-    write(context: SpanContext, text: Buffer | string, blobId: string): Promise<void>;
+    write(context: SpanContext, blobId: string, content: Buffer | string): Promise<void>;
     readAsText(context: SpanContext, blobId: string): Promise<string>;
     // TODO: Add a method for reading Buffer
 
     exists(context: SpanContext, blobId: string): Promise<boolean>;
     deleteFolderIfExists(context: SpanContext, folderId: string): Promise<boolean>;
     deleteBlobIfExists(context: SpanContext, blobId: string): Promise<boolean>;
-    listAllBlobs(context: SpanContext, prefix: string): Promise<string[]>;
+    listBlobs(context: SpanContext, prefix: string): AsyncIterableIterator<string>;
 }
 
 export function createBlobClient(configuration: IBlobStorageConfiguration): IBlobClient {

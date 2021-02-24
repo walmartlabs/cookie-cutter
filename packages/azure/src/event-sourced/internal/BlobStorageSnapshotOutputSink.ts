@@ -45,8 +45,8 @@ export class BlobStorageSnapshotOutputSink
             const listerName = item.state.key;
             await this.client.write(
                 item.spanContext,
-                JSON.stringify(item.message.payload),
-                newBlobName
+                newBlobName,
+                JSON.stringify(item.message.payload)
             );
             let sequenceList: number[] = [];
             try {
@@ -69,7 +69,7 @@ export class BlobStorageSnapshotOutputSink
             }
             if (!exactMatch) {
                 sequenceList.splice(insertionIndex, 0, atSn);
-                await this.client.write(item.spanContext, JSON.stringify(sequenceList), listerName);
+                await this.client.write(item.spanContext, listerName, JSON.stringify(sequenceList));
             }
         }
     }

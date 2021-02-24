@@ -23,8 +23,9 @@ export class QueueClientWithLargeItemSupport {
     public static create(config: IQueueConfiguration): QueueClient {
         const queueClient = new QueueClient(config);
         const blobClient = new BlobClient({
-            storageAccount: config.storageAccount,
+            url: config.url,
             storageAccessKey: config.storageAccessKey,
+            storageAccount: config.storageAccount,
             container: config.largeItemBlobContainer,
         });
         const withLargeItemSupport = new QueueClientWithLargeItemSupport(queueClient, blobClient);
@@ -103,7 +104,7 @@ export class QueueClientWithLargeItemSupport {
         });
         const queueName = (options && options.queueName) || this.queueClient.defaultQueue;
         const path = `${queueName}/${v4()}`;
-        await this.blobClient.write(span.context(), JSON.stringify({ headers, payload }), path);
+        await this.blobClient.write(span.context(), path, JSON.stringify({ headers, payload }));
         const headersWithPath = {
             ...(headers || {}),
             [PATH_HEADER]: path,
