@@ -98,8 +98,12 @@ export enum KafkaMessagePublishingStrategy {
 export enum KafkaPublisherCompressionMode {
     /** Messages will be published as-is without any compression. */
     None = 1,
-    /** Messages will be published after gzip-ing their payload. */
+    /** Messages will be compressed with the Gzip algorithm before being published. */
     Gzip,
+    /** Messages will be compressed with the Snappy algorithm before being published. */
+    Snappy,
+    /** Messages will be compressed with the LZ4 algorithm before being published. */
+    LZ4,
 }
 
 export interface IKafkaPublisherConfiguration {
