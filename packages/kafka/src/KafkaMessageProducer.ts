@@ -13,8 +13,6 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import * as kafkajs from "kafkajs";
-import * as LZ4Codec from "kafkajs-lz4";
-import * as SnappyCodec from "kafkajs-snappy";
 import { FORMAT_HTTP_HEADERS, Span, Tags, Tracer } from "opentracing";
 import * as uuid from "uuid";
 import {
@@ -23,9 +21,9 @@ import {
     KafkaPublisherCompressionMode,
 } from ".";
 import { IProducerMessage, TRACE_HEADER } from "./model";
+import { loadCompressionPlugins } from "./utils";
 
-kafkajs.CompressionCodecs[kafkajs.CompressionTypes.Snappy] = SnappyCodec;
-kafkajs.CompressionCodecs[kafkajs.CompressionTypes.LZ4] = new (LZ4Codec as any)().codec;
+loadCompressionPlugins();
 
 enum KafkaMetrics {
     MsgPublished = "cookie_cutter.kafka_producer.msg_published",
