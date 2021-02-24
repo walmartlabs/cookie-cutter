@@ -27,6 +27,7 @@ import {
     IKafkaPublisherConfiguration,
     KafkaMessagePublishingStrategy,
     KafkaMetadata,
+    KafkaPublisherCompressionMode,
 } from ".";
 import { KafkaMessageProducer } from "./KafkaMessageProducer";
 import { IOffsetTracker, IProducerMessage } from "./model";
@@ -106,6 +107,7 @@ export class KafkaSink
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         let sendWith: kafkajs.Producer | kafkajs.Transaction = this.producer;
         let transaction: kafkajs.Transaction;
+        const compressionMode = this.config.compressionMode ?? KafkaPublisherCompressionMode.None;
         let acks = 1; // Only leader
         const offsetTracker: IOffsetTracker = {};
 
@@ -152,7 +154,13 @@ export class KafkaSink
                 this.logMissingKey = false;
             }
             try {
-                await this.messageProducer.sendMessages(messages, topic, acks, sendWith);
+                await this.messageProducer.sendMessages(
+                    messages,
+                    topic,
+                    acks,
+                    sendWith,
+                    compressionMode
+                );
 
                 if (transaction && offsetTracker[topic]) {
                     // Send any offsets participating in transaction for this topic
