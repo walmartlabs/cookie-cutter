@@ -95,6 +95,17 @@ export enum KafkaMessagePublishingStrategy {
     ExactlyOnceSemantics,
 }
 
+export enum KafkaPublisherCompressionMode {
+    /** Messages will be published as-is without any compression. */
+    None = 1,
+    /** Messages will be compressed with the Gzip algorithm before being published. */
+    Gzip,
+    /** Messages will be compressed with the Snappy algorithm before being published. */
+    Snappy,
+    /** Messages will be compressed with the LZ4 algorithm before being published. */
+    LZ4,
+}
+
 export interface IKafkaPublisherConfiguration {
     readonly defaultTopic?: string;
     readonly maximumBatchSize?: number;
@@ -118,6 +129,11 @@ export interface IKafkaPublisherConfiguration {
      * > leak through the fencing provided by transactions.
      */
     readonly transactionalId?: string;
+    /**
+     * Determines which compression mode, if any, should be used to produce messages.
+     * Defaults to `None`.
+     */
+    readonly compressionMode?: KafkaPublisherCompressionMode;
 }
 
 export interface IKafkaTopic {
@@ -163,6 +179,7 @@ export function kafkaSink(
         messagePublishingStrategy: KafkaMessagePublishingStrategy.NonTransactional,
         maximumBatchSize: 1000,
         headerNames: DefaultKafkaHeaderNames,
+        compressionMode: KafkaPublisherCompressionMode.None,
     });
     return new KafkaSink(configuration);
 }

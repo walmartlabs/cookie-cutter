@@ -17,8 +17,6 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import {
     Admin,
-    CompressionCodecs,
-    CompressionTypes,
     Consumer,
     ConsumerCrashEvent,
     ConsumerGroupJoinEvent,
@@ -30,8 +28,6 @@ import {
     RequestQueueSizeEvent,
     RetryOptions,
 } from "kafkajs";
-import * as LZ4Codec from "kafkajs-lz4";
-import * as SnappyCodec from "kafkajs-snappy";
 import Long = require("long");
 import { isNumber, isString } from "util";
 import {
@@ -43,10 +39,9 @@ import {
 } from ".";
 import { IMessageHeaders, IRawKafkaMessage } from "./model";
 import { OffsetManager } from "./OffsetManager";
-import { generateClientId } from "./utils";
+import { generateClientId, loadCompressionPlugins } from "./utils";
 
-CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
-CompressionCodecs[CompressionTypes.LZ4] = new (LZ4Codec as any)().codec;
+loadCompressionPlugins();
 
 enum KafkaMetrics {
     RequestQueueSize = "cookie_cutter.kafka_consumer.request_queue_size",

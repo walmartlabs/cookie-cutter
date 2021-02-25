@@ -15,6 +15,7 @@ import {
     IKafkaTopic,
     KafkaMessagePublishingStrategy,
     KafkaOffsetResetStrategy,
+    KafkaPublisherCompressionMode,
 } from ".";
 
 @config.section
@@ -144,6 +145,14 @@ export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
         config.noop();
     }
     public get transactionalId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.enum(KafkaPublisherCompressionMode))
+    public set compressionMode(_: KafkaPublisherCompressionMode) {
+        config.noop();
+    }
+    public get compressionMode(): KafkaPublisherCompressionMode {
         return config.noop();
     }
 }
