@@ -75,6 +75,7 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         });
         this.client.on("end", () => {
             this.logger.debug("Disconnected from Redis");
+            throw new Error("connection to Redis lost");
         });
 
         this.asyncGet = promisify(this.client.get).bind(this.client);
