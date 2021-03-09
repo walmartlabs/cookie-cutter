@@ -50,7 +50,7 @@ describe("Blob Client", () => {
             }
         });
 
-        it("tries to create already existing container and gets the response as false", async () => {
+        it("tries to create an already existing container and gets the response as false", async () => {
             const newClient = new BlobClient({
                 url: storageUrl,
                 storageAccount,
