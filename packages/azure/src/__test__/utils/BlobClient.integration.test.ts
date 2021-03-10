@@ -11,7 +11,7 @@ import { SpanContext } from "opentracing";
 describe("Blob Client", () => {
     const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
     const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
-    const storageUrl = process.env.AZURE_BLOB_STORAGE_URL;
+    const storageUrl = process.env.AZURE_STORAGE_URL;
     const container = "defaultcontainer";
 
     const client = new BlobClient({
