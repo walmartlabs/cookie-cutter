@@ -29,6 +29,7 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
 
     constructor(config: IBlobStorageConfiguration) {
         if (config.url) {
+            // tslint:disable:no-console
             console.log(`url is: ${config.url}`);
             console.log(`account is: ${config.storageAccount}`);
             console.log(`accesskey is: ${config.storageAccessKey}`);
