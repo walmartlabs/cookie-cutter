@@ -298,7 +298,7 @@ function emitTimerMetric(
     metrics: IMetrics
 ): void {
     const currentPerformanceTime = performance.now();
-    const runTime = Math.round((currentPerformanceTime - startTime)/1000);
+    const runTime = Math.round((currentPerformanceTime - startTime) / 1000);
     metrics.timing(GrpcMetrics.RequestProcessingTime, runTime, {
         path,
         endpoint,
