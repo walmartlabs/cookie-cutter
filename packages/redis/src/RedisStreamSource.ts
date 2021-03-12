@@ -241,7 +241,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             });
 
             if (!err) {
-                this.logger.error("failed to ack message", err, { messageId, stream, consumerId });
+                this.logger.error("failed to ack message", e, { messageId, stream, consumerId });
             }
         } finally {
             span.finish();
