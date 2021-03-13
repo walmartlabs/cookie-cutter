@@ -34,7 +34,7 @@ The scripts contained here set up emulators for Cosmos DB and Azure Storage in a
 ## Setup Details
 
 -   `setup_env_vars_locally.sh` - exports all the variables needed for running integration testing locally.
-    `Note`: Please also update the file `start_emulators.ps1` and `.travis.yaml' if environment vaiables in`setup_env_vars_locally.sh` are updated or added.
+    `Note`: Please also update the file `start_emulators.ps1` and `.travis.yaml' if you would need these environment vaiables during server CI.
 
 -   `start_emulators.ps1` - provision script which downloads, installs an spins up emulators.
 
