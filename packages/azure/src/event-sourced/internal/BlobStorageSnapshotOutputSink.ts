@@ -45,12 +45,12 @@ export class BlobStorageSnapshotOutputSink
             const listerName = item.state.key;
             await this.client.write(
                 item.spanContext,
-                JSON.stringify(item.message.payload),
-                newBlobName
+                newBlobName,
+                JSON.stringify(item.message.payload)
             );
             let sequenceList: number[] = [];
             try {
-                const listerResponse = await this.client.read(item.spanContext, listerName);
+                const listerResponse = await this.client.readAsText(item.spanContext, listerName);
                 if (listerResponse) {
                     sequenceList = JSON.parse(listerResponse) as number[];
                     if (!(sequenceList && Array.isArray(sequenceList))) {
@@ -69,7 +69,7 @@ export class BlobStorageSnapshotOutputSink
             }
             if (!exactMatch) {
                 sequenceList.splice(insertionIndex, 0, atSn);
-                await this.client.write(item.spanContext, JSON.stringify(sequenceList), listerName);
+                await this.client.write(item.spanContext, listerName, JSON.stringify(sequenceList));
             }
         }
     }

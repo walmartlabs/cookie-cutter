@@ -6,33 +6,45 @@ The scripts contained here set up emulators for Cosmos DB and Azure Storage in a
 
 ## Pre-requisites
 
-* Vagrant
+-   Install 'Virtual Box', the provider to be used by Vagrant.
+
+    `https://www.virtualbox.org/wiki/Downloads`
+
+*   Vagrant
 
     `brew install vagrant`
 
 ## Running integration tests
 
-`yarn integrate`
-  - start VM, run setup steps, run tests and destroy VM.
+-   Make sure that the `core` package is built. As it is required by other packages.
 
-`yarn integrate --keep`
- - keeps the VM on after running the tests. Speeds up test reruns.
+    Run `yarn && yarn build` at this path `cookie-cutter/packages/core`
+    Do the same if you want to build other packages.
 
-When starting the VM for the first time, the emulators get downloaded, installed and spun up, which may take 10-15 minutes.
+-   `yarn integrate`
+
+    start VM, run setup steps, run tests and destroy VM.
+
+-   `yarn integrate --keep`
+
+    leaves the VM running post test runs. Speeds up test re-runs.
+
+    When starting the VM for the first time, the emulators get downloaded, installed and spun up, which may take 10-15 minutes.
 
 ## Setup Details
 
-* `setup_env_vars_locally.sh` - exports all the variables needed for running integration testing locally.
+-   `setup_env_vars_locally.sh` - exports all the variables needed for running integration testing locally.
+    `Note`: Please also update the file `start_emulators.ps1` and `.travis.yaml' if you would need these environment vaiables during server CI.
 
-* `start_emulators.ps1` - provision script which downloads, installs an spins up emulators.
+-   `start_emulators.ps1` - provision script which downloads, installs an spins up emulators.
 
-* `vagrant up --provision` - sets up the Windows VM and forces running the provision script even if VM is already up.
+-   `vagrant up --provision` - sets up the Windows VM and forces running the provision script even if VM is already up.
 
-* `vagrant destroy` - stops the VM and all resources that were created during the machine creation process.
+-   `vagrant destroy` - stops the VM and all resources that were created during the machine creation process.
 
-* `vagrant rdp` - start an RDP client for a remote desktop session with the guest.
+-   `vagrant rdp` - start an RDP client for a remote desktop session with the guest.
 
-* `run_integration_tests.ps1` - PowerShell script that sets up and runs integration tests in CI
+-   `run_integration_tests.ps1` - PowerShell script that sets up and runs integration tests in CI
 
 More details on [Vagrant](https://www.vagrantup.com/docs/cli)
 
@@ -41,7 +53,7 @@ More details on [Vagrant](https://www.vagrantup.com/docs/cli)
 The following environment variables are set by the `yarn integrate` command:
 
     export NODE_TLS_REJECT_UNAUTHORIZED="0"
-    
+
     export COSMOS_SECRET_KEY="C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
 
     export AZURE_STORAGE_ACCOUNT="devstoreaccount1"
@@ -54,7 +66,7 @@ The following environment variables are set by the `yarn integrate` command:
 
 ## Azure Cosmos Emulator
 
-Cosmos DB emulator can be accessed at the following URL: 
+Cosmos DB emulator can be accessed at the following URL:
 
     https://localhost:8081/_explorer/index.html
 
@@ -72,15 +84,19 @@ Cosmos DB Emulator: `https://docs.microsoft.com/en-us/azure/cosmos-db/local-emul
 
 ## Troubleshooting
 
+-   you can access the Windows VM through the `Virtual Box` app.
+
 ### Localhost cert not valid
 
 Follow instructions here:
 https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21#macos-environment
 
 ### Authorization errors
+
 If you get an authorization error, make sure that the Windows VM time is set correctly. This can drift over time, so RDP onto the box and verify it.
 
 ### Rejected cert errors
+
 If you get errors from node about a reject self-signed cert, ensure you have the following set:
 `export NODE_TLS_REJECT_UNAUTHORIZED="0"`
 NOTE: never set this in a production environment, it is strictly for testing purposes.
