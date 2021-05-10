@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "lodash": "4.17.20",
+        "lodash": "4.17.21",
         "lru-cache": "5.1.1",
         "ms": "2.1.2",
         "opentracing": "0.14.4",
