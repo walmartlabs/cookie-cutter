@@ -14,7 +14,7 @@ import {
     IRequireInitialization,
     OpenTracingTagKeys,
     ILogger,
-    NullLogger
+    NullLogger,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { IBigQueryClient, IBigQueryConfiguration } from ".";
