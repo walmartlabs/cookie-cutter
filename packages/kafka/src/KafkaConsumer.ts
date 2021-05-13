@@ -132,6 +132,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             retries: 10,
         };
 
+        // TODO: remove
         const { broker, ssl } = this.config;
         const client = new Kafka({
             clientId: generateClientId(),
