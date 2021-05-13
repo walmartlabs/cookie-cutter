@@ -88,10 +88,11 @@ export class KafkaSink
             idempotent = true;
             this.useTransactionalProducer = true;
         }
-        const { broker } = this.config;
+        const { broker, ssl } = this.config;
         const client = new kafkajs.Kafka({
             clientId: generateClientId(),
             brokers: Array.isArray(broker) ? broker : [broker],
+            ssl,
         });
         this.producer = client.producer({
             idempotent, // An idempotent producer enforces EoS messaging

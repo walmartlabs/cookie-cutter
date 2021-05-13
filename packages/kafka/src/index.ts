@@ -17,6 +17,7 @@ import { KafkaPublisherConfiguration, KafkaSubscriptionConfiguration } from "./c
 import { KafkaSink } from "./KafkaSink";
 import { KafkaSource } from "./KafkaSource";
 import { IRawKafkaMessage } from "./model";
+import * as tls from "tls";
 
 export enum KafkaOffsetResetStrategy {
     // starts consuming from the latest offset if no consumer group is present
@@ -49,6 +50,7 @@ export interface IKafkaBrokerConfiguration {
     readonly broker: string | string[];
     readonly encoder: IMessageEncoder;
     readonly headerNames?: IKafkaHeaderNames;
+    readonly ssl?: tls.ConnectionOptions;
 }
 
 export interface IKafkaSubscriptionConfiguration {
