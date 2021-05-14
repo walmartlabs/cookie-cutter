@@ -14,7 +14,6 @@ import {
     IRequireInitialization,
     OpenTracingTagKeys,
     ILogger,
-    NullLogger,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { IBigQueryClient, IBigQueryConfiguration } from ".";
@@ -50,7 +49,7 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
             },
         }).dataset(this.config.datasetId);
         this.tracer = DefaultComponentContext.tracer;
-        this.logger = new NullLogger();
+        this.logger = DefaultComponentContext.logger;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -88,7 +87,7 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
                 result: BigQueryMetricResults.Error,
                 error: e instanceof Error ? e.message : "",
             });
-            let detailedErrorMsg = "";
+            let detailedErrorMsg = e;
             if (e.errors) {
                 detailedErrorMsg = JSON.stringify(e.errors);
             }
