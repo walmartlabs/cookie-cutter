@@ -30,6 +30,7 @@ const MockStorageSharedKeyCredential: jest.Mock = StorageSharedKeyCredential as 
 
 describe("QueueClient", () => {
     const rawConfiguration = {
+        url: `https://myAccount.queue.core.windows.net`,
         queueName: "queue123",
         storageAccount: "myAccount",
         storageAccessKey: "myKey",
@@ -220,6 +221,7 @@ describe("QueueClient", () => {
         });
         it("should read messages with options", async () => {
             let options: IQueueConfiguration & IQueueSourceConfiguration = {
+                url: `https://storageAcc.queue.core.windows.net`,
                 storageAccount: "storageAcc",
                 storageAccessKey: "storageKey",
                 queueName: "different",

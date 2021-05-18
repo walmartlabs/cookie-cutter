@@ -48,7 +48,7 @@ export interface IDeadLetterQueueConfiguration {
 }
 
 export interface IQueueConfiguration {
-    readonly url?: string;
+    readonly url: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
