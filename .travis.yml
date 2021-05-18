@@ -27,7 +27,7 @@ matrix:
           stage: smoke
           # if: type = cron
           # script: yarn audit --level critical
-          script: /bin/bash -c 'yarn audit; [[ $? -ge 16 ]] && exit 1 || exit 0'
+          script: /bin/bash -c 'yarn audit --level critical; [[ $? -ge 16 ]] && exit 1 || exit 0'
 
         - name: "Linux Node 12"
           os: linux
