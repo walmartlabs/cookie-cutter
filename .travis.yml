@@ -86,29 +86,29 @@ matrix:
             - docker
           script: yarn build && cd packages/kafka && yarn integrate
 
-        # - name: "Prometheus"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/prometheus && yarn integrate
+        - name: "Prometheus"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/prometheus && yarn integrate
 
-        # - name: "S3"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/s3 && yarn integrate
+        - name: "S3"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/s3 && yarn integrate
 
-        # - name: "Redis"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: yarn build && cd packages/redis && yarn integrate
+        - name: "Redis"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: yarn build && cd packages/redis && yarn integrate
 
         - name: "Publish to NPM"
           os: linux
