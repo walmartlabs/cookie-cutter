@@ -25,7 +25,7 @@ matrix:
           os: linux
           node_js: 10
           stage: smoke
-          if: type = cron
+          # if: type = cron
           script: yarn audit --level critical
 
         - name: "Linux Node 12"
