@@ -135,6 +135,7 @@ export class QueueClient implements IRequireInitialization {
             };
         }
 
+        // TODO: handle connectionString?
         const sharedKeyCredential = new StorageSharedKeyCredential(
             config.storageAccount,
             config.storageAccessKey
