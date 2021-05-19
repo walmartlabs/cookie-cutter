@@ -138,7 +138,7 @@ export class QueueClient implements IRequireInitialization {
         // TODO
         if (config.connectionString) {
             this.queueService = QueueServiceClient.fromConnectionString(
-                config.url,
+                config.connectionString,
                 storagePipelineOptions
             );
         } else {
