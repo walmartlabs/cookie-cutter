@@ -115,8 +115,6 @@ export class QueueClient implements IRequireInitialization {
     private spanOperationName = "Azure Queue Client Call";
 
     constructor(private config: IQueueConfiguration) {
-        // tslint:disable-next-line:no-console
-        console.log("CONFIG:\n", config);
         this.defaultQueue = config.queueName;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
