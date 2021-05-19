@@ -135,17 +135,23 @@ export class QueueClient implements IRequireInitialization {
             };
         }
 
-        // TODO: handle connectionString?
-        const sharedKeyCredential = new StorageSharedKeyCredential(
-            config.storageAccount,
-            config.storageAccessKey
-        );
+        if (config.connectionString) {
+            this.queueService = QueueServiceClient.fromConnectionString(
+                config.url,
+                storagePipelineOptions
+            );
+        } else {
+            const sharedKeyCredential = new StorageSharedKeyCredential(
+                config.storageAccount,
+                config.storageAccessKey
+            );
 
-        this.queueService = new QueueServiceClient(
-            config.url,
-            sharedKeyCredential,
-            storagePipelineOptions
-        );
+            this.queueService = new QueueServiceClient(
+                config.url,
+                sharedKeyCredential,
+                storagePipelineOptions
+            );
+        }
     }
 
     public async initialize(context: IComponentContext) {

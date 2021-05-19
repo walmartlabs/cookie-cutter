@@ -84,4 +84,12 @@ export class BlobStorageConfiguration implements IBlobStorageConfiguration {
     public get url(): string {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set connectionString(_: string) {
+        config.noop();
+    }
+    public get connectionString(): string {
+        return config.noop();
+    }
 }

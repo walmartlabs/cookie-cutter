@@ -12,7 +12,8 @@ import { JsonMessageEncoder, EventSourcedMetadata } from "@walmartlabs/cookie-cu
 
 const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
 const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
-const url = process.env.AZURE_STORAGE_CONNECTION_STRING;
+const url = `https://${storageAccount}.queue.core.windows.net`;
+const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const queueName = "testqueue";
 const encoder = new JsonMessageEncoder();
 const spanContext = new SpanContext();
@@ -22,6 +23,7 @@ const client = new QueueClient({
     storageAccount,
     storageAccessKey,
     queueName,
+    connectionString,
     encoder,
     createQueueIfNotExists: true,
 });
