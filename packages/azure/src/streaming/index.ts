@@ -47,9 +47,9 @@ export interface IDeadLetterQueueConfiguration {
     readonly retryInterval?: number;
 }
 
-// FULL CI
 export interface IQueueConfiguration {
     readonly connectionString?: string;
+    /** Ex: `https://account.queue.core.windows.net` */
     readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;

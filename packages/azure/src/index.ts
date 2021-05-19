@@ -30,6 +30,7 @@ export interface IBlobStorageConfiguration {
     readonly storageAccessKey: string;
     readonly container: string;
     readonly connectionString?: string;
+    /** Ex: `https://account.blob.core.windows.net` */
     readonly url?: string;
 }
 

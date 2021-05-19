@@ -19,8 +19,7 @@ matrix:
           os: linux
           node_js: 10
           stage: smoke
-          # script: yarn build && yarn lint && yarn test
-          script: yarn build
+          script: yarn build && yarn lint && yarn test
 
         - name: "Audit Dependencies"
           os: linux
@@ -29,20 +28,20 @@ matrix:
           if: type = cron
           script: yarn audit
 
-        # - name: "Linux Node 12"
-        #   os: linux
-        #   node_js: 12
-        #   stage: test
-        # - name: "OSX Node 10"
-        #   os: osx
-        #   node_js: 10
-        #   stage: test
-        # - name: "Windows Node 10"
-        #   os: windows
-        #   node_js: 10
-        #   stage: test
-        #   env:
-        #     - YARN_GPG=no # Windows build agent will hang without this
+        - name: "Linux Node 12"
+          os: linux
+          node_js: 12
+          stage: test
+        - name: "OSX Node 10"
+          os: osx
+          node_js: 10
+          stage: test
+        - name: "Windows Node 10"
+          os: windows
+          node_js: 10
+          stage: test
+          env:
+            - YARN_GPG=no # Windows build agent will hang without this
 
         - name: "AZURE"
           os: windows
