@@ -34,7 +34,7 @@ describe("BlobStorageSnapshotProvider", () => {
         storageAccount: "snapshots",
         storageAccessKey: "dummy_access_key",
         container: "unit-test",
-        url: "https://snapshots.blob.core.windows.net",
+        // url: "https://snapshots.blob.core.windows.net",
     };
 
     describe("Responds to error from the underlying blob service", () => {

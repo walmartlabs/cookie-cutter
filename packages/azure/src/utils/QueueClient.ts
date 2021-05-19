@@ -135,29 +135,46 @@ export class QueueClient implements IRequireInitialization {
             };
         }
 
-        const sharedKeyCredential = new StorageSharedKeyCredential(
-            config.storageAccount,
-            config.storageAccessKey
-        );
-
-        if (config.connectionString) {
+        if (config.url) {
             this.queueService = QueueServiceClient.fromConnectionString(
-                config.connectionString,
+                config.url,
                 storagePipelineOptions
             );
-        } else if (config.url) {
+        } else {
+            const sharedKeyCredential = new StorageSharedKeyCredential(
+                config.storageAccount,
+                config.storageAccessKey
+            );
+
             this.queueService = new QueueServiceClient(
                 config.url,
                 sharedKeyCredential,
                 storagePipelineOptions
             );
-        } else {
-            this.queueService = new QueueServiceClient(
-                `https://${config.storageAccount}.queue.core.windows.net`,
-                sharedKeyCredential,
-                storagePipelineOptions
-            );
         }
+        // const sharedKeyCredential = new StorageSharedKeyCredential(
+        //     config.storageAccount,
+        //     config.storageAccessKey
+        // );
+
+        // if (config.connectionString) {
+        //     this.queueService = QueueServiceClient.fromConnectionString(
+        //         config.connectionString,
+        //         storagePipelineOptions
+        //     );
+        // } else if (config.url) {
+        //     this.queueService = new QueueServiceClient(
+        //         config.url,
+        //         sharedKeyCredential,
+        //         storagePipelineOptions
+        //     );
+        // } else {
+        //     this.queueService = new QueueServiceClient(
+        //         `https://${config.storageAccount}.queue.core.windows.net`,
+        //         sharedKeyCredential,
+        //         storagePipelineOptions
+        //     );
+        // }
     }
 
     public async initialize(context: IComponentContext) {
