@@ -47,6 +47,7 @@ export interface IDeadLetterQueueConfiguration {
     readonly retryInterval?: number;
 }
 
+// FULL CI
 export interface IQueueConfiguration {
     readonly connectionString?: string;
     readonly url?: string;
