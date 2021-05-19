@@ -28,6 +28,8 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
     private spanOperationName = "Azure Blob Client Call";
 
     constructor(config: IBlobStorageConfiguration) {
+        // tslint:disable-next-line:no-console
+        console.log("CONFIG:\n", config);
         if (config.url) {
             this.client = new BlobServiceClient(
                 config.url,
