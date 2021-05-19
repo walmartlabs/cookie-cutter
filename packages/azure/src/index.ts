@@ -29,8 +29,8 @@ export interface IBlobStorageConfiguration {
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly container: string;
-    readonly url: string;
     readonly connectionString?: string;
+    readonly url?: string;
 }
 
 export interface ICosmosQuery {

@@ -48,11 +48,11 @@ export interface IDeadLetterQueueConfiguration {
 }
 
 export interface IQueueConfiguration {
-    readonly url: string;
+    readonly connectionString?: string;
+    readonly url?: string;
     readonly storageAccount: string;
     readonly storageAccessKey: string;
     readonly queueName: string;
-    readonly connectionString?: string;
     readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;
     readonly retryInterval?: number;
