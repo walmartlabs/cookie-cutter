@@ -740,6 +740,7 @@ describe("Kafka Integration Tests", () => {
         const snappyTopic = `snappy-topic-${new Date().getTime()}`;
         const shoppingCartIds = ["test-id-1", "test-id-2"];
         let admin;
+        let producer: kafkajs.Producer;
         beforeAll(async () => {
             const client = new kafkajs.Kafka({
                 clientId: "admin",
@@ -751,7 +752,8 @@ describe("Kafka Integration Tests", () => {
                 waitForLeaders: true,
                 topics: [{ topic: snappyTopic, numPartitions: 1 }],
             });
-            const producer = client.producer();
+            producer = client.producer();
+            await producer.connect();
             await producer.send({
                 topic: snappyTopic,
                 compression: CompressionTypes.Snappy,
@@ -770,6 +772,7 @@ describe("Kafka Integration Tests", () => {
             });
         });
         afterAll(async () => {
+            await producer.disconnect();
             await admin.disconnect();
         });
         it("successfully consumes messages from a snappy encoded topic", async () => {
