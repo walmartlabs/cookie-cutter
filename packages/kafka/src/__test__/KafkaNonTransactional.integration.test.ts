@@ -775,6 +775,7 @@ describe("Kafka Integration Tests", () => {
             await producer.disconnect();
             await admin.disconnect();
         });
+
         it("successfully consumes messages from a snappy encoded topic", async () => {
             const groupId = "snappy-topic";
             const expNumConsumedMsgs = 2;
