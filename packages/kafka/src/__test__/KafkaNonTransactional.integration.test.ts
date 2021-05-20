@@ -771,6 +771,7 @@ describe("Kafka Integration Tests", () => {
                 ],
             });
         });
+        // Full CI
         afterAll(async () => {
             await producer.disconnect();
             await admin.disconnect();
