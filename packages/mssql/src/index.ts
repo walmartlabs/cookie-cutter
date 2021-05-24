@@ -104,6 +104,9 @@ export function mssqlSink(configuration: IMssqlConfiguration): IOutputSink<IPubl
     configuration = config.parse(MssqlConfiguration, configuration, {
         mode: Mode.Table,
         encrypt: false,
+        connectionTimeout: 15000,
+        requestTimeout: 15000,
+        stream: true,
     });
     return new MssqlSink(configuration);
 }
