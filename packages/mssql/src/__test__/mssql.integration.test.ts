@@ -57,23 +57,23 @@ async function testClient(): Promise<sql.ConnectionPool> {
 }
 
 class PartialObject {
-    constructor(public id: number) { }
+    constructor(public id: number) {}
 }
 
 class SimpleObject {
-    constructor(public id: number, public str: string) { }
+    constructor(public id: number, public str: string) {}
 }
 
 class MessageWithObject {
-    constructor(public embedded: SimpleObject) { }
+    constructor(public embedded: SimpleObject) {}
 }
 
 class MessageWithSimpleArray {
-    constructor(public arr: number[]) { }
+    constructor(public arr: number[]) {}
 }
 
 class MessageWithArrayOfObjects {
-    constructor(public arr: (SimpleObject | PartialObject)[]) { }
+    constructor(public arr: (SimpleObject | PartialObject)[]) {}
 }
 
 class CommandHandler {
