@@ -20,6 +20,8 @@ export interface IMssqlConfiguration {
     readonly password: string;
     readonly encrypt: boolean;
     readonly mode?: Mode;
+    readonly connectionTimeout?: number;
+    readonly requestTimeout?: number;
 }
 
 @config.section
@@ -69,6 +71,22 @@ class MssqlConfiguration {
         config.noop();
     }
     public get mode(): Mode {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set connectionTimeout(_: number) {
+        config.noop();
+    }
+    public get connectionTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set requestTimeout(_: number) {
+        config.noop();
+    }
+    public get requestTimeout(): number {
         return config.noop();
     }
 }
