@@ -22,6 +22,7 @@ export interface IMssqlConfiguration {
     readonly mode?: Mode;
     readonly connectionTimeout?: number;
     readonly requestTimeout?: number;
+    readonly stream?: boolean;
 }
 
 @config.section
@@ -87,6 +88,14 @@ class MssqlConfiguration {
         config.noop();
     }
     public get requestTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.boolean)
+    public set stream(_: boolean) {
+        config.noop();
+    }
+    public get stream(): boolean {
         return config.noop();
     }
 }

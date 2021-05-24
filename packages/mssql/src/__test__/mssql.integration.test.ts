@@ -28,6 +28,7 @@ function getSqlEnv(): {
     password: string;
     connectionTimeout: number;
     requestTimeout: number;
+    stream: boolean;
 } {
     const server = "localhost";
     const username = "sa";
@@ -35,6 +36,7 @@ function getSqlEnv(): {
     const password = process.env.MSSQL_PASSWORD;
     const connectionTimeout = 15000;
     const requestTimeout = 15000;
+    const stream = true;
 
     return {
         server,
@@ -43,6 +45,7 @@ function getSqlEnv(): {
         database,
         connectionTimeout,
         requestTimeout,
+        stream,
     };
 }
 
