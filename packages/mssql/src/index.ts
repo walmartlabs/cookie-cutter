@@ -75,7 +75,7 @@ class MssqlConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.number)
+    @config.field(config.converters.timespan)
     public set connectionTimeout(_: number) {
         config.noop();
     }
@@ -83,7 +83,7 @@ class MssqlConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.number)
+    @config.field(config.converters.timespan)
     public set requestTimeout(_: number) {
         config.noop();
     }
