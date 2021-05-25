@@ -169,6 +169,9 @@ export class MssqlSink
             options: {
                 encrypt: this.config.encrypt,
             },
+            connectionTimeout: this.config.connectionTimeout,
+            requestTimeout: this.config.requestTimeout,
+            stream: this.config.stream,
         };
         this.connectionPool = new sql.ConnectionPool(connectionConfig);
         await this.connectionPool.connect();
