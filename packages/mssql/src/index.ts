@@ -95,7 +95,6 @@ class MssqlConfiguration {
     public set stream(_: boolean) {
         config.noop();
     }
-    
     public get stream(): boolean {
         return config.noop();
     }
