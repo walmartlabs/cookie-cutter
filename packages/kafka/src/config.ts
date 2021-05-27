@@ -17,6 +17,7 @@ import {
     KafkaOffsetResetStrategy,
     KafkaPublisherCompressionMode,
 } from ".";
+import * as tls from "tls";
 
 @config.section
 export class KafkaBrokerConfiguration implements IKafkaBrokerConfiguration {
@@ -41,6 +42,14 @@ export class KafkaBrokerConfiguration implements IKafkaBrokerConfiguration {
         config.noop();
     }
     public get headerNames(): IKafkaHeaderNames {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set ssl(_: tls.ConnectionOptions) {
+        config.noop();
+    }
+    public get ssl(): tls.ConnectionOptions {
         return config.noop();
     }
 }
