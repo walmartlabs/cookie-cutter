@@ -13,6 +13,6 @@
         "lint:fix": "echo 'N/A'"
     },
     "devDependencies": {
-        "docusaurus": "1.12.0"
+        "docusaurus": "1.14.7"
     }
 }

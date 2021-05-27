@@ -13,10 +13,10 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "amqplib": "^0.5.6"
+        "amqplib": "^0.8.0"
     },
     "devDependencies": {
-        "@types/amqplib": "^0.5.13",
+        "@types/amqplib": "^0.5.17",
         "@walmartlabs/cookie-cutter-core": "^1.4.0-beta"
     },
     "scripts": {
