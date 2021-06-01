@@ -186,7 +186,7 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                                 result: error ? GrpcMetricResult.Error : GrpcMetricResult.Success,
                             });
                             const currentPerformanceTime = performance.now();
-                            const runTime = Math.round(currentPerformanceTime - startTime);
+                            const runTime = (currentPerformanceTime - startTime) / 1000;
                             this.metrics.timing(GrpcMetrics.RequestProcessingTime, runTime, {
                                 path: method.path,
                                 peer: call.getPeer(),
