@@ -38,6 +38,8 @@ import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
 import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
+jest.setTimeout(10000);
+
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
         it("routes all published messages to output sink", async () => {
@@ -836,6 +838,10 @@ for (const mode of [ParallelismMode.Rpc]) {
                     onIncrement: async (msg: Increment, ctx: IDispatchContext): Promise<void> => {
                         // ensure number of pending requests keeps growing
                         await sleep(5);
+                        if (msg.count % 100 === 0 || msg.count >= 4998) {
+                            // tslint:disable-next-line:no-console
+                            console.log(msg.count);
+                        }
                         ctx.publish(Decrement, new Decrement(msg.count + 1));
                     },
                 },
