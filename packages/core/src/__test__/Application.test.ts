@@ -838,10 +838,6 @@ for (const mode of [ParallelismMode.Rpc]) {
                     onIncrement: async (msg: Increment, ctx: IDispatchContext): Promise<void> => {
                         // ensure number of pending requests keeps growing
                         await sleep(5);
-                        if (msg.count % 100 === 0 || msg.count >= 4998) {
-                            // tslint:disable-next-line:no-console
-                            console.log(msg.count);
-                        }
                         ctx.publish(Decrement, new Decrement(msg.count + 1));
                     },
                 },
