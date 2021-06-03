@@ -141,6 +141,10 @@ before_install:
   - export PATH="$HOME/.yarn/bin:$PATH"
   - |
     echo os
+    echo $os
+    echo ${os}
+    echo "${os}"
+    env
     if [ "${os}" == "linux" ]; then
       echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
     fi
