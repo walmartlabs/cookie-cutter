@@ -127,7 +127,7 @@ describe("Kafka Integration Tests", () => {
                 },
             });
 
-            await new Promise((resolve) => {
+            await new Promise<void>((resolve) => {
                 const i = setInterval(() => {
                     if (consumed.length >= messagesToCommit.length) {
                         clearInterval(i);
