@@ -28,20 +28,26 @@ matrix:
           if: type = cron
           script: yarn audit
 
-        - name: "Linux Node 12"
+        # - name: "Linux Node 12"
+        #   os: linux
+        #   node_js: 12
+        #   stage: test
+        # - name: "OSX Node 10"
+        #   os: osx
+        #   node_js: 10
+        #   stage: test
+        # - name: "Windows Node 10"
+        #   os: windows
+        #   node_js: 10
+        #   stage: test
+        #   env:
+        #     - YARN_GPG=no # Windows build agent will hang without this
+
+        - name: "Login to Docker"
           os: linux
-          node_js: 12
-          stage: test
-        - name: "OSX Node 10"
-          os: osx
           node_js: 10
-          stage: test
-        - name: "Windows Node 10"
-          os: windows
-          node_js: 10
-          stage: test
-          env:
-            - YARN_GPG=no # Windows build agent will hang without this
+          stage: integrate
+          script: echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
         - name: "AZURE"
           os: windows
@@ -138,7 +144,7 @@ matrix:
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
   - export PATH="$HOME/.yarn/bin:$PATH"
-  - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 install:
   - yarn install --frozen-lockfile
