@@ -43,12 +43,6 @@ matrix:
         #   env:
         #     - YARN_GPG=no # Windows build agent will hang without this
 
-        - name: "Login to Docker"
-          os: linux
-          node_js: 10
-          stage: integrate
-          script: echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
         - name: "AZURE"
           os: windows
           node_js: 10
@@ -144,7 +138,8 @@ matrix:
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
   - export PATH="$HOME/.yarn/bin:$PATH"
-  # - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  if: stage = integration
+  - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 install:
   - yarn install --frozen-lockfile
