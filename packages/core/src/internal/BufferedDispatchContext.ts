@@ -156,10 +156,10 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
     }
 
     public store<T, M extends string = string>(
-      type: IClassType<T>,
-      state: StateRef<TState>,
-      msg: T,
-      meta?: Readonly<{ [key in M]: any }>
+        type: IClassType<T>,
+        state: StateRef<TState>,
+        msg: T,
+        meta?: Readonly<{ [key in M]: any }>
     ): void {
         if (this.completed) {
             throw new Error(
