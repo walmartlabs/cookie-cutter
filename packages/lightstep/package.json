@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-lightstep",
-    "version": "1.4.0-beta.0",
+    "version": "1.4.0-beta.1",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "lightstep-tracer": "0.30.2",
+        "lightstep-tracer": "0.31.2",
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
