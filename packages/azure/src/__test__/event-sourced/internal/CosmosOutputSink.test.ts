@@ -25,6 +25,7 @@ import { CosmosOutputSink } from "../../../event-sourced/internal";
 import { CosmosClient, RETRY_AFTER_MS } from "../../../utils/CosmosClient";
 import { DummyMessageEncoder } from "../../dummyEncoder";
 import { DummyState } from "../../dummystate";
+import { CosmosMetadata } from "../../../utils";
 
 jest.mock("../../../utils/CosmosClient", () => {
     const { RETRY_AFTER_MS } = jest.requireActual("../../../utils/CosmosClient");
@@ -410,6 +411,56 @@ describe("event-sourced CosmosOutputSink", () => {
                     id: `${regularKey1}-${expSeqNum + 2}`,
                     stream_id: regularKey1,
                     sn: expSeqNum + 2,
+                    ...remainingFields,
+                }),
+            ]),
+            regularKey1,
+            verifySn
+        );
+    });
+
+    it("succeeds in writing events with TTL metadata", async () => {
+        const retry = createRetrierContext(retries + 1);
+        const spyBail = jest.spyOn(retry, "bail");
+        const expSeqNum = 1;
+        const sink = new CosmosOutputSink(config);
+        await expect(
+            sink.sink(
+                iterate([
+                    {
+                        state: new StateRef({}, regularKey1, expSeqNum),
+                        ...payload,
+                        metadata: {
+                            [CosmosMetadata.ttl]: 20,
+                        },
+                    },
+                    {
+                        state: new StateRef({}, regularKey1, expSeqNum),
+                        ...payload,
+                        metadata: {
+                            [CosmosMetadata.ttl]: 40,
+                        },
+                    },
+                ]),
+                retry
+            )
+        ).resolves.toBe(undefined);
+        expect(spyBail).toHaveBeenCalledTimes(0);
+        expect(bulkInsert).toHaveBeenCalledTimes(1);
+        expect(bulkInsert).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: `${regularKey1}-${expSeqNum + 1}`,
+                    stream_id: regularKey1,
+                    sn: expSeqNum + 1,
+                    ttl: 20,
+                    ...remainingFields,
+                }),
+                expect.objectContaining({
+                    id: `${regularKey1}-${expSeqNum + 2}`,
+                    stream_id: regularKey1,
+                    sn: expSeqNum + 2,
+                    ttl: 40,
                     ...remainingFields,
                 }),
             ]),

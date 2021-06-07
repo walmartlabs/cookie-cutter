@@ -14,7 +14,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { isNullOrUndefined } from "util";
 import { ICosmosConfiguration } from "../../";
-import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
+import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument, CosmosMetadata } from "../../utils";
 
 export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSink<IStoredMessage> {
     constructor(config: ICosmosConfiguration) {
@@ -48,6 +48,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
                 metadata: {
                     ...cosmosMetadata(msg.original),
                 },
+                ttl: msg.metadata ? msg.metadata[CosmosMetadata.ttl] : undefined,
             };
             documents.push(doc);
         }

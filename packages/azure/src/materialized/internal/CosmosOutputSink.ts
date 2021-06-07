@@ -27,6 +27,7 @@ import {
     isRetryableError,
     isSequenceConflict,
     RETRY_AFTER_MS,
+    CosmosMetadata,
 } from "../../utils";
 
 export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSink<IStoredMessage> {
@@ -63,6 +64,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
                 metadata: {
                     ...cosmosMetadata(message.original),
                 },
+                ttl: message.metadata ? message.metadata[CosmosMetadata.ttl] : undefined,
             };
 
             try {

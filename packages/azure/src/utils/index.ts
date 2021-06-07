@@ -26,6 +26,12 @@ export interface ICosmosMetadata {
     };
 }
 
+export enum CosmosMetadata {
+    // Cosmos item level TTL in seconds.  Note that this is effective only if container level TTL is enabled
+    // See https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-time-to-live?tabs=dotnetv2%2Cjavav4#nodejs-set-ttl-item
+    ttl = "ttl",
+}
+
 export interface ICosmosDocument {
     readonly id: string;
     // `data` was converted to `encodedData` but we support it here for
@@ -38,6 +44,7 @@ export interface ICosmosDocument {
     readonly event_type: string;
     readonly metadata?: ICosmosMetadata;
     readonly trace: SpanContext;
+    readonly ttl?: number;
 }
 
 export function cosmosMetadata(msg: MessageRef): ICosmosMetadata {
