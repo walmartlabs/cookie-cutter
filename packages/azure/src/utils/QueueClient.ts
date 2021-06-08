@@ -135,26 +135,28 @@ export class QueueClient implements IRequireInitialization {
             };
         }
 
-        const sharedKeyCredential = new StorageSharedKeyCredential(
-            config.storageAccount,
-            config.storageAccessKey
-        );
-
         if (config.connectionString) {
             this.queueService = QueueServiceClient.fromConnectionString(
                 config.connectionString,
                 storagePipelineOptions
             );
         } else if (config.url) {
-            this.queueService = new QueueServiceClient(
-                config.url,
-                sharedKeyCredential,
-                storagePipelineOptions
-            );
+            if (config.url.indexOf("https://") === 0) {
+                this.queueService = new QueueServiceClient(
+                    config.url,
+                    new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey),
+                    storagePipelineOptions
+                );
+            } else {
+                this.queueService = QueueServiceClient.fromConnectionString(
+                    config.url,
+                    storagePipelineOptions
+                );
+            }
         } else {
             this.queueService = new QueueServiceClient(
                 `https://${config.storageAccount}.queue.core.windows.net`,
-                sharedKeyCredential,
+                new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey),
                 storagePipelineOptions
             );
         }

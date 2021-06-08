@@ -31,10 +31,14 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         if (config.connectionString) {
             this.client = BlobServiceClient.fromConnectionString(config.connectionString);
         } else if (config.url) {
-            this.client = new BlobServiceClient(
-                config.url,
-                new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey)
-            );
+            if (config.url.indexOf("https://") === 0) {
+                this.client = new BlobServiceClient(
+                    config.url,
+                    new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey)
+                );
+            } else {
+                this.client = BlobServiceClient.fromConnectionString(config.url);
+            }
         } else {
             this.client = new BlobServiceClient(
                 `https://${config.storageAccount}.blob.core.windows.net`,

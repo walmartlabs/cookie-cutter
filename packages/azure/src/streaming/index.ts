@@ -62,10 +62,12 @@ export interface IQueueConfiguration {
      * TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;`
      */
     readonly connectionString?: string;
-    /** Ex: `https://account.queue.core.windows.net` */
+    /** Ex: `https://account.queue.core.windows.net`
+     * Deprecated: uses as a connection string
+     */
     readonly url?: string;
-    readonly storageAccount: string;
-    readonly storageAccessKey: string;
+    readonly storageAccount?: string;
+    readonly storageAccessKey?: string;
     readonly queueName: string;
     readonly preprocessor?: IQueueMessagePreprocessor;
     readonly retryCount?: number;

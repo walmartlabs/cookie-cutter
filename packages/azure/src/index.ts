@@ -32,8 +32,8 @@ export interface ICosmosConfiguration {
  * uses the account and key to construct a standard url and connect
  */
 export interface IBlobStorageConfiguration {
-    readonly storageAccount: string;
-    readonly storageAccessKey: string;
+    readonly storageAccount?: string;
+    readonly storageAccessKey?: string;
     readonly container: string;
     /** Ex:
      * `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;
@@ -43,7 +43,9 @@ export interface IBlobStorageConfiguration {
      * TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;`
      */
     readonly connectionString?: string;
-    /** Ex: `https://account.blob.core.windows.net` */
+    /** Ex: `https://account.blob.core.windows.net`
+     * Deprecated: uses as a connection string
+     */
     readonly url?: string;
 }
 
