@@ -431,14 +431,14 @@ describe("event-sourced CosmosOutputSink", () => {
                         state: new StateRef({}, regularKey1, expSeqNum),
                         ...payload,
                         metadata: {
-                            [CosmosMetadata.ttl]: 20,
+                            [CosmosMetadata.TTL]: 20,
                         },
                     },
                     {
                         state: new StateRef({}, regularKey1, expSeqNum),
                         ...payload,
                         metadata: {
-                            [CosmosMetadata.ttl]: 40,
+                            [CosmosMetadata.TTL]: 40,
                         },
                     },
                 ]),

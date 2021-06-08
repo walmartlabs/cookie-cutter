@@ -64,7 +64,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
                 metadata: {
                     ...cosmosMetadata(message.original),
                 },
-                ttl: message.metadata ? message.metadata[CosmosMetadata.ttl] : undefined,
+                ttl: message.metadata ? message.metadata[CosmosMetadata.TTL] : undefined,
             };
 
             try {
