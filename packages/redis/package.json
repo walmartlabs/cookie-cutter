@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-redis",
-    "version": "1.4.0-beta.3",
+    "version": "1.4.0-beta.4",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,14 +13,14 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "redis": "3.0.2",
+        "redis": "3.1.2",
         "shortid": "^2.2.15"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.4.0-beta"
     },
     "devDependencies": {
-        "@types/redis": "2.8.25",
+        "@types/redis": "2.8.28",
         "@walmartlabs/cookie-cutter-core": "^1.4.0-beta"
     },
     "scripts": {

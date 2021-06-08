@@ -1,6 +1,6 @@
 language: node_js
 branches:
-  only: 
+  only:
     - master
     - develop
     - /^release/.*$/
@@ -26,8 +26,7 @@ matrix:
           node_js: 10
           stage: smoke
           if: type = cron
-          script: /bin/bash -c 'yarn audit --level critical; [[ $? -ge 16 ]] && exit 1 || exit 0'
-          # script: yarn audit
+          script: yarn audit
 
         - name: "Linux Node 12"
           os: linux
@@ -68,7 +67,9 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/mssql && yarn integrate
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/mssql && yarn integrate
 
         - name: "AMQP"
           os: linux
@@ -76,7 +77,9 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/amqp && yarn integrate
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/amqp && yarn integrate
 
         - name: "Kafka"
           os: linux
@@ -84,7 +87,9 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/kafka && yarn integrate
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/kafka && yarn integrate
 
         - name: "Prometheus"
           os: linux
@@ -92,7 +97,9 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/prometheus && yarn integrate
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/prometheus && yarn integrate
 
         - name: "S3"
           os: linux
@@ -100,7 +107,9 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/s3 && yarn integrate
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/s3 && yarn integrate
 
         - name: "Redis"
           os: linux
@@ -108,7 +117,9 @@ matrix:
           stage: integrate
           services:
             - docker
-          script: yarn build && cd packages/redis && yarn integrate
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/redis && yarn integrate
 
         - name: "Publish to NPM"
           os: linux
@@ -144,3 +155,8 @@ install:
   - yarn install --frozen-lockfile
 
 script: yarn build && yarn test
+
+env:
+  global:
+  - DOCKER_USERNAME: wmtcookiecutter
+  - secure: pR9Vrg1oJ4HM6vWH7NSyzzhlEaXm3EAg8gNl9JPtMJ8eCMiahS7fo4HfH35JCNBMeSjNoXF8+CX+N63aQdTTYb3NXtvqciO/ErFqaDmb/ah4ANNpbLCpaCIK0D7Xwi6xdnXw0HiyKOlnKAN46i9ISfaFdv8qHo4tk1q8URRu3TIz0hjECCM6jbou6ehlejr5sYMil/gU58NznU1C58NEOBDJ4b+kDC13Atsjf8DwKINe+ZFS2Y0tcgAs7OnfcCALFqEcf9H3d6bLPiThfHGVfVWnutcjc+P9FurOEpXhN1yTwsPbqWB5G9iNs7Ju85nLX8JnfvJab24d5kPaEUfH8MqcKJ5F/GX3gvRc1Sa6EyHL8wFodeln4raO2fQ6GTnAgRTiqr6mDzYTugfeF8PFjO2nDVUT7HKGv+j7/vhxsHMaZGzx/hxdVGai+9bFdsOkMgwBnjlXu8x6XpjuTjiAwIW5D8XepqS+LwUd9nQAY2o1URpmQotqfqPS5yL907tsNPDVA4yRqXPlM0ETXAzq7TPsNzK26V1x/7xl2MTWD3msy2DWz3/th/GmrLLpTQcBmzXEOshxChXBUyY5ML5w/4eMAiJCdI6Az0liUzjJbatM2DstvZfeZyYZo0P4HRFDWNzsSAgkgN12nz6ZSb94ggt+SeEYbWSMzVpZc5EHZWI=
