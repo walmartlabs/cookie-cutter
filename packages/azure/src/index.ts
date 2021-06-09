@@ -25,10 +25,27 @@ export interface ICosmosConfiguration {
     readonly encoder: IMessageEncoder;
 }
 
+/**
+ * When connecting to a blob, the BlobClient:
+ * uses the connectionString (if provided) to connect, otherwise
+ * uses the url (if provided) and account and key to connect, otherwise
+ * uses the account and key to construct a standard url and connect
+ */
 export interface IBlobStorageConfiguration {
-    readonly storageAccount: string;
-    readonly storageAccessKey: string;
+    readonly storageAccount?: string;
+    readonly storageAccessKey?: string;
     readonly container: string;
+    /** Ex:
+     * `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;
+     * AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;
+     * BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;
+     * QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;
+     * TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;`
+     */
+    readonly connectionString?: string;
+    /** Ex: `https://account.blob.core.windows.net`
+     * Deprecated: uses as a connection string
+     */
     readonly url?: string;
 }
 

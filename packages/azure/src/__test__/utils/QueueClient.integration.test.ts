@@ -12,13 +12,13 @@ import { JsonMessageEncoder, EventSourcedMetadata } from "@walmartlabs/cookie-cu
 
 const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
 const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
-const url = process.env.AZURE_STORAGE_CONNECTION_STRING;
+const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const queueName = "testqueue";
 const encoder = new JsonMessageEncoder();
 const spanContext = new SpanContext();
 
 const client = new QueueClient({
-    url,
+    connectionString,
     storageAccount,
     storageAccessKey,
     queueName,
@@ -39,7 +39,7 @@ describe("Blob Client", () => {
             }
 
             const newClient = new QueueClient({
-                url,
+                connectionString,
                 storageAccount,
                 storageAccessKey,
                 queueName: newQueueName,
@@ -68,7 +68,7 @@ describe("Blob Client", () => {
             }
 
             const newClient = new QueueClient({
-                url,
+                connectionString,
                 storageAccount,
                 storageAccessKey,
                 queueName: newQueueName,
@@ -147,7 +147,7 @@ describe("Blob Client", () => {
             const newQueueName = `queue-${Date.now()}`;
 
             const newClient = new QueueClient({
-                url,
+                connectionString,
                 storageAccount,
                 storageAccessKey,
                 queueName: newQueueName,
