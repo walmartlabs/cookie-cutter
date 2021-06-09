@@ -23,7 +23,12 @@ export interface IDispatchState<TState> {
 export interface IDispatchContext<TState = any> {
     metadata<T>(key: string): T;
     publish<T>(type: IClassType<T>, msg: T, meta?: Readonly<{ [key in string]: any }>): void;
-    store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void;
+    store<T>(
+        type: IClassType<T>,
+        state: StateRef<TState>,
+        msg: T,
+        meta?: Readonly<{ [key in string]: any }>
+    ): void;
     typeName<T>(type: IClassType<T>): string;
     bail(err: any): never;
     readonly services: IServiceRegistry;
