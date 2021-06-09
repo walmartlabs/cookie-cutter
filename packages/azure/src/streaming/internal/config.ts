@@ -108,6 +108,14 @@ export class QueueConfiguration implements IQueueConfiguration {
         return config.noop();
     }
 
+    @config.field(config.converters.string)
+    public set connectionString(_: string) {
+        config.noop();
+    }
+    public get connectionString(): string {
+        return config.noop();
+    }
+
     @config.field(config.converters.none)
     public set preprocessor(_: IQueueMessagePreprocessor) {
         config.noop();

@@ -28,14 +28,20 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
     private spanOperationName = "Azure Blob Client Call";
 
     constructor(config: IBlobStorageConfiguration) {
-        if (config.url) {
-            this.client = new BlobServiceClient(
-                config.url,
-                new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey)
-            );
+        if (config.connectionString) {
+            this.client = BlobServiceClient.fromConnectionString(config.connectionString);
+        } else if (config.url) {
+            if (config.url.indexOf("https://") === 0) {
+                this.client = new BlobServiceClient(
+                    config.url,
+                    new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey)
+                );
+            } else {
+                this.client = BlobServiceClient.fromConnectionString(config.url);
+            }
         } else {
             this.client = new BlobServiceClient(
-                `https://${this.storageAccount}.blob.core.windows.net`,
+                `https://${config.storageAccount}.blob.core.windows.net`,
                 new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey)
             );
         }
