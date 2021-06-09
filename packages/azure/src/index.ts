@@ -57,6 +57,12 @@ export interface ICosmosQuery {
     }[];
 }
 
+export enum CosmosMetadata {
+    // Cosmos item level TTL in seconds.  Note that this is effective only if container level TTL is enabled
+    // See https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-time-to-live?tabs=dotnetv2%2Cjavav4#nodejs-set-ttl-item
+    TTL = "ttl",
+}
+
 export interface ICosmosQueryClient {
     query(spanContext: SpanContext, query: ICosmosQuery, collectionId?: string): Promise<any[]>;
 }
