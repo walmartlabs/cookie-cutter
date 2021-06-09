@@ -13,7 +13,7 @@ import {
     RetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { isNullOrUndefined } from "util";
-import { ICosmosConfiguration } from "../../";
+import { ICosmosConfiguration, CosmosMetadata } from "../../";
 import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
 
 export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSink<IStoredMessage> {
@@ -48,6 +48,7 @@ export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSin
                 metadata: {
                     ...cosmosMetadata(msg.original),
                 },
+                ttl: msg.metadata ? msg.metadata[CosmosMetadata.TTL] : undefined,
             };
             documents.push(doc);
         }

@@ -38,6 +38,7 @@ export interface ICosmosDocument {
     readonly event_type: string;
     readonly metadata?: ICosmosMetadata;
     readonly trace: SpanContext;
+    readonly ttl?: number;
 }
 
 export function cosmosMetadata(msg: MessageRef): ICosmosMetadata {
