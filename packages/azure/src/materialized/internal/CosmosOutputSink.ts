@@ -18,7 +18,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { isNullOrUndefined } from "util";
-import { ICosmosConfiguration } from "../..";
+import { ICosmosConfiguration, CosmosMetadata } from "../..";
 import {
     cosmosMetadata,
     CosmosOutputSinkBase,
@@ -27,7 +27,6 @@ import {
     isRetryableError,
     isSequenceConflict,
     RETRY_AFTER_MS,
-    CosmosMetadata,
 } from "../../utils";
 
 export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSink<IStoredMessage> {

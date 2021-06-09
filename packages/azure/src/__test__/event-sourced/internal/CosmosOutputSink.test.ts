@@ -20,12 +20,11 @@ import {
     SequenceConflictError,
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
-import { ICosmosConfiguration } from "../../..";
+import { ICosmosConfiguration, CosmosMetadata } from "../../..";
 import { CosmosOutputSink } from "../../../event-sourced/internal";
 import { CosmosClient, RETRY_AFTER_MS } from "../../../utils/CosmosClient";
 import { DummyMessageEncoder } from "../../dummyEncoder";
 import { DummyState } from "../../dummystate";
-import { CosmosMetadata } from "../../../utils";
 
 jest.mock("../../../utils/CosmosClient", () => {
     const { RETRY_AFTER_MS } = jest.requireActual("../../../utils/CosmosClient");

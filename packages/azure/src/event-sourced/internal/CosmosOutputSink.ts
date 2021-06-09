@@ -13,8 +13,8 @@ import {
     RetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
 import { isNullOrUndefined } from "util";
-import { ICosmosConfiguration } from "../../";
-import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument, CosmosMetadata } from "../../utils";
+import { ICosmosConfiguration, CosmosMetadata } from "../../";
+import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
 
 export class CosmosOutputSink extends CosmosOutputSinkBase implements IOutputSink<IStoredMessage> {
     constructor(config: ICosmosConfiguration) {
