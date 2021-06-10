@@ -23,6 +23,8 @@ jobs:
           node-version: "10"
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -47,6 +49,8 @@ jobs:
           node-version: "12"
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Dependencies for Ubuntu Node 12
         run: yarn install --frozen-lockfile
       - name: Build and Test on Ubuntu Node 12
@@ -66,6 +70,8 @@ jobs:
         run: |
               yarn set version 1.21.1
               yarn install --frozen-lockfile
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       # - name: Install Dependencies for macOS Node 10
       #   run: yarn install --frozen-lockfile
       - name: Build and Test on macOS Node 10
@@ -85,6 +91,8 @@ jobs:
           YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}s
       - name: Install Dependencies for Windows Node 10
         run: yarn install --frozen-lockfile
       - name: Build and Test on Windows Node 10
