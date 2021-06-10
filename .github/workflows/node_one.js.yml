@@ -18,7 +18,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
@@ -44,14 +44,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Ubuntu Node 12
         uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
       - name: Install Yarn 1.21.1
         # with:
-        #   repo-token: ${{ secrets.GITHUB_TOKEN }}
+        #   token: ${{ secrets.GITHUB_TOKEN }}
         run: yarn set version 1.21.1
       - name: Install Dependencies for Ubuntu Node 12
         run: yarn install --frozen-lockfile
@@ -65,14 +65,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: macOS Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
         # with:
-        #   repo-token: ${{ secrets.GITHUB_TOKEN }}
+        #   token: ${{ secrets.GITHUB_TOKEN }}
         run: |
               yarn set version 1.21.1
               yarn install --frozen-lockfile
@@ -88,7 +88,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Windows Node 10
         uses: actions/setup-node@v2-beta
         with:
@@ -97,7 +97,7 @@ jobs:
           YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
         # with:
-        #   repo-token: ${{ secrets.GITHUB_TOKEN }}
+        #   token: ${{ secrets.GITHUB_TOKEN }}
         run: yarn set version 1.21.1
       - name: Install Dependencies for Windows Node 10
         run: yarn install --frozen-lockfile
