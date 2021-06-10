@@ -22,9 +22,9 @@ jobs:
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn set version 1.21.1
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
