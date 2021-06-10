@@ -63,9 +63,11 @@ jobs:
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
-      - name: Install Dependencies for macOS Node 10
-        run: yarn install --frozen-lockfile
+        run: |
+              yarn set version 1.21.1
+              yarn install --frozen-lockfile
+      # - name: Install Dependencies for macOS Node 10
+      #   run: yarn install --frozen-lockfile
       - name: Build and Test on macOS Node 10
         run: yarn build && yarn test
 
