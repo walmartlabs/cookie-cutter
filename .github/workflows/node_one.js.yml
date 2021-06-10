@@ -48,23 +48,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # WORKS:
-      # - name: Ubuntu Node 12
-      #   uses: actions/setup-node@v2-beta
-      #   if: ${{ matrix.os == 'ubuntu-latest' }}
-      #   with:
-      #     node-version: "12"
-      # - name: Install Yarn 1.21.1
-      #   # run:  |
-      #   #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-      #   #       export PATH="$HOME/.yarn/bin:$PATH"
-      #   run: yarn set version 1.21.1
-      # - name: Install Dependencies for Ubuntu Node 12
-      #   if: ${{ matrix.os == 'ubuntu-latest' }}
-      #   run: yarn install --frozen-lockfile
-      # - name: Build and Test on Ubuntu Node 12
-      #   if: ${{ matrix.os == 'ubuntu-latest' }}
-      #   run: yarn build && yarn test
+      - name: Ubuntu Node 12
+        uses: actions/setup-node@v2-beta
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          node-version: "12"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies for Ubuntu Node 12
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: yarn install --frozen-lockfile
+      - name: Build and Test on Ubuntu Node 12
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: yarn build && yarn test
 
       - name: macOS Node 10
         uses: actions/setup-node@v2-beta
@@ -72,9 +68,6 @@ jobs:
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
-        # run:  |
-        #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-        #       export PATH="$HOME/.yarn/bin:$PATH"
         run: yarn set version 1.21.1
       - name: Install Dependencies for macOS Node 10
         if: ${{ matrix.os == 'macOS-latest' }}
@@ -83,25 +76,21 @@ jobs:
         if: ${{ matrix.os == 'macOS-latest' }}
         run: yarn build && yarn test
 
-      # WORKS:
-      # - name: Windows Node 10
-      #   uses: actions/setup-node@v2-beta
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   with:
-      #     node-version: "10"
-      #   env:
-      #     YARN_GPG: no # Windows build agent will hang without this
-      # - name: Install Yarn 1.21.1
-      #   # run:  |
-      #   #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-      #   #       export PATH="$HOME/.yarn/bin:$PATH"
-      #   run: yarn set version 1.21.1
-      # - name: Install Dependencies for Windows Node 10
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   run: yarn install --frozen-lockfile
-      # - name: Build and Test on Windows Node 10
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   run: yarn build && yarn test
+      - name: Windows Node 10
+        uses: actions/setup-node@v2-beta
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          node-version: "10"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies for Windows Node 10
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: yarn install --frozen-lockfile
+      - name: Build and Test on Windows Node 10
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: yarn build && yarn test
 
   # example-build:
   #   runs-on: ubuntu-latest
