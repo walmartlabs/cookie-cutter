@@ -22,10 +22,10 @@ jobs:
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
-        run:  |
-              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-              export PATH="$HOME/.yarn/bin:$PATH"
-              yarn set version 1.21.1
+        # run:  |
+        #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+        #       export PATH="$HOME/.yarn/bin:$PATH"
+        run: yarn set version 1.21.1
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -54,10 +54,10 @@ jobs:
         with:
           node-version: "12"
       - name: Install Yarn 1.21.1
-        run:  |
-              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-              export PATH="$HOME/.yarn/bin:$PATH"
-              yarn set version 1.21.1
+        # run:  |
+        #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+        #       export PATH="$HOME/.yarn/bin:$PATH"
+        run: yarn set version 1.21.1
       - name: Install Dependencies for Ubuntu Node 12
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: yarn install --frozen-lockfile
@@ -71,10 +71,10 @@ jobs:
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
-        run:  |
-              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-              export PATH="$HOME/.yarn/bin:$PATH"
-              yarn set version 1.21.1
+        # run:  |
+        #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+        #       export PATH="$HOME/.yarn/bin:$PATH"
+        run: yarn set version 1.21.1
       - name: Install Dependencies for macOS Node 10
         if: ${{ matrix.os == 'macOS-latest' }}
         run: yarn install --frozen-lockfile
@@ -90,10 +90,10 @@ jobs:
         env:
           YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
-        run:  |
-              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-              export PATH="$HOME/.yarn/bin:$PATH"
-              yarn set version 1.21.1
+        # run:  |
+        #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+        #       export PATH="$HOME/.yarn/bin:$PATH"
+        run: yarn set version 1.21.1
       - name: Install Dependencies for Windows Node 10
         if: ${{ matrix.os == 'windows-latest' }}
         run: yarn install --frozen-lockfile
