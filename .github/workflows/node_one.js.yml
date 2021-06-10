@@ -21,6 +21,10 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+      - name: Install Yarn 1.21.1
+        run:  |
+              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+              export PATH="$HOME/.yarn/bin:$PATH"
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -34,6 +38,7 @@ jobs:
         run: yarn audit
 
   test:
+    needs: smoke
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -47,6 +52,10 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           node-version: "12"
+      - name: Install Yarn 1.21.1
+        run:  |
+              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+              export PATH="$HOME/.yarn/bin:$PATH"
       - name: Install Dependencies for Ubuntu Node 12
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: yarn install --frozen-lockfile
@@ -59,6 +68,10 @@ jobs:
         if: ${{ matrix.os == 'macOS-latest' }}
         with:
           node-version: "10"
+      - name: Install Yarn 1.21.1
+        run:  |
+              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+              export PATH="$HOME/.yarn/bin:$PATH"
       - name: Install Dependencies for macOS Node 10
         if: ${{ matrix.os == 'macOS-latest' }}
         run: yarn install --frozen-lockfile
@@ -73,6 +86,10 @@ jobs:
           node-version: "10"
         env:
           YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run:  |
+              curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
+              export PATH="$HOME/.yarn/bin:$PATH"
       - name: Install Dependencies for Windows Node 10
         if: ${{ matrix.os == 'windows-latest' }}
         run: yarn install --frozen-lockfile
