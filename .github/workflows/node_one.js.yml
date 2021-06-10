@@ -22,9 +22,6 @@ jobs:
   #       with:
   #         node-version: "10"
   #     - name: Install Yarn 1.21.1
-  #       # run:  |
-  #       #       curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
-  #       #       export PATH="$HOME/.yarn/bin:$PATH"
   #       run: yarn set version 1.21.1
   #     - name: Install Dependencies
   #       run: yarn install --frozen-lockfile
@@ -38,47 +35,48 @@ jobs:
   #       if: ${{ github.event_name == 'schedule' }}
   #       run: yarn audit
 
-  test:
+  test-ubuntu:
     # needs: smoke
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
       - name: Ubuntu Node 12
         uses: actions/setup-node@v2-beta
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           node-version: "12"
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
       - name: Install Dependencies for Ubuntu Node 12
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: yarn install --frozen-lockfile
       - name: Build and Test on Ubuntu Node 12
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: yarn build && yarn test
 
+  test-macOs:
+    # needs: smoke
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
       - name: macOS Node 10
         uses: actions/setup-node@v2-beta
-        if: ${{ matrix.os == 'macOS-latest' }}
         with:
           node-version: "10"
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
       - name: Install Dependencies for macOS Node 10
-        if: ${{ matrix.os == 'macOS-latest' }}
         run: yarn install --frozen-lockfile
       - name: Build and Test on macOS Node 10
-        if: ${{ matrix.os == 'macOS-latest' }}
         run: yarn build && yarn test
 
+  test-windows:
+    # needs: smoke
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
       - name: Windows Node 10
         uses: actions/setup-node@v2-beta
-        if: ${{ matrix.os == 'windows-latest' }}
         with:
           node-version: "10"
         env:
@@ -86,10 +84,8 @@ jobs:
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
       - name: Install Dependencies for Windows Node 10
-        if: ${{ matrix.os == 'windows-latest' }}
         run: yarn install --frozen-lockfile
       - name: Build and Test on Windows Node 10
-        if: ${{ matrix.os == 'windows-latest' }}
         run: yarn build && yarn test
 
   # example-build:
