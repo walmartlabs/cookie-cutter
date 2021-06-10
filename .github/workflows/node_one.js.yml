@@ -1,0 +1,97 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Ubuntu Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Lint
+        run: yarn lint
+      - name: Yarn Test
+        run: yarn test
+      - name: Yarn Audit
+        if: ${{ github.event_name == 'schedule' }}
+        run: yarn audit
+
+  test:
+    runs-on: {{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Ubuntu Node 12
+        uses: actions/setup-node@v2-beta
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          node-version: "12"
+      - name: Install Dependencies for Ubuntu Node 12
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: yarn install --frozen-lockfile
+      - name: Build and Test on Ubuntu Node 12
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: yarn build && yarn test
+
+      - name: macOS Node 10
+        uses: actions/setup-node@v2-beta
+        if: ${{ matrix.os == 'macOS-latest' }}
+        with:
+          node-version: "10"
+      - name: Install Dependencies for macOS Node 10
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: yarn install --frozen-lockfile
+      - name: Build and Test on macOS Node 10
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: yarn build && yarn test
+
+      - name: Windows Node 10
+        uses: actions/setup-node@v2-beta
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          node-version: "10"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Dependencies for Windows Node 10
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: yarn install --frozen-lockfile
+      - name: Build and Test on Windows Node 10
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: yarn build && yarn test
+
+  # example-build:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       node-version: [10.x, 12.x, 14.x, 15.x]
+  #       # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Use Node.js ${{ matrix.node-version }}
+  #     uses: actions/setup-node@v2
+  #     with:
+  #       node-version: ${{ matrix.node-version }}
+  #   - run: npm ci
+  #   - run: npm run build --if-present
+  #   - run: npm test
