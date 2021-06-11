@@ -60,7 +60,7 @@ jobs:
       - name: Build and Test on Ubuntu Node 12
         run: yarn build && yarn test
 
-  test-macOs:
+  test-macOS:
     needs: smoke
     runs-on: macOS-latest
     steps:
@@ -74,8 +74,8 @@ jobs:
           node-version: "10"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Yarn 1.21.1
-        # with:
-        #   token: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
         run: |
               yarn set version 1.21.1
               yarn install --frozen-lockfile
@@ -107,3 +107,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build and Test on Windows Node 10
         run: yarn build && yarn test
+
+  # integration-azure:
+  #   needs: [test-ubuntu, test-macOS. test-windows]
+  #   runs-on: windows-latest
