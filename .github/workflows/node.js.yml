@@ -22,8 +22,13 @@ jobs:
         env:
             GITHUB_CONTEXT: ${{ toJson(github) }}
             COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
-            CMT: ${{ toJson(github.event.pull_request.commits.href) }}
+            # CMT: ${{ toJson(github.event.pull_request.commits.href) }}
+            JSON_CMT: ${{ toJson(github.event) }}
+            BR_CMT: ${{ github.event }}
+            CMT: github.event
         run:  |
+              echo "JSON_CMT: $JSON_CMT"
+              echo "BR_CMT: $BR_CMT"
               echo "CMT: $CMT"
               echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
               echo "$GITHUB_CONTEXT"
