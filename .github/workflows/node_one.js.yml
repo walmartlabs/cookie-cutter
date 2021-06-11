@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
@@ -51,29 +49,49 @@ jobs:
       - name: Build and Test on Ubuntu Node 12
         run: yarn build # && yarn test
 
-  test-macOS:
-    needs: smoke
-    runs-on: macOS-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: macOS Node 10
-        uses: actions/setup-node@v2-beta
-        with:
-          node-version: "10"
-      - name: Install Yarn 1.21.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-              yarn set version 1.21.1
-              yarn install --frozen-lockfile
-      # - name: Install Dependencies for macOS Node 10
-      #   run: yarn install --frozen-lockfile
-      - name: Build and Test on macOS Node 10
-        run: yarn build # && yarn test
+  # test-macOS:
+  #   needs: smoke
+  #   runs-on: macOS-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #     - name: macOS Node 10
+  #       uses: actions/setup-node@v2-beta
+  #       with:
+  #         node-version: "10"
+  #     - name: Install Yarn 1.21.1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #             yarn set version 1.21.1
+  #             yarn install --frozen-lockfile
+  #     # - name: Install Dependencies for macOS Node 10
+  #     #   run: yarn install --frozen-lockfile
+  #     - name: Build and Test on macOS Node 10
+  #       run: yarn build # && yarn test
 
-  test-windows:
-    needs: smoke
+  # test-windows:
+  #   needs: smoke
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #     - name: Windows Node 10
+  #       uses: actions/setup-node@v2-beta
+  #       with:
+  #         node-version: "10"
+  #       env:
+  #         YARN_GPG: no # Windows build agent will hang without this
+  #     - name: Install Yarn 1.21.1
+  #       run: yarn set version 1.21.1
+  #     - name: Install Dependencies for Windows Node 10
+  #       run: yarn install --frozen-lockfile
+  #     - name: Build and Test on Windows Node 10
+  #       run: yarn build # && yarn test
+
+  integration-azure:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: windows-latest
     steps:
       - name: Checkout Code
@@ -82,34 +100,28 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-        env:
-          YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
       - name: Install Dependencies for Windows Node 10
         run: yarn install --frozen-lockfile
-      - name: Build and Test on Windows Node 10
-        run: yarn build # && yarn test
-
-  # integration-azure:
-  #   needs: [test-ubuntu, test-macOS, test-windows]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Windows Node 10
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "10"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies for Windows Node 10
-  #       run: yarn install --frozen-lockfile
-  #     - name: Run Test
-  #       run: yarn build && cd packages/azure && yarn integrate
+      - name: Run Test
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+          NODE_TLS_REJECT_UNAUTHORIZED: "0"
+          COSMOS_SECRET_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+          AZURE_STORAGE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+          AZURE_STORAGE_ACCOUNT: "devstoreaccount1"
+          AZURE_STORAGE_URL: "http://127.0.0.1:10000/devstoreaccount1"
+          RUNNING_IN_CI: "1"
+        run:  |
+              PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
+              PowerShell -File packages/azure/start_emulators.ps1
+              PowerShell -File packages/azure/run_integration_tests.ps1
 
   integration-mssql:
-    needs: [test-ubuntu, test-macOS, test-windows]
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -126,7 +138,8 @@ jobs:
         run: yarn build && cd packages/mssql && yarn integrate
 
   integration-amqp:
-    needs: [test-ubuntu, test-macOS, test-windows]
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -143,7 +156,8 @@ jobs:
         run: yarn build && cd packages/amqp && yarn integrate
 
   integration-kafka:
-    needs: [test-ubuntu, test-macOS, test-windows]
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -160,7 +174,8 @@ jobs:
         run: yarn build && cd packages/kafka && yarn integrate
 
   integration-prometheus:
-    needs: [test-ubuntu, test-macOS, test-windows]
+    needs: test-ubuntu
+# needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -177,7 +192,8 @@ jobs:
         run: yarn build && cd packages/prometheus && yarn integrate
 
   integration-s3:
-    needs: [test-ubuntu, test-macOS, test-windows]
+    needs: test-ubuntu
+# needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -194,7 +210,8 @@ jobs:
         run: yarn build && cd packages/s3 && yarn integrate
 
   integration-redis:
-    needs: [test-ubuntu, test-macOS, test-windows]
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
