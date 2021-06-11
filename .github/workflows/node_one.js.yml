@@ -92,7 +92,7 @@ jobs:
         run: yarn build # && yarn test
 
   integration-mssql:
-    needs: [test-ubuntu, test-macOS. test-windows]
+    needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
