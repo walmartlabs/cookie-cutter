@@ -21,7 +21,9 @@ jobs:
       - name: Commit Message
         env:
             COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
-        run: echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
+        run:  |
+              echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
+              echo "$GITHUB_CONTEXT"
       - name: Testing
         # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' ) ) }}
