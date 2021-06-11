@@ -23,6 +23,7 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
       - name: Install Dependencies
@@ -43,12 +44,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+        #   token: ${{ secrets.GITHUB_TOKEN }}
       - name: Ubuntu Node 12
         uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Yarn 1.21.1
         # with:
         #   token: ${{ secrets.GITHUB_TOKEN }}
@@ -64,12 +66,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+        #   token: ${{ secrets.GITHUB_TOKEN }}
       - name: macOS Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Yarn 1.21.1
         # with:
         #   token: ${{ secrets.GITHUB_TOKEN }}
@@ -87,12 +90,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+        #   token: ${{ secrets.GITHUB_TOKEN }}
       - name: Windows Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
