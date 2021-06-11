@@ -22,7 +22,9 @@ jobs:
         env:
             GITHUB_CONTEXT: ${{ toJson(github) }}
             COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
+            CMT: ${{ toJson(github.event.pull_request.commits) }}
         run:  |
+              echo "CMT: $CMT"
               echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
               echo "$GITHUB_CONTEXT"
       - name: Testing
