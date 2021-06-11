@@ -38,27 +38,27 @@ jobs:
       #   if: ${{ github.event_name == 'schedule' }}
       #   run: yarn audit
 
-  test-ubuntu:
-    needs: smoke
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        # with:
-        #   token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Ubuntu Node 12
-        uses: actions/setup-node@v2-beta
-        with:
-          node-version: "12"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Yarn 1.21.1
-        # with:
-        #   token: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn set version 1.21.1
-      - name: Install Dependencies for Ubuntu Node 12
-        run: yarn install --frozen-lockfile
-      - name: Build and Test on Ubuntu Node 12
-        run: yarn build && yarn test
+  # test-ubuntu:
+  #   needs: smoke
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #       # with:
+  #       #   token: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Ubuntu Node 12
+  #       uses: actions/setup-node@v2-beta
+  #       with:
+  #         node-version: "12"
+  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Install Yarn 1.21.1
+  #       # with:
+  #       #   token: ${{ secrets.GITHUB_TOKEN }}
+  #       run: yarn set version 1.21.1
+  #     - name: Install Dependencies for Ubuntu Node 12
+  #       run: yarn install --frozen-lockfile
+  #     - name: Build and Test on Ubuntu Node 12
+  #       run: yarn build && yarn test
 
   test-macOS:
     needs: smoke
@@ -74,8 +74,8 @@ jobs:
           node-version: "10"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Yarn 1.21.1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
               yarn set version 1.21.1
               yarn install --frozen-lockfile
@@ -84,29 +84,29 @@ jobs:
       - name: Build and Test on macOS Node 10
         run: yarn build && yarn test
 
-  test-windows:
-    needs: smoke
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        # with:
-        #   token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Windows Node 10
-        uses: actions/setup-node@v2-beta
-        with:
-          node-version: "10"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          YARN_GPG: no # Windows build agent will hang without this
-      - name: Install Yarn 1.21.1
-        # with:
-        #   token: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn set version 1.21.1
-      - name: Install Dependencies for Windows Node 10
-        run: yarn install --frozen-lockfile
-      - name: Build and Test on Windows Node 10
-        run: yarn build && yarn test
+  # test-windows:
+  #   needs: smoke
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #       # with:
+  #       #   token: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Windows Node 10
+  #       uses: actions/setup-node@v2-beta
+  #       with:
+  #         node-version: "10"
+  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
+  #       env:
+  #         YARN_GPG: no # Windows build agent will hang without this
+  #     - name: Install Yarn 1.21.1
+  #       # with:
+  #       #   token: ${{ secrets.GITHUB_TOKEN }}
+  #       run: yarn set version 1.21.1
+  #     - name: Install Dependencies for Windows Node 10
+  #       run: yarn install --frozen-lockfile
+  #     - name: Build and Test on Windows Node 10
+  #       run: yarn build && yarn test
 
   # integration-azure:
   #   needs: [test-ubuntu, test-macOS. test-windows]
