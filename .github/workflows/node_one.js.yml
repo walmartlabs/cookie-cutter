@@ -26,7 +26,7 @@ jobs:
         # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' ) ) }}
         env:
-          COMMIT_MESSAGE: github.commits[0].message
+          COMMIT_MESSAGE: ${{ github.commits[0].message }}
         run:  |
               echo "CI: $CI"
               echo "GITHUB_WORKFLOW: $GITHUB_WORKFLOW"
