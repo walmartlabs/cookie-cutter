@@ -28,7 +28,7 @@ jobs:
             # BR_CMT: ${{ github.event }}
             # CMT: github.event
         run:  |
-              git --no-pager log -1 --pretty=format:"%s
+              git --no-pager log -1 --pretty=format:"%s"
               git log -1 --pretty=oneline
               echo "INPUT_COMMITS: $INPUT_COMMITS"
               echo "JSON_CMT: $JSON_CMT"
