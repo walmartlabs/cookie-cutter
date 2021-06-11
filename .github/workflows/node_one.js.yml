@@ -20,6 +20,7 @@ jobs:
           node-version: "10"
       - name: Commit Message
         env:
+            GITHUB_CONTEXT: ${{ toJson(github) }}
             COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
         run:  |
               echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
