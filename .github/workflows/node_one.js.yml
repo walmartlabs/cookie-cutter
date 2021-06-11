@@ -20,7 +20,7 @@ jobs:
           node-version: "10"
       - name: Commit Message
         env:
-            COMMIT_MESSAGE: ${{ github.commits[0].message }}
+            COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
         run: echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
       - name: Testing
         # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
