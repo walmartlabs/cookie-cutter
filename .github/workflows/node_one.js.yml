@@ -72,7 +72,7 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Yarn 1.21.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
