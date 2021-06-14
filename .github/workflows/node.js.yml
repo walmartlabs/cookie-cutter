@@ -49,9 +49,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Ubuntu Node 12
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -76,13 +76,13 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-              yarn set version 1.21.1
-              yarn install --frozen-lockfile
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #         yarn set version 1.21.1
+      #         yarn install --frozen-lockfile
       # - name: Install Dependencies for macOS Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -101,7 +101,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
-        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+        run: |
+              ecbo $(git log --format=%B -n 1 ${{ github.event.after }})
+              echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+              echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
+      - name: echo env var
+        env:
+          SOME_NAME: ${{ env.COMMIT_MESSAGE }}
+        run: echo "SOME_NAME $SOME_NAME"
       - name: Windows Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
@@ -109,9 +116,9 @@ jobs:
           node-version: "10"
         env:
           YARN_GPG: no # Windows build agent will hang without this
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -137,9 +144,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -177,9 +184,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -205,9 +212,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -233,9 +240,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -261,9 +268,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -288,9 +295,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
@@ -316,9 +323,9 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: Install Yarn 1.21.1
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-        run: yarn set version 1.21.1
+      # - name: Install Yarn 1.21.1
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+      #   run: yarn set version 1.21.1
       # - name: Install Dependencies for Windows Node 10
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn install --frozen-lockfile
