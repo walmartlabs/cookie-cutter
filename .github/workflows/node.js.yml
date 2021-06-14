@@ -10,6 +10,7 @@ on:
 
 jobs:
   smoke:
+    if: contains($(git log --format=%B -n 1 ${{ github.event.after }}), 'full ci')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
