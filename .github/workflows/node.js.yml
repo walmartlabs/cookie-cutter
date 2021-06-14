@@ -22,9 +22,9 @@ jobs:
           node-version: "10"
       - name: get commit message
         run: |
-           echo ::set-env name=commitmsg::$(git log --format=%B -n 1 ${{ github.event.after }})
+           echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
       - name: show commit message
-        run : echo $commitmsg
+        run : cat COMMIT_MSG
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
