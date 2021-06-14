@@ -102,9 +102,9 @@ jobs:
       - name: Get Commit Message 1
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
       - name: Get Commit Message 2
-        run: echo $(${{ env.COMMIT_MESSAGE }})
+        run: echo ${{ env.COMMIT_MESSAGE }}
       - name: Get Commit Message 3
-        run: echo $(${{ env.COMMIT_MESSAGE }}) > COMMIT_MESSAGE.txt
+        run: echo ${{ env.COMMIT_MESSAGE }} > COMMIT_MESSAGE.txt
       - name: Get Commit Message 4
         run: cat COMMIT_MESSAGE.txt
       - name: Upload Commit Message as Artifact
