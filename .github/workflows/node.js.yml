@@ -121,6 +121,16 @@ jobs:
       #   if: ${{ github.event_name == 'schedule' }}
       #   run: yarn audit
 
+  test-test:
+    if: contains(env.COMM_MSG, 'full ci')
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Env Var Echo
+        run: echo "COMM_MSG $COMM_MSG"
+
   # test-ubuntu:
   #   if: ${{ github.event_name == 'schedule' }}
   #   needs: smoke
