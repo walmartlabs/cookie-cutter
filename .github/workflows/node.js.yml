@@ -14,8 +14,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        with: # required for git log to access the correct commits
-          ref: ${{ github.event.pull_request.head.sha }}
+        # with: # required for git log to access the correct commits
+        #   ref: ${{ github.event.pull_request.head.sha }}
       - name: Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
@@ -32,86 +32,88 @@ jobs:
       #   env:
       #     SOME_NAME: ${{ env.COMM_MSG }}
       #   run: echo "SOME_NAME $SOME_NAME"
-      - name: Dump GitHub context
-        # if: contains(env.COMM_MSG, 'full ci')
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: Commit Message
-        env:
-            BEFORE_CMT: ${{ github.event.before }} 
-            AFTER_CMT: ${{ github.event.after }}
-            # GITHUB_CONTEXT: ${{ toJson(github) }}
-            # SOMETHING: 
-            # COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
-            # CMT: ${{ toJson(github.event.pull_request.commits.href) }}
-            # JSON_CMT: ${{ toJson(github.event) }}
-            # BR_CMT: ${{ github.event }}
-            # CMT: github.event
-            # git log -1 --pretty=oneline
-            # git log --format=%B -n 1 "$BEFORE_CMT"
-            # echo "$GITHUB_CONTEXT"
-        run:  |
-              git log --pretty=oneline -n -1 "$AFTER_CMT"
-              echo "BEFORE_CMT: $BEFORE_CMT"
-              git log --format=%B -n 1 "$AFTER_CMT"
-              echo "AFTER_CMT: $AFTER_CMT"
-              git log
-              echo "INPUT_COMMITS: $INPUT_COMMITS"
-              echo "JSON_CMT: $JSON_CMT"
-              echo "BR_CMT: $BR_CMT"
-              echo "CMT: $CMT"
-              echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
-      - name: Testing
-        # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' ) ) }}
-        run:  |
-              echo "CI: $CI"
-              echo "GITHUB_WORKFLOW: $GITHUB_WORKFLOW"
-              echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
-              echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
-              echo "GITHUB_JOB: $GITHUB_JOB"
-              echo "GITHUB_ACTION: $GITHUB_ACTION"
-              echo "GITHUB_ACTION_PATH: $GITHUB_ACTION_PATH"
-              echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
-              echo "GITHUB_ACTOR: $GITHUB_ACTOR"
-              echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
-              echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
-              echo "GITHUB_EVENT_PATH: $GITHUB_EVENT_PATH"
-              echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-              echo "GITHUB_SHA: $GITHUB_SHA"
-              echo "GITHUB_REF: $GITHUB_REF"
-              echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
-              echo "GITHUB_BASE_REF: $GITHUB_BASE_REF"
-              echo "GITHUB_SERVER_URL: $GITHUB_SERVER_URL"
-              echo "GITHUB_API_URL: $GITHUB_API_URL"
-              echo "GITHUB_GRAPHQL_URL: $GITHUB_GRAPHQL_URL"
-      # - name: Install Yarn 1.21.1
-      #   run: yarn set version 1.21.1
-      # - name: Install Dependencies
-      #   run: yarn install --frozen-lockfile
-      # - name: Yarn Build
-      #   run: yarn build
+      # - name: Dump GitHub context
+      #   # if: contains(env.COMM_MSG, 'full ci')
+      #   env:
+      #     GITHUB_CONTEXT: ${{ toJSON(github) }}
+      #   run: echo "$GITHUB_CONTEXT"
+      # - name: Commit Message
+      #   env:
+      #       BEFORE_CMT: ${{ github.event.before }} 
+      #       AFTER_CMT: ${{ github.event.after }}
+      #       # GITHUB_CONTEXT: ${{ toJson(github) }}
+      #       # SOMETHING: 
+      #       # COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
+      #       # CMT: ${{ toJson(github.event.pull_request.commits.href) }}
+      #       # JSON_CMT: ${{ toJson(github.event) }}
+      #       # BR_CMT: ${{ github.event }}
+      #       # CMT: github.event
+      #       # git log -1 --pretty=oneline
+      #       # git log --format=%B -n 1 "$BEFORE_CMT"
+      #       # echo "$GITHUB_CONTEXT"
+      #   run:  |
+      #         git log --pretty=oneline -n -1 "$AFTER_CMT"
+      #         echo "BEFORE_CMT: $BEFORE_CMT"
+      #         git log --format=%B -n 1 "$AFTER_CMT"
+      #         echo "AFTER_CMT: $AFTER_CMT"
+      #         git log
+      #         echo "INPUT_COMMITS: $INPUT_COMMITS"
+      #         echo "JSON_CMT: $JSON_CMT"
+      #         echo "BR_CMT: $BR_CMT"
+      #         echo "CMT: $CMT"
+      #         echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
+      # - name: Testing
+      #   # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' ) ) }}
+      #   run:  |
+      #         echo "CI: $CI"
+      #         echo "GITHUB_WORKFLOW: $GITHUB_WORKFLOW"
+      #         echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
+      #         echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
+      #         echo "GITHUB_JOB: $GITHUB_JOB"
+      #         echo "GITHUB_ACTION: $GITHUB_ACTION"
+      #         echo "GITHUB_ACTION_PATH: $GITHUB_ACTION_PATH"
+      #         echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
+      #         echo "GITHUB_ACTOR: $GITHUB_ACTOR"
+      #         echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
+      #         echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+      #         echo "GITHUB_EVENT_PATH: $GITHUB_EVENT_PATH"
+      #         echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+      #         echo "GITHUB_SHA: $GITHUB_SHA"
+      #         echo "GITHUB_REF: $GITHUB_REF"
+      #         echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+      #         echo "GITHUB_BASE_REF: $GITHUB_BASE_REF"
+      #         echo "GITHUB_SERVER_URL: $GITHUB_SERVER_URL"
+      #         echo "GITHUB_API_URL: $GITHUB_API_URL"
+      #         echo "GITHUB_GRAPHQL_URL: $GITHUB_GRAPHQL_URL"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
       # - name: Yarn Lint
       #   run: yarn lint
       # - name: Yarn Test
       #   run: yarn test
-      # - name: Yarn Audit
-      #   if: ${{ github.event_name == 'schedule' }}
-      #   run: yarn audit
-      - name: Get Commit Message 1
-        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Get Commit Message 2
-        run: echo ${{ env.COMMIT_MESSAGE }}
-      - name: Get Commit Message 3
-        run: echo ${{ env.COMMIT_MESSAGE }} > COMMIT_MESSAGE.txt
-      - name: Get Commit Message 4
-        run: cat COMMIT_MESSAGE.txt
-      - name: Upload Commit Message as Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: commit_message
-          path: COMMIT_MESSAGE.txt
+      - name: Yarn Audit
+        if: ${{ github.event_name == 'schedule' }}
+        run: yarn audit
+      # Uplaod File with commit message to artifacts BEGIN
+      # - name: Get Commit Message 1
+      #   run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      # - name: Get Commit Message 2
+      #   run: echo ${{ env.COMMIT_MESSAGE }}
+      # - name: Get Commit Message 3
+      #   run: echo ${{ env.COMMIT_MESSAGE }} > COMMIT_MESSAGE.txt
+      # - name: Get Commit Message 4
+      #   run: cat COMMIT_MESSAGE.txt
+      # - name: Upload Commit Message as Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: commit_message
+      #     path: COMMIT_MESSAGE.txt
+      # Uplaod File with commit message to artifacts END
 
   # type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
 
@@ -123,20 +125,29 @@ jobs:
     needs: smoke
     runs-on: ubuntu-latest
     steps:
-      - name: Download Commit Message from Artifacts
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
-        uses: actions/download-artifact@v2
-        with:
-          name: commit_message
-      - name: Set Commit Message Env Var
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
-        run: |
-              cat COMMIT_MESSAGE.txt
-              echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE.txt)" >> $GITHUB_ENV
+      # Download File with commit message from artifacts BEGIN
+      # - name: Download Commit Message from Artifacts
+      #   if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: commit_message
+      # - name: Set Commit Message Env Var
+      #   if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+      #   run: |
+      #         cat COMMIT_MESSAGE.txt
+      #         echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE.txt)" >> $GITHUB_ENV
+      # - name: Checkout Code
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   uses: actions/checkout@v2
+      # Download File with commit message from artifacts END
       - name: Checkout Code
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
-        # if: contains(env.COMMIT_MESSAGE, 'full ci')
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
       - name: Ubuntu Node 12
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
         uses: actions/setup-node@v2-beta
