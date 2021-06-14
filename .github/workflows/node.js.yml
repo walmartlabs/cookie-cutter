@@ -30,10 +30,10 @@ jobs:
             # BR_CMT: ${{ github.event }}
             # CMT: github.event
             # git log -1 --pretty=oneline
+            # git log --format=%B -n 1 "$BEFORE_CMT"
         run:  |
               echo "BEFORE_CMT: $BEFORE_CMT"
               echo "AFTER_CMT: $AFTER_CMT"
-              git log --format=%B -n 1 "$BEFORE_CMT"
               git log --format=%B -n 1 "$AFTER_CMT"
               git log
               echo "INPUT_COMMITS: $INPUT_COMMITS"
