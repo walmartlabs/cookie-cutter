@@ -102,7 +102,9 @@ jobs:
       - name: Get Commit Message
         run:  |
               echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+              echo "$COMMIT_MESSAGE"
               echo "$COMMIT_MESSAGE" > COMMIT_MESSAGE.txt
+              cat COMMIT_MESSAGE.txt
       - name: Upload Commit Message as Artifact
         uses: actions/upload-artifact@v2
         with:
