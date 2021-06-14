@@ -14,84 +14,16 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        # with: # required for git log to access the correct commits
-        #   ref: ${{ github.event.pull_request.head.sha }}
       - name: Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      # - name: get commit message
-      #   run:  |
-      #         echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
-      # - name: show commit message
-      #   run : cat COMMIT_MSG
-      # - name: set env variable
-      #   run:  |
-      #         echo "COMM_MSG=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      # - name: echo env var
-      #   env:
-      #     SOME_NAME: ${{ env.COMM_MSG }}
-      #   run: echo "SOME_NAME $SOME_NAME"
-      # - name: Dump GitHub context
-      #   # if: contains(env.COMM_MSG, 'full ci')
-      #   env:
-      #     GITHUB_CONTEXT: ${{ toJSON(github) }}
-      #   run: echo "$GITHUB_CONTEXT"
-      # - name: Commit Message
-      #   env:
-      #       BEFORE_CMT: ${{ github.event.before }} 
-      #       AFTER_CMT: ${{ github.event.after }}
-      #       # GITHUB_CONTEXT: ${{ toJson(github) }}
-      #       # SOMETHING: 
-      #       # COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
-      #       # CMT: ${{ toJson(github.event.pull_request.commits.href) }}
-      #       # JSON_CMT: ${{ toJson(github.event) }}
-      #       # BR_CMT: ${{ github.event }}
-      #       # CMT: github.event
-      #       # git log -1 --pretty=oneline
-      #       # git log --format=%B -n 1 "$BEFORE_CMT"
-      #       # echo "$GITHUB_CONTEXT"
-      #   run:  |
-      #         git log --pretty=oneline -n -1 "$AFTER_CMT"
-      #         echo "BEFORE_CMT: $BEFORE_CMT"
-      #         git log --format=%B -n 1 "$AFTER_CMT"
-      #         echo "AFTER_CMT: $AFTER_CMT"
-      #         git log
-      #         echo "INPUT_COMMITS: $INPUT_COMMITS"
-      #         echo "JSON_CMT: $JSON_CMT"
-      #         echo "BR_CMT: $BR_CMT"
-      #         echo "CMT: $CMT"
-      #         echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
-      # - name: Testing
-      #   # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
-      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' ) ) }}
-      #   run:  |
-      #         echo "CI: $CI"
-      #         echo "GITHUB_WORKFLOW: $GITHUB_WORKFLOW"
-      #         echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
-      #         echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
-      #         echo "GITHUB_JOB: $GITHUB_JOB"
-      #         echo "GITHUB_ACTION: $GITHUB_ACTION"
-      #         echo "GITHUB_ACTION_PATH: $GITHUB_ACTION_PATH"
-      #         echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
-      #         echo "GITHUB_ACTOR: $GITHUB_ACTOR"
-      #         echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
-      #         echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
-      #         echo "GITHUB_EVENT_PATH: $GITHUB_EVENT_PATH"
-      #         echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-      #         echo "GITHUB_SHA: $GITHUB_SHA"
-      #         echo "GITHUB_REF: $GITHUB_REF"
-      #         echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
-      #         echo "GITHUB_BASE_REF: $GITHUB_BASE_REF"
-      #         echo "GITHUB_SERVER_URL: $GITHUB_SERVER_URL"
-      #         echo "GITHUB_API_URL: $GITHUB_API_URL"
-      #         echo "GITHUB_GRAPHQL_URL: $GITHUB_GRAPHQL_URL"
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile
-      - name: Yarn Build
-        run: yarn build
+      # - name: Install Dependencies
+      #   run: yarn install --frozen-lockfile
+      # - name: Yarn Build
+      #   run: yarn build
       # - name: Yarn Lint
       #   run: yarn lint
       # - name: Yarn Test
@@ -99,47 +31,11 @@ jobs:
       - name: Yarn Audit
         if: ${{ github.event_name == 'schedule' }}
         run: yarn audit
-      # Uplaod File with commit message to artifacts BEGIN
-      # - name: Get Commit Message 1
-      #   run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      # - name: Get Commit Message 2
-      #   run: echo ${{ env.COMMIT_MESSAGE }}
-      # - name: Get Commit Message 3
-      #   run: echo ${{ env.COMMIT_MESSAGE }} > COMMIT_MESSAGE.txt
-      # - name: Get Commit Message 4
-      #   run: cat COMMIT_MESSAGE.txt
-      # - name: Upload Commit Message as Artifact
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: commit_message
-      #     path: COMMIT_MESSAGE.txt
-      # Uplaod File with commit message to artifacts END
-
-  # type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
-
-  # schedule || ( pull_request && ( master OR full_ci ) )       RESULT
-  # schedule || (pull_request && master) || (pull_request && full_ci)
 
   test-ubuntu:
-    # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && github.base_ref == 'master' ) }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
-      # Download File with commit message from artifacts BEGIN
-      # - name: Download Commit Message from Artifacts
-      #   if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: commit_message
-      # - name: Set Commit Message Env Var
-      #   if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
-      #   run: |
-      #         cat COMMIT_MESSAGE.txt
-      #         echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE.txt)" >> $GITHUB_ENV
-      # - name: Checkout Code
-      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
-      #   uses: actions/checkout@v2
-      # Download File with commit message from artifacts END
       - name: Checkout Code
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         uses: actions/checkout@v2
@@ -156,197 +52,276 @@ jobs:
       - name: Install Yarn 1.21.1
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
         run: yarn set version 1.21.1
-      - name: Install Dependencies for Ubuntu Node 12
-        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
-        run: yarn install --frozen-lockfile
+      # - name: Install Dependencies for Ubuntu Node 12
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
       # - name: Build and Test on Ubuntu Node 12
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
       #   run: yarn build # && yarn test
 
-  # test-macOS:
-  #   if: ${{ github.event_name == 'schedule' }}
-  #   needs: smoke
-  #   runs-on: macOS-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: macOS Node 10
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "10"
-  #     - name: Install Yarn 1.21.1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       run: |
-  #             yarn set version 1.21.1
-  #             yarn install --frozen-lockfile
-  #     # - name: Install Dependencies for macOS Node 10
-  #     #   run: yarn install --frozen-lockfile
-  #     - name: Build and Test on macOS Node 10
-  #       run: yarn build # && yarn test
+  test-macOS:
+    needs: smoke
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: macOS Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+              yarn set version 1.21.1
+              yarn install --frozen-lockfile
+      # - name: Install Dependencies for macOS Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Build and Test on macOS Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build # && yarn test
 
-  # test-windows:
-  #   if: ${{ github.event_name == 'schedule' }}
-  #   needs: smoke
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Windows Node 10
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "10"
-  #       env:
-  #         YARN_GPG: no # Windows build agent will hang without this
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies for Windows Node 10
-  #       run: yarn install --frozen-lockfile
-  #     - name: Build and Test on Windows Node 10
-  #       run: yarn build # && yarn test
+  test-windows:
+    needs: smoke
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Build and Test on Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build # && yarn test
 
-#   integration-azure:
-#     if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
-#     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github. ||  ) ) }}
-#     needs: test-ubuntu
-#     # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: windows-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         env:
-#           YARN_GPG: no # Windows build agent will hang without this
-#           NODE_TLS_REJECT_UNAUTHORIZED: "0"
-#           COSMOS_SECRET_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-#           AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
-#           AZURE_STORAGE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-#           AZURE_STORAGE_ACCOUNT: "devstoreaccount1"
-#           AZURE_STORAGE_URL: "http://127.0.0.1:10000/devstoreaccount1"
-#           RUNNING_IN_CI: "1"
-#         run:  |
-#               PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
-#               PowerShell -File packages/azure/start_emulators.ps1
-#               PowerShell -File packages/azure/run_integration_tests.ps1
+  integration-azure:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   env:
+      #     YARN_GPG: no # Windows build agent will hang without this
+      #     NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      #     COSMOS_SECRET_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+      #     AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+      #     AZURE_STORAGE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+      #     AZURE_STORAGE_ACCOUNT: "devstoreaccount1"
+      #     AZURE_STORAGE_URL: "http://127.0.0.1:10000/devstoreaccount1"
+      #     RUNNING_IN_CI: "1"
+      #   run:  |
+      #         PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
+      #         PowerShell -File packages/azure/start_emulators.ps1
+      #         PowerShell -File packages/azure/run_integration_tests.ps1
 
-#   integration-mssql:
-#     if: ${{ github.event_name == 'schedule' }}
-#     needs: test-ubuntu
-#     # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         run: yarn build && cd packages/mssql && yarn integrate
+  integration-mssql:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build && cd packages/mssql && yarn integrate
 
-#   integration-amqp:
-#     if: ${{ github.event_name == 'schedule' }}
-#     needs: test-ubuntu
-#     # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         run: yarn build && cd packages/amqp && yarn integrate
+  integration-amqp:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build && cd packages/amqp && yarn integrate
 
-#   integration-kafka:
-#     if: ${{ github.event_name == 'schedule' }}
-#     needs: test-ubuntu
-#     # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         run: yarn build && cd packages/kafka && yarn integrate
+  integration-kafka:
+    if: ${{ github.event_name == 'schedule' }}
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build && cd packages/kafka && yarn integrate
 
-#   integration-prometheus:
-#     if: ${{ github.event_name == 'schedule' }}
-#     needs: test-ubuntu
-# # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         run: yarn build && cd packages/prometheus && yarn integrate
+  integration-prometheus:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build && cd packages/prometheus && yarn integrate
 
-#   integration-s3:
-#     if: ${{ github.event_name == 'schedule' }}
-#     needs: test-ubuntu
-#     # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         run: yarn build && cd packages/s3 && yarn integrate
+  integration-s3:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build && cd packages/s3 && yarn integrate
 
-#   integration-redis:
-#     if: ${{ github.event_name == 'schedule' }}
-#     needs: test-ubuntu
-#     # needs: [test-ubuntu, test-macOS, test-windows]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-#       - name: Windows Node 10
-#         uses: actions/setup-node@v2-beta
-#         with:
-#           node-version: "10"
-#       - name: Install Yarn 1.21.1
-#         run: yarn set version 1.21.1
-#       - name: Install Dependencies for Windows Node 10
-#         run: yarn install --frozen-lockfile
-#       - name: Run Test
-#         run: yarn build && cd packages/redis && yarn integrate
+  integration-redis:
+    needs: test-ubuntu
+    # needs: [test-ubuntu, test-macOS, test-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        run: yarn set version 1.21.1
+      # - name: Install Dependencies for Windows Node 10
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn install --frozen-lockfile
+      # - name: Run Test
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build && cd packages/redis && yarn integrate
