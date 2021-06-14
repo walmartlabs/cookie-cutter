@@ -122,7 +122,7 @@ jobs:
       #   run: yarn audit
 
   test-test:
-    if: contains(env.COMM_MSG, 'full ci')
+    if: contains(${{ env.COMM_MSG }}, 'full ci')
     needs: smoke
     runs-on: ubuntu-latest
     steps:
