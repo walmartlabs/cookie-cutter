@@ -31,7 +31,7 @@ jobs:
       - name: echo env var
         env:
           SOME_NAME: ${{ env.COMM_MSG }}
-      #   run: echo "SOME_NAME $SOME_NAME"
+        run: echo "SOME_NAME $SOME_NAME"
       - name: Dump GitHub context
         # if: contains(env.COMM_MSG, 'full ci')
         env:
