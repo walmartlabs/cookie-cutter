@@ -29,7 +29,7 @@ jobs:
             # CMT: github.event
             # git log -1 --pretty=oneline
         run:  |
-              git log -2 --first-parent
+              git log
               echo "INPUT_COMMITS: $INPUT_COMMITS"
               echo "JSON_CMT: $JSON_CMT"
               echo "BR_CMT: $BR_CMT"
