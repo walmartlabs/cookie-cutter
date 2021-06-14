@@ -10,7 +10,6 @@ on:
 
 jobs:
   smoke:
-    if: contains($(git log --format=%B -n 1 ${{ github.event.after }}), 'full ci')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -27,6 +26,7 @@ jobs:
       - name: show commit message
         run : cat COMMIT_MSG
       - name: Dump GitHub context
+        if: contains($(git log --format=%B -n 1 ${{ github.event.after }}), 'full ci')
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: echo "$GITHUB_CONTEXT"
