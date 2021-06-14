@@ -135,7 +135,7 @@ jobs:
               echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE.txt)" >> $GITHUB_ENV
       - name: Checkout Code
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
-        # if: contains(env.COMMIT_MESSAGE, 'full ci')
+        # if: contains(env.COMMIT_MESSAGE, 'full ci') 
         uses: actions/checkout@v2
       - name: Ubuntu Node 12
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
