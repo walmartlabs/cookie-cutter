@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ master, develop ] # TODO: /^release/.*$/
   schedule:
-    - cron:  '17 15 * * *'  # TODO: make sure this triggers
+    - cron:  '21 16 * * *'  # TODO: make sure this triggers
 
 jobs:
   smoke:
