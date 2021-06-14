@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ master, develop ] # TODO: /^release/.*$/
   schedule:
-    - cron:  '21 16 * * *'  # TODO: make sure this triggers
+    - cron:  '21 16 * * *'  # TODO: not working at the moment
 
 jobs:
   smoke:
@@ -14,24 +14,24 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-        with:
+        with: # required for git log to access the correct commits
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      - name: get commit message
-        run:  |
-              echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
-      - name: show commit message
-        run : cat COMMIT_MSG
-      - name: set env variable
-        run:  |
-              echo "COMM_MSG=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: echo env var
-        env:
-          SOME_NAME: ${{ env.COMM_MSG }}
-        run: echo "SOME_NAME $SOME_NAME"
+      # - name: get commit message
+      #   run:  |
+      #         echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
+      # - name: show commit message
+      #   run : cat COMMIT_MSG
+      # - name: set env variable
+      #   run:  |
+      #         echo "COMM_MSG=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      # - name: echo env var
+      #   env:
+      #     SOME_NAME: ${{ env.COMM_MSG }}
+      #   run: echo "SOME_NAME $SOME_NAME"
       - name: Dump GitHub context
         if: contains(env.COMM_MSG, 'full ci')
         env:
@@ -41,7 +41,7 @@ jobs:
         env:
             BEFORE_CMT: ${{ github.event.before }} 
             AFTER_CMT: ${{ github.event.after }}
-            GITHUB_CONTEXT: ${{ toJson(github) }}
+            # GITHUB_CONTEXT: ${{ toJson(github) }}
             # SOMETHING: 
             # COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
             # CMT: ${{ toJson(github.event.pull_request.commits.href) }}
@@ -50,6 +50,7 @@ jobs:
             # CMT: github.event
             # git log -1 --pretty=oneline
             # git log --format=%B -n 1 "$BEFORE_CMT"
+            # echo "$GITHUB_CONTEXT"
         run:  |
               git log --pretty=oneline -n -1 "$AFTER_CMT"
               echo "BEFORE_CMT: $BEFORE_CMT"
@@ -61,7 +62,6 @@ jobs:
               echo "BR_CMT: $BR_CMT"
               echo "CMT: $CMT"
               echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
-              echo "$GITHUB_CONTEXT"
       - name: Testing
         # if: type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' ) ) }}
@@ -86,7 +86,6 @@ jobs:
               echo "GITHUB_SERVER_URL: $GITHUB_SERVER_URL"
               echo "GITHUB_API_URL: $GITHUB_API_URL"
               echo "GITHUB_GRAPHQL_URL: $GITHUB_GRAPHQL_URL"
-
       # - name: Install Yarn 1.21.1
       #   run: yarn set version 1.21.1
       # - name: Install Dependencies
@@ -100,33 +99,41 @@ jobs:
       # - name: Yarn Audit
       #   if: ${{ github.event_name == 'schedule' }}
       #   run: yarn audit
+      - name: Get Commit Message
+        run:  |
+              echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+              echo "$COMMIT_MESSAGE" > COMMIT_MESSAGE
+      - name: Upload Commit Message as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: commit_message
+          path: COMMIT_MESSAGE
 
-  test-test:
+
+  test-ubuntu:
+    # if: ${{ github.event_name == 'schedule' }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
+      - name: Download Commit Message from Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: commit_message
+      - name: Set Commit Message Env Var
+        echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE)" >> $GITHUB_ENV
       - name: Checkout Code
+        if: contains(env.COMMIT_MESSAGE, 'full ci')
         uses: actions/checkout@v2
-      - name: Env Var Echo
-        run: echo "COMM_MSG $COMM_MSG"
-
-  # test-ubuntu:
-  #   if: ${{ github.event_name == 'schedule' }}
-  #   needs: smoke
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Ubuntu Node 12
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "12"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies for Ubuntu Node 12
-  #       run: yarn install --frozen-lockfile
-  #     - name: Build and Test on Ubuntu Node 12
-  #       run: yarn build # && yarn test
+      - name: Ubuntu Node 12
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "12"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies for Ubuntu Node 12
+        run: yarn install --frozen-lockfile
+      - name: Build and Test on Ubuntu Node 12
+        run: yarn build # && yarn test
 
   # test-macOS:
   #   if: ${{ github.event_name == 'schedule' }}
