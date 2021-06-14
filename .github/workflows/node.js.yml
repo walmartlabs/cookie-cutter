@@ -25,13 +25,13 @@ jobs:
       #         echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
       # - name: show commit message
       #   run : cat COMMIT_MSG
-      - name: set env variable
-        run:  |
-              echo "COMM_MSG=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: echo env var
-        env:
-          SOME_NAME: ${{ env.COMM_MSG }}
-        run: echo "SOME_NAME $SOME_NAME"
+      # - name: set env variable
+      #   run:  |
+      #         echo "COMM_MSG=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      # - name: echo env var
+      #   env:
+      #     SOME_NAME: ${{ env.COMM_MSG }}
+      #   run: echo "SOME_NAME $SOME_NAME"
       - name: Dump GitHub context
         # if: contains(env.COMM_MSG, 'full ci')
         env:
