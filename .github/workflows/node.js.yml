@@ -113,37 +113,44 @@ jobs:
           name: commit_message
           path: COMMIT_MESSAGE.txt
 
+  # type = cron OR (type = pull_request AND (branch = master OR commit_message =~ /\[full(-| )ci\]/))
+
+  # schedule || ( pull_request && ( master OR full_ci ) )       RESULT
+  # schedule || (pull_request && master) || (pull_request && full_ci)
 
   test-ubuntu:
-    # if: ${{ github.event_name == 'schedule' }}
+    # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && github.base_ref == 'master' ) }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
       - name: Download Commit Message from Artifacts
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         uses: actions/download-artifact@v2
         with:
           name: commit_message
       - name: Set Commit Message Env Var
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: |
               cat COMMIT_MESSAGE.txt
               echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE.txt)" >> $GITHUB_ENV
       - name: Checkout Code
-        if: contains(env.COMMIT_MESSAGE, 'full ci')
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+        # if: contains(env.COMMIT_MESSAGE, 'full ci')
         uses: actions/checkout@v2
       - name: Ubuntu Node 12
-        if: contains(env.COMMIT_MESSAGE, 'full ci')
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
       - name: Install Yarn 1.21.1
-        if: contains(env.COMMIT_MESSAGE, 'full ci')
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
         run: yarn set version 1.21.1
       - name: Install Dependencies for Ubuntu Node 12
-        if: contains(env.COMMIT_MESSAGE, 'full ci')
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
         run: yarn install --frozen-lockfile
-      - name: Build and Test on Ubuntu Node 12
-        if: contains(env.COMMIT_MESSAGE, 'full ci')
-        run: yarn build # && yarn test
+      # - name: Build and Test on Ubuntu Node 12
+      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, 'full ci') ) ) }}
+      #   run: yarn build # && yarn test
 
   # test-macOS:
   #   if: ${{ github.event_name == 'schedule' }}
