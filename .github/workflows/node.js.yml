@@ -33,7 +33,7 @@ jobs:
       #     SOME_NAME: ${{ env.COMM_MSG }}
       #   run: echo "SOME_NAME $SOME_NAME"
       - name: Dump GitHub context
-        if: contains(env.COMM_MSG, 'full ci')
+        # if: contains(env.COMM_MSG, 'full ci')
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: echo "$GITHUB_CONTEXT"
@@ -102,12 +102,12 @@ jobs:
       - name: Get Commit Message
         run:  |
               echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-              echo "$COMMIT_MESSAGE" > COMMIT_MESSAGE
+              echo "$COMMIT_MESSAGE" > COMMIT_MESSAGE.txt
       - name: Upload Commit Message as Artifact
         uses: actions/upload-artifact@v2
         with:
           name: commit_message
-          path: COMMIT_MESSAGE
+          path: COMMIT_MESSAGE.txt
 
 
   test-ubuntu:
@@ -120,19 +120,23 @@ jobs:
         with:
           name: commit_message
       - name: Set Commit Message Env Var
-        echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE)" >> $GITHUB_ENV
+        run: echo "COMMIT_MESSAGE=$(cat COMMIT_MESSAGE.txt)" >> $GITHUB_ENV
       - name: Checkout Code
         if: contains(env.COMMIT_MESSAGE, 'full ci')
         uses: actions/checkout@v2
       - name: Ubuntu Node 12
+        if: contains(env.COMMIT_MESSAGE, 'full ci')
         uses: actions/setup-node@v2-beta
         with:
           node-version: "12"
       - name: Install Yarn 1.21.1
+        if: contains(env.COMMIT_MESSAGE, 'full ci')
         run: yarn set version 1.21.1
       - name: Install Dependencies for Ubuntu Node 12
+        if: contains(env.COMMIT_MESSAGE, 'full ci')
         run: yarn install --frozen-lockfile
       - name: Build and Test on Ubuntu Node 12
+        if: contains(env.COMMIT_MESSAGE, 'full ci')
         run: yarn build # && yarn test
 
   # test-macOS:
