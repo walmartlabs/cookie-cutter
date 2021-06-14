@@ -21,12 +21,15 @@ jobs:
         with:
           node-version: "10"
       - name: get commit message
-        run: |
-           echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
+        run:  |
+              echo $(git log --format=%B -n 1 ${{ github.event.after }}) > COMMIT_MSG
       - name: show commit message
         run : cat COMMIT_MSG
+      - name: set env variable
+        run:  |
+              echo "COMM_MSG=$(sh scripts/test.sh)" >> $GITHUB_ENV
       - name: Dump GitHub context
-        if: contains($(git log --format=%B -n 1 ${{ github.event.after }}), 'full ci')
+        if: contains(env.COMM_MSG, 'full ci')
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: echo "$GITHUB_CONTEXT"
