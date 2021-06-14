@@ -36,8 +36,8 @@ jobs:
         run:  |
               git log --pretty=oneline -n -1 "$AFTER_CMT"
               echo "BEFORE_CMT: $BEFORE_CMT"
-              echo "AFTER_CMT: $AFTER_CMT"
               git log --format=%B -n 1 "$AFTER_CMT"
+              echo "AFTER_CMT: $AFTER_CMT"
               git log
               echo "INPUT_COMMITS: $INPUT_COMMITS"
               echo "JSON_CMT: $JSON_CMT"
