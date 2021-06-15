@@ -20,6 +20,7 @@ fi
 
 jest --config=../../jest.integration.config.js --rootDir=.
 exit_code=$?
+echo "Exit Code: $exit_code"
 
 if [[ $RUNNING_IN_CI != 1 ]]
 then

@@ -376,5 +376,5 @@ jobs:
               echo "$SOME_ENV"
               git config --global user.name "${GH_NAME}"
               git config --global user.email "${GH_EMAIL}"
-            # echo "echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc"
-            # echo "cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages"
+            # echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+            # cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
