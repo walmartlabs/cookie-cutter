@@ -135,7 +135,7 @@ jobs:
         run: |
               chcp 65001 #set code page to utf-8
               echo ("VAR1=" + "THIS IS THE THING") >> $env:GITHUB_ENV
-              echo ("VAR2=" + "$(git log -1)") >> $env:GITHUB_ENV
+              echo ("VAR2=" + "$(git log --format=%B -n 1 ${{ github.event.after }})") >> $env:GITHUB_ENV
       - run:  |
               echo "${{ env.VAR1 }}"
               echo "${{ env.VAR2 }}"
