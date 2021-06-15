@@ -122,7 +122,7 @@ jobs:
       #   run: yarn build # && yarn test
 
   integration-azure:
-    needs: test-ubuntu
+    needs: test-windows
     # needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: windows-latest
     steps:
