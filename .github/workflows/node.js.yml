@@ -2,11 +2,11 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ master, develop ] # TODO: /^release/.*$/
+    branches: [ master, develop, ^release/.*$ ]
   pull_request:
-    branches: [ master, develop ] # TODO: /^release/.*$/
+    branches: [ master, develop, ^release/.*$ ]
   schedule:
-    - cron:  '21 16 * * *'  # TODO: not working at the moment
+    - cron:  '15,30,45 * * * *'  # TODO: not working at the moment
 
 jobs:
   smoke:
@@ -324,54 +324,56 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      # - name: Install Yarn 1.21.1
-      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-      #   run: yarn set version 1.21.1
-      # - name: Install Dependencies for Windows Node 10
-      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-      #   run: yarn install --frozen-lockfile
-      # - name: Run Test
-      #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
-      #   run: yarn build && cd packages/redis && yarn integrate
+      - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+        run: yarn set version 1.21.1
+      - name: Install Dependencies for Windows Node 10
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+        run: yarn install --frozen-lockfile
+      - name: Run Test
+        if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
+        run: yarn build && cd packages/redis && yarn integrate
 
   publish-to-npm:
     name: Publish to NPM
-    # if: 
+    if: ${{ github.event_name == 'push' }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        # if: 
         uses: actions/checkout@v2
       - name: Setup Ubuntu Node 10
-        # if: 
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
       - name: Publish to NPM
-        # if: 
         env:
           SOME_ENV: "THIS IS UNDER CONSTRUCTION"
         run: |
               echo "$SOME_ENV"
+            # echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            # yarn build && node ./.ci/deploy.js
 
   publish-to-github-pages:
     name: Publish to Github Pages
-    # if: 
+    if: ${{ github.event_name == 'push' && github.base_ref == 'master' }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        # if: 
         uses: actions/checkout@v2
       - name: Setup Ubuntu Node 10
-        # if: 
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
       - name: Publish to Github Pages
-        # if: 
         env:
+          GH_NAME: sklose
+          GH_EMAIL: sebastian.klose@walmart.com
           SOME_ENV: "THIS IS UNDER CONSTRUCTION"
         run: |
               echo "$SOME_ENV"
+              git config --global user.name "${GH_NAME}"
+              git config --global user.email "${GH_EMAIL}"
+            # echo "echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc"
+            # echo "cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages"
