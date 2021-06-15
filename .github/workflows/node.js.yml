@@ -128,7 +128,8 @@ jobs:
         shell: bash
         run: |
               echo $(git log --format=%B -n 1 ${{ github.event.after }})
-              echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> %GITHUB_ENV%
+              chcp 65001 #set code page to utf-8
+              echo ("COMMIT_MESSAGE=" + $(git log --format=%B -n 1 ${{ github.event.after }})) >> $env:GITHUB_ENV
       - name: echo env var
         env:
           SOME_NAME: ${{ env.COMMIT_MESSAGE }}
