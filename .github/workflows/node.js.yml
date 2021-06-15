@@ -101,10 +101,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+        shell: bash
         run: |
               echo $(git log --format=%B -n 1 ${{ github.event.after }})
-              echo "set COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-              echo "COMMIT_MESSAGE $COMMIT_MESSAGE"
+              echo COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> %GITHUB_ENV%
       - name: echo env var
         env:
           SOME_NAME: ${{ env.COMMIT_MESSAGE }}
