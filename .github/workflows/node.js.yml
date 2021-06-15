@@ -1,11 +1,12 @@
 name: Cookie Cutter Build Workflow
 
 on:
+  workflow_dispatch:
+    branches: [ master, develop, ^release/.*$ ]
   push:
     branches: [ master, develop, ^release/.*$ ]
   pull_request:
     branches: [ master, develop, ^release/.*$ ]
-  workflow_dispatch:
   schedule:
     - cron:  '15,30,45 * * * *'  # TODO: not working at the moment/ possibly an fix with an external cron service and a webhook?
 
