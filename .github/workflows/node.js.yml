@@ -10,11 +10,12 @@ on:
 
 jobs:
   smoke:
+    name: Ubuntu Node 10 Smoke
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Ubuntu Node 10
+      - name: Setup Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
@@ -33,6 +34,7 @@ jobs:
         run: yarn audit
 
   test-ubuntu:
+    name: Ubuntu Node 12 Test
     needs: smoke
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +46,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Ubuntu Node 12
+      - name: Setup Ubuntu Node 12
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -60,6 +62,7 @@ jobs:
         run: yarn build && yarn test
 
   test-macOS:
+    name: MacOS Node 10 Test
     needs: smoke
     runs-on: macOS-latest
     steps:
@@ -71,7 +74,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: macOS Node 10
+      - name: Setup macOS Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -91,6 +94,7 @@ jobs:
         run: yarn build && yarn test
 
   test-windows:
+    name: Windows Node 10 Test
     needs: smoke
     runs-on: windows-latest
     steps:
@@ -104,7 +108,7 @@ jobs:
         run: |
               chcp 65001 #set code page to utf-8
               echo ("COMMIT_MESSAGE=" + "$(git log --format=%B -n 1 ${{ github.event.after }})") >> $env:GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Windows Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -122,7 +126,7 @@ jobs:
         run: yarn build && yarn test
 
   integration-azure:
-    # needs: test-windows
+    name: Azure Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: windows-latest
     steps:
@@ -136,7 +140,7 @@ jobs:
         run: |
               chcp 65001 #set code page to utf-8
               echo ("COMMIT_MESSAGE=" + "$(git log --format=%B -n 1 ${{ github.event.after }})") >> $env:GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Windows Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -164,7 +168,7 @@ jobs:
               PowerShell -File packages/azure/run_integration_tests.ps1
 
   integration-mssql:
-    # needs: test-ubuntu
+    name: MSSQL Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -176,7 +180,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Ubuntu Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -192,7 +196,7 @@ jobs:
         run: yarn build && cd packages/mssql && yarn integrate
 
   integration-amqp:
-    # needs: test-ubuntu
+    name: AMQP Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -204,7 +208,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Ubuntu Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -220,7 +224,7 @@ jobs:
         run: yarn build && cd packages/amqp && yarn integrate
 
   integration-kafka:
-    # needs: test-ubuntu
+    name: Kafka Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -232,7 +236,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Ubuntu Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -248,7 +252,7 @@ jobs:
         run: yarn build && cd packages/kafka && yarn integrate
 
   integration-prometheus:
-    # needs: test-ubuntu
+    name: Prometheus Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -260,7 +264,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Ubuntu Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -276,7 +280,7 @@ jobs:
         run: yarn build && cd packages/prometheus && yarn integrate
 
   integration-s3:
-    # needs: test-ubuntu
+    name: S3 Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -288,7 +292,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
@@ -303,7 +307,7 @@ jobs:
         run: yarn build && cd packages/s3 && yarn integrate
 
   integration-redis:
-    # needs: test-ubuntu
+    name: Redis Integration
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -315,7 +319,7 @@ jobs:
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-      - name: Windows Node 10
+      - name: Setup Ubuntu Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         uses: actions/setup-node@v2-beta
         with:
@@ -329,3 +333,45 @@ jobs:
       # - name: Run Test
       #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
       #   run: yarn build && cd packages/redis && yarn integrate
+
+  publish-to-npm:
+    name: Publish to NPM
+    # if: 
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        # if: 
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 10
+        # if: 
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Publish to NPM
+        # if: 
+        env:
+          SOME_ENV: "THIS IS UNDER CONSTRUCTION"
+        run: |
+              echo "$SOME_ENV"
+
+  publish-to-github-pages:
+    name: Publish to Github Pages
+    # if: 
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        # if: 
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 10
+        # if: 
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      - name: Publish to Github Pages
+        # if: 
+        env:
+          SOME_ENV: "THIS IS UNDER CONSTRUCTION"
+        run: |
+              echo "$SOME_ENV"
