@@ -1,0 +1,23 @@
+name: Cookie Cutter Master Build Workflow
+
+on:
+  workflow_dispatch:
+    branches: [ master, develop ]
+  push:
+    branches: [ master, develop]
+  pull_request:
+    branches: [ master, develop ]
+  schedule:
+    - cron:  '40 * * * *'
+
+jobs:
+  smoke:
+    name: Ubuntu Node 10 Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
