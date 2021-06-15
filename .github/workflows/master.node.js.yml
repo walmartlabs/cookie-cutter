@@ -2,11 +2,11 @@ name: Cookie Cutter Master Build Workflow
 
 on:
   workflow_dispatch:
-    branches: [ master ]
+    branches: [ master, develop ]
   push:
-    branches: [ master]
+    branches: [ master, develop]
   pull_request:
-    branches: [ master ]
+    branches: [ master, develop ]
   schedule:
     - cron:  '40 * * * *'
 
