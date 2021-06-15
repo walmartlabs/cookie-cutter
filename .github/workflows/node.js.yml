@@ -1,0 +1,36 @@
+name: Cookie Cutter Master Build Workflow
+
+on:
+  workflow_dispatch:
+    branches: [ master ]
+  push:
+    branches: [ master]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron:  '15,30,45 * * * *'
+
+jobs:
+  smoke:
+    name: Ubuntu Node 10 Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10"
+      # - name: Install Yarn 1.21.1
+      #   run: yarn set version 1.21.1
+      # - name: Install Dependencies
+      #   run: yarn install --frozen-lockfile
+      # - name: Yarn Build
+      #   run: yarn build
+      # - name: Yarn Lint
+      #   run: yarn lint
+      # - name: Yarn Test
+      #   run: yarn test
+      # - name: Yarn Audit
+      #   if: ${{ github.event_name == 'schedule' }}
+      #   run: yarn audit
