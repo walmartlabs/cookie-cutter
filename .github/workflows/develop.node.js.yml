@@ -1,4 +1,4 @@
-name: Cookie Cutter Master Build Workflow
+name: Cookie Cutter Develop Build Workflow
 
 on:
   workflow_dispatch:

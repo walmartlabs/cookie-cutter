@@ -19,132 +19,132 @@ matrix:
           os: linux
           node_js: 10
           stage: smoke
-          script: cd packages/core && yarn build # && yarn lint && yarn test
+          script: cd packages/core && yarn build && yarn lint && yarn test
 
-        # - name: "Audit Dependencies"
-        #   os: linux
-        #   node_js: 10
-        #   stage: smoke
-        #   if: type = cron
-        #   script: yarn audit
+        - name: "Audit Dependencies"
+          os: linux
+          node_js: 10
+          stage: smoke
+          if: type = cron
+          script: yarn audit
 
-        # - name: "Linux Node 12"
-        #   os: linux
-        #   node_js: 12
-        #   stage: test
-        # - name: "OSX Node 10"
-        #   os: osx
-        #   node_js: 10
-        #   stage: test
-        # - name: "Windows Node 10"
-        #   os: windows
-        #   node_js: 10
-        #   stage: test
-        #   env:
-        #     - YARN_GPG=no # Windows build agent will hang without this
+        - name: "Linux Node 12"
+          os: linux
+          node_js: 12
+          stage: test
+        - name: "OSX Node 10"
+          os: osx
+          node_js: 10
+          stage: test
+        - name: "Windows Node 10"
+          os: windows
+          node_js: 10
+          stage: test
+          env:
+            - YARN_GPG=no # Windows build agent will hang without this
 
-        # - name: "AZURE"
-        #   os: windows
-        #   node_js: 10
-        #   stage: integrate
-        #   env:
-        #     - YARN_GPG=no # Windows build agent will hang without this
-        #     - NODE_TLS_REJECT_UNAUTHORIZED="0"
-        #     - COSMOS_SECRET_KEY="C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-        #     - AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
-        #     - AZURE_STORAGE_ACCESS_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-        #     - AZURE_STORAGE_ACCOUNT="devstoreaccount1"
-        #     - AZURE_STORAGE_URL="http://127.0.0.1:10000/devstoreaccount1"
-        #     - RUNNING_IN_CI="1"
-        #   script: |
-        #           PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
-        #           PowerShell -File packages/azure/start_emulators.ps1
-        #           PowerShell -File packages/azure/run_integration_tests.ps1
+        - name: "AZURE"
+          os: windows
+          node_js: 10
+          stage: integrate
+          env:
+            - YARN_GPG=no # Windows build agent will hang without this
+            - NODE_TLS_REJECT_UNAUTHORIZED="0"
+            - COSMOS_SECRET_KEY="C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+            - AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+            - AZURE_STORAGE_ACCESS_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+            - AZURE_STORAGE_ACCOUNT="devstoreaccount1"
+            - AZURE_STORAGE_URL="http://127.0.0.1:10000/devstoreaccount1"
+            - RUNNING_IN_CI="1"
+          script: |
+                  PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
+                  PowerShell -File packages/azure/start_emulators.ps1
+                  PowerShell -File packages/azure/run_integration_tests.ps1
 
-        # - name: "MSSQL"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: |
-        #           echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        #           yarn build && cd packages/mssql && yarn integrate
+        - name: "MSSQL"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/mssql && yarn integrate
 
-        # - name: "AMQP"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: |
-        #           echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        #           yarn build && cd packages/amqp && yarn integrate
+        - name: "AMQP"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/amqp && yarn integrate
 
-        # - name: "Kafka"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: |
-        #           echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        #           yarn build && cd packages/kafka && yarn integrate
+        - name: "Kafka"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/kafka && yarn integrate
 
-        # - name: "Prometheus"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: |
-        #           echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        #           yarn build && cd packages/prometheus && yarn integrate
+        - name: "Prometheus"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/prometheus && yarn integrate
 
-        # - name: "S3"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: |
-        #           echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        #           yarn build && cd packages/s3 && yarn integrate
+        - name: "S3"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/s3 && yarn integrate
 
-        # - name: "Redis"
-        #   os: linux
-        #   node_js: 10
-        #   stage: integrate
-        #   services:
-        #     - docker
-        #   script: |
-        #           echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        #           yarn build && cd packages/redis && yarn integrate
+        - name: "Redis"
+          os: linux
+          node_js: 10
+          stage: integrate
+          services:
+            - docker
+          script: |
+                  echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                  yarn build && cd packages/redis && yarn integrate
 
-        # - name: "Publish to NPM"
-        #   os: linux
-        #   node_js: 10
-        #   stage: deploy
-        #   env:
-        #     - secure: "X4e3tI6zIOShCVHgao7vd7qJQXh2nOlE0SCYGsQhSAxe3c9+rBX7ih9tS5PTACOyvxXqrhqVHhn7P9yTZQT1ponFY0yzWDHcTWtzIDLaXnL189MN6hNq7zz6aPC/zy6/RLUay63/yeyHWCl2MlJYxjcFTsgJRVU2W9hzyl99SDPQrDTNwZKN3rEdqDQxjXTZAxIRRE4RNYPfOkTQpKXIP0JiFUszKhGOE4YA56f0YNVQG2OCdlG/y38qDRK7RTVeechao3XdpkIfuDcJNlx4xFFTRmuciOIbgM6UsDZaCIKjVa06LhR9WApTGG5J91lTpC/3h6v1A0dY13drjQaHY1XLca0Yt2zYTu+o8gLngaPuqLuQDFNXBkuov/r8o8dqAIHHPr/TfeT5mSs7bgTLOFc0ABttpubk6T1LuITZvdEwtfH2z0mivad7d0P4C+jQRlN8mO8kuBzDo9BfX9Bn2yStRdvXcbjhw2tPth16RWIq2HmpTyC/wWRYFdREJnRRGC5GNnEKZbJN2zXxOrLeJkbQeFdavpwDZqKV0xi3ni5CBKIw/hF4efF5VKuIrMkTgdi3pI5QmZHqDOYNgeLG1KFTm6mwZGD9VHpFSt3WokC/92SbcxM/UvLCQ/vxp+CkvcIuzTQ9b5bCakYbAJ5MTBjzfsEhep4lB1Hytb0C668="
-        #   script: |
-        #           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-        #           yarn build && node ./.ci/deploy.js
+        - name: "Publish to NPM"
+          os: linux
+          node_js: 10
+          stage: deploy
+          env:
+            - secure: "X4e3tI6zIOShCVHgao7vd7qJQXh2nOlE0SCYGsQhSAxe3c9+rBX7ih9tS5PTACOyvxXqrhqVHhn7P9yTZQT1ponFY0yzWDHcTWtzIDLaXnL189MN6hNq7zz6aPC/zy6/RLUay63/yeyHWCl2MlJYxjcFTsgJRVU2W9hzyl99SDPQrDTNwZKN3rEdqDQxjXTZAxIRRE4RNYPfOkTQpKXIP0JiFUszKhGOE4YA56f0YNVQG2OCdlG/y38qDRK7RTVeechao3XdpkIfuDcJNlx4xFFTRmuciOIbgM6UsDZaCIKjVa06LhR9WApTGG5J91lTpC/3h6v1A0dY13drjQaHY1XLca0Yt2zYTu+o8gLngaPuqLuQDFNXBkuov/r8o8dqAIHHPr/TfeT5mSs7bgTLOFc0ABttpubk6T1LuITZvdEwtfH2z0mivad7d0P4C+jQRlN8mO8kuBzDo9BfX9Bn2yStRdvXcbjhw2tPth16RWIq2HmpTyC/wWRYFdREJnRRGC5GNnEKZbJN2zXxOrLeJkbQeFdavpwDZqKV0xi3ni5CBKIw/hF4efF5VKuIrMkTgdi3pI5QmZHqDOYNgeLG1KFTm6mwZGD9VHpFSt3WokC/92SbcxM/UvLCQ/vxp+CkvcIuzTQ9b5bCakYbAJ5MTBjzfsEhep4lB1Hytb0C668="
+          script: |
+                  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+                  yarn build && node ./.ci/deploy.js
 
-        # - name: "Publish to GitHub Pages"
-        #   if: branch = master
-        #   os: linux
-        #   node_js: 10
-        #   stage: deploy
-        #   env:
-        #     - GH_NAME=sklose
-        #     - GH_EMAIL=sebastian.klose@walmart.com
-        #     - secure: "GlsrfPBNJWOzBL0xGo/B/V9x6Q4FvTt4icFKIneqfpopPEqJZKG6Pc1IcE0bssuiv+FIq+K9I0CAQF7Lz9e5X1BT/Sscnz69qTlbf0f46DBvXE8bNeLrRH7FEQHuiyEosJiB0lF9lgok0PwCsJXyAeevktNmI9udkULk9wYGrA8EiQnrJwApYBhJenHpy51fSFO2rHwE7acgaf6kKZXvIkiaWg35+jM+JJwfw3eSWi+ktfJ3KXsMPk0eb+ji0Py85vL2IMvJt7aDYSf5RIIApZjHuWCdSw42gPX3szlmFJ7Kb6BwKQd5Bo5otIlywg3uZ4G08xnJg6vHIAxDU93bgT0i82qHAkCo8IWsl6XcZFisdjdplI1Aw2w2HiIFtT0APPmUwarQWW7m8Y6s3uTDMXQCl2CFlaL0pK4y1tfz68M3YI4aotueQDJbDxUn/C81K6RnVZPV/oXGfx3WMN6nCdMQwX2xwS6AxCO6X1N7suXmSq6Bew/yP9kO+tD8Qd2BOOnXvFCqlmHgL0MVYEAZVl3bo4aayfoquT/iLG85+XoSRgnbVXEhHiYQQP3g0AorBOamBGkaWd71kJBgwX6JTn49RFK/8A85pNEovz6L72hV9uFFlKDJpOeo5UgZOZ76xQS5TPF7HCeT8IPui5F5boN+NE9OzFG1despJYt8WEo="
-        #   script: |
-        #           git config --global user.name "${GH_NAME}"
-        #           git config --global user.email "${GH_EMAIL}"
-        #           echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
-        #           cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
+        - name: "Publish to GitHub Pages"
+          if: branch = master
+          os: linux
+          node_js: 10
+          stage: deploy
+          env:
+            - GH_NAME=sklose
+            - GH_EMAIL=sebastian.klose@walmart.com
+            - secure: "GlsrfPBNJWOzBL0xGo/B/V9x6Q4FvTt4icFKIneqfpopPEqJZKG6Pc1IcE0bssuiv+FIq+K9I0CAQF7Lz9e5X1BT/Sscnz69qTlbf0f46DBvXE8bNeLrRH7FEQHuiyEosJiB0lF9lgok0PwCsJXyAeevktNmI9udkULk9wYGrA8EiQnrJwApYBhJenHpy51fSFO2rHwE7acgaf6kKZXvIkiaWg35+jM+JJwfw3eSWi+ktfJ3KXsMPk0eb+ji0Py85vL2IMvJt7aDYSf5RIIApZjHuWCdSw42gPX3szlmFJ7Kb6BwKQd5Bo5otIlywg3uZ4G08xnJg6vHIAxDU93bgT0i82qHAkCo8IWsl6XcZFisdjdplI1Aw2w2HiIFtT0APPmUwarQWW7m8Y6s3uTDMXQCl2CFlaL0pK4y1tfz68M3YI4aotueQDJbDxUn/C81K6RnVZPV/oXGfx3WMN6nCdMQwX2xwS6AxCO6X1N7suXmSq6Bew/yP9kO+tD8Qd2BOOnXvFCqlmHgL0MVYEAZVl3bo4aayfoquT/iLG85+XoSRgnbVXEhHiYQQP3g0AorBOamBGkaWd71kJBgwX6JTn49RFK/8A85pNEovz6L72hV9uFFlKDJpOeo5UgZOZ76xQS5TPF7HCeT8IPui5F5boN+NE9OzFG1despJYt8WEo="
+          script: |
+                  git config --global user.name "${GH_NAME}"
+                  git config --global user.email "${GH_EMAIL}"
+                  echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+                  cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
 
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
