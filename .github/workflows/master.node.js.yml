@@ -3,21 +3,46 @@ name: Cookie Cutter Master Build Workflow
 on:
   workflow_dispatch:
     branches: [ master, develop ]
+    inputs:
+      branch:
+        description: 'Target Branch'
+        required: false
+        default: 'master'
   push:
     branches: [ master, develop]
   pull_request:
     branches: [ master, develop ]
   schedule:
-    - cron:  '40 * * * *'
+    - cron:  '20,40 * * * *'
 
 jobs:
   smoke:
     name: Ubuntu Node 10 Smoke
     runs-on: ubuntu-latest
     steps:
+      - name:
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'manual' }}
+        run: echo "Target Branch is ${{ github.event.inputs.branch }}!"
       - name: Checkout Code
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'manual' }}
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' }}
+        uses: actions/checkout@v2
+        with:
+          ref: develop
+      - name: Checkout Code
+        if: ${{ github.event_name != 'schedule' }}
+        uses: actions/checkout@v2
+      - name: Echo GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Setup Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+      - name: Cat core/package.json
+        run: cd packages/core && cat package.json
