@@ -20,6 +20,8 @@ jobs:
     name: Ubuntu Node 10 Smoke
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code on schedule
+        uses: actions/checkout@v2
       - name: Conditional Checkout Code
         uses: ./.github/actions/conditional-checkout
       # - name: Checkout Code on schedule
@@ -53,6 +55,8 @@ jobs:
     needs: smoke
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code on schedule
+        uses: actions/checkout@v2
       - name: Conditional Checkout Code
         uses: ./.github/actions/conditional-checkout
       # - name: Checkout Code on schedule
