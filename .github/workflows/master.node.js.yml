@@ -16,8 +16,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
+        if: ${{ github.event_name == 'schedule' }}
         uses: actions/checkout@v2
+        with:
+          ref: develop
+      - name: Checkout Code
+        if: ${{ github.event_name != 'schedule' }}
+        uses: actions/checkout@v2
+      - name: Echo GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Setup Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+      - name: Cat core/package.json
+        run: cd packages/core && cat package.json
