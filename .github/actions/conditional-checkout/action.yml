@@ -1,0 +1,31 @@
+name: 'Conditional Checkout'
+description: 'Runs Checkout based on trigger event'
+# inputs:
+#   who-to-greet:  # id of input
+#     description: 'Who to greet'
+#     required: true
+#     default: 'World'
+# outputs:
+#   random-number:
+#     description: "Random number"
+#     value: ${{ steps.random-number-generator.outputs.random-id }}
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout Code on schedule
+        if: ${{ github.event_name == 'schedule' }}
+        uses: actions/checkout@v2
+        with:
+          ref: develop
+      - name: Checkout Code on pull_request
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+    # - run: echo Hello ${{ inputs.who-to-greet }}.
+    #   shell: bash
+    # - id: random-number-generator
+    #   run: echo "::set-output name=random-id::$(echo $RANDOM)"
+    #   shell: bash
+    # - run: ${{ github.action_path }}/goodbye.sh
+    #   shell: bash

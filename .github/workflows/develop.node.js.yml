@@ -20,14 +20,16 @@ jobs:
     name: Ubuntu Node 10 Smoke
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code on schedule
-        if: ${{ github.event_name == 'schedule' }}
-        uses: actions/checkout@v2
-        with:
-          ref: develop
-      - name: Checkout Code on other triggers
-        if: ${{ github.event_name != 'schedule' }}
-        uses: actions/checkout@v2
+      - name: Conditional Checkout Code
+        uses: ./.github/actions/conditional-checkout
+      # - name: Checkout Code on schedule
+      #   if: ${{ github.event_name == 'schedule' }}
+      #   uses: actions/checkout@v2
+      #   with:
+      #     ref: develop
+      # - name: Checkout Code on other triggers
+      #   if: ${{ github.event_name != 'schedule' }}
+      #   uses: actions/checkout@v2
       - name: Setup Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
@@ -51,16 +53,18 @@ jobs:
     needs: smoke
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code on schedule
-        if: ${{ github.event_name == 'schedule' }}
-        uses: actions/checkout@v2
-        with:
-          ref: develop
-      - name: Checkout Code on pull_request
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v2
-        with: # required for git log to access the correct commits
-          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Conditional Checkout Code
+        uses: ./.github/actions/conditional-checkout
+      # - name: Checkout Code on schedule
+      #   if: ${{ github.event_name == 'schedule' }}
+      #   uses: actions/checkout@v2
+      #   with:
+      #     ref: develop
+      # - name: Checkout Code on pull_request
+      #   if: ${{ github.event_name == 'pull_request' }}
+      #   uses: actions/checkout@v2
+      #   with: # required for git log to access the correct commits
+      #     ref: ${{ github.event.pull_request.head.sha }}
       - name: Get Commit Message
         if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
