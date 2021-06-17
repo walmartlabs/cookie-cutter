@@ -172,7 +172,7 @@ Application.create()
             endpoint: "localhost:5000",
             definition: SampleServiceDefinition,
         }))
-        done()
+        .done()
     .dispatch({
         onSomeInput: (msg: ISomeInput, ctx: IDispatchContext): Promise<void> => {
             const client = ctx.services.get<ISampleService>("some-service");
