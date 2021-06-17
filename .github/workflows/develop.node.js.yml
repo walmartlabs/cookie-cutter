@@ -60,7 +60,7 @@ jobs:
     needs: smoke
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{needs.job1.outputs.commit_message}}
+      - run: echo ${{needs.smoke.outputs.commit_message}}
       - name: Checkout Code on schedule
         if: ${{ github.event_name == 'schedule' }}
         uses: actions/checkout@v2
