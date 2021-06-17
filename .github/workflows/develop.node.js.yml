@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ master, develop, ^release/.*$ ]
   schedule:
-    - cron:  '20,40,55 * * * *'
+    - cron:  '0 4 * * *'
 
 jobs:
   smoke:
