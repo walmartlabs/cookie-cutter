@@ -48,6 +48,7 @@ jobs:
 
   test-ubuntu:
     name: Ubuntu Node 12 Test
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
@@ -81,6 +82,7 @@ jobs:
 
   test-macOS:
     name: MacOS Node 10 Test
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: smoke
     runs-on: macOS-latest
     steps:
@@ -116,6 +118,7 @@ jobs:
 
   test-windows:
     name: Windows Node 10 Test
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: smoke
     runs-on: windows-latest
     steps:
@@ -153,6 +156,7 @@ jobs:
 
   integration-azure:
     name: Azure Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: windows-latest
     steps:
@@ -200,6 +204,7 @@ jobs:
 
   integration-mssql:
     name: MSSQL Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -233,6 +238,7 @@ jobs:
 
   integration-amqp:
     name: AMQP Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -266,6 +272,7 @@ jobs:
 
   integration-kafka:
     name: Kafka Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -299,6 +306,7 @@ jobs:
 
   integration-prometheus:
     name: Prometheus Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -332,6 +340,7 @@ jobs:
 
   integration-s3:
     name: S3 Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -364,6 +373,7 @@ jobs:
 
   integration-redis:
     name: Redis Integration
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: [test-ubuntu, test-macOS, test-windows]
     runs-on: ubuntu-latest
     steps:
