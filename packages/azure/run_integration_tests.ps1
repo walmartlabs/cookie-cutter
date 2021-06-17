@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 Write-Host "Build core"
 cd packages/core
 yarn build
