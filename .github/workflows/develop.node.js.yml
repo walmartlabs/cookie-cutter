@@ -106,9 +106,8 @@ jobs:
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-              yarn set version 1.21.1
-              yarn install --frozen-lockfile
+        run: yarn set version 1.21.1
+              # yarn install --frozen-lockfile
       - name: Install Dependencies for macOS Node 10
         if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(env.COMMIT_MESSAGE, '[full ci]') || contains(env.COMMIT_MESSAGE, '[full-ci]') ) ) }}
         run: yarn install --frozen-lockfile
