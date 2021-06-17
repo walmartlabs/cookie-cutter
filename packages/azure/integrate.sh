@@ -34,4 +34,4 @@ then
     fi
 fi
 
-exit "$exit_code"
+exit $exit_code
