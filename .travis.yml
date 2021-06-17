@@ -19,7 +19,7 @@ matrix:
           os: linux
           node_js: 10
           stage: smoke
-          script: cd packages/core && yarn build && yarn lint && yarn test
+          script: yarn build && yarn lint && yarn test
 
         - name: "Audit Dependencies"
           os: linux
@@ -150,12 +150,7 @@ before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.21.1
   - export PATH="$HOME/.yarn/bin:$PATH"
 
-sudo: required
 install:
-  - sudo apt-get install -y ccrypt
-  - echo $NPM_TOKEN > info.txt
-  - ccencrypt info.txt -K $TEMP_SECRET
-  - cat info.txt.cpt | base64
   - yarn install --frozen-lockfile
 
 script: yarn build && yarn test
@@ -164,5 +159,3 @@ env:
   global:
   - DOCKER_USERNAME: wmtcookiecutter
   - secure: pR9Vrg1oJ4HM6vWH7NSyzzhlEaXm3EAg8gNl9JPtMJ8eCMiahS7fo4HfH35JCNBMeSjNoXF8+CX+N63aQdTTYb3NXtvqciO/ErFqaDmb/ah4ANNpbLCpaCIK0D7Xwi6xdnXw0HiyKOlnKAN46i9ISfaFdv8qHo4tk1q8URRu3TIz0hjECCM6jbou6ehlejr5sYMil/gU58NznU1C58NEOBDJ4b+kDC13Atsjf8DwKINe+ZFS2Y0tcgAs7OnfcCALFqEcf9H3d6bLPiThfHGVfVWnutcjc+P9FurOEpXhN1yTwsPbqWB5G9iNs7Ju85nLX8JnfvJab24d5kPaEUfH8MqcKJ5F/GX3gvRc1Sa6EyHL8wFodeln4raO2fQ6GTnAgRTiqr6mDzYTugfeF8PFjO2nDVUT7HKGv+j7/vhxsHMaZGzx/hxdVGai+9bFdsOkMgwBnjlXu8x6XpjuTjiAwIW5D8XepqS+LwUd9nQAY2o1URpmQotqfqPS5yL907tsNPDVA4yRqXPlM0ETXAzq7TPsNzK26V1x/7xl2MTWD3msy2DWz3/th/GmrLLpTQcBmzXEOshxChXBUyY5ML5w/4eMAiJCdI6Az0liUzjJbatM2DstvZfeZyYZo0P4HRFDWNzsSAgkgN12nz6ZSb94ggt+SeEYbWSMzVpZc5EHZWI=
-  - secure: C7wwoO51AMmuRHdJMq/KZg9ZEFuWZDCuESBxSFRoBuJii/tDAnk0NaSwxMca9MUysCtIEL1TbWnrWynVrXcRyOj9BJLRLSlzHElC67AKinKG0cNoeLKmg+qlqHIHyQC4JeoIDjKkQSC9Vanni3ZSAPaUnHqKejS5A6J3KBvcSekWyQTM4u9oa6rbu9nxqJCS5yAQQULvxEqdSwDyquh1iXwnI/t5V6mdEF/mRNunvX1gu7yJXjh+lW4QyiNoS7WYJt+iAEnnwVqccPL9HoGZh5QobIQuW/3qUSQiuuSB8/fiVrjmXMWh97dN1VsBl4s/+506aVFYoNXKQiW1yvIqp0mPBqWvaUYcnpG/vqHd79xnluCr/gGxnfC56eFNvekROkAmlc9Ce/ogyUxC6/07QbjA6GlYDLr0QnVae6NR4wwlFIn7G8I6Afg4/BTnQjLXJUV4UuTErp6DlZM1ATN96dlyfq4NMaLENboBBfoBtYOx/qcDRynJB1j2iZTPGeOkG4yvPWJSuq9qlSmU1KPaqz5iE+QrolensH6vjWomBowfcNfNUcgWmCYQKYv4xOPgavAtR+5hZKfLTn93ex+ZLLJrdWIlSYRoVMeZMkab0fJhX/I2Vf9/aBNjU/m8SFGnoac3Cb7TIECu99Dk/pDjWJBJ29hWcSm+j2UXzPKuOng=
-  - secure: "X4e3tI6zIOShCVHgao7vd7qJQXh2nOlE0SCYGsQhSAxe3c9+rBX7ih9tS5PTACOyvxXqrhqVHhn7P9yTZQT1ponFY0yzWDHcTWtzIDLaXnL189MN6hNq7zz6aPC/zy6/RLUay63/yeyHWCl2MlJYxjcFTsgJRVU2W9hzyl99SDPQrDTNwZKN3rEdqDQxjXTZAxIRRE4RNYPfOkTQpKXIP0JiFUszKhGOE4YA56f0YNVQG2OCdlG/y38qDRK7RTVeechao3XdpkIfuDcJNlx4xFFTRmuciOIbgM6UsDZaCIKjVa06LhR9WApTGG5J91lTpC/3h6v1A0dY13drjQaHY1XLca0Yt2zYTu+o8gLngaPuqLuQDFNXBkuov/r8o8dqAIHHPr/TfeT5mSs7bgTLOFc0ABttpubk6T1LuITZvdEwtfH2z0mivad7d0P4C+jQRlN8mO8kuBzDo9BfX9Bn2yStRdvXcbjhw2tPth16RWIq2HmpTyC/wWRYFdREJnRRGC5GNnEKZbJN2zXxOrLeJkbQeFdavpwDZqKV0xi3ni5CBKIw/hF4efF5VKuIrMkTgdi3pI5QmZHqDOYNgeLG1KFTm6mwZGD9VHpFSt3WokC/92SbcxM/UvLCQ/vxp+CkvcIuzTQ9b5bCakYbAJ5MTBjzfsEhep4lB1Hytb0C668="

@@ -12,13 +12,11 @@ describe("Blob Client", () => {
     const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
     const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
     const storageUrl = process.env.AZURE_STORAGE_URL;
-    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     const container = "defaultcontainer";
 
     const client = new BlobClient({
         storageAccount,
         storageAccessKey,
-        // url: connectionString,
         url: storageUrl,
         container,
     });
@@ -32,7 +30,6 @@ describe("Blob Client", () => {
     describe("createContainerIfNotExists()", () => {
         it("creates a new container using url, account and accesskey, and tests a write into it", async () => {
             const newClient = new BlobClient({
-                // url: connectionString,
                 url: storageUrl,
                 storageAccount,
                 storageAccessKey,
@@ -55,8 +52,7 @@ describe("Blob Client", () => {
 
         it("tries to create an already existing container and gets the response as false", async () => {
             const newClient = new BlobClient({
-                url: connectionString,
-                // url: storageUrl,
+                url: storageUrl,
                 storageAccount,
                 storageAccessKey,
                 container: "oldcontainer",
