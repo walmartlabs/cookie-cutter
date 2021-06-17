@@ -76,7 +76,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Setup macOS Node 10
+      - name: Setup MacOS Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
@@ -131,7 +131,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
-        run: yarn build
+        run: cd packages/core && yarn build && cd ../mssql && yarn build
       - name: Yarn Integrate
         run: cd packages/mssql && yarn integrate
 
@@ -152,7 +152,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
-        run: yarn build
+        run: cd packages/core && yarn build && cd ../amqp && yarn build
       - name: Yarn Integrate
         run: cd packages/amqp && yarn integrate
 
@@ -173,7 +173,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
-        run: yarn build
+        run: cd packages/core && yarn build && cd ../kafka && yarn build
       - name: Yarn Integrate
         run: cd packages/kafka && yarn integrate
 
@@ -194,7 +194,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
-        run: yarn build
+        run: cd packages/core && yarn build && cd ../prometheus && yarn build
       - name: Yarn Integrate
         run: cd packages/prometheus && yarn integrate
 
@@ -215,7 +215,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
-        run: yarn build
+        run: cd packages/core && yarn build && cd ../s3 && yarn build
       - name: Yarn Integrate
         run: cd packages/s3 && yarn integrate
 
@@ -236,7 +236,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
-        run: yarn build
+        run: cd packages/core && yarn build && cd ../redis && yarn build
       - name: Yarn Integrate
         run: cd packages/redis && yarn integrate
 
