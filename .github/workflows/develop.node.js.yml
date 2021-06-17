@@ -62,7 +62,8 @@ jobs:
 
   test-ubuntu:
     name: Ubuntu Node 12 Test
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
+    if: ${{ contains(needs.smoke.outputs.commit_message, '[small ci]) }}
+    # if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
