@@ -30,14 +30,14 @@ jobs:
       - name: Checkout Code on other triggers
         if: ${{ github.event_name != 'schedule' }}
         uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Setup Ubuntu Node 10
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
       - name: Get Commit Message
         run: echo "COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-        with: # required for git log to access the correct commits
-          ref: ${{ github.event.pull_request.head.sha }}
       - name: Output Commit Message
         id: output_message
         env:
