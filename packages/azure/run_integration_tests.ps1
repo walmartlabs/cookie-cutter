@@ -1,4 +1,7 @@
-$ErrorActionPreference = "Stop"
+# $ErrorActionPreference = "Stop"
+
+Write-Host "Throw Error here"
+throw "This is an error."
 
 Write-Host "Build core"
 cd packages/core
