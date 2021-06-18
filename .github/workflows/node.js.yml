@@ -320,4 +320,3 @@ jobs:
               git config --global user.email "${GH_EMAIL}"
               echo "machine github.com login ${GH_NAME} password ${GITHUB_TOKEN}" > ~/.netrc
               cd docs/website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
-
