@@ -20,10 +20,8 @@ jobs:
         with: # required for git log to access the correct commits
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get Commit Message
-        if: ${{ github.event_name != 'push' }}
         run: echo "COMMIT_MESSAGE=$(git log --format=oneline -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
       - name: Set Output Commit Message
-        if: ${{ github.event_name != 'push' }}
         id: output_message
         env:
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
