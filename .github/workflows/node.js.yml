@@ -252,6 +252,10 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
       - name: Publish to NPM
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -272,6 +276,10 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
       - name: Publish to Github Pages
         env:
           GH_NAME: sklose
