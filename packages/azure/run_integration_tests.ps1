@@ -1,6 +1,10 @@
 # $ErrorActionPreference = "Stop"
 
 Write-Host "Throw Error here"
+If ($lastExitCode -eq "0") {
+    Write-Host "Success !!"
+}
+Write-Host "Last Exit Code: $lastExitCode"
 throw "This is an error."
 
 Write-Host "Build core"
