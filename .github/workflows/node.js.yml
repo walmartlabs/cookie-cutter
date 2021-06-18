@@ -260,13 +260,12 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-              echo "$SOME_ENV"
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               yarn build && node ./.ci/deploy.js
 
   publish-to-github-pages:
     name: Publish to Github Pages
-    if: ${{ github.event_name == 'push' && github.base_ref == 'master' }}
+    if: ${{ github.event_name == 'push' && contains(github.ref, 'master') }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
