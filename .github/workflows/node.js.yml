@@ -49,7 +49,7 @@ jobs:
 
   test-ubuntu:
     name: Ubuntu Node 12 Test
-    if: {{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
+    if: ${{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
     # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: ubuntu-latest
@@ -72,7 +72,7 @@ jobs:
 
   test-macOS:
     name: MacOS Node 10 Test
-    if: {{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
+    if: ${{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
     # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: macOS-latest
@@ -96,7 +96,7 @@ jobs:
 
   test-windows:
     name: Windows Node 10 Test
-    if: {{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
+    if: ${{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
     # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: windows-latest
