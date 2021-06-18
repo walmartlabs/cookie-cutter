@@ -141,7 +141,7 @@ export class QueueClient implements IRequireInitialization {
                 storagePipelineOptions
             );
         } else if (config.url) {
-            if (config.url.indexOf("https://") === 0) {
+            if (config.url.indexOf("http") === 0) {
                 this.queueService = new QueueServiceClient(
                     config.url,
                     new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey),
