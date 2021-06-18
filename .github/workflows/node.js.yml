@@ -34,24 +34,23 @@ jobs:
         uses: actions/setup-node@v2-beta
         with:
           node-version: "10"
-      # - name: Install Yarn 1.21.1
-      #   run: yarn set version 1.21.1
-      # - name: Install Dependencies
-      #   run: yarn install --frozen-lockfile
-      # - name: Yarn Build
-      #   run: yarn build
-      # - name: Yarn Lint
-      #   run: yarn lint
-      # - name: Yarn Test
-      #   run: yarn test
-      # - name: Yarn Audit
-      #   if: ${{ github.event_name == 'schedule' }}
-      #   run: yarn audit
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Lint
+        run: yarn lint
+      - name: Yarn Test
+        run: yarn test
+      - name: Yarn Audit
+        if: ${{ github.event_name == 'schedule' }}
+        run: yarn audit
 
   test-ubuntu:
     name: Ubuntu Node 12 Test
-    if: ${{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
-    # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
@@ -73,8 +72,7 @@ jobs:
 
   test-macOS:
     name: MacOS Node 10 Test
-    if: ${{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
-    # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: macOS-latest
     steps:
@@ -97,8 +95,7 @@ jobs:
 
   test-windows:
     name: Windows Node 10 Test
-    if: ${{ contains(needs.smoke.outputs.commit_message, '[full ci]') }}
-    # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: windows-latest
     steps:
