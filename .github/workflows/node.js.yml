@@ -266,7 +266,7 @@ jobs:
 
   publish-to-github-pages:
     name: Publish to Github Pages
-    if: ${{ github.event_name == 'push' && github.base_ref == 'master' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     needs: smoke
     runs-on: ubuntu-latest
     steps:
