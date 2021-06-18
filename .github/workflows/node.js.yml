@@ -260,7 +260,6 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-              echo "$SOME_ENV"
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               yarn build && node ./.ci/deploy.js
 
