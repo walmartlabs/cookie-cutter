@@ -7,7 +7,7 @@ cd ../azure
 yarn build
 yarn integrate
 
-If ("$?" -ne "0") {
+If ("$?" -ne "True") {
     throw "Yarn Integrate Failed"
 }
 
