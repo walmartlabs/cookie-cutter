@@ -24,7 +24,7 @@ jobs:
       - name: Set Output Commit Message
         id: output_message
         env:
-          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
+          COMMIT_MESSAGE: "${{ env.COMMIT_MESSAGE }}"
         run: |
               echo "::set-output name=commit_message::$COMMIT_MESSAGE"
               echo Commit Message: "$COMMIT_MESSAGE"
