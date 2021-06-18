@@ -25,9 +25,7 @@ jobs:
         id: output_message
         env:
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
-          REF: ${{ github.ref }}
         run: |
-              echo "REF: $REF"
               echo "::set-output name=commit_message::$COMMIT_MESSAGE"
               echo Commit Message: "$COMMIT_MESSAGE"
       - name: Setup Ubuntu Node 10
