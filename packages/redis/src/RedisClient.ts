@@ -342,7 +342,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err,
+                error: err.toString(),
             });
 
             throw err;
@@ -376,7 +376,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err,
+                error: err.toString(),
             });
 
             throw err;
@@ -490,7 +490,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err,
+                error: err.toString(),
             });
 
             throw err;
