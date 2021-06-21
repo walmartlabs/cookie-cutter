@@ -19,6 +19,7 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
+import { RedisError } from "redis";
 import { isString, isNullOrUndefined, isNull, isUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 import { RedisProxy, RawReadGroupResult, RawPELResult, RawXClaimResult } from "./RedisProxy";
@@ -342,7 +343,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err.toString(),
+                errorType: err instanceof RedisError ? err.name : "NonRedisError",
             });
 
             throw err;
@@ -376,7 +377,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err.toString(),
+                errorType: err instanceof RedisError ? err.name : "NonRedisError",
             });
 
             throw err;
@@ -490,7 +491,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err.toString(),
+                errorType: err instanceof RedisError ? err.name : "NonRedisError",
             });
 
             throw err;
