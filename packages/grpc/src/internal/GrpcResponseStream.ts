@@ -30,7 +30,7 @@ export class GrpcResponseStream<T = any> implements IResponseStream<T> {
         }
     }
 
-    public send(response: T): Promise<void> {
-        return this.pipe.send(response);
+    public async send(response: T): Promise<void> {
+        return await this.pipe.send(response);
     }
 }
