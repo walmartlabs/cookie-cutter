@@ -47,6 +47,7 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         }
         this.containerName = config.container;
         this.storageAccount = config.storageAccount;
+
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
     }
