@@ -38,6 +38,7 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
     private metrics: IMetrics;
     private spanOperationName: string = "BigQuery Client Call";
     private logger: ILogger;
+    private rawInserts: boolean = false;
 
     constructor(private readonly config: IBigQueryConfiguration) {
         const key = this.config.privateKey.split("\\n").join("\n");
@@ -50,6 +51,7 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
         }).dataset(this.config.datasetId);
         this.tracer = DefaultComponentContext.tracer;
         this.logger = DefaultComponentContext.logger;
+        this.rawInserts = this.config.rawInserts || false;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -74,8 +76,9 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.putObject.name, datasetId, table);
         const rows = body instanceof Array ? body : [body];
+        const insertOptions = { raw: this.rawInserts };
         try {
-            await this.dataset.table(table).insert(rows);
+            await this.dataset.table(table).insert(rows, insertOptions);
             this.metrics.increment(BigQueryMetrics.Put, {
                 datasetTable,
                 result: BigQueryMetricResults.Success,

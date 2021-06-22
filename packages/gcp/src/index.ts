@@ -34,6 +34,8 @@ export interface IBigQueryConfiguration {
     readonly datasetId: string;
     readonly clientEmail: string;
     readonly privateKey: string;
+    // requires specific message format
+    readonly rawInserts?: boolean;
 }
 
 export interface IGcpAuthConfiguration {
