@@ -53,7 +53,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/checkout@v2
       - name: Setup Ubuntu Node 12
         uses: actions/setup-node@v2-beta
