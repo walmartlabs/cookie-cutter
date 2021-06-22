@@ -4,7 +4,7 @@ An opinionated framework for building event-driven and request/response based mi
 
 | Stable | Beta |
 |--------|------|
-| [![Build Status](https://travis-ci.org/walmartlabs/cookie-cutter.svg?branch=master)](https://travis-ci.org/walmartlabs/cookie-cutter) | [![Build Status](https://travis-ci.org/walmartlabs/cookie-cutter.svg?branch=develop)](https://travis-ci.org/walmartlabs/cookie-cutter) | 
+| [![Build Status](https://github.com/walmartlabs/cookie-cutter/actions/workflows/node.js.yml/badge.svg?branch=master)](https://github.com/walmartlabs/cookie-cutter/actions) | [![Build Status](https://github.com/walmartlabs/cookie-cutter/actions/workflows/node.js.yml/badge.svg?branch=develop)](https://github.com/walmartlabs/cookie-cutter/actions) | 
 
 ## Features
 
