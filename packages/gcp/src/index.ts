@@ -34,7 +34,10 @@ export interface IBigQueryConfiguration {
     readonly datasetId: string;
     readonly clientEmail: string;
     readonly privateKey: string;
-    // requires specific message format
+    /**
+     * requires specific message format
+     * https://googleapis.dev/nodejs/bigquery/latest/Table.html#insert-examples
+     */
     readonly rawInserts?: boolean;
 }
 
