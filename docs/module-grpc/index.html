@@ -197,7 +197,7 @@ Application.create()
             endpoint: <span class="hljs-string">"localhost:5000"</span>,
             definition: SampleServiceDefinition,
         }))
-        done()
+        .done()
     .dispatch({
         onSomeInput: (msg: ISomeInput, ctx: IDispatchContext): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">void</span>&gt; =&gt; {
             <span class="hljs-keyword">const</span> client = ctx.services.get&lt;ISampleService&gt;(<span class="hljs-string">"some-service"</span>);
