@@ -37,6 +37,7 @@ export type RedisClientWithStreamOperations = RedisClient & IRedisCommandPatches
 export class RedisProxy implements IRequireInitialization, IDisposable {
     private readonly client: RedisClientWithStreamOperations;
 
+    private disposeInitiated: boolean = false;
     private logger: ILogger = DefaultComponentContext.logger;
     private asyncGet: (key: string) => Promise<string>;
     private asyncSet: (key: string, value: string | Buffer) => Promise<"OK">;
@@ -75,7 +76,9 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
         });
         this.client.on("end", () => {
             this.logger.debug("Disconnected from Redis");
-            throw new Error("connection to Redis lost");
+            if (!this.disposeInitiated) {
+                throw new Error("connection to Redis lost");
+            }
         });
 
         this.asyncGet = promisify(this.client.get).bind(this.client);
@@ -94,6 +97,7 @@ export class RedisProxy implements IRequireInitialization, IDisposable {
     }
 
     public async dispose() {
+        this.disposeInitiated = true;
         await this.asyncQuit();
         this.client.unref();
     }
