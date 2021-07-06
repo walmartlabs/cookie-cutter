@@ -186,7 +186,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -227,7 +227,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             this.metrics.increment(RedisClientMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -283,7 +283,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 db,
                 streamName,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -459,7 +459,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                error,
+                errorType: error instanceof RedisError ? error.name : "NonRedisError",
             });
             throw error;
         } finally {
@@ -558,7 +558,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                error,
+                errorType: error instanceof RedisError ? error.name : "NonRedisError",
             });
             throw error;
         } finally {
