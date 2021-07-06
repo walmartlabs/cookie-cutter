@@ -127,7 +127,6 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
-        this.logger = context.logger;
         await this.client.initialize(context);
     }
 
@@ -186,7 +185,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -283,7 +282,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 db,
                 streamName,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -459,7 +458,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                error,
+                errorType: error instanceof RedisError ? error.name : "NonRedisError",
             });
             throw error;
         } finally {
@@ -558,7 +557,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                error,
+                errorType: error instanceof RedisError ? error.name : "NonRedisError",
             });
             throw error;
         } finally {

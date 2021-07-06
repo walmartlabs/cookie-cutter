@@ -164,7 +164,6 @@ export class CosmosClient
         const file = fs.readFileSync(path.resolve(__dirname, sprocPath));
         const sprocBody = file.toString();
         const container = await this.container(collectionId);
-
         const query = {
             query: "SELECT * FROM collection c WHERE c.id = @id",
             parameters: [{ name: "@id", value: sprocID }],
