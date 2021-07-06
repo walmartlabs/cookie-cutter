@@ -127,6 +127,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
+        this.logger = context.logger;
         await this.client.initialize(context);
     }
 
