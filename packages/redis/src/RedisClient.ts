@@ -227,7 +227,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             this.metrics.increment(RedisClientMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
