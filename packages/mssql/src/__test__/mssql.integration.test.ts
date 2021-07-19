@@ -110,7 +110,12 @@ class CommandHandler {
     }
 }
 
-function testApp(messages: IMessage[]): CancelablePromise<void> {
+function testApp(
+    messages: IMessage[],
+    schema: string,
+    mode: Mode,
+    parrallelism: ParallelismMode
+): CancelablePromise<void> {
     const config = getSqlEnv();
 
     return Application.create()
@@ -122,35 +127,14 @@ function testApp(messages: IMessage[]): CancelablePromise<void> {
             mssqlSink({
                 ...config,
                 encrypt: true,
-                mode: Mode.StoredProcedure,
-            })
-        )
-        .done()
-        .dispatch(new CommandHandler())
-        .logger(new ConsoleLogger())
-        .run(ErrorHandlingMode.LogAndContinue);
-}
-
-function testAppTable(messages: IMessage[], schema: string): CancelablePromise<void> {
-    const config = getSqlEnv();
-
-    return Application.create()
-        .input()
-        .add(new StaticInputSource(messages))
-        .done()
-        .output()
-        .published(
-            mssqlSink({
-                ...config,
-                encrypt: true,
-                mode: Mode.Table,
+                mode,
                 schema,
             })
         )
         .done()
         .dispatch(new CommandHandler())
         .logger(new ConsoleLogger())
-        .run(ErrorHandlingMode.LogAndContinue, ParallelismMode.Concurrent);
+        .run(ErrorHandlingMode.LogAndContinue, parrallelism);
 }
 
 function returnMixedTableInput(num: number): IMessage[] {
@@ -219,14 +203,18 @@ describe("Microsoft SQL", () => {
             return await client.request().query(`SELECT * FROM ${name}`);
         }
 
-        async function evaluateSprocTest(messages: IMessage[], expectedResults: any[]) {
-            const app = testApp(messages);
+        async function evaluateSprocTest(
+            messages: IMessage[],
+            expectedResults: any[],
+            schema?: string
+        ) {
+            const app = testApp(messages, schema, Mode.StoredProcedure, ParallelismMode.Serial);
             try {
                 await timeout(app, 10000);
             } catch (e) {
                 app.cancel();
             } finally {
-                const resultsTable = await getTableContents(undefined, "TestTable");
+                const resultsTable = await getTableContents(schema, "TestTable");
                 expect(resultsTable.recordset).toMatchObject(expectedResults);
             }
         }
@@ -235,9 +223,9 @@ describe("Microsoft SQL", () => {
             mixedMessages: IMessage[],
             expectedResultsSimple: any[],
             expectedResultsPartial: any[],
-            schema: string
+            schema?: string
         ) {
-            const app = testAppTable(mixedMessages, schema);
+            const app = testApp(mixedMessages, schema, Mode.Table, ParallelismMode.Concurrent);
             try {
                 await timeout(app, 10000);
             } catch (e) {
@@ -250,10 +238,10 @@ describe("Microsoft SQL", () => {
             }
         }
 
-        it("successfully writes to a table with non-default schema", async () => {
+        it("successfully writes to a Table with non-default schema", async () => {
             await dropFromDB("nonexistent", SimpleObject.name);
             await dropFromDB("nonexistent", PartialObject.name);
-            const schema = "scheming";
+            const schema = "scheming_table";
             const createSchema = `CREATE SCHEMA ${schema};`;
             const createSimpleTable = `CREATE TABLE ${schema}.${SimpleObject.name} (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createPartialTable = `CREATE TABLE ${schema}.${PartialObject.name} (id INT NOT NULL PRIMARY KEY);`;
@@ -273,7 +261,7 @@ describe("Microsoft SQL", () => {
             }
         });
 
-        it("successfully writes to a table with default schema", async () => {
+        it("successfully writes to a Table with default schema", async () => {
             await dropFromDB("nonexistent", SimpleObject.name);
             await dropFromDB("nonexistent", PartialObject.name);
             const createSimpleTable = `CREATE TABLE ${SimpleObject.name} (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
@@ -282,12 +270,7 @@ describe("Microsoft SQL", () => {
                 await createInDB([createSimpleTable, createPartialTable]);
                 const num = 10;
                 const messages: IMessage[] = returnMixedTableInput(num);
-                await evaluateTableTest(
-                    messages,
-                    expectedSimple(num),
-                    expectedPartial(num),
-                    undefined
-                );
+                await evaluateTableTest(messages, expectedSimple(num), expectedPartial(num));
             } finally {
                 await dropFromDB("nonexistent", SimpleObject.name);
                 await dropFromDB("nonexistent", PartialObject.name);
@@ -321,6 +304,47 @@ describe("Microsoft SQL", () => {
                 ]);
             } finally {
                 await dropFromDB(SimpleObject.name);
+            }
+        });
+
+        it("succesfully calls a Sproc with Messages containing simple types with non-default schema", async () => {
+            const schema = "scheming_sproc";
+            await dropFromDB("nonexistent", `${schema}.${SimpleObject.name}`);
+            await dropFromDB(`${schema}.${SimpleObject.name}`, `${schema}.TestTable`, "TableType");
+            const createSchema = `CREATE SCHEMA ${schema};`;
+            const createTable = `CREATE TABLE ${schema}.TestTable (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
+            const createSproc = `CREATE PROCEDURE ${schema}.${SimpleObject.name}
+                @id INT,
+                @str VARCHAR(50)
+                AS
+                INSERT INTO ${schema}.TestTable (id, str) VALUES (@id, @str);`;
+            try {
+                await createInDB([createSchema, createTable, createSproc]);
+                const messages: IMessage[] = [
+                    {
+                        type: SimpleObject.name,
+                        payload: new SimpleObject(0, "0"),
+                    },
+                    {
+                        type: SimpleObject.name,
+                        payload: new SimpleObject(1, "1"),
+                    },
+                ];
+                await evaluateSprocTest(
+                    messages,
+                    [
+                        { id: 0, str: "0" },
+                        { id: 1, str: "1" },
+                    ],
+                    schema
+                );
+            } finally {
+                await dropFromDB(
+                    `${schema}.${SimpleObject.name}`,
+                    `${schema}.TestTable`,
+                    "TableType"
+                );
+                await dropFromDB("nonexistent", `${schema}.${SimpleObject.name}`);
             }
         });
 

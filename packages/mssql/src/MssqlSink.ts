@@ -25,6 +25,7 @@ import { IMssqlConfiguration, Mode } from "./index";
 export enum MsSqlOpenTracingTagKeys {
     MessageType = "mssql.msg_type",
     Mode = "mssql.client_mode",
+    Schema = "mssql.schema",
 }
 
 enum MssqlMetrics {
@@ -191,7 +192,13 @@ export class MssqlSink
     }
 
     // TODO: add schema?
-    private spanLogAndSetTags(span: Span, query: string, mode: string, messageType: string): void {
+    private spanLogAndSetTags(
+        span: Span,
+        query: string,
+        mode: string,
+        messageType: string,
+        schema: string
+    ): void {
         span.log({ messageType });
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
         span.setTag(Tags.COMPONENT, "cookie-cutter-mssql");
@@ -203,6 +210,7 @@ export class MssqlSink
         span.setTag(Tags.PEER_SERVICE, "mssql");
         span.setTag(MsSqlOpenTracingTagKeys.Mode, mode);
         span.setTag(MsSqlOpenTracingTagKeys.MessageType, messageType);
+        span.setTag(MsSqlOpenTracingTagKeys.Schema, schema);
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
@@ -255,7 +263,7 @@ export class MssqlSink
                         table.rows.add(...row);
                     }
                     const request = tx.request();
-                    // this.spanLogAndSetTags(span, insertQueryString, "Table", pubMsg.message.type);
+                    // this.spanLogAndSetTags(span, insertQueryString, "Table", pubMsg.message.type, this.config.schema);
                     await request.bulk(table);
                     await tx.commit();
                     this.metrics.increment(MssqlMetrics.CommitTransaction, {
@@ -274,13 +282,20 @@ export class MssqlSink
                     haveUnfinishedSpan = true;
                     let metricKey;
                     const sprocDetails: ISprocDetails = await this.getSprocDetails(
+                        this.config.schema,
                         pubMsg.message.type,
                         tx.request()
                     );
                     this.populateRequest(request, sprocDetails, pubMsg.message.payload);
-                    this.spanLogAndSetTags(span, undefined, "StoredProcedure", pubMsg.message.type);
+                    this.spanLogAndSetTags(
+                        span,
+                        undefined,
+                        "StoredProcedure",
+                        pubMsg.message.type,
+                        this.config.schema
+                    );
                     metricKey = MssqlMetrics.ExecuteSproc;
-                    await request.execute(pubMsg.message.type);
+                    await request.execute(`${this.config.schema}.${pubMsg.message.type}`);
                     this.metrics.increment(metricKey, {
                         server: this.config.server,
                         database: this.config.database,
@@ -332,10 +347,11 @@ export class MssqlSink
     }
 
     private async getSprocDetailsFromSql(
+        schema: string,
         sprocName: string,
         request: sql.Request
     ): Promise<ISprocDetails> {
-        const rawSprocDetails = await request.query(this.getSqlQuery(sprocName));
+        const rawSprocDetails = await request.query(this.getSprocSqlQuery(schema, sprocName));
         const recordsetEntries = rawSprocDetails.recordset;
         const sprocDetails: ISprocDetails = { parameters: new Map<string, ParamType>() };
         for (const entry of recordsetEntries) {
@@ -357,11 +373,15 @@ export class MssqlSink
         return sprocDetails;
     }
 
-    private async getSprocDetails(sprocName: string, request: sql.Request): Promise<ISprocDetails> {
-        let sprocDetails: ISprocDetails = this.sprocMap.get(sprocName);
+    private async getSprocDetails(
+        schema: string,
+        sprocName: string,
+        request: sql.Request
+    ): Promise<ISprocDetails> {
+        let sprocDetails: ISprocDetails = this.sprocMap.get(`${schema}.${sprocName}`);
         if (!sprocDetails) {
-            sprocDetails = await this.getSprocDetailsFromSql(sprocName, request);
-            this.sprocMap.set(sprocName, sprocDetails);
+            sprocDetails = await this.getSprocDetailsFromSql(schema, sprocName, request);
+            this.sprocMap.set(`${schema}.${sprocName}`, sprocDetails);
         }
         return sprocDetails;
     }
@@ -391,7 +411,7 @@ export class MssqlSink
         }
     }
 
-    private getSqlQuery(sprocName: string): string {
+    private getSprocSqlQuery(schema: string, sprocName: string): string {
         return `
         SELECT
             par.name as sprocParamName,
@@ -404,7 +424,7 @@ export class MssqlSink
         LEFT JOIN sys.table_types as tt ON tt.name = type_name(par.user_type_id)
         LEFT JOIN sys.columns as col ON col.object_id = tt.type_table_object_id
         WHERE
-            par.object_id = object_id('dbo.${sprocName}');`;
+            par.object_id = object_id('${schema}.${sprocName}');`;
     }
 
     private async getTableDetailsFromSql(
@@ -412,7 +432,7 @@ export class MssqlSink
         tableName: string,
         request: sql.Request
     ): Promise<ITableDetails> {
-        const rawTableDetails = await request.query(this.getSqlQueryTable(schema, tableName));
+        const rawTableDetails = await request.query(this.getTableSqlQuery(schema, tableName));
         const recordsetEntries = rawTableDetails.recordset;
         const tableDetails: ITableDetails = { columns: new Map<string, ITableColumn>() };
         for (const entry of recordsetEntries) {
@@ -434,7 +454,7 @@ export class MssqlSink
         return tableDetails;
     }
 
-    private getSqlQueryTable(schema: string, tableName: string): string {
+    private getTableSqlQuery(schema: string, tableName: string): string {
         return `
             SELECT
                 c.name AS name,
