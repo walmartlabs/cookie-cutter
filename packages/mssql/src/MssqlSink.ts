@@ -37,6 +37,12 @@ enum MssqlMetricResults {
     Error = "error",
 }
 
+interface ITableColumn {
+    readonly name: string;
+    readonly type: string;
+    readonly isNullable: boolean;
+}
+
 interface ITableTypeParam {
     readonly name: string;
     readonly type: string;
@@ -48,6 +54,10 @@ type ParamType = "Simple" | DynamicTableType;
 
 interface ISprocDetails {
     readonly parameters: Map<string, ParamType>;
+}
+
+interface ITableDetails {
+    readonly columns: Map<string, ITableColumn>;
 }
 
 class DynamicTableType extends sql.Table {
@@ -149,6 +159,7 @@ export class MssqlSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
     private connectionPool: sql.ConnectionPool;
     private sprocMap: Map<string, ISprocDetails>;
+    private tableMap: Map<string, ITableDetails>;
     private tracer: Tracer;
     private metrics: IMetrics;
     private spanOperationName: string = "MsSql Client Call";
@@ -176,8 +187,10 @@ export class MssqlSink
         this.connectionPool = new sql.ConnectionPool(connectionConfig);
         await this.connectionPool.connect();
         this.sprocMap = new Map<string, ISprocDetails>();
+        this.tableMap = new Map<string, ITableDetails>();
     }
 
+    // TODO: add schema?
     private spanLogAndSetTags(span: Span, query: string, mode: string, messageType: string): void {
         span.log({ messageType });
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
@@ -198,25 +211,68 @@ export class MssqlSink
         let span: Span;
         let haveUnfinishedSpan: boolean;
         try {
-            await tx.begin();
-            for (const pubMsg of output) {
-                const request = tx.request();
-                const keys = Object.keys(pubMsg.message.payload);
-                // Using TableInsertion as default mode for backward compatibility
-                span = this.tracer.startSpan(this.spanOperationName, {
-                    childOf: pubMsg.spanContext,
-                });
-                haveUnfinishedSpan = true;
-                let metricKey;
-                if (mode === Mode.Table) {
-                    keys.forEach((key) => request.input(key, pubMsg.message.payload[key]));
-                    metricKey = MssqlMetrics.ExecuteQuery;
-                    const keysList = keys.join(", ");
-                    const valuesList = keys.map((key) => "@" + key).join(", ");
-                    const insertQueryString = `INSERT INTO ${pubMsg.message.type} (${keysList}) VALUES (${valuesList})`;
-                    this.spanLogAndSetTags(span, insertQueryString, "Table", pubMsg.message.type);
-                    await request.query(insertQueryString);
-                } else if (mode === Mode.StoredProcedure) {
+            if (mode === Mode.Table) {
+                const messagesByTableName: Map<string, IPublishedMessage[]> = new Map();
+                for (const msg of output) {
+                    const tableName = msg.message.type;
+                    if (!messagesByTableName.has(tableName)) {
+                        messagesByTableName.set(tableName, []);
+                    }
+                    messagesByTableName.get(tableName).push(msg);
+                }
+                for (const [_, messages] of messagesByTableName) {
+                    await tx.begin();
+                    let getTableInfo = false;
+                    let tableDetails: ITableDetails;
+                    let table: sql.Table;
+                    for (const pubMsg of messages) {
+                        // TODO: fix span handling
+                        // span = this.tracer.startSpan(this.spanOperationName, {
+                        //     childOf: pubMsg.spanContext,
+                        // });
+                        // haveUnfinishedSpan = true;
+                        // let metricKey;
+                        if (!getTableInfo) {
+                            tableDetails = await this.getTableDetails(
+                                this.config.schema,
+                                pubMsg.message.type,
+                                tx.request()
+                            );
+                            table = new sql.Table(`${this.config.schema}.${pubMsg.message.type}`);
+                            table.create = false;
+                            const columns = tableDetails.columns;
+                            for (const [name, column] of columns) {
+                                table.columns.add(name, typeMap.get(column.type), {
+                                    nullable: column.isNullable,
+                                });
+                            }
+                            getTableInfo = true;
+                        }
+                        const row: sql.IRow = [];
+                        table.columns.forEach((value) => {
+                            row.push(pubMsg.message.payload[value.name]);
+                        });
+                        table.rows.add(...row);
+                    }
+                    const request = tx.request();
+                    // this.spanLogAndSetTags(span, insertQueryString, "Table", pubMsg.message.type);
+                    await request.bulk(table);
+                    await tx.commit();
+                    this.metrics.increment(MssqlMetrics.CommitTransaction, {
+                        server: this.config.server,
+                        database: this.config.database,
+                        result: MssqlMetricResults.Success,
+                    });
+                }
+            } else if (mode === Mode.StoredProcedure) {
+                await tx.begin();
+                for (const pubMsg of output) {
+                    const request = tx.request();
+                    span = this.tracer.startSpan(this.spanOperationName, {
+                        childOf: pubMsg.spanContext,
+                    });
+                    haveUnfinishedSpan = true;
+                    let metricKey;
                     const sprocDetails: ISprocDetails = await this.getSprocDetails(
                         pubMsg.message.type,
                         tx.request()
@@ -225,20 +281,20 @@ export class MssqlSink
                     this.spanLogAndSetTags(span, undefined, "StoredProcedure", pubMsg.message.type);
                     metricKey = MssqlMetrics.ExecuteSproc;
                     await request.execute(pubMsg.message.type);
+                    this.metrics.increment(metricKey, {
+                        server: this.config.server,
+                        database: this.config.database,
+                    });
+                    span.finish();
+                    haveUnfinishedSpan = false;
                 }
-                this.metrics.increment(metricKey, {
+                await tx.commit();
+                this.metrics.increment(MssqlMetrics.CommitTransaction, {
                     server: this.config.server,
                     database: this.config.database,
+                    result: MssqlMetricResults.Success,
                 });
-                span.finish();
-                haveUnfinishedSpan = false;
             }
-            await tx.commit();
-            this.metrics.increment(MssqlMetrics.CommitTransaction, {
-                server: this.config.server,
-                database: this.config.database,
-                result: MssqlMetricResults.Success,
-            });
         } catch (e) {
             failSpan(span, e);
             this.metrics.increment(MssqlMetrics.CommitTransaction, {
@@ -349,5 +405,43 @@ export class MssqlSink
         LEFT JOIN sys.columns as col ON col.object_id = tt.type_table_object_id
         WHERE
             par.object_id = object_id('dbo.${sprocName}');`;
+    }
+
+    private async getTableDetailsFromSql(
+        schema: string,
+        tableName: string,
+        request: sql.Request
+    ): Promise<ITableDetails> {
+        const rawTableDetails = await request.query(this.getSqlQueryTable(schema, tableName));
+        const recordsetEntries = rawTableDetails.recordset;
+        const tableDetails: ITableDetails = { columns: new Map<string, ITableColumn>() };
+        for (const entry of recordsetEntries) {
+            tableDetails.columns.set(entry.name as string, entry as ITableColumn);
+        }
+        return tableDetails;
+    }
+
+    private async getTableDetails(
+        schema: string,
+        tableName: string,
+        request: sql.Request
+    ): Promise<ITableDetails> {
+        let tableDetails: ITableDetails = this.tableMap.get(`${schema}.${tableName}`);
+        if (!tableDetails) {
+            tableDetails = await this.getTableDetailsFromSql(schema, tableName, request);
+            this.tableMap.set(`${schema}.${tableName}`, tableDetails);
+        }
+        return tableDetails;
+    }
+
+    private getSqlQueryTable(schema: string, tableName: string): string {
+        return `
+            SELECT
+                c.name AS name,
+                type_name(system_type_id) AS type,
+                is_nullable AS isNullable
+            FROM sys.columns AS c
+            WHERE c.object_id = object_id('${schema}.${tableName}');
+        `;
     }
 }

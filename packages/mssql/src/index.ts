@@ -20,6 +20,7 @@ export interface IMssqlConfiguration {
     readonly password: string;
     readonly encrypt: boolean;
     readonly mode?: Mode;
+    readonly schema?: string;
     readonly connectionTimeout?: number;
     readonly requestTimeout?: number;
     readonly stream?: boolean;
@@ -75,6 +76,14 @@ class MssqlConfiguration {
         return config.noop();
     }
 
+    @config.field(config.converters.string)
+    public set schema(_: string) {
+        config.noop();
+    }
+    public get schema(): string {
+        return config.noop();
+    }
+
     @config.field(config.converters.timespan)
     public set connectionTimeout(_: number) {
         config.noop();
@@ -103,6 +112,7 @@ class MssqlConfiguration {
 export function mssqlSink(configuration: IMssqlConfiguration): IOutputSink<IPublishedMessage> {
     configuration = config.parse(MssqlConfiguration, configuration, {
         mode: Mode.Table,
+        schema: "dbo",
         encrypt: false,
         connectionTimeout: 15000,
         requestTimeout: 15000,
