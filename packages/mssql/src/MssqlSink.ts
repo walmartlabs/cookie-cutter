@@ -191,7 +191,6 @@ export class MssqlSink
         this.tableMap = new Map<string, ITableDetails>();
     }
 
-    // TODO: add schema?
     private spanLogAndSetTags(
         span: Span,
         query: string,
@@ -216,10 +215,11 @@ export class MssqlSink
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         const tx = this.connectionPool.transaction();
         const mode = this.config.mode;
-        let span: Span;
-        let haveUnfinishedSpan: boolean;
+        let spans: Span[] = [];
+        let haveUnfinishedSpans: boolean;
         try {
             if (mode === Mode.Table) {
+                await tx.begin();
                 const messagesByTableName: Map<string, IPublishedMessage[]> = new Map();
                 for (const msg of output) {
                     const tableName = msg.message.type;
@@ -229,18 +229,17 @@ export class MssqlSink
                     messagesByTableName.get(tableName).push(msg);
                 }
                 for (const [_, messages] of messagesByTableName) {
-                    await tx.begin();
-                    let getTableInfo = false;
+                    let hasTableInfo = false;
                     let tableDetails: ITableDetails;
                     let table: sql.Table;
+                    let insertQueryString = "";
+                    spans = [];
                     for (const pubMsg of messages) {
-                        // TODO: fix span handling
-                        // span = this.tracer.startSpan(this.spanOperationName, {
-                        //     childOf: pubMsg.spanContext,
-                        // });
-                        // haveUnfinishedSpan = true;
-                        // let metricKey;
-                        if (!getTableInfo) {
+                        const span = this.tracer.startSpan(this.spanOperationName, {
+                            childOf: pubMsg.spanContext,
+                        });
+                        haveUnfinishedSpans = true;
+                        if (!hasTableInfo) {
                             tableDetails = await this.getTableDetails(
                                 this.config.schema,
                                 pubMsg.message.type,
@@ -249,43 +248,60 @@ export class MssqlSink
                             table = new sql.Table(`${this.config.schema}.${pubMsg.message.type}`);
                             table.create = false;
                             const columns = tableDetails.columns;
+                            const columnNames: string[] = [];
                             for (const [name, column] of columns) {
                                 table.columns.add(name, typeMap.get(column.type), {
                                     nullable: column.isNullable,
                                 });
+                                columnNames.push(name);
                             }
-                            getTableInfo = true;
+                            const columnList = columnNames.join(", ");
+                            const valuesList = columnNames.map((col) => "@" + col).join(", ");
+                            insertQueryString = `INSERT INTO ${this.config.schema}.${pubMsg.message.type} (${columnList}) VALUES (${valuesList})`;
+                            hasTableInfo = true;
                         }
+                        this.spanLogAndSetTags(
+                            span,
+                            insertQueryString,
+                            "Table",
+                            pubMsg.message.type,
+                            this.config.schema
+                        );
+                        spans.push(span);
                         const row: sql.IRow = [];
-                        table.columns.forEach((value) => {
-                            row.push(pubMsg.message.payload[value.name]);
+                        table.columns.forEach((column) => {
+                            row.push(pubMsg.message.payload[column.name]);
                         });
                         table.rows.add(...row);
                     }
                     const request = tx.request();
-                    // this.spanLogAndSetTags(span, insertQueryString, "Table", pubMsg.message.type, this.config.schema);
                     await request.bulk(table);
-                    await tx.commit();
-                    this.metrics.increment(MssqlMetrics.CommitTransaction, {
+                    this.metrics.increment(MssqlMetrics.ExecuteQuery, messages.length, {
                         server: this.config.server,
                         database: this.config.database,
-                        result: MssqlMetricResults.Success,
                     });
+                    spans.map((span) => span.finish());
+                    haveUnfinishedSpans = false;
                 }
+                await tx.commit();
+                this.metrics.increment(MssqlMetrics.CommitTransaction, {
+                    server: this.config.server,
+                    database: this.config.database,
+                    result: MssqlMetricResults.Success,
+                });
             } else if (mode === Mode.StoredProcedure) {
                 await tx.begin();
                 for (const pubMsg of output) {
-                    const request = tx.request();
-                    span = this.tracer.startSpan(this.spanOperationName, {
+                    const span = this.tracer.startSpan(this.spanOperationName, {
                         childOf: pubMsg.spanContext,
                     });
-                    haveUnfinishedSpan = true;
-                    let metricKey;
+                    haveUnfinishedSpans = true;
                     const sprocDetails: ISprocDetails = await this.getSprocDetails(
                         this.config.schema,
                         pubMsg.message.type,
                         tx.request()
                     );
+                    const request = tx.request();
                     this.populateRequest(request, sprocDetails, pubMsg.message.payload);
                     this.spanLogAndSetTags(
                         span,
@@ -294,14 +310,14 @@ export class MssqlSink
                         pubMsg.message.type,
                         this.config.schema
                     );
-                    metricKey = MssqlMetrics.ExecuteSproc;
+                    spans.push(span);
                     await request.execute(`${this.config.schema}.${pubMsg.message.type}`);
-                    this.metrics.increment(metricKey, {
+                    this.metrics.increment(MssqlMetrics.ExecuteSproc, {
                         server: this.config.server,
                         database: this.config.database,
                     });
-                    span.finish();
-                    haveUnfinishedSpan = false;
+                    spans.map((span) => span.finish());
+                    haveUnfinishedSpans = false;
                 }
                 await tx.commit();
                 this.metrics.increment(MssqlMetrics.CommitTransaction, {
@@ -311,7 +327,7 @@ export class MssqlSink
                 });
             }
         } catch (e) {
-            failSpan(span, e);
+            spans.map((span) => failSpan(span, e));
             this.metrics.increment(MssqlMetrics.CommitTransaction, {
                 server: this.config.server,
                 database: this.config.database,
@@ -327,8 +343,8 @@ export class MssqlSink
             }
             throw e;
         } finally {
-            if (span && haveUnfinishedSpan) {
-                span.finish();
+            if (spans.length > 0 && haveUnfinishedSpans) {
+                spans.map((span) => span.finish());
             }
         }
     }
