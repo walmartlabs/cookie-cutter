@@ -368,6 +368,9 @@ export class MssqlSink
         request: sql.Request
     ): Promise<ISprocDetails> {
         const rawSprocDetails = await request.query(this.getSprocSqlQuery(schema, sprocName));
+        if (rawSprocDetails.rowsAffected[0] === 0) {
+            throw new Error(`Stored Procedure ${schema}.${sprocName} not found`);
+        }
         const recordsetEntries = rawSprocDetails.recordset;
         const sprocDetails: ISprocDetails = { parameters: new Map<string, ParamType>() };
         for (const entry of recordsetEntries) {
@@ -449,6 +452,9 @@ export class MssqlSink
         request: sql.Request
     ): Promise<ITableDetails> {
         const rawTableDetails = await request.query(this.getTableSqlQuery(schema, tableName));
+        if (rawTableDetails.rowsAffected[0] === 0) {
+            throw new Error(`Table ${schema}.${tableName} not found`);
+        }
         const recordsetEntries = rawTableDetails.recordset;
         const tableDetails: ITableDetails = { columns: new Map<string, ITableColumn>() };
         for (const entry of recordsetEntries) {

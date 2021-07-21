@@ -179,7 +179,9 @@ describe("Microsoft SQL", () => {
 
         async function dropFromDB(sproc: string, table?: string, type?: string): Promise<void> {
             const request = client.request();
-            await request.query(`DROP PROCEDURE IF EXISTS ${sproc}`);
+            if (sproc) {
+                await request.query(`DROP PROCEDURE IF EXISTS ${sproc}`);
+            }
             if (table) {
                 await request.query(`DROP TABLE IF EXISTS ${table}`);
             }
@@ -239,8 +241,6 @@ describe("Microsoft SQL", () => {
         }
 
         it("successfully writes to a Table with non-default schema", async () => {
-            await dropFromDB("nonexistent", SimpleObject.name);
-            await dropFromDB("nonexistent", PartialObject.name);
             const schema = "scheming_table";
             const createSchema = `CREATE SCHEMA ${schema};`;
             const createSimpleTable = `CREATE TABLE ${schema}.${SimpleObject.name} (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
@@ -256,14 +256,12 @@ describe("Microsoft SQL", () => {
                     schema
                 );
             } finally {
-                await dropFromDB("nonexistent", SimpleObject.name);
-                await dropFromDB("nonexistent", PartialObject.name);
+                await dropFromDB(undefined, SimpleObject.name);
+                await dropFromDB(undefined, PartialObject.name);
             }
         });
 
         it("successfully writes to a Table with default schema", async () => {
-            await dropFromDB("nonexistent", SimpleObject.name);
-            await dropFromDB("nonexistent", PartialObject.name);
             const createSimpleTable = `CREATE TABLE ${SimpleObject.name} (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createPartialTable = `CREATE TABLE ${PartialObject.name} (id INT NOT NULL PRIMARY KEY);`;
             try {
@@ -272,14 +270,12 @@ describe("Microsoft SQL", () => {
                 const messages: IMessage[] = returnMixedTableInput(num);
                 await evaluateTableTest(messages, expectedSimple(num), expectedPartial(num));
             } finally {
-                await dropFromDB("nonexistent", SimpleObject.name);
-                await dropFromDB("nonexistent", PartialObject.name);
+                await dropFromDB(undefined, SimpleObject.name);
+                await dropFromDB(undefined, PartialObject.name);
             }
         });
 
         it("succesfully calls a Sproc with Messages containing simple types", async () => {
-            await dropFromDB("nonexistent", SimpleObject.name);
-            await dropFromDB(SimpleObject.name, "TestTable", "TableType");
             const createTable = `CREATE TABLE TestTable (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createSproc = `CREATE PROCEDURE ${SimpleObject.name}
                 @id INT,
@@ -303,14 +299,12 @@ describe("Microsoft SQL", () => {
                     { id: 1, str: "1" },
                 ]);
             } finally {
-                await dropFromDB(SimpleObject.name);
+                await dropFromDB(SimpleObject.name, "TestTable");
             }
         });
 
         it("succesfully calls a Sproc with Messages containing simple types with non-default schema", async () => {
             const schema = "scheming_sproc";
-            await dropFromDB("nonexistent", `${schema}.${SimpleObject.name}`);
-            await dropFromDB(`${schema}.${SimpleObject.name}`, `${schema}.TestTable`, "TableType");
             const createSchema = `CREATE SCHEMA ${schema};`;
             const createTable = `CREATE TABLE ${schema}.TestTable (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createSproc = `CREATE PROCEDURE ${schema}.${SimpleObject.name}
@@ -339,17 +333,11 @@ describe("Microsoft SQL", () => {
                     schema
                 );
             } finally {
-                await dropFromDB(
-                    `${schema}.${SimpleObject.name}`,
-                    `${schema}.TestTable`,
-                    "TableType"
-                );
-                await dropFromDB("nonexistent", `${schema}.${SimpleObject.name}`);
+                await dropFromDB(`${schema}.${SimpleObject.name}`, `${schema}.TestTable`);
             }
         });
 
         it("succesfully calls a Sproc with Messages containing an object", async () => {
-            await dropFromDB(MessageWithObject.name, "TestTable", "TableType");
             const createType = `CREATE TYPE TableType AS TABLE ( id INT, str [VARCHAR](50) )`;
             const createTable = `CREATE TABLE TestTable ( id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createSproc = `CREATE PROCEDURE ${MessageWithObject.name}
@@ -373,12 +361,11 @@ describe("Microsoft SQL", () => {
                     { id: 1, str: "1" },
                 ]);
             } finally {
-                await dropFromDB(MessageWithObject.name);
+                await dropFromDB(MessageWithObject.name, "TestTable", "TableType");
             }
         });
 
         it("succesfully calls a Sproc with a Message containing an array of simple types", async () => {
-            await dropFromDB(MessageWithSimpleArray.name, "TestTable", "TableType");
             const createType = `CREATE TYPE TableType AS TABLE ( id INT )`;
             const createTable = `CREATE TABLE TestTable ( id INT NOT NULL PRIMARY KEY );`;
             const createSproc = `CREATE PROCEDURE ${MessageWithSimpleArray.name}
@@ -395,12 +382,11 @@ describe("Microsoft SQL", () => {
                 ];
                 await evaluateSprocTest(messages, [{ id: 0 }, { id: 1 }]);
             } finally {
-                await dropFromDB(MessageWithSimpleArray.name);
+                await dropFromDB(MessageWithSimpleArray.name, "TestTable", "TableType");
             }
         });
 
         it("succesfully calls a Sproc with a Message containing an array of objects", async () => {
-            await dropFromDB(MessageWithArrayOfObjects.name, "TestTable", "TableType");
             const createType = `CREATE TYPE TableType AS TABLE ( id INT, str [VARCHAR](50) )`;
             const createTable = `CREATE TABLE TestTable ( id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createSproc = `CREATE PROCEDURE ${MessageWithArrayOfObjects.name}
@@ -423,12 +409,11 @@ describe("Microsoft SQL", () => {
                     { id: 1, str: "1" },
                 ]);
             } finally {
-                await dropFromDB(MessageWithArrayOfObjects.name);
+                await dropFromDB(MessageWithArrayOfObjects.name, "TestTable", "TableType");
             }
         });
 
         it("succesfully calls a Sproc with a Message containing an array of partial objects", async () => {
-            await dropFromDB(MessageWithArrayOfObjects.name, "TestTable", "TableType");
             const createType = `CREATE TYPE TableType AS TABLE  ( id INT, str [VARCHAR](50) )`;
             const createTable = `CREATE TABLE TestTable ( id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createSproc = `CREATE PROCEDURE ${MessageWithArrayOfObjects.name}
@@ -451,12 +436,11 @@ describe("Microsoft SQL", () => {
                     { id: 1, str: null },
                 ]);
             } finally {
-                await dropFromDB(MessageWithArrayOfObjects.name);
+                await dropFromDB(MessageWithArrayOfObjects.name, "TestTable", "TableType");
             }
         });
 
         it("succesfully calls a Sproc with a Message containing a large array of objects", async () => {
-            await dropFromDB(MessageWithArrayOfObjects.name, "TestTable", "TableType");
             const createType = `CREATE TYPE TableType AS TABLE ( id INT, str [VARCHAR](50) )`;
             const createTable = `CREATE TABLE TestTable ( id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createSproc = `CREATE PROCEDURE ${MessageWithArrayOfObjects.name}
@@ -575,7 +559,7 @@ describe("Microsoft SQL", () => {
                     { id: 49, str: "49" },
                 ]);
             } finally {
-                await dropFromDB(MessageWithArrayOfObjects.name);
+                await dropFromDB(MessageWithArrayOfObjects.name, "TestTable", "TableType");
             }
         });
     });
