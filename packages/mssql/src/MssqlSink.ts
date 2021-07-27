@@ -381,6 +381,9 @@ export class MssqlSink
         if (rawSprocDetails.rowsAffected[0] === 0) {
             throw new Error(`Stored Procedure ${schema}.${sprocName} not found`);
         }
+        if (rawSprocDetails.rowsAffected[0] > 1) {
+            throw new Error(`Found more than one Stored Procedure ${schema}.${sprocName}`);
+        }
         const recordsetEntries = rawSprocDetails.recordset;
         const sprocDetails: ISprocDetails = { parameters: new Map<string, ParamType>() };
         for (const entry of recordsetEntries) {
@@ -464,6 +467,9 @@ export class MssqlSink
         const rawTableDetails = await request.query(this.getTableSqlQuery(schema, tableName));
         if (rawTableDetails.rowsAffected[0] === 0) {
             throw new Error(`Table ${schema}.${tableName} not found`);
+        }
+        if (rawTableDetails.rowsAffected[0] > 1) {
+            throw new Error(`Found more than one Table ${schema}.${tableName}`);
         }
         const recordsetEntries = rawTableDetails.recordset;
         const tableDetails: ITableDetails = { columns: new Map<string, ITableColumn>() };
