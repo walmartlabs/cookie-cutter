@@ -18,7 +18,7 @@ import {
     timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import * as sql from "mssql";
-import { Mode, mssqlSink } from "..";
+import { Mode, mssqlSink, MsSqlMetadata } from "..";
 
 jest.setTimeout(60000); // 60 second
 
@@ -64,6 +64,8 @@ class PartialObject {
     constructor(public id: number) {}
 }
 
+class PartialObjectWithMetadata extends PartialObject {}
+
 class SimpleObject {
     constructor(public id: number, public str: string) {}
 }
@@ -80,8 +82,26 @@ class MessageWithArrayOfObjects {
     constructor(public arr: (SimpleObject | PartialObject)[]) {}
 }
 
+const metadataSchema = "metadata_scheming";
+
 class CommandHandler {
-    public onPartialObject(msg: SimpleObject, ctx: IDispatchContext): void {
+    public metadataCounter = 0;
+    public onPartialObjectWithMetadata(
+        msg: PartialObjectWithMetadata,
+        ctx: IDispatchContext
+    ): void {
+        ctx.logger.info(JSON.stringify(msg));
+        if (this.metadataCounter % 2 === 0) {
+            ctx.publish(PartialObjectWithMetadata, msg, {
+                [MsSqlMetadata.Schema]: metadataSchema,
+            });
+        } else {
+            ctx.publish(PartialObjectWithMetadata, msg);
+        }
+        this.metadataCounter++;
+    }
+
+    public onPartialObject(msg: PartialObject, ctx: IDispatchContext): void {
         ctx.logger.info(JSON.stringify(msg));
         ctx.publish(PartialObject, msg);
     }
@@ -128,7 +148,7 @@ function testApp(
                 ...config,
                 encrypt: true,
                 mode,
-                schema,
+                defaultSchema: schema,
             })
         )
         .done()
@@ -177,7 +197,12 @@ describe("Microsoft SQL", () => {
             await client.close();
         });
 
-        async function dropFromDB(sproc: string, table?: string, type?: string): Promise<void> {
+        async function dropFromDB(
+            sproc: string,
+            table?: string,
+            type?: string,
+            schema?: string
+        ): Promise<void> {
             const request = client.request();
             if (sproc) {
                 await request.query(`DROP PROCEDURE IF EXISTS ${sproc}`);
@@ -187,6 +212,9 @@ describe("Microsoft SQL", () => {
             }
             if (type) {
                 await request.query(`DROP TYPE IF EXISTS ${type}`);
+            }
+            if (schema) {
+                await request.query(`DROP SCHEMA IF EXISTS ${schema}`);
             }
         }
 
@@ -240,7 +268,7 @@ describe("Microsoft SQL", () => {
             }
         }
 
-        it("successfully writes to a Table with non-default schema", async () => {
+        it("successfully writes to Tables with non-default schema", async () => {
             const schema = "scheming_table";
             const createSchema = `CREATE SCHEMA ${schema};`;
             const createSimpleTable = `CREATE TABLE ${schema}.${SimpleObject.name} (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
@@ -256,12 +284,12 @@ describe("Microsoft SQL", () => {
                     schema
                 );
             } finally {
-                await dropFromDB(undefined, SimpleObject.name);
-                await dropFromDB(undefined, PartialObject.name);
+                await dropFromDB(undefined, `${schema}.${SimpleObject.name}`);
+                await dropFromDB(undefined, `${schema}.${PartialObject.name}`, undefined, schema);
             }
         });
 
-        it("successfully writes to a Table with default schema", async () => {
+        it("successfully writes to Tables with default schema", async () => {
             const createSimpleTable = `CREATE TABLE ${SimpleObject.name} (id INT NOT NULL PRIMARY KEY, str [VARCHAR](50) );`;
             const createPartialTable = `CREATE TABLE ${PartialObject.name} (id INT NOT NULL PRIMARY KEY);`;
             try {
@@ -272,6 +300,121 @@ describe("Microsoft SQL", () => {
             } finally {
                 await dropFromDB(undefined, SimpleObject.name);
                 await dropFromDB(undefined, PartialObject.name);
+            }
+        });
+
+        it("succesfully writes to Tables with schemas provided by default value and message metadata", async () => {
+            const createSchema = `CREATE SCHEMA ${metadataSchema};`;
+            const createDefaultTable = `CREATE TABLE ${PartialObjectWithMetadata.name} (id INT NOT NULL PRIMARY KEY);`;
+            const createMetadataTable = `CREATE TABLE ${metadataSchema}.${PartialObjectWithMetadata.name} (id INT NOT NULL PRIMARY KEY);`;
+            try {
+                await createInDB([createSchema, createDefaultTable, createMetadataTable]);
+                const messages: IMessage[] = [
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(0),
+                    },
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(1),
+                    },
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(2),
+                    },
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(3),
+                    },
+                ];
+                const app = testApp(messages, "dbo", Mode.Table, ParallelismMode.Concurrent);
+                try {
+                    await timeout(app, 10000);
+                } catch (e) {
+                    app.cancel();
+                } finally {
+                    const resultsDefaultTable = await getTableContents(
+                        "dbo",
+                        PartialObjectWithMetadata.name
+                    );
+                    const resultsMetadataTable = await getTableContents(
+                        metadataSchema,
+                        PartialObjectWithMetadata.name
+                    );
+                    expect(resultsDefaultTable.recordset).toMatchObject([{ id: 1 }, { id: 3 }]);
+                    expect(resultsMetadataTable.recordset).toMatchObject([{ id: 0 }, { id: 2 }]);
+                }
+            } finally {
+                await dropFromDB(undefined, PartialObjectWithMetadata.name);
+                await dropFromDB(
+                    undefined,
+                    `${metadataSchema}.${PartialObjectWithMetadata.name}`,
+                    undefined,
+                    metadataSchema
+                );
+            }
+        });
+
+        it("succesfully calls Sprocs with schema provided by default value and message metadata", async () => {
+            const createSchema = `CREATE SCHEMA ${metadataSchema};`;
+            const createDefaultTable = `CREATE TABLE TestTable (id INT NOT NULL PRIMARY KEY);`;
+            const createMetadataTable = `CREATE TABLE ${metadataSchema}.TestTable (id INT NOT NULL PRIMARY KEY);`;
+            const createDefaultSproc = `CREATE PROCEDURE ${PartialObjectWithMetadata.name}
+                @id INT
+                AS
+                INSERT INTO TestTable (id) VALUES (@id);`;
+            const createMetadataSproc = `CREATE PROCEDURE ${metadataSchema}.${PartialObjectWithMetadata.name}
+                @id INT
+                AS
+                INSERT INTO TestTable (id) VALUES (@id);`;
+            try {
+                await createInDB([
+                    createSchema,
+                    createDefaultTable,
+                    createMetadataTable,
+                    createDefaultSproc,
+                    createMetadataSproc,
+                ]);
+                const messages: IMessage[] = [
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(0),
+                    },
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(1),
+                    },
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(2),
+                    },
+                    {
+                        type: PartialObjectWithMetadata.name,
+                        payload: new PartialObjectWithMetadata(3),
+                    },
+                ];
+                const app = testApp(messages, "dbo", Mode.StoredProcedure, ParallelismMode.Serial);
+                try {
+                    await timeout(app, 10000);
+                } catch (e) {
+                    app.cancel();
+                } finally {
+                    const resultsDefaultTable = await getTableContents("dbo", "TestTable");
+                    const resultsMetadataTable = await getTableContents(
+                        metadataSchema,
+                        "TestTable"
+                    );
+                    expect(resultsDefaultTable.recordset).toMatchObject([{ id: 1 }, { id: 3 }]);
+                    expect(resultsMetadataTable.recordset).toMatchObject([{ id: 0 }, { id: 2 }]);
+                }
+            } finally {
+                await dropFromDB(PartialObjectWithMetadata.name, "TestTable");
+                await dropFromDB(
+                    `${metadataSchema}.${PartialObjectWithMetadata.name}`,
+                    `${metadataSchema}.TestTable`,
+                    undefined,
+                    metadataSchema
+                );
             }
         });
 
@@ -333,7 +476,12 @@ describe("Microsoft SQL", () => {
                     schema
                 );
             } finally {
-                await dropFromDB(`${schema}.${SimpleObject.name}`, `${schema}.TestTable`);
+                await dropFromDB(
+                    `${schema}.${SimpleObject.name}`,
+                    `${schema}.TestTable`,
+                    undefined,
+                    schema
+                );
             }
         });
 

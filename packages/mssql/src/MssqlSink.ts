@@ -22,6 +22,10 @@ import { Span, Tags, Tracer } from "opentracing";
 import { isArray, isObject } from "util";
 import { IMssqlConfiguration, Mode } from "./index";
 
+export enum MsSqlMetadata {
+    Schema = "mssql.schema",
+}
+
 export enum MsSqlOpenTracingTagKeys {
     MessageType = "mssql.msg_type",
     Mode = "mssql.client_mode",
@@ -222,17 +226,19 @@ export class MssqlSink
                 await tx.begin();
                 const messagesByTableName: Map<string, IPublishedMessage[]> = new Map();
                 for (const msg of output) {
-                    const tableName = msg.message.type;
-                    if (!messagesByTableName.has(tableName)) {
-                        messagesByTableName.set(tableName, []);
+                    const schema = msg.metadata[MsSqlMetadata.Schema] || this.config.defaultSchema;
+                    const fullTableName = `${schema}.${msg.message.type}`;
+                    if (!messagesByTableName.has(fullTableName)) {
+                        messagesByTableName.set(fullTableName, []);
                     }
-                    messagesByTableName.get(tableName).push(msg);
+                    messagesByTableName.get(fullTableName).push(msg);
                 }
-                for (const [_, messages] of messagesByTableName) {
+                for (const [fullTableName, messages] of messagesByTableName) {
                     let hasTableInfo = false;
                     let tableDetails: ITableDetails;
                     let table: sql.Table;
                     let insertQueryString = "";
+                    let schema = "";
                     spans = [];
                     for (const pubMsg of messages) {
                         const span = this.tracer.startSpan(this.spanOperationName, {
@@ -240,12 +246,14 @@ export class MssqlSink
                         });
                         haveUnfinishedSpans = true;
                         if (!hasTableInfo) {
+                            schema =
+                                pubMsg.metadata[MsSqlMetadata.Schema] || this.config.defaultSchema;
                             tableDetails = await this.getTableDetails(
-                                this.config.schema,
+                                schema,
                                 pubMsg.message.type,
                                 tx.request()
                             );
-                            table = new sql.Table(`${this.config.schema}.${pubMsg.message.type}`);
+                            table = new sql.Table(fullTableName);
                             table.create = false;
                             const columns = tableDetails.columns;
                             const columnNames: string[] = [];
@@ -257,7 +265,7 @@ export class MssqlSink
                             }
                             const columnList = columnNames.join(", ");
                             const valuesList = columnNames.map((col) => "@" + col).join(", ");
-                            insertQueryString = `INSERT INTO ${this.config.schema}.${pubMsg.message.type} (${columnList}) VALUES (${valuesList})`;
+                            insertQueryString = `INSERT INTO ${fullTableName} (${columnList}) VALUES (${valuesList})`;
                             hasTableInfo = true;
                         }
                         this.spanLogAndSetTags(
@@ -265,7 +273,7 @@ export class MssqlSink
                             insertQueryString,
                             "Table",
                             pubMsg.message.type,
-                            this.config.schema
+                            schema
                         );
                         spans.push(span);
                         const row: sql.IRow = [];
@@ -296,8 +304,10 @@ export class MssqlSink
                         childOf: pubMsg.spanContext,
                     });
                     haveUnfinishedSpans = true;
+                    const schema =
+                        pubMsg.metadata[MsSqlMetadata.Schema] || this.config.defaultSchema;
                     const sprocDetails: ISprocDetails = await this.getSprocDetails(
-                        this.config.schema,
+                        schema,
                         pubMsg.message.type,
                         tx.request()
                     );
@@ -308,10 +318,10 @@ export class MssqlSink
                         undefined,
                         "StoredProcedure",
                         pubMsg.message.type,
-                        this.config.schema
+                        schema
                     );
                     spans.push(span);
-                    await request.execute(`${this.config.schema}.${pubMsg.message.type}`);
+                    await request.execute(`${schema}.${pubMsg.message.type}`);
                     this.metrics.increment(MssqlMetrics.ExecuteSproc, {
                         server: this.config.server,
                         database: this.config.database,
