@@ -137,6 +137,8 @@ export enum KafkaMetadata {
     ConsumerGroupEpoch = "consumerGroupEpoch",
 }
 
+export { IRawKafkaMessage } from "./model";
+
 export interface IKafkaMessagePreprocessor {
     process(msg: IRawKafkaMessage): IRawKafkaMessage;
 }
