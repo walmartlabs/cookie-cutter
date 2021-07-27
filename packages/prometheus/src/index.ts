@@ -222,6 +222,8 @@ class PrometheusMetrics
     }
 }
 
+export { IPrometheusConfiguration } from "./config";
+
 export function prometheus(prometheusConfig: IPrometheusConfiguration): IMetrics {
     const defaults: IPrometheusConfiguration = {
         port: 3000,
