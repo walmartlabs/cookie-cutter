@@ -20,6 +20,7 @@ import {
 import { IAmqpConfiguration, amqpSink, amqpSource } from "..";
 import * as amqp from "amqplib";
 
+// whitespace remove
 jest.setTimeout(10000);
 
 async function waitForServer() {
