@@ -481,7 +481,6 @@ export class MssqlSink
         request: sql.Request
     ): Promise<ITableDetails> {
         let tableDetails: ITableDetails = this.tableMap.get(`${schema}.${tableName}`);
-
         if (!tableDetails) {
             tableDetails = await this.getTableDetailsFromSql(schema, tableName, request);
             this.tableMap.set(`${schema}.${tableName}`, tableDetails);
