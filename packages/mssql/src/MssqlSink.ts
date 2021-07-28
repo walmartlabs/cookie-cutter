@@ -167,6 +167,7 @@ export class MssqlSink
     private tableMap: Map<string, ITableDetails>;
     private tracer: Tracer;
     private metrics: IMetrics;
+
     private spanOperationName: string = "MsSql Client Call";
 
     constructor(private readonly config: IMssqlConfiguration) {
