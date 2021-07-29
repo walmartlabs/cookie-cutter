@@ -20,8 +20,6 @@ import {
 import { IAmqpConfiguration, amqpSink, amqpSource } from "..";
 import * as amqp from "amqplib";
 
-// tslint:disable:no-console
-// whitespace remove
 jest.setTimeout(10000);
 
 async function waitForServer() {
@@ -32,20 +30,14 @@ async function waitForServer() {
         password: "test",
         vhost: "test",
     };
-    let count = 0;
     while (true) {
         try {
             const conn = await amqp.connect(options);
-            console.log(conn.connection);
             await conn.close();
             break;
         } catch (e) {
-            if (count % 4 === 0) {
-                console.log(e);
-            }
             await sleep(500);
         }
-        count++;
     }
 }
 

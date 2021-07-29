@@ -21,7 +21,6 @@ import { AmqpOpenTracingTagKeys, IAmqpConfiguration } from ".";
 import * as amqp from "amqplib";
 import { Span, Tags, Tracer } from "opentracing";
 
-// tslint:disable:no-console
 export class AmqpSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
     private tracer: Tracer;
@@ -33,7 +32,6 @@ export class AmqpSink
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
-        console.log("sink init start");
         this.tracer = context.tracer;
         // note: username and password are set to default amqp credentials(guest) by underlying library if not set or set to undefined
         const options: amqp.Options.Connect = {
@@ -44,44 +42,33 @@ export class AmqpSink
             password: this.config.server.password,
             vhost: this.config.server.vhost,
         };
-        try {
-            this.conn = await amqp.connect(options);
-        } catch (e) {
-            console.log("sink connect e: ", e);
-            throw e;
-        }
+        this.conn = await amqp.connect(options);
         this.channel = await this.conn.createChannel();
         const queueName = this.config.queue.name;
         const durable = this.config.queue.durable;
         await this.channel.assertQueue(queueName, { durable });
-        console.log("sink init end");
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         for (const msg of output) {
-            console.log("sink sink msg start");
             const span = this.tracer.startSpan("Producing Message For AMQP", {
                 childOf: msg.spanContext,
             });
             this.spanLogAndSetTags(span, this.sink.name);
             const payload = Buffer.from(this.config.encoder.encode(msg.message));
             try {
-                console.log("sink sendToQueue start");
                 this.channel.sendToQueue(this.config.queue.name, payload, {
                     persistent: true,
                     type: msg.message.type,
                     contentType: this.config.encoder.mimeType,
                     expiration: this.config.message ? this.config.message.expiration : undefined,
                 });
-                console.log("sink sendToQueue end");
             } catch (e) {
-                console.log("sink sink catch: ", e);
                 failSpan(span, e);
                 throw e;
             } finally {
                 span.finish();
             }
-            console.log("sink sink msg end");
         }
     }
 
@@ -103,9 +90,7 @@ export class AmqpSink
 
     public async dispose(): Promise<void> {
         if (this.conn) {
-            console.log("sink dispose conn.close before");
             await this.conn.close(); // also closes channel
-            console.log("sink dispose conn.close after");
         }
     }
 }
