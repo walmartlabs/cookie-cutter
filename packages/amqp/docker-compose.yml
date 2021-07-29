@@ -1,7 +1,7 @@
 version: "3"
 services:
   rabbitmq:
-    image: rabbitmq:latest
+    image: rabbitmq@sha256:39b5939a9c5b40e655a71bfcc5a4238963aed1f127ab51265f456f8296376855
     ports:
       - "5672:5672"
     environment:
