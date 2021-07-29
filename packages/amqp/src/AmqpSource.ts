@@ -67,7 +67,12 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
             vhost: this.config.server.vhost,
         };
         console.log("source connect start");
-        this.conn = await amqp.connect(options);
+        try {
+            this.conn = await amqp.connect(options);
+        } catch (e) {
+            console.log("source connect e: ", e);
+            throw e;
+        }
         console.log("source connect end");
         console.log("source createChannel start");
         this.channel = await this.conn.createChannel();

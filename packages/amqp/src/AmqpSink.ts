@@ -44,7 +44,12 @@ export class AmqpSink
             password: this.config.server.password,
             vhost: this.config.server.vhost,
         };
-        this.conn = await amqp.connect(options);
+        try {
+            this.conn = await amqp.connect(options);
+        } catch (e) {
+            console.log("sink connect e: ", e);
+            throw e;
+        }
         this.channel = await this.conn.createChannel();
         const queueName = this.config.queue.name;
         const durable = this.config.queue.durable;
