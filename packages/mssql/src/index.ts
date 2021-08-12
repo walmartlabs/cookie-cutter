@@ -13,6 +13,8 @@ export enum Mode {
     StoredProcedure,
 }
 
+export { MsSqlMetadata } from "./MssqlSink";
+
 export interface IMssqlConfiguration {
     readonly server: string;
     readonly database: string;
@@ -20,6 +22,7 @@ export interface IMssqlConfiguration {
     readonly password: string;
     readonly encrypt: boolean;
     readonly mode?: Mode;
+    readonly defaultSchema?: string;
     readonly connectionTimeout?: number;
     readonly requestTimeout?: number;
     readonly stream?: boolean;
@@ -75,6 +78,14 @@ class MssqlConfiguration {
         return config.noop();
     }
 
+    @config.field(config.converters.string)
+    public set defaultSchema(_: string) {
+        config.noop();
+    }
+    public get defaultSchema(): string {
+        return config.noop();
+    }
+
     @config.field(config.converters.timespan)
     public set connectionTimeout(_: number) {
         config.noop();
@@ -103,6 +114,7 @@ class MssqlConfiguration {
 export function mssqlSink(configuration: IMssqlConfiguration): IOutputSink<IPublishedMessage> {
     configuration = config.parse(MssqlConfiguration, configuration, {
         mode: Mode.Table,
+        defaultSchema: "dbo",
         encrypt: false,
         connectionTimeout: 15000,
         requestTimeout: 15000,

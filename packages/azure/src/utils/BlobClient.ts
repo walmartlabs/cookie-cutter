@@ -31,7 +31,7 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         if (config.connectionString) {
             this.client = BlobServiceClient.fromConnectionString(config.connectionString);
         } else if (config.url) {
-            if (config.url.indexOf("https://") === 0) {
+            if (config.url.indexOf("http") === 0) {
                 this.client = new BlobServiceClient(
                     config.url,
                     new StorageSharedKeyCredential(config.storageAccount, config.storageAccessKey)

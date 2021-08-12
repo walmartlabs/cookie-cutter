@@ -20,6 +20,7 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
+import { RedisError } from "redis";
 import { isString, isNullOrUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 import { RedisProxy, RawReadGroupResult, RawPELResult, RawXClaimResult } from "./RedisProxy";
@@ -185,7 +186,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -226,7 +227,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             this.metrics.increment(RedisClientMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -282,7 +283,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 db,
                 streamName,
                 result: RedisMetricResults.Error,
-                error: e,
+                errorType: e instanceof RedisError ? e.name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -334,7 +335,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err,
+                errorType: err instanceof RedisError ? err.name : "NonRedisError",
             });
 
             throw err;
@@ -368,7 +369,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err,
+                errorType: err instanceof RedisError ? err.name : "NonRedisError",
             });
 
             throw err;
@@ -458,7 +459,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                error,
+                errorType: error instanceof RedisError ? error.name : "NonRedisError",
             });
             throw error;
         } finally {
@@ -497,7 +498,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                error: err,
+                errorType: err instanceof RedisError ? err.name : "NonRedisError",
             });
 
             throw err;
@@ -557,7 +558,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                error,
+                errorType: error instanceof RedisError ? error.name : "NonRedisError",
             });
             throw error;
         } finally {

@@ -7,4 +7,8 @@ cd ../azure
 yarn build
 yarn integrate
 
+If ("$?" -ne "True") {
+    throw "Yarn Integrate Failed"
+}
+
 Start-Sleep -s 60
