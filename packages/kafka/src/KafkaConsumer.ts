@@ -138,8 +138,8 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             clientId: generateClientId(),
             brokers: Array.isArray(broker) ? broker : [broker],
             ssl,
-            connectionTimeout: this.config.connectionTimeout || 1000, // KafkaJs Default
-            requestTimeout: this.config.requestTimeout || 30000, // KafkaJs Default
+            connectionTimeout: this.config.connectionTimeout,
+            requestTimeout: this.config.requestTimeout,
         });
 
         this.admin = client.admin({

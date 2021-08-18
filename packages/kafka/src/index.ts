@@ -186,6 +186,8 @@ export function kafkaSource(
         preprocessor: {
             process: (msg) => msg,
         },
+        connectionTimeout: 1000,
+        requestTimeout: 3000,
     });
     return new KafkaSource(configuration);
 }
