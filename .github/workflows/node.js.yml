@@ -36,15 +36,15 @@ jobs:
         run: yarn set version 1.21.1
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
-      # - name: Yarn Build
-      #   run: yarn build
-      # - name: Yarn Lint
-      #   run: yarn lint
-      # - name: Yarn Test
-      #   run: yarn test
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Lint
+        run: yarn lint
+      - name: Yarn Test
+        run: yarn test
       - name: Yarn Audit
-        # if: ${{ github.event_name == 'schedule' }}
-        run: /bin/bash -c 'yarn audit; [[ $? -ge 4 ]] && exit 1 || exit 0'
+        if: ${{ github.event_name == 'schedule' }}
+        run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
         # revert back once xmldom v0.7.0 is published: https://github.com/xmldom/xmldom/issues/271
         # run: yarn audit
 
