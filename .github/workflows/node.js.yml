@@ -44,7 +44,7 @@ jobs:
       #   run: yarn test
       - name: Yarn Audit
         # if: ${{ github.event_name == 'schedule' }}
-        run: /bin/bash -c 'yarn audit --level critical; [[ $? -ge 4 ]] && exit 1 || exit 0'
+        run: /bin/bash -c 'yarn audit --level critical; [[ $? -ge 8 ]] && exit 1 || exit 0'
         # run: yarn audit --level high; [[ $? -ge 8 ]] && exit 1 || exit 0
         # revert back once xmldom v0.7.0 is published: https://github.com/xmldom/xmldom/issues/271
         # run: yarn audit
