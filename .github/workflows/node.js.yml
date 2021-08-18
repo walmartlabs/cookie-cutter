@@ -43,7 +43,7 @@ jobs:
       # - name: Yarn Test
       #   run: yarn test
       - name: Yarn Audit
-        if: ${{ github.event_name == 'schedule' }}
+        # if: ${{ github.event_name == 'schedule' }}
         run: /bin/bash -c 'yarn audit; [[ $? -ge 4 ]] && exit 1 || exit 0'
         # revert back once xmldom v0.7.0 is published: https://github.com/xmldom/xmldom/issues/271
         # run: yarn audit
