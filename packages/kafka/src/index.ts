@@ -99,7 +99,7 @@ export interface IKafkaClientConfiguration {
     readonly connectionTimeout?: number;
 
     /*
-     * Time in milliseconds to wait for a successful request. The default value is: 30000  
+     * Time in milliseconds to wait for a successful request. The default value is: 30000
      * https://kafka.js.org/docs/configuration#request-timeout
      */
     readonly requestTimeout?: number;
@@ -176,7 +176,9 @@ export interface IKafkaMessagePreprocessor {
 }
 
 export function kafkaSource(
-    configuration: IKafkaBrokerConfiguration & IKafkaSubscriptionConfiguration & IKafkaClientConfiguration
+    configuration: IKafkaBrokerConfiguration &
+        IKafkaSubscriptionConfiguration &
+        IKafkaClientConfiguration
 ): IInputSource {
     configuration = config.parse(KafkaSubscriptionConfiguration, configuration, {
         consumeTimeout: 50,

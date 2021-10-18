@@ -39,7 +39,6 @@ export class KafkaClientConfiguration implements IKafkaClientConfiguration {
     }
 }
 
-
 @config.section
 export class KafkaBrokerConfiguration extends KafkaClientConfiguration
     implements IKafkaBrokerConfiguration {

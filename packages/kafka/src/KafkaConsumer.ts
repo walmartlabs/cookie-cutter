@@ -53,7 +53,9 @@ enum KafkaMetrics {
     Lag = "cookie_cutter.kafka_consumer.lag", // lag = high watermark - committed
 }
 
-export type KafkaConsumerConfig = IKafkaBrokerConfiguration & IKafkaSubscriptionConfiguration & IKafkaClientConfiguration; 
+export type KafkaConsumerConfig = IKafkaBrokerConfiguration &
+    IKafkaSubscriptionConfiguration &
+    IKafkaClientConfiguration;
 
 const EARLIEST_OFFSET: string = "-2";
 const LATEST_OFFSET: string = "-1";
