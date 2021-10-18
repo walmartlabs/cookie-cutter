@@ -32,6 +32,7 @@ import Long = require("long");
 import { isNumber, isString } from "util";
 import {
     IKafkaBrokerConfiguration,
+    IKafkaClientConfiguration,
     IKafkaSubscriptionConfiguration,
     IKafkaTopic,
     KafkaMetadata,
@@ -52,7 +53,9 @@ enum KafkaMetrics {
     Lag = "cookie_cutter.kafka_consumer.lag", // lag = high watermark - committed
 }
 
-export type KafkaConsumerConfig = IKafkaBrokerConfiguration & IKafkaSubscriptionConfiguration;
+export type KafkaConsumerConfig = IKafkaBrokerConfiguration &
+    IKafkaSubscriptionConfiguration &
+    IKafkaClientConfiguration;
 
 const EARLIEST_OFFSET: string = "-2";
 const LATEST_OFFSET: string = "-1";
@@ -137,6 +140,8 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             clientId: generateClientId(),
             brokers: Array.isArray(broker) ? broker : [broker],
             ssl,
+            connectionTimeout: this.config.connectionTimeout,
+            requestTimeout: this.config.requestTimeout,
         });
 
         this.admin = client.admin({

@@ -91,6 +91,20 @@ export interface IKafkaSubscriptionConfiguration {
     readonly sessionTimeout?: number;
 }
 
+export interface IKafkaClientConfiguration {
+    /*
+     * Time in milliseconds to wait for a successful connection. The default value is: 1000
+     * https://kafka.js.org/docs/configuration#connection-timeout
+     */
+    readonly connectionTimeout?: number;
+
+    /*
+     * Time in milliseconds to wait for a successful request. The default value is: 30000
+     * https://kafka.js.org/docs/configuration#request-timeout
+     */
+    readonly requestTimeout?: number;
+}
+
 export enum KafkaMessagePublishingStrategy {
     NonTransactional = 1,
     Transactional,
@@ -162,7 +176,9 @@ export interface IKafkaMessagePreprocessor {
 }
 
 export function kafkaSource(
-    configuration: IKafkaBrokerConfiguration & IKafkaSubscriptionConfiguration
+    configuration: IKafkaBrokerConfiguration &
+        IKafkaSubscriptionConfiguration &
+        IKafkaClientConfiguration
 ): IInputSource {
     configuration = config.parse(KafkaSubscriptionConfiguration, configuration, {
         consumeTimeout: 50,
@@ -172,6 +188,8 @@ export function kafkaSource(
         preprocessor: {
             process: (msg) => msg,
         },
+        connectionTimeout: 1000,
+        requestTimeout: 30000,
     });
     return new KafkaSource(configuration);
 }
