@@ -16,6 +16,7 @@
         "change-case": "4.1.1",
         "grpc": "1.24.11",
         "opentracing": "0.14.4"
+
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.4.0-beta"
