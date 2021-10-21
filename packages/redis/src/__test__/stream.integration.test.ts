@@ -28,6 +28,8 @@ import { RepublishMessageDispatcher } from "./utils";
 import { RedisClientMetrics } from "../RedisClient";
 import { RedisMetrics } from "../RedisStreamSource";
 
+jest.setTimeout(10000);
+
 const RoundTripTestConfigurationPermutations: [
     string,
     Partial<IRedisInputStreamOptions & IRedisOutputStreamOptions>
