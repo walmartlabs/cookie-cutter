@@ -28,8 +28,6 @@ import { RepublishMessageDispatcher } from "./utils";
 import { RedisClientMetrics } from "../RedisClient";
 import { RedisMetrics } from "../RedisStreamSource";
 
-jest.setTimeout(10000);
-
 const RoundTripTestConfigurationPermutations: [
     string,
     Partial<IRedisInputStreamOptions & IRedisOutputStreamOptions>
@@ -55,10 +53,12 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
     ],
 ];
 
+jest.setTimeout(90000);
+
 describe("Redis Streams", () => {
-    beforeAll(() => {
-        jest.setTimeout(90000);
-    });
+    // beforeAll(() => {
+    //     jest.setTimeout(90000);
+    // });
 
     for (const [id, cfg] of RoundTripTestConfigurationPermutations) {
         it(`produces and consumes messages - ${id}`, async () => {
