@@ -45,7 +45,7 @@ jobs:
       - name: Yarn Audit
         if: ${{ github.event_name == 'schedule' }}
         run: yarn audit
-        run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
+        # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
 
   test-ubuntu:
     name: Ubuntu Node 12 Test
@@ -260,8 +260,7 @@ jobs:
     name: Redis Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     # needs: [test-ubuntu, test-macOS, test-windows]
-    # needs: [test-ubuntu, test-windows]
-    needs: [smoke]
+    needs: [test-ubuntu, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
