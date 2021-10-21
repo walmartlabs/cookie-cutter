@@ -36,8 +36,8 @@ jobs:
         run: yarn set version 1.21.1
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
-      - name: Yarn Build
-        run: yarn build
+      # - name: Yarn Build
+      #   run: yarn build
       # - name: Yarn Lint
       #   run: yarn lint
       # - name: Yarn Test
@@ -83,9 +83,9 @@ jobs:
       - name: Install Yarn 1.21.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn set version 1.21.1
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn set version 1.21.1 && yarn install --frozen-lockfile
+      # - name: Install Dependencies
+      #   run: yarn install --frozen-lockfile
       - name: Yarn Build
         run: yarn build
       - name: Yarn Test
