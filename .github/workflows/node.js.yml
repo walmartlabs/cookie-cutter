@@ -81,6 +81,8 @@ jobs:
         with:
           node-version: "10"
       - name: Install Yarn 1.22.14
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: yarn set version 1.22.14
       - name: Install Yarn 1.21.1
         env:
