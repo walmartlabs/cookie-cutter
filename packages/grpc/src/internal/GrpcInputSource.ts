@@ -41,6 +41,7 @@ import {
 } from ".";
 import { GrpcMetadata, IGrpcConfiguration, IGrpcServerConfiguration } from "..";
 import { GrpcOpenTracingTagKeys } from "./helper";
+import { HealthService, GrpcHealthCheck, HealthCheckResponse } from "grpc-ts-health-check";
 
 enum GrpcMetrics {
     RequestReceived = "cookie_cutter.grpc_server.request_received",
@@ -200,6 +201,11 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                 };
             }
             this.server.addService(spec, impl);
+        }
+        if (this.config.healthCheck) {
+            this.logger.info("Health check enabled, see https://github.com/grpc/grpc/blob/master/doc/health-checking.md");
+            this.server.addService(HealthService, new GrpcHealthCheck(this.config.healthCheck));
+            this.config.healthCheck[""] = HealthCheckResponse.ServingStatus.SERVING;
         }
     }
 

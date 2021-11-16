@@ -22,6 +22,7 @@ import {
     GrpcInputSource,
     GrpcSourceConfiguration,
 } from "./internal";
+import { HealthCheckResponse } from "grpc-ts-health-check";
 
 export interface IProtocolBufferType {
     new (): any;
@@ -56,6 +57,7 @@ export interface IGrpcServerConfiguration {
     readonly host?: string;
     readonly definitions: IGrpcServiceDefinition[];
     readonly skipNoStreamingValidation?: boolean;
+    readonly healthCheck?: { [key: string]: HealthCheckResponse.ServingStatus };
 }
 
 export interface IGrpcClientConfiguration {

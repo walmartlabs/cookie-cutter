@@ -5950,6 +5950,11 @@ google-protobuf@3.6.1:
   resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.6.1.tgz#7ef58e2bea137a93cdaf5cfd5afa5f6abdd92025"
   integrity sha512-SJYemeX5GjDLPnadcmCNQePQHCS4Hl5fOcI/JawqDIYFhCmrtYAjcx/oTQx/Wi8UuCuZQhfvftbmPePPAYHFtA==
 
+google-protobuf@^3.12.2:
+  version "3.19.1"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.19.1.tgz#5af5390e8206c446d8f49febaffd4b7f4ac28f41"
+  integrity sha512-Isv1RlNC+IzZzilcxnlVSf+JvuhxmY7DaxYCBy+zPS9XVuJRtlTTIXR9hnZ1YL1MMusJn/7eSy2swCzZIomQSg==
+
 got@^11.8.0:
   version "11.8.2"
   resolved "https://registry.yarnpkg.com/got/-/got-11.8.2.tgz#7abb3959ea28c31f3576f1576c1effce23f33599"
@@ -6035,6 +6040,19 @@ growly@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/growly/-/growly-1.3.0.tgz#f10748cbe76af964b7c96c93c6bcc28af120c081"
   integrity sha1-8QdIy+dq+WS3yWyTxrzCivEgwIE=
+
+grpc-boom@^1.0.28:
+  version "1.0.29"
+  resolved "https://registry.yarnpkg.com/grpc-boom/-/grpc-boom-1.0.29.tgz#ce01a018da450d933f9a7e13c392726bf6a395d8"
+  integrity sha512-YMQj+p4PHa40EAsASZqp06PgJ0tKxM7IMMyQr1BFho/O251rh7XsG28QEn08CULKlrCGu9xddJ1qfVq9vF7Y6A==
+
+grpc-ts-health-check@2.0.6:
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/grpc-ts-health-check/-/grpc-ts-health-check-2.0.6.tgz#628d6acbef3fae4c4e6217c88870b605164a393d"
+  integrity sha512-3VepmtINdbU1ZZQ3w3WOMBgPhpfnvNtQWHy48ak+LepPHSVlV168vsUlYwQ7whj8A1kDyRs+ffLhAZQLGUwT6Q==
+  dependencies:
+    google-protobuf "^3.12.2"
+    grpc-boom "^1.0.28"
 
 grpc@1.24.10:
   version "1.24.10"
