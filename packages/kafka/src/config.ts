@@ -15,10 +15,33 @@ import {
     IKafkaTopic,
     KafkaMessagePublishingStrategy,
     KafkaOffsetResetStrategy,
+    KafkaPublisherCompressionMode,
+    IKafkaClientConfiguration,
 } from ".";
+import * as tls from "tls";
 
 @config.section
-export class KafkaBrokerConfiguration implements IKafkaBrokerConfiguration {
+export class KafkaClientConfiguration implements IKafkaClientConfiguration {
+    @config.field(config.converters.timespan)
+    public set connectionTimeout(_: number) {
+        config.noop();
+    }
+    public get connectionTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set requestTimeout(_: number) {
+        config.noop();
+    }
+    public get requestTimeout(): number {
+        return config.noop();
+    }
+}
+
+@config.section
+export class KafkaBrokerConfiguration extends KafkaClientConfiguration
+    implements IKafkaBrokerConfiguration {
     @config.field(config.converters.listOf(config.converters.string))
     public set broker(_: string | string[]) {
         config.noop();
@@ -40,6 +63,14 @@ export class KafkaBrokerConfiguration implements IKafkaBrokerConfiguration {
         config.noop();
     }
     public get headerNames(): IKafkaHeaderNames {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set ssl(_: tls.ConnectionOptions) {
+        config.noop();
+    }
+    public get ssl(): tls.ConnectionOptions {
         return config.noop();
     }
 }
@@ -144,6 +175,14 @@ export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
         config.noop();
     }
     public get transactionalId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.enum(KafkaPublisherCompressionMode))
+    public set compressionMode(_: KafkaPublisherCompressionMode) {
+        config.noop();
+    }
+    public get compressionMode(): KafkaPublisherCompressionMode {
         return config.noop();
     }
 }

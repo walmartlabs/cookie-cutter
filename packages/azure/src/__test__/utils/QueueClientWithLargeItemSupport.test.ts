@@ -37,7 +37,7 @@ describe("QueueClientWithLargeItemSupport", () => {
         };
         const blob = {
             initialize: mocks.blobInit,
-            read: mocks.blobRead,
+            readAsText: mocks.blobRead,
             write: mocks.blobWrite,
             createContainerIfNotExists: mocks.createContainerIfNotExists,
         };
@@ -94,7 +94,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             queue.read.mockResolvedValue([messageQueueResult]);
             const result = await client.read(context);
             expect(result[0]).toMatchObject(messageQueueResult);
-            expect(blob.read).not.toBeCalled();
+            expect(blob.readAsText).not.toBeCalled();
         });
         it("should read from blob if blob header", async () => {
             const { client, queue, blob } = buildClient();
@@ -108,9 +108,9 @@ describe("QueueClientWithLargeItemSupport", () => {
                 payload: null,
             };
             queue.read.mockResolvedValue([messageResult]);
-            blob.read.mockResolvedValue(messageQueueResult.messageText);
+            blob.readAsText.mockResolvedValue(messageQueueResult.messageText);
             const result = await client.read(context);
-            expect(blob.read).toBeCalled();
+            expect(blob.readAsText).toBeCalled();
             expect(result[0]).toMatchObject(messageQueueResult);
         });
         it("should read mixed", async () => {
@@ -125,9 +125,9 @@ describe("QueueClientWithLargeItemSupport", () => {
                 payload: null,
             };
             queue.read.mockResolvedValue([messageResult, messageQueueResult]);
-            blob.read.mockResolvedValue(messageQueueResult.messageText);
+            blob.readAsText.mockResolvedValue(messageQueueResult.messageText);
             const result = await client.read(context);
-            expect(blob.read).toBeCalledTimes(1);
+            expect(blob.readAsText).toBeCalledTimes(1);
             expect(result).toMatchObject([messageQueueResult, messageQueueResult]);
         });
     });

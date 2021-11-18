@@ -49,7 +49,7 @@ export class BlobStorageSnapshotProvider<TSnapshot>
         atSn?: number
     ): Promise<[number, TSnapshot]> {
         try {
-            const listerResponse = await this.client.read(spanContext, key);
+            const listerResponse = await this.client.readAsText(spanContext, key);
             if (!listerResponse) {
                 return [0, undefined];
             }
@@ -63,7 +63,7 @@ export class BlobStorageSnapshotProvider<TSnapshot>
             }
             const returnedSequenceNumber = sequenceList[retrievalIndex];
             const blobName = `${key}-${returnedSequenceNumber}`;
-            const response = await this.client.read(spanContext, blobName);
+            const response = await this.client.readAsText(spanContext, blobName);
             if (!response) {
                 return [0, undefined];
             }

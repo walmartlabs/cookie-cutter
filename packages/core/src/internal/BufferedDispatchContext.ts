@@ -155,7 +155,12 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
         });
     }
 
-    public store<T>(type: IClassType<T>, state: StateRef<TState>, msg: T): void {
+    public store<T, M extends string = string>(
+        type: IClassType<T>,
+        state: StateRef<TState>,
+        msg: T,
+        meta?: Readonly<{ [key in M]: any }>
+    ): void {
         if (this.completed) {
             throw new Error(
                 "Buffered Dispatch Context was already completed. Unable to call store after completion."
@@ -169,6 +174,7 @@ export class BufferedDispatchContext<TState = any> implements IDispatchContext<T
         this.storedItems.push({
             state,
             message,
+            metadata: meta,
             original: this.source,
             spanContext: this.trace.context,
         });

@@ -13,6 +13,7 @@ import {
     IMetrics,
     IRequireInitialization,
     OpenTracingTagKeys,
+    ILogger,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { IBigQueryClient, IBigQueryConfiguration } from ".";
@@ -36,6 +37,7 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
     private tracer: Tracer;
     private metrics: IMetrics;
     private spanOperationName: string = "BigQuery Client Call";
+    private logger: ILogger;
 
     constructor(private readonly config: IBigQueryConfiguration) {
         const key = this.config.privateKey.split("\\n").join("\n");
@@ -47,11 +49,13 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
             },
         }).dataset(this.config.datasetId);
         this.tracer = DefaultComponentContext.tracer;
+        this.logger = DefaultComponentContext.logger;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
+        this.logger = context.logger;
     }
 
     private spanLogAndSetTags(span: Span, funcName: string, dataset: string, table: string): void {
@@ -81,8 +85,16 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
             this.metrics.increment(BigQueryMetrics.Put, {
                 datasetTable,
                 result: BigQueryMetricResults.Error,
-                error: e,
+                error: e instanceof Error ? e.message : "",
             });
+            let detailedErrorMsg = e;
+            if (e.errors) {
+                detailedErrorMsg = e.errors;
+            }
+            this.logger.error(
+                "An error occurred while inserting data into big query",
+                detailedErrorMsg
+            );
             throw e;
         } finally {
             span.finish();
