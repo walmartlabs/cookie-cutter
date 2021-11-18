@@ -1,3 +1,56 @@
+# 1.4
+
+## CI/CD
+- Switch from Travis to Github Actions
+
+## azure
+- Expose `IBlobClient` interface
+
+    ```typescript
+    export interface IBlobClient extends IRequireInitialization {
+        createContainerIfNotExists(context?: SpanContext): Promise<boolean>;
+        write(context: SpanContext, blobId: string, content: Buffer | string): Promise<void>;
+        readAsText(context: SpanContext, blobId: string): Promise<string>;
+        exists(context: SpanContext, blobId: string): Promise<boolean>;
+        deleteFolderIfExists(context: SpanContext, folderId: string): Promise<boolean>;
+        deleteBlobIfExists(context: SpanContext, blobId: string): Promise<boolean>;
+        listBlobs(context: SpanContext, prefix: string): AsyncIterableIterator<string>;
+    }
+    ```
+- Run integration tests via emulators for Cosmos DB and Azure Storage in a Windows VM
+- Expose `ICosmosDocument` field `ttl` in order to allow setting time-to-live for Cosmos DB documents
+- Fix: Don't extract data field in QueueInputSource when encoder isEmbeddable
+- Fix: Handle the `url` and `connectionString` fields of `IQueueConfiguration` correctly as separate fields
+
+## gcp
+- Fix: pass error.message instead of error object to increment metric
+- Log a detailed error message when an error occurs while inserting data into BiqQuery
+
+## grpc
+- Fix: pass correct time value to the `RequestProcessingTime` timing metric
+
+## kafka
+- Add TLS support
+- Expose compression modes setting in kafkaSink: `None`, `Gzip`, `Snappy`, `LZ4`
+- Expose KafkaJS Client Configuration fields: `connectionTimeout` and `requestTimeout`
+- Fix: properly connect/disconnect KafkaJS producer
+- Fix: properly export `IRawKafkaMessage`
+
+## mssql
+- Update mssql from `4.x.x` to `6.x.x`
+- Expose connection configuration fields: `connectionTimeout`, `requestTimeout` and `stream`
+- Add schema support for Sproc and Table mode
+- Add bulk insert support for Table mode
+
+## prometheus
+- Fix: properly export `IPrometheusConfiguration`
+
+## redis
+- Fix: redis client no longer stops processing messages in a batch when it encounters an invalid message
+- Fix: force application to restart on unexpected redis disconnect because reconnect doesn't seem to work properly
+- Fix: log correct error when redis ack fails
+- Fix: pass RedisError type instead of Error object to increment metric
+
 # 1.3
 
 ## core
