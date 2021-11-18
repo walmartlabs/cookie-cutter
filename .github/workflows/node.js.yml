@@ -83,7 +83,8 @@ jobs:
       - name: Install Yarn 1.21.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn policies set-version 1.21.1
+        run: yarn policies set-version 1.22.17
+        # run: yarn policies set-version 1.21.1
         # run: yarn set version 1.21.1
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
