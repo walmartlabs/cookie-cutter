@@ -22,10 +22,10 @@
         "uuid": "8.3.0"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4"
+        "@walmartlabs/cookie-cutter-core": "^1.4.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4"
+        "@walmartlabs/cookie-cutter-core": "^1.4.0"
     },
     "scripts": {
         "build": "tsc",

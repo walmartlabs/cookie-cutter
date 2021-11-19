@@ -17,11 +17,11 @@
         "shortid": "^2.2.15"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4"
+        "@walmartlabs/cookie-cutter-core": "^1.4.0"
     },
     "devDependencies": {
         "@types/redis": "2.8.28",
-        "@walmartlabs/cookie-cutter-core": "^1.4"
+        "@walmartlabs/cookie-cutter-core": "^1.4.0"
     },
     "scripts": {
         "build": "tsc",
