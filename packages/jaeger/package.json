@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-jaeger",
-    "version": "1.4.0-rc.0",
+    "version": "1.4.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -18,10 +18,10 @@
         "prom-client": "^13.1.0"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0-rc"
+        "@walmartlabs/cookie-cutter-core": "^1.4"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0-rc",
+        "@walmartlabs/cookie-cutter-core": "^1.4",
         "@types/jaeger-client": "3.18.0"
     },
     "scripts": {
