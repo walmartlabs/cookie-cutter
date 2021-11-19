@@ -17,8 +17,6 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import {
     Admin,
-    CompressionCodecs,
-    CompressionTypes,
     Consumer,
     ConsumerCrashEvent,
     ConsumerGroupJoinEvent,
@@ -30,12 +28,11 @@ import {
     RequestQueueSizeEvent,
     RetryOptions,
 } from "kafkajs";
-import * as LZ4Codec from "kafkajs-lz4";
-import * as SnappyCodec from "kafkajs-snappy";
 import Long = require("long");
 import { isNumber, isString } from "util";
 import {
     IKafkaBrokerConfiguration,
+    IKafkaClientConfiguration,
     IKafkaSubscriptionConfiguration,
     IKafkaTopic,
     KafkaMetadata,
@@ -43,10 +40,9 @@ import {
 } from ".";
 import { IMessageHeaders, IRawKafkaMessage } from "./model";
 import { OffsetManager } from "./OffsetManager";
-import { generateClientId } from "./utils";
+import { generateClientId, loadCompressionPlugins } from "./utils";
 
-CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
-CompressionCodecs[CompressionTypes.LZ4] = new (LZ4Codec as any)().codec;
+loadCompressionPlugins();
 
 enum KafkaMetrics {
     RequestQueueSize = "cookie_cutter.kafka_consumer.request_queue_size",
@@ -57,7 +53,9 @@ enum KafkaMetrics {
     Lag = "cookie_cutter.kafka_consumer.lag", // lag = high watermark - committed
 }
 
-export type KafkaConsumerConfig = IKafkaBrokerConfiguration & IKafkaSubscriptionConfiguration;
+export type KafkaConsumerConfig = IKafkaBrokerConfiguration &
+    IKafkaSubscriptionConfiguration &
+    IKafkaClientConfiguration;
 
 const EARLIEST_OFFSET: string = "-2";
 const LATEST_OFFSET: string = "-1";
@@ -137,10 +135,13 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
             retries: 10,
         };
 
-        const { broker } = this.config;
+        const { broker, ssl } = this.config;
         const client = new Kafka({
             clientId: generateClientId(),
             brokers: Array.isArray(broker) ? broker : [broker],
+            ssl,
+            connectionTimeout: this.config.connectionTimeout,
+            requestTimeout: this.config.requestTimeout,
         });
 
         this.admin = client.admin({

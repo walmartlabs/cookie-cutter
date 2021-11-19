@@ -6,6 +6,8 @@
 !/.yarnignore
 /**/prometheus/config/targets.json
 
+/**/.vagrant
+
 /docs/website/build
 /yarn-error.log
 /**/package-lock.json

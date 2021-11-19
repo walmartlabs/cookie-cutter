@@ -85,11 +85,19 @@ export class BlobStorageConfiguration implements IBlobStorageConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.timespan)
-    public set requestTimeout(_: number) {
+    @config.field(config.converters.string)
+    public set url(_: string) {
         config.noop();
     }
-    public get requestTimeout(): number {
+    public get url(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set connectionString(_: string) {
+        config.noop();
+    }
+    public get connectionString(): string {
         return config.noop();
     }
 }

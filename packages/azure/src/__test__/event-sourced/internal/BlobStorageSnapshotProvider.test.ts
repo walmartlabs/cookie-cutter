@@ -19,18 +19,18 @@ import { IAzureError, makeAzureError, makeReturnString } from "../../helper";
 const MockBlobClient: jest.Mock = BlobClient as any;
 
 describe("BlobStorageSnapshotProvider", () => {
-    let read: jest.Mock;
+    let readAsText: jest.Mock;
     beforeEach(() => {
-        read = jest.fn();
+        readAsText = jest.fn();
         MockBlobClient.mockImplementation(() => {
             return {
-                read,
+                readAsText,
             };
         });
     });
 
     const testKey = "UnitTestKey";
-    const config = {
+    const config: IBlobStorageConfiguration = {
         storageAccount: "snapshots",
         storageAccessKey: "dummy_access_key",
         container: "unit-test",
@@ -39,8 +39,8 @@ describe("BlobStorageSnapshotProvider", () => {
     describe("Responds to error from the underlying blob service", () => {
         const atSn = 20;
         function setUpProvider(error: IAzureError): BlobStorageSnapshotProvider<any> {
-            read.mockReturnValueOnce(Promise.reject(error));
-            return new BlobStorageSnapshotProvider<any>(config as IBlobStorageConfiguration);
+            readAsText.mockReturnValueOnce(Promise.reject(error));
+            return new BlobStorageSnapshotProvider<any>(config);
         }
 
         it("returns no snapshot if the file is not found", async () => {
@@ -49,7 +49,7 @@ describe("BlobStorageSnapshotProvider", () => {
                 0,
                 undefined,
             ]);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
 
         it("returns no snapshot if the container is not found", async () => {
@@ -58,7 +58,7 @@ describe("BlobStorageSnapshotProvider", () => {
                 0,
                 undefined,
             ]);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
 
         it("throws any other 404 error generated when reading a file", async () => {
@@ -67,7 +67,7 @@ describe("BlobStorageSnapshotProvider", () => {
             await expect(snapshotProvider.get(undefined, testKey, atSn)).rejects.toMatchObject(
                 error
             );
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
 
         it("throws any other error generated when reading a file", async () => {
@@ -76,7 +76,7 @@ describe("BlobStorageSnapshotProvider", () => {
             await expect(snapshotProvider.get(undefined, testKey, atSn)).rejects.toMatchObject(
                 error
             );
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -88,9 +88,9 @@ describe("BlobStorageSnapshotProvider", () => {
             listerReturnObject: any,
             snapshotReturnObject: any
         ): BlobStorageSnapshotProvider<any> {
-            read.mockReturnValueOnce(Promise.resolve(listerReturnObject));
-            read.mockReturnValueOnce(Promise.resolve(snapshotReturnObject));
-            return new BlobStorageSnapshotProvider<any>(config as IBlobStorageConfiguration);
+            readAsText.mockReturnValueOnce(Promise.resolve(listerReturnObject));
+            readAsText.mockReturnValueOnce(Promise.resolve(snapshotReturnObject));
+            return new BlobStorageSnapshotProvider<any>(config);
         }
 
         it("returns no snapshot if lister file is malformed", async () => {
@@ -99,7 +99,7 @@ describe("BlobStorageSnapshotProvider", () => {
                 0,
                 undefined,
             ]);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
 
         it("returns no snapshot if snapshot file is malformed", async () => {
@@ -108,7 +108,7 @@ describe("BlobStorageSnapshotProvider", () => {
                 0,
                 undefined,
             ]);
-            expect(read).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenCalledTimes(2);
         });
 
         it("returns no snapshot if requested sequence is smaller than all saved sequences", async () => {
@@ -118,7 +118,7 @@ describe("BlobStorageSnapshotProvider", () => {
                 0,
                 undefined,
             ]);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
 
         it("returns no snapshot if the list of saved sequences is empty", async () => {
@@ -127,7 +127,7 @@ describe("BlobStorageSnapshotProvider", () => {
                 0,
                 undefined,
             ]);
-            expect(read).toHaveBeenCalledTimes(1);
+            expect(readAsText).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -136,9 +136,9 @@ describe("BlobStorageSnapshotProvider", () => {
         const snapshotContents = { prop1: "prop1", prop2: "prop2" };
 
         function setUpProvider(): BlobStorageSnapshotProvider<any> {
-            read.mockReturnValueOnce(Promise.resolve(makeReturnString(sequenceList)));
-            read.mockReturnValueOnce(Promise.resolve(makeReturnString(snapshotContents)));
-            return new BlobStorageSnapshotProvider<any>(config as IBlobStorageConfiguration);
+            readAsText.mockReturnValueOnce(Promise.resolve(makeReturnString(sequenceList)));
+            readAsText.mockReturnValueOnce(Promise.resolve(makeReturnString(snapshotContents)));
+            return new BlobStorageSnapshotProvider<any>(config);
         }
 
         it("returns a snapshot which is exact match of the requested snapshot", async () => {
@@ -148,8 +148,11 @@ describe("BlobStorageSnapshotProvider", () => {
                 expectedReturnSn,
                 snapshotContents,
             ]);
-            expect(read).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenLastCalledWith(undefined, `${testKey}-${expectedReturnSn}`);
+            expect(readAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenLastCalledWith(
+                undefined,
+                `${testKey}-${expectedReturnSn}`
+            );
         });
 
         it("returns a snapshot from inside the list of snapshots", async () => {
@@ -159,8 +162,11 @@ describe("BlobStorageSnapshotProvider", () => {
                 expectedReturnSn,
                 snapshotContents,
             ]);
-            expect(read).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenLastCalledWith(undefined, `${testKey}-${expectedReturnSn}`);
+            expect(readAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenLastCalledWith(
+                undefined,
+                `${testKey}-${expectedReturnSn}`
+            );
         });
 
         it("returns the latest available snapshot since the requested sequence is larger than all stored sequences", async () => {
@@ -170,8 +176,11 @@ describe("BlobStorageSnapshotProvider", () => {
                 expectedReturnSn,
                 snapshotContents,
             ]);
-            expect(read).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenLastCalledWith(undefined, `${testKey}-${expectedReturnSn}`);
+            expect(readAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenLastCalledWith(
+                undefined,
+                `${testKey}-${expectedReturnSn}`
+            );
         });
 
         it("returns the latest available snapshot since no request sequence was provided", async () => {
@@ -181,8 +190,11 @@ describe("BlobStorageSnapshotProvider", () => {
                 expectedReturnSn,
                 snapshotContents,
             ]);
-            expect(read).toHaveBeenCalledTimes(2);
-            expect(read).toHaveBeenLastCalledWith(undefined, `${testKey}-${expectedReturnSn}`);
+            expect(readAsText).toHaveBeenCalledTimes(2);
+            expect(readAsText).toHaveBeenLastCalledWith(
+                undefined,
+                `${testKey}-${expectedReturnSn}`
+            );
         });
     });
 });

@@ -102,6 +102,7 @@ export interface IMessageEnricher {
 export interface IStoredMessage {
     readonly message: IMessage;
     readonly state: StateRef;
+    readonly metadata: IMetadata;
     readonly original: MessageRef;
     readonly spanContext: SpanContext;
 }
