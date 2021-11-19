@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-lightstep",
-    "version": "1.4.0-beta.1",
+    "version": "1.5.0-beta.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,10 +17,10 @@
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "scripts": {
         "build": "tsc",
