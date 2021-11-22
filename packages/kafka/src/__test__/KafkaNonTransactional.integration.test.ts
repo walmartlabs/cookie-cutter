@@ -252,7 +252,7 @@ describe("Kafka Integration Tests", () => {
             try {
                 await appProducer;
 
-                const checkKafkaPromise = new Promise(async (resolve) => {
+                const checkKafkaPromise = new Promise<void>(async (resolve) => {
                     while (receivedKafkaMsg.length < expNumConsumedMsgs) {
                         await sleep(1000);
                         await waitForPendingIO();
@@ -365,7 +365,7 @@ describe("Kafka Integration Tests", () => {
             try {
                 await appProducer;
 
-                const checkKafkaPromise = new Promise(async (resolve) => {
+                const checkKafkaPromise = new Promise<void>(async (resolve) => {
                     while (receivedKafkaMessages.length < input.length) {
                         await sleep(1000);
                         await waitForPendingIO();
@@ -443,7 +443,7 @@ describe("Kafka Integration Tests", () => {
             try {
                 await appProducer;
 
-                const checkKafkaPromise = new Promise(async (resolve) => {
+                const checkKafkaPromise = new Promise<void>(async (resolve) => {
                     while (receivedKafkaMessages.length < expNumConsumedMsgs) {
                         await sleep(1000);
                         await waitForPendingIO();
@@ -561,7 +561,7 @@ describe("Kafka Integration Tests", () => {
                 await appProducer;
 
                 firstConsumer = createAppConsumerFn();
-                const checkFirstConsumerPromise = new Promise(async (resolve) => {
+                const checkFirstConsumerPromise = new Promise<void>(async (resolve) => {
                     while (processedMsgs < expNumMsgsFirstConsumer) {
                         await sleep(1000);
                         await waitForPendingIO();
@@ -574,7 +574,7 @@ describe("Kafka Integration Tests", () => {
 
                 secondConsumer = createAppConsumerFn();
                 // restart of the consumer should only consume 2 more messages
-                const checkSecondConsumerPromise = new Promise(async (resolve) => {
+                const checkSecondConsumerPromise = new Promise<void>(async (resolve) => {
                     while (processedMsgs < expNumMsgsFirstConsumer + expNumMsgsSecondConsumer) {
                         await sleep(1000);
                         await waitForPendingIO();
@@ -715,7 +715,7 @@ describe("Kafka Integration Tests", () => {
                         resolve(appConsumer2);
                     }
                 );
-                const checkAppConsumer2ReceivedMsgs = new Promise(async (resolve) => {
+                const checkAppConsumer2ReceivedMsgs = new Promise<void>(async (resolve) => {
                     while (secondAppProcessedMsgs < 2) {
                         await sleep(1000);
                         await waitForPendingIO();
@@ -796,7 +796,7 @@ describe("Kafka Integration Tests", () => {
             );
 
             try {
-                const checkKafkaPromise = new Promise(async (resolve) => {
+                const checkKafkaPromise = new Promise<void>(async (resolve) => {
                     while (receivedKafkaMsg.length < expNumConsumedMsgs) {
                         await sleep(1000);
                         await waitForPendingIO();

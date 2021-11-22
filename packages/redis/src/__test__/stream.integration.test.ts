@@ -53,11 +53,9 @@ const RedeliveryTestConfigurationPermutations: [string, Partial<IRedisInputStrea
     ],
 ];
 
-describe("Redis Streams", () => {
-    beforeAll(() => {
-        jest.setTimeout(90000);
-    });
+jest.setTimeout(90000);
 
+describe("Redis Streams", () => {
     for (const [id, cfg] of RoundTripTestConfigurationPermutations) {
         it(`produces and consumes messages - ${id}`, async () => {
             const input: MessageRef[] = [];

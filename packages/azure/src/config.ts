@@ -54,14 +54,6 @@ export class CosmosConfiguration implements ICosmosConfiguration {
 @config.section
 export class BlobStorageConfiguration implements IBlobStorageConfiguration {
     @config.field(config.converters.string)
-    public set url(_: string) {
-        config.noop();
-    }
-    public get url(): string {
-        return config.noop();
-    }
-
-    @config.field(config.converters.string)
     public set storageAccount(_: string) {
         config.noop();
     }
@@ -85,11 +77,19 @@ export class BlobStorageConfiguration implements IBlobStorageConfiguration {
         return config.noop();
     }
 
-    @config.field(config.converters.timespan)
-    public set requestTimeout(_: number) {
+    @config.field(config.converters.string)
+    public set url(_: string) {
         config.noop();
     }
-    public get requestTimeout(): number {
+    public get url(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set connectionString(_: string) {
+        config.noop();
+    }
+    public get connectionString(): string {
         return config.noop();
     }
 }

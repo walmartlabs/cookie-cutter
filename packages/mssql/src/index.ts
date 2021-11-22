@@ -13,6 +13,8 @@ export enum Mode {
     StoredProcedure,
 }
 
+export { MsSqlMetadata } from "./MssqlSink";
+
 export interface IMssqlConfiguration {
     readonly server: string;
     readonly database: string;
@@ -20,6 +22,10 @@ export interface IMssqlConfiguration {
     readonly password: string;
     readonly encrypt: boolean;
     readonly mode?: Mode;
+    readonly defaultSchema?: string;
+    readonly connectionTimeout?: number;
+    readonly requestTimeout?: number;
+    readonly stream?: boolean;
 }
 
 @config.section
@@ -71,12 +77,48 @@ class MssqlConfiguration {
     public get mode(): Mode {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set defaultSchema(_: string) {
+        config.noop();
+    }
+    public get defaultSchema(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set connectionTimeout(_: number) {
+        config.noop();
+    }
+    public get connectionTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.timespan)
+    public set requestTimeout(_: number) {
+        config.noop();
+    }
+    public get requestTimeout(): number {
+        return config.noop();
+    }
+
+    @config.field(config.converters.boolean)
+    public set stream(_: boolean) {
+        config.noop();
+    }
+    public get stream(): boolean {
+        return config.noop();
+    }
 }
 
 export function mssqlSink(configuration: IMssqlConfiguration): IOutputSink<IPublishedMessage> {
     configuration = config.parse(MssqlConfiguration, configuration, {
         mode: Mode.Table,
+        defaultSchema: "dbo",
         encrypt: false,
+        connectionTimeout: 15000,
+        requestTimeout: 15000,
+        stream: true,
     });
     return new MssqlSink(configuration);
 }

@@ -42,6 +42,7 @@ export function makeIterableIterator(
         state: new StateRef({}, key, sequenceNumber),
         original: new MessageRef({}, someIMessage),
         spanContext: new SpanContext(),
+        metadata: {},
     };
     return iterate([someMessage]);
 }

@@ -15,8 +15,15 @@ import {
 import * as kafkajs from "kafkajs";
 import { FORMAT_HTTP_HEADERS, Span, Tags, Tracer } from "opentracing";
 import * as uuid from "uuid";
-import { IKafkaBrokerConfiguration, IKafkaPublisherConfiguration } from ".";
+import {
+    IKafkaBrokerConfiguration,
+    IKafkaPublisherConfiguration,
+    KafkaPublisherCompressionMode,
+} from ".";
 import { IProducerMessage, TRACE_HEADER } from "./model";
+import { loadCompressionPlugins } from "./utils";
+
+loadCompressionPlugins();
 
 enum KafkaMetrics {
     MsgPublished = "cookie_cutter.kafka_producer.msg_published",
@@ -27,6 +34,26 @@ enum KafkaMetricResults {
 }
 
 type Message = { type: string } & IProducerMessage<Buffer>;
+
+namespace CompressionTypes {
+    /** Maps our wrapper enum onto the kafkajs enum for compression types. */
+    export const fromCompressionMode = (
+        mode: KafkaPublisherCompressionMode
+    ): kafkajs.CompressionTypes => {
+        switch (mode) {
+            case KafkaPublisherCompressionMode.None:
+                return kafkajs.CompressionTypes.None;
+            case KafkaPublisherCompressionMode.Gzip:
+                return kafkajs.CompressionTypes.GZIP;
+            case KafkaPublisherCompressionMode.Snappy:
+                return kafkajs.CompressionTypes.Snappy;
+            case KafkaPublisherCompressionMode.LZ4:
+                return kafkajs.CompressionTypes.LZ4;
+            default:
+                throw new Error("Unknown KafkaPublisherCompressionMode");
+        }
+    };
+}
 
 /**
  * Wrapper class to produce messages using KafkaJS
@@ -52,7 +79,8 @@ export class KafkaMessageProducer {
         messages: Message[],
         topic: string,
         acks: number,
-        sendWith: kafkajs.Transaction | kafkajs.Producer
+        sendWith: kafkajs.Transaction | kafkajs.Producer,
+        compressionMode: KafkaPublisherCompressionMode
     ) {
         const spans: Span[] = [];
         try {
@@ -65,6 +93,7 @@ export class KafkaMessageProducer {
             await sendWith.send({
                 acks,
                 topic,
+                compression: CompressionTypes.fromCompressionMode(compressionMode),
                 messages: messages.map((message) => ({
                     ...message,
                     // partition's type is number in kafkajs but since we've updated

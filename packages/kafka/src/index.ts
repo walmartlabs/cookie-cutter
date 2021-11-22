@@ -17,6 +17,7 @@ import { KafkaPublisherConfiguration, KafkaSubscriptionConfiguration } from "./c
 import { KafkaSink } from "./KafkaSink";
 import { KafkaSource } from "./KafkaSource";
 import { IRawKafkaMessage } from "./model";
+import * as tls from "tls";
 
 export enum KafkaOffsetResetStrategy {
     // starts consuming from the latest offset if no consumer group is present
@@ -49,6 +50,7 @@ export interface IKafkaBrokerConfiguration {
     readonly broker: string | string[];
     readonly encoder: IMessageEncoder;
     readonly headerNames?: IKafkaHeaderNames;
+    readonly ssl?: tls.ConnectionOptions;
 }
 
 export interface IKafkaSubscriptionConfiguration {
@@ -89,10 +91,35 @@ export interface IKafkaSubscriptionConfiguration {
     readonly sessionTimeout?: number;
 }
 
+export interface IKafkaClientConfiguration {
+    /*
+     * Time in milliseconds to wait for a successful connection. The default value is: 1000
+     * https://kafka.js.org/docs/configuration#connection-timeout
+     */
+    readonly connectionTimeout?: number;
+
+    /*
+     * Time in milliseconds to wait for a successful request. The default value is: 30000
+     * https://kafka.js.org/docs/configuration#request-timeout
+     */
+    readonly requestTimeout?: number;
+}
+
 export enum KafkaMessagePublishingStrategy {
     NonTransactional = 1,
     Transactional,
     ExactlyOnceSemantics,
+}
+
+export enum KafkaPublisherCompressionMode {
+    /** Messages will be published as-is without any compression. */
+    None = 1,
+    /** Messages will be compressed with the Gzip algorithm before being published. */
+    Gzip,
+    /** Messages will be compressed with the Snappy algorithm before being published. */
+    Snappy,
+    /** Messages will be compressed with the LZ4 algorithm before being published. */
+    LZ4,
 }
 
 export interface IKafkaPublisherConfiguration {
@@ -118,6 +145,11 @@ export interface IKafkaPublisherConfiguration {
      * > leak through the fencing provided by transactions.
      */
     readonly transactionalId?: string;
+    /**
+     * Determines which compression mode, if any, should be used to produce messages.
+     * Defaults to `None`.
+     */
+    readonly compressionMode?: KafkaPublisherCompressionMode;
 }
 
 export interface IKafkaTopic {
@@ -144,7 +176,9 @@ export interface IKafkaMessagePreprocessor {
 }
 
 export function kafkaSource(
-    configuration: IKafkaBrokerConfiguration & IKafkaSubscriptionConfiguration
+    configuration: IKafkaBrokerConfiguration &
+        IKafkaSubscriptionConfiguration &
+        IKafkaClientConfiguration
 ): IInputSource {
     configuration = config.parse(KafkaSubscriptionConfiguration, configuration, {
         consumeTimeout: 50,
@@ -154,6 +188,8 @@ export function kafkaSource(
         preprocessor: {
             process: (msg) => msg,
         },
+        connectionTimeout: 1000,
+        requestTimeout: 30000,
     });
     return new KafkaSource(configuration);
 }
@@ -165,6 +201,7 @@ export function kafkaSink(
         messagePublishingStrategy: KafkaMessagePublishingStrategy.NonTransactional,
         maximumBatchSize: 1000,
         headerNames: DefaultKafkaHeaderNames,
+        compressionMode: KafkaPublisherCompressionMode.None,
     });
     return new KafkaSink(configuration);
 }
