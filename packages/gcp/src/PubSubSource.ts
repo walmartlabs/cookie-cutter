@@ -1,30 +1,54 @@
 import { PubSub, Subscription } from "@google-cloud/pubsub";
-import { IComponentContext, IInputSource, IInputSourceContext, ILogger, IMessage, MessageRef, sleep } from "@walmartlabs/cookie-cutter-core"
-import { IGcpAuthConfiguration } from ".";
-import { Tracer } from "opentracing";
+import {
+    EventSourcedMetadata,
+    IComponentContext,
+    IInputSource,
+    ILogger,
+    IMetadata,
+    isEmbeddable,
+    MessageRef,
+    sleep,
+} from "@walmartlabs/cookie-cutter-core";
+import { IGcpAuthConfiguration, IPubSubSubscriberConfiguration } from ".";
+import { FORMAT_HTTP_HEADERS, Tracer, Tags } from "opentracing";
+import { isArray } from "util";
+
+interface IBufferToJSON {
+    type: string;
+    data: any[];
+}
+
+export enum GooglePubSubTracingTagKeys {
+    SubscriptionName = "google.pubsub.subscription_name",
+}
 
 /*
-* implements pull delivery for subscriber apps reading from a topic
-*/
+ * implements pull delivery with limits on max number of unacknowledged messages
+ * that a subscriber can have in process while reading from a topic
+ */
 export class PubSubPullSource implements IInputSource {
+    private readonly MAX_MSG_BATCH_SIZE: number = 10;
     private subscriber: Subscription;
     private done: boolean = false;
     private tracer: Tracer;
     private logger: ILogger;
-    // array to store a batch of messages - # of msgs in array is defined by maxMsgBatchSize
-    private messages: any[] =[];
+    private messages: any[] = [];
 
-    constructor(private readonly config: IGcpAuthConfiguration, private readonly subscriptionName: string, private readonly maxMsgBatchSize: number = 10) {
-        /*
-        * need to include - error handling if subscription name is incorrect
-        * The subscriber is only allowed to process msgBatchSize messages in a single batch
-        * The service account is authenticated by feeding in the credentials or by putting the json cred file in the environment set to GOOGLE_APPLICATION_CREDENTIALS
-        */
+    constructor(private readonly config: IGcpAuthConfiguration & IPubSubSubscriberConfiguration) {
+        this.config.maxMsgBatchSize =
+            this.config.maxMsgBatchSize == undefined
+                ? this.MAX_MSG_BATCH_SIZE
+                : this.config.maxMsgBatchSize;
+
         this.subscriber = new PubSub({
             projectId: this.config.projectId,
-        }).subscription(this.subscriptionName, {
+            credentials: {
+                client_email: this.config.clientEmail,
+                private_key: this.config.privateKey,
+            },
+        }).subscription(this.config.subscriptionName, {
             flowControl: {
-                maxMessages: this.maxMsgBatchSize,
+                maxMessages: this.config.maxMsgBatchSize,
             },
         });
     }
@@ -34,48 +58,62 @@ export class PubSubPullSource implements IInputSource {
         this.logger = context.logger;
     }
 
-    public async *start(context: IInputSourceContext): AsyncIterableIterator<MessageRef> {
-        /*
-        * reads max of maxMsgBatchSize from the subsc
-        */
-        this.subscriber.on('message', (message) => {
-            this.messages.push(message);
+    public async *start(): AsyncIterableIterator<MessageRef> {
+        this.subscriber.on("message", (message) => this.messages.push(message));
+        // Error codes - https://cloud.google.com/pubsub/docs/reference/error-codes
+        this.subscriber.on("error", async (error) => {
+            this.logger.error("Subscriber ran into a error", error);
+            await this.stop();
         });
 
-        /*
-        * for the subscriber there is an 'error' event handler that needs to be added. this will log the errors
-        * and then gracefully remove the event 'message' listner and stop the cookie cutter app
-        */
+        while (!this.done) {
+            while (this.messages.length !== 0) {
+                const message: any = this.messages.shift();
 
-        let message: any;
-        while(!this.done) {
-            while(this.messages.length !== 0) {
-                message = this.messages.pop();
-
-                const span = this.tracer.startSpan("Consuming messages from Google PubSub");
-                const data: IMessage = {
-                    type: "Google PubSub",
-                    payload: message.data,
+                const { attributes, data } = message as {
+                    attributes: any;
+                    data: IBufferToJSON | any;
                 };
 
-                const msg = new MessageRef(
-                    {
-                        "attibutes": message.attributes,
-                        "eventTime": message.publishTime,
-                    },
-                    data,
-                    span.context(),
+                const event_type = attributes[EventSourcedMetadata.EventType];
+
+                let protoOrJsonPayload = data;
+                if(!isEmbeddable(this.config.encoder) && data.type && data.type == "Buffer" && isArray(data.dat)) {
+                    protoOrJsonPayload = data.data;
+                }
+
+                const msg = this.decode(protoOrJsonPayload, event_type);
+
+                const spanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, attributes);
+                const span = this.tracer.startSpan("Processing Google PubSub Message", {
+                    childOf: spanContext,
+                });
+                span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_CONSUMER);
+                span.setTag(Tags.MESSAGE_BUS_DESTINATION, this.config.subscriptionName);
+                span.setTag(Tags.COMPONENT, "cookie-cutter-gcp");
+                span.setTag(Tags.DB_INSTANCE, this.config.subscriptionName);
+                span.setTag(Tags.DB_TYPE, "GooglePubSub");
+                span.setTag(Tags.PEER_SERVICE, "GooglePubSub");
+                span.setTag(Tags.SAMPLING_PRIORITY, 1);
+                span.setTag(GooglePubSubTracingTagKeys.SubscriptionName, this.config.subscriptionName);
+
+                const metadata: IMetadata = {
+
+                };
+                
+                const msgRef = new MessageRef(metadata, msg, span.context());
+                msgRef.once(
+                    "released",
+                    async (msg, __, err): Promise<void> => {
+                        if (err) {
+                            this.logger.error("Unable to release message", err);
+                        }
+                        message.ack();
+                        span.finish();
+                    }
                 );
 
-                msg.once("released", async (msg, __, err): Promise<void> => {
-                    if(err) {
-                        this.logger.error("Unable to release message", err);
-                    }
-                    span.finish();
-                });
-
-                yield msg;
-                await sleep(100);
+                yield msgRef;
             }
             await sleep(100);
         }
@@ -83,6 +121,20 @@ export class PubSubPullSource implements IInputSource {
 
     public async stop(): Promise<void> {
         this.done = true;
-        // need to remove the event listner from subscriber once service has been stopped
+        await this.dispose();
+    }
+
+    public async dispose(): Promise<void> {
+        if (this.subscriber) {
+            this.subscriber.removeAllListeners();
+            this.subscriber.close();
+        }
+    }
+
+    private decode(payload: any, event_type: string){
+        if(isEmbeddable(this.config.encoder)) {
+            return this.config.encoder.decode(this.config.encoder.fromJsonEmbedding(payload), event_type);
+        }
+        return this.config.encoder.decode(payload, event_type);
     }
 }
