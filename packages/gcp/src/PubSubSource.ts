@@ -1,6 +1,7 @@
 import { PubSub, Subscription } from "@google-cloud/pubsub";
 import {
     EventSourcedMetadata,
+    failSpan,
     IComponentContext,
     IInputSource,
     ILogger,
@@ -12,6 +13,7 @@ import {
 import { IGcpAuthConfiguration, IPubSubSubscriberConfiguration } from ".";
 import { FORMAT_HTTP_HEADERS, Tracer, Tags } from "opentracing";
 import { isArray } from "util";
+import { AttributeNames } from "./PubSubSink";
 
 interface IBufferToJSON {
     type: string;
@@ -35,10 +37,7 @@ export class PubSubPullSource implements IInputSource {
     private messages: any[] = [];
 
     constructor(private readonly config: IGcpAuthConfiguration & IPubSubSubscriberConfiguration) {
-        this.config.maxMsgBatchSize =
-            this.config.maxMsgBatchSize == undefined
-                ? this.MAX_MSG_BATCH_SIZE
-                : this.config.maxMsgBatchSize;
+        this.config.maxMsgBatchSize = this.config.maxMsgBatchSize || this.MAX_MSG_BATCH_SIZE;
 
         this.subscriber = new PubSub({
             projectId: this.config.projectId,
@@ -98,18 +97,27 @@ export class PubSubPullSource implements IInputSource {
                 span.setTag(GooglePubSubTracingTagKeys.SubscriptionName, this.config.subscriptionName);
 
                 const metadata: IMetadata = {
-
+                    [AttributeNames.contentType] : message.attributes[AttributeNames.contentType],
+                    [AttributeNames.eventType] : message.attributes[AttributeNames.eventType],
+                    [AttributeNames.timestamp] : message.attributes[AttributeNames.timestamp]
                 };
                 
                 const msgRef = new MessageRef(metadata, msg, span.context());
                 msgRef.once(
                     "released",
-                    async (msg, __, err): Promise<void> => {
-                        if (err) {
-                            this.logger.error("Unable to release message", err);
+                    async (_msg: MessageRef, _value?: any, error?: Error): Promise<void> => {
+                        try{
+                            if (error) {
+                                this.logger.error(`Unable to release message | ${error}`);
+                            } else{
+                                message.ack();
+                                this.logger.debug(`Message processed : ${message.id}`);
+                                failSpan(span, error);
+                            }
+
+                        } finally {
+                            span.finish();
                         }
-                        message.ack();
-                        span.finish();
                     }
                 );
 
