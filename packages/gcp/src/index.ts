@@ -50,6 +50,12 @@ export interface IPubSubPublisherConfiguration {
     readonly maxPayloadSize?: number;
 }
 
+export interface IPubSubSubscriberConfiguration {
+    readonly encoder: IMessageEncoder;
+    readonly subscriptionName: string;
+    maxMsgBatchSize?: number;
+}
+
 export interface IGcsClient {
     putObject(spanContext: SpanContext, body: Buffer, key: string): Promise<void>;
 }
