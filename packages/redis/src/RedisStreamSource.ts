@@ -65,11 +65,12 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     this.config.blockTimeout
                 );
 
+                this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
+
                 if (messages.length === 0) {
                     break;
                 }
 
-                this.metrics.gauge(RedisMetrics.IncomingBatchSize, messages.length, {});
                 for (const message of messages) {
                     // when calling XReadGroup again only get messages after this one
                     streams.filter((s) => s.name === message.streamName)[0].id = message.messageId;
@@ -242,6 +243,7 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
             if (!err) {
                 this.logger.error("failed to ack message", err, { messageId, stream, consumerId });
+                throw e;
             }
         } finally {
             span.finish();
