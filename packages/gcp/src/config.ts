@@ -11,6 +11,7 @@ import {
     IGCSConfiguration,
     IGcpAuthConfiguration,
     IPubSubPublisherConfiguration,
+    IPubSubSubscriberConfiguration,
 } from ".";
 
 @config.section
@@ -150,6 +151,34 @@ export class PubSubPublisherConfiguration extends GcpAuthConfiguration
         config.noop();
     }
     public get maxPayloadSize(): number {
+        return config.noop();
+    }
+}
+
+@config.section
+export class PubSubSubscriberConfiguration extends GcpAuthConfiguration
+    implements IPubSubSubscriberConfiguration {
+    @config.field(config.converters.none)
+    public set encoder(_: IMessageEncoder) {
+        config.noop();
+    }
+    public get encoder(): IMessageEncoder {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set subscriptionName(_: string) {
+        config.noop();
+    }
+    public get subscriptionName() {
+        return config.noop();
+    }
+
+    @config.field(config.converters.number)
+    public set maxMsgBatchSize(_: number) {
+        config.noop();
+    }
+    public get maxMsgBatchSize() {
         return config.noop();
     }
 }

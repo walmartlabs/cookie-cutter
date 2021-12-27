@@ -12,15 +12,22 @@ import {
     IRequireInitialization,
     IStoredMessage,
     IMessageEncoder,
+    IInputSource,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { BigQueryClient } from "./BigQueryClient";
 import { BigQuerySink } from "./BigQuerySink";
 export { BigQueryMetadata } from "./BigQuerySink";
-import { BigQueryConfiguration, GCSConfiguration, PubSubPublisherConfiguration } from "./config";
+import {
+    BigQueryConfiguration,
+    GCSConfiguration,
+    PubSubPublisherConfiguration,
+    PubSubSubscriberConfiguration,
+} from "./config";
 import { GcsClient } from "./GcsClient";
 import { GcsSink } from "./GcsSink";
 import { PubSubSink } from "./PubSubSink";
+import { PubSubSource } from "./PubSubSource";
 
 export interface IGCSConfiguration {
     readonly projectId: string;
@@ -53,7 +60,7 @@ export interface IPubSubPublisherConfiguration {
 export interface IPubSubSubscriberConfiguration {
     readonly encoder: IMessageEncoder;
     readonly subscriptionName: string;
-    maxMsgBatchSize?: number;
+    readonly maxMsgBatchSize?: number;
 }
 
 export interface IGcsClient {
@@ -108,4 +115,14 @@ export function pubSubSink(
         maxPayloadSize: 5242880,
     });
     return new PubSubSink(configuration);
+}
+
+export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
+export function pubSubSource(
+    configuration: IGcpAuthConfiguration & IPubSubSubscriberConfiguration
+): IInputSource {
+    configuration = config.parse(PubSubSubscriberConfiguration, configuration, {
+        maxMsgBatchSize: MAX_MSG_BATCH_SIZE_SUBSCRIBER,
+    });
+    return new PubSubSource(configuration);
 }

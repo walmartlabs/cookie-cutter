@@ -6,6 +6,7 @@ import {
     IInputSource,
     ILogger,
     IMetadata,
+    IRequireInitialization,
     isEmbeddable,
     MessageRef,
     sleep,
@@ -28,8 +29,7 @@ export enum GooglePubSubTracingTagKeys {
  * implements pull delivery with limits on max number of unacknowledged messages
  * that a subscriber can have in process while reading from a topic
  */
-export class PubSubPullSource implements IInputSource {
-    private readonly MAX_MSG_BATCH_SIZE: number = 10;
+export class PubSubSource implements IInputSource, IRequireInitialization {
     private subscriber: Subscription;
     private done: boolean = false;
     private tracer: Tracer;
@@ -37,8 +37,6 @@ export class PubSubPullSource implements IInputSource {
     private messages: any[] = [];
 
     constructor(private readonly config: IGcpAuthConfiguration & IPubSubSubscriberConfiguration) {
-        this.config.maxMsgBatchSize = this.config.maxMsgBatchSize || this.MAX_MSG_BATCH_SIZE;
-
         this.subscriber = new PubSub({
             projectId: this.config.projectId,
             credentials: {
@@ -59,10 +57,8 @@ export class PubSubPullSource implements IInputSource {
 
     public async *start(): AsyncIterableIterator<MessageRef> {
         this.subscriber.on("message", (message) => this.messages.push(message));
-        // Error codes - https://cloud.google.com/pubsub/docs/reference/error-codes
-        this.subscriber.on("error", async (error) => {
-            this.logger.error("Subscriber ran into a error", error);
-            await this.stop();
+        this.subscriber.on("error", (error) => {
+            throw error;
         });
 
         while (!this.done) {
@@ -77,7 +73,12 @@ export class PubSubPullSource implements IInputSource {
                 const event_type = attributes[EventSourcedMetadata.EventType];
 
                 let protoOrJsonPayload = data;
-                if(!isEmbeddable(this.config.encoder) && data.type && data.type == "Buffer" && isArray(data.dat)) {
+                if (
+                    !isEmbeddable(this.config.encoder) &&
+                    data.type &&
+                    data.type === "Buffer" &&
+                    isArray(data.data)
+                ) {
                     protoOrJsonPayload = data.data;
                 }
 
@@ -94,27 +95,30 @@ export class PubSubPullSource implements IInputSource {
                 span.setTag(Tags.DB_TYPE, "GooglePubSub");
                 span.setTag(Tags.PEER_SERVICE, "GooglePubSub");
                 span.setTag(Tags.SAMPLING_PRIORITY, 1);
-                span.setTag(GooglePubSubTracingTagKeys.SubscriptionName, this.config.subscriptionName);
+                span.setTag(
+                    GooglePubSubTracingTagKeys.SubscriptionName,
+                    this.config.subscriptionName
+                );
 
                 const metadata: IMetadata = {
-                    [AttributeNames.contentType] : message.attributes[AttributeNames.contentType],
-                    [AttributeNames.eventType] : message.attributes[AttributeNames.eventType],
-                    [AttributeNames.timestamp] : message.attributes[AttributeNames.timestamp]
+                    [AttributeNames.contentType]: message.attributes[AttributeNames.contentType],
+                    [AttributeNames.eventType]: message.attributes[AttributeNames.eventType],
+                    [AttributeNames.timestamp]: message.attributes[AttributeNames.timestamp],
                 };
-                
+
                 const msgRef = new MessageRef(metadata, msg, span.context());
+
                 msgRef.once(
                     "released",
                     async (_msg: MessageRef, _value?: any, error?: Error): Promise<void> => {
-                        try{
+                        try {
                             if (error) {
                                 this.logger.error(`Unable to release message | ${error}`);
-                            } else{
+                            } else {
                                 message.ack();
                                 this.logger.debug(`Message processed : ${message.id}`);
                                 failSpan(span, error);
                             }
-
                         } finally {
                             span.finish();
                         }
@@ -135,13 +139,16 @@ export class PubSubPullSource implements IInputSource {
     public async dispose(): Promise<void> {
         if (this.subscriber) {
             this.subscriber.removeAllListeners();
-            this.subscriber.close();
+            await this.subscriber.close();
         }
     }
 
-    private decode(payload: any, event_type: string){
-        if(isEmbeddable(this.config.encoder)) {
-            return this.config.encoder.decode(this.config.encoder.fromJsonEmbedding(payload), event_type);
+    private decode(payload: any, event_type: string) {
+        if (isEmbeddable(this.config.encoder)) {
+            return this.config.encoder.decode(
+                this.config.encoder.fromJsonEmbedding(payload),
+                event_type
+            );
         }
         return this.config.encoder.decode(payload, event_type);
     }
