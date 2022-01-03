@@ -12,6 +12,7 @@ import {
     IGcpAuthConfiguration,
     IPubSubPublisherConfiguration,
     IPubSubSubscriberConfiguration,
+    IPubSubMessagePreprocessor,
 } from ".";
 
 @config.section
@@ -179,6 +180,14 @@ export class PubSubSubscriberConfiguration extends GcpAuthConfiguration
         config.noop();
     }
     public get maxMsgBatchSize() {
+        return config.noop();
+    }
+
+    @config.field(config.converters.none)
+    public set preprocessor(_: IPubSubMessagePreprocessor) {
+        config.noop();
+    }
+    public get preprocessor(): IPubSubMessagePreprocessor {
         return config.noop();
     }
 }

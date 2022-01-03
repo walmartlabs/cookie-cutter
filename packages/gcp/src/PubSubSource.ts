@@ -25,6 +25,11 @@ export enum GooglePubSubTracingTagKeys {
     SubscriptionName = "google.pubsub.subscription_name",
 }
 
+export interface IPubSubMessage {
+    attributes: any;
+    data: IBufferToJSON | any;
+}
+
 /*
  * implements pull delivery with limits on max number of unacknowledged messages
  * that a subscriber can have in process while reading from a topic
@@ -65,7 +70,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
             while (this.messages.length !== 0) {
                 const message: any = this.messages.shift();
 
-                const { attributes, data } = message as {
+                const { attributes, data } = this.config.preprocessor ? this.config.preprocessor.process(message) : message as {
                     attributes: any;
                     data: IBufferToJSON | any;
                 };
@@ -101,9 +106,9 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                 );
 
                 const metadata: IMetadata = {
-                    [AttributeNames.contentType]: message.attributes[AttributeNames.contentType],
-                    [AttributeNames.eventType]: message.attributes[AttributeNames.eventType],
-                    [AttributeNames.timestamp]: message.attributes[AttributeNames.timestamp],
+                    [AttributeNames.contentType]: this.config.encoder.mimeType,
+                    [AttributeNames.eventType]: event_type,
+                    [AttributeNames.timestamp]: attributes[EventSourcedMetadata.Timestamp],
                 };
 
                 const msgRef = new MessageRef(metadata, msg, span.context());
