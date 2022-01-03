@@ -120,7 +120,7 @@ export function pubSubSink(
 
 export interface IPubSubMessagePreprocessor {
     process(payload: string): IPubSubMessage;
-};
+}
 
 export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
 

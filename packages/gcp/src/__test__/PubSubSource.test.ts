@@ -66,7 +66,7 @@ function createTestApp(source: IInputSource): CancelablePromise<void> {
             },
         });
 }
- 
+
 let mockHandlerFunction;
 let capturedOutput: any[] = [];
 
@@ -116,9 +116,7 @@ describe("Testing of pubsub subscriber service WITH DEFAULT batch size", () => {
         const source = pubSubSource({ ...testConfig });
         const testApp = createTestApp(source);
 
-        while (
-            capturedOutput.length < MAX_MSG_BATCH_SIZE_SUBSCRIBER
-        ) {
+        while (capturedOutput.length < MAX_MSG_BATCH_SIZE_SUBSCRIBER) {
             await sleep(50);
         }
 
@@ -175,9 +173,7 @@ describe("Testing of pubsub subscriber service WITH USER SPECIFIED batch size", 
         const source = pubSubSource({ ...testConfig });
         const testApp = createTestApp(source);
 
-        while (
-            capturedOutput.length < testConfig.maxMsgBatchSize
-        ) {
+        while (capturedOutput.length < testConfig.maxMsgBatchSize) {
             await sleep(50);
         }
 
@@ -189,19 +185,19 @@ describe("Testing of pubsub subscriber service WITH USER SPECIFIED batch size", 
 
 describe("Testing with message preprocessor mentioned", () => {
     let testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration;
-    function pubSubMessagePreprocessor(): IPubSubMessagePreprocessor{
+    function pubSubMessagePreprocessor(): IPubSubMessagePreprocessor {
         return {
             process(payload: string): IPubSubMessage {
                 return {
                     attributes: {
-                        "event_type": "TestEvent",
-                        "dt" : new Date().toUTCString(),
+                        event_type: "TestEvent",
+                        dt: new Date().toUTCString(),
                     },
                     data: payload,
                 };
-            }
+            },
         };
-    };
+    }
 
     beforeEach(() => {
         testConfig = {
@@ -245,9 +241,7 @@ describe("Testing with message preprocessor mentioned", () => {
         const source = pubSubSource({ ...testConfig });
         const testApp = createTestApp(source);
 
-        while (
-            capturedOutput.length < testConfig.maxMsgBatchSize
-        ) {
+        while (capturedOutput.length < testConfig.maxMsgBatchSize) {
             await sleep(50);
         }
 

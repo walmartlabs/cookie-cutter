@@ -70,10 +70,12 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
             while (this.messages.length !== 0) {
                 const message: any = this.messages.shift();
 
-                const { attributes, data } = this.config.preprocessor ? this.config.preprocessor.process(message) : message as {
-                    attributes: any;
-                    data: IBufferToJSON | any;
-                };
+                const { attributes, data } = this.config.preprocessor
+                    ? this.config.preprocessor.process(message)
+                    : (message as {
+                          attributes: any;
+                          data: IBufferToJSON | any;
+                      });
 
                 const event_type = attributes[EventSourcedMetadata.EventType];
 
