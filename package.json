@@ -42,3 +42,4 @@
     "bump-version": "node bump-version.js"
   }
 }
+
