@@ -10,7 +10,7 @@ import { BoundedPriorityQueue } from "../utils";
 
 export async function* roundRobinIterators<T>(
     inputs: AsyncIterableIterator<T>[],
-    logger: ILogger,
+    logger: ILogger
 ): AsyncIterableIterator<T> {
     const pipe = new BoundedPriorityQueue<T>(1);
 
@@ -39,7 +39,6 @@ export async function* roundRobinIterators<T>(
 }
 
 export function dumpOpenHandles(logger: ILogger): void {
-
     const wtf = require("wtfnode");
     const util = require("util");
     wtf.setLogger("info", (...args: any[]) => {
