@@ -20,6 +20,9 @@ import {
 import { AttributeNames } from "../PubSubSink";
 import { IPubSubMessage } from "../PubSubSource";
 
+let mockHandlerFunction;
+let capturedOutput: any[] = [];
+
 jest.mock("@google-cloud/pubsub", () => {
     return {
         PubSub: jest.fn(function(_testConfig) {
@@ -66,9 +69,6 @@ function createTestApp(source: IInputSource): CancelablePromise<void> {
             },
         });
 }
-
-let mockHandlerFunction;
-let capturedOutput: any[] = [];
 
 describe("Testing of pubsub subscriber service WITH DEFAULT batch size", () => {
     let testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration;

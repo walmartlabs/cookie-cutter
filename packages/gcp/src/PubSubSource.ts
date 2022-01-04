@@ -13,7 +13,6 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { IGcpAuthConfiguration, IPubSubSubscriberConfiguration } from ".";
 import { FORMAT_HTTP_HEADERS, Tracer, Tags } from "opentracing";
-import { isArray } from "util";
 import { AttributeNames } from "./PubSubSink";
 
 interface IBufferToJSON {
@@ -72,10 +71,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
 
                 const { attributes, data } = this.config.preprocessor
                     ? this.config.preprocessor.process(message)
-                    : (message as {
-                          attributes: any;
-                          data: IBufferToJSON | any;
-                      });
+                    : (message as IPubSubMessage);
 
                 const event_type = attributes[EventSourcedMetadata.EventType];
 
@@ -84,7 +80,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                     !isEmbeddable(this.config.encoder) &&
                     data.type &&
                     data.type === "Buffer" &&
-                    isArray(data.data)
+                    Array.isArray(data.data)
                 ) {
                     protoOrJsonPayload = data.data;
                 }
