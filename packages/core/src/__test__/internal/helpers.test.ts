@@ -5,6 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+import { DefaultComponentContext } from "../..";
 import { roundRobinIterators } from "../../../src/internal/helpers";
 
 async function* iterator<T>(items: T[]): AsyncIterableIterator<T> {
@@ -21,7 +22,7 @@ describe("roundRobinIterators", () => {
         const it2 = iterator(values2);
 
         const all = [];
-        for await (const n of roundRobinIterators([it1, it2])) {
+        for await (const n of roundRobinIterators([it1, it2], DefaultComponentContext.logger)) {
             all.push(n);
         }
 

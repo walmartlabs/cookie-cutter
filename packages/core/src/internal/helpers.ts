@@ -9,7 +9,8 @@ import { ILogger } from "..";
 import { BoundedPriorityQueue } from "../utils";
 
 export async function* roundRobinIterators<T>(
-    inputs: AsyncIterableIterator<T>[]
+    inputs: AsyncIterableIterator<T>[],
+    logger: ILogger
 ): AsyncIterableIterator<T> {
     const pipe = new BoundedPriorityQueue<T>(1);
 
@@ -25,6 +26,7 @@ export async function* roundRobinIterators<T>(
                 }
             } catch (e) {
                 // ignore, close pipe
+                logger.warn("Error iterating input source", { msg: e });
             } finally {
                 if (++done === inputs.length) {
                     pipe.close();

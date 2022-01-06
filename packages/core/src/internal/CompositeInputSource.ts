@@ -56,7 +56,7 @@ export class CompositeInputSource
 
         let source = sources[0];
         if (sources.length > 1) {
-            source = roundRobinIterators(sources);
+            source = roundRobinIterators(sources, this.logger);
         }
 
         let sequence = 0;
