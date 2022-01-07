@@ -167,11 +167,11 @@ export class PubSubSubscriberConfiguration extends GcpAuthConfiguration
         return config.noop();
     }
 
-    @config.field(config.converters.none)
+    @config.field(config.converters.string)
     public set subscriptionName(_: string) {
         config.noop();
     }
-    public get subscriptionName() {
+    public get subscriptionName(): string {
         return config.noop();
     }
 
@@ -179,7 +179,7 @@ export class PubSubSubscriberConfiguration extends GcpAuthConfiguration
     public set maxMsgBatchSize(_: number) {
         config.noop();
     }
-    public get maxMsgBatchSize() {
+    public get maxMsgBatchSize(): number {
         return config.noop();
     }
 

@@ -27,7 +27,9 @@ import {
 import { GcsClient } from "./GcsClient";
 import { GcsSink } from "./GcsSink";
 import { PubSubSink } from "./PubSubSink";
-import { PubSubSource, IPubSubMessage } from "./PubSubSource";
+import { IBufferToJSON, PubSubSource } from "./PubSubSource";
+
+export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
 
 export interface IGCSConfiguration {
     readonly projectId: string;
@@ -62,6 +64,15 @@ export interface IPubSubSubscriberConfiguration {
     readonly subscriptionName: string;
     readonly maxMsgBatchSize?: number;
     readonly preprocessor?: IPubSubMessagePreprocessor;
+}
+
+export interface IPubSubMessage {
+    attributes: any;
+    data: IBufferToJSON | any;
+}
+
+export interface IPubSubMessagePreprocessor {
+    process(payload: any): IPubSubMessage;
 }
 
 export interface IGcsClient {
@@ -117,12 +128,6 @@ export function pubSubSink(
     });
     return new PubSubSink(configuration);
 }
-
-export interface IPubSubMessagePreprocessor {
-    process(payload: string): IPubSubMessage;
-}
-
-export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
 
 export function pubSubSource(
     configuration: IGcpAuthConfiguration & IPubSubSubscriberConfiguration

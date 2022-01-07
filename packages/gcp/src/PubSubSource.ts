@@ -5,28 +5,24 @@ import {
     IComponentContext,
     IInputSource,
     ILogger,
+    IMessage,
     IMetadata,
     IRequireInitialization,
     isEmbeddable,
     MessageRef,
     sleep,
 } from "@walmartlabs/cookie-cutter-core";
-import { IGcpAuthConfiguration, IPubSubSubscriberConfiguration } from ".";
-import { FORMAT_HTTP_HEADERS, Tracer, Tags } from "opentracing";
-import { AttributeNames } from "./PubSubSink";
+import { IGcpAuthConfiguration, IPubSubMessage, IPubSubSubscriberConfiguration } from "./index";
+import { FORMAT_HTTP_HEADERS, Tracer, Tags, Span } from "opentracing";
+import { AttributeNames } from "./model";
 
-interface IBufferToJSON {
+export interface IBufferToJSON {
     type: string;
     data: any[];
 }
 
-export enum GooglePubSubTracingTagKeys {
+enum GooglePubSubTracingTagKeys {
     SubscriptionName = "google.pubsub.subscription_name",
-}
-
-export interface IPubSubMessage {
-    attributes: any;
-    data: IBufferToJSON | any;
 }
 
 /*
@@ -66,14 +62,14 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
         });
 
         while (!this.done) {
-            while (this.messages.length !== 0) {
+            if (this.messages.length !== 0) {
                 const message: any = this.messages.shift();
 
                 const { attributes, data } = this.config.preprocessor
                     ? this.config.preprocessor.process(message)
                     : (message as IPubSubMessage);
 
-                const event_type = attributes[EventSourcedMetadata.EventType];
+                const event_type = attributes[AttributeNames.eventType];
 
                 let protoOrJsonPayload = data;
                 if (
@@ -91,22 +87,12 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                 const span = this.tracer.startSpan("Processing Google PubSub Message", {
                     childOf: spanContext,
                 });
-                span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_CONSUMER);
-                span.setTag(Tags.MESSAGE_BUS_DESTINATION, this.config.subscriptionName);
-                span.setTag(Tags.COMPONENT, "cookie-cutter-gcp");
-                span.setTag(Tags.DB_INSTANCE, this.config.subscriptionName);
-                span.setTag(Tags.DB_TYPE, "GooglePubSub");
-                span.setTag(Tags.PEER_SERVICE, "GooglePubSub");
-                span.setTag(Tags.SAMPLING_PRIORITY, 1);
-                span.setTag(
-                    GooglePubSubTracingTagKeys.SubscriptionName,
-                    this.config.subscriptionName
-                );
+
+                this.spanLogAndSetTags(span);
 
                 const metadata: IMetadata = {
-                    [AttributeNames.contentType]: this.config.encoder.mimeType,
-                    [AttributeNames.eventType]: event_type,
-                    [AttributeNames.timestamp]: attributes[EventSourcedMetadata.Timestamp],
+                    [EventSourcedMetadata.EventType]: event_type,
+                    [EventSourcedMetadata.Timestamp]: attributes[AttributeNames.timestamp],
                 };
 
                 const msgRef = new MessageRef(metadata, msg, span.context());
@@ -116,11 +102,19 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                     async (_msg: MessageRef, _value?: any, error?: Error): Promise<void> => {
                         try {
                             if (error) {
-                                this.logger.error(`Unable to release message | ${error}`);
+                                this.logger.error(`Unable to release message`, error, {
+                                    id: message.id,
+                                    subscriptionName: this.config.subscriptionName,
+                                    "projectId:": this.config.projectId,
+                                });
+                                failSpan(span, error);
                             } else {
                                 message.ack();
-                                this.logger.debug(`Message processed : ${message.id}`);
-                                failSpan(span, error);
+                                this.logger.debug(`Message processed`, {
+                                    id: message.id,
+                                    subscriptionName: this.config.subscriptionName,
+                                    "projectId:": this.config.projectId,
+                                });
                             }
                         } finally {
                             span.finish();
@@ -130,13 +124,12 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
 
                 yield msgRef;
             }
-            await sleep(100);
+            await sleep(50);
         }
     }
 
     public async stop(): Promise<void> {
         this.done = true;
-        await this.dispose();
     }
 
     public async dispose(): Promise<void> {
@@ -146,7 +139,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
         }
     }
 
-    private decode(payload: any, event_type: string) {
+    private decode(payload: any, event_type: string): IMessage {
         if (isEmbeddable(this.config.encoder)) {
             return this.config.encoder.decode(
                 this.config.encoder.fromJsonEmbedding(payload),
@@ -154,5 +147,16 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
             );
         }
         return this.config.encoder.decode(payload, event_type);
+    }
+
+    private spanLogAndSetTags(span: Span): void {
+        span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_CONSUMER);
+        span.setTag(Tags.MESSAGE_BUS_DESTINATION, this.config.subscriptionName);
+        span.setTag(Tags.COMPONENT, "cookie-cutter-gcp");
+        span.setTag(Tags.DB_INSTANCE, this.config.subscriptionName);
+        span.setTag(Tags.DB_TYPE, "GooglePubSub");
+        span.setTag(Tags.PEER_SERVICE, "GooglePubSub");
+        span.setTag(Tags.SAMPLING_PRIORITY, 1);
+        span.setTag(GooglePubSubTracingTagKeys.SubscriptionName, this.config.subscriptionName);
     }
 }

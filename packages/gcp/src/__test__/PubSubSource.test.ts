@@ -16,9 +16,9 @@ import {
     IPubSubSubscriberConfiguration,
     MAX_MSG_BATCH_SIZE_SUBSCRIBER,
     pubSubSource,
-} from "../index";
-import { AttributeNames } from "../PubSubSink";
-import { IPubSubMessage } from "../PubSubSource";
+} from "..";
+import { AttributeNames } from "../model";
+import { IPubSubMessage } from "../index";
 
 let mockHandlerFunction;
 let capturedOutput: any[] = [];
@@ -70,16 +70,16 @@ function createTestApp(source: IInputSource): CancelablePromise<void> {
         });
 }
 
-describe("Testing of pubsub subscriber service WITH DEFAULT batch size", () => {
-    let testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration;
+describe("Testing pubsub subscriber WITH DEFAULT batch size", () => {
+    const testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration = {
+        projectId: "test_project_id",
+        clientEmail: "test@testserver.com",
+        privateKey: "test_private_key",
+        encoder: new JsonMessageEncoder(),
+        subscriptionName: "test_subscription_name",
+    };
+
     beforeEach(() => {
-        testConfig = {
-            projectId: "test_project_id",
-            clientEmail: "test@testserver.com",
-            privateKey: "test_private_key",
-            encoder: new JsonMessageEncoder(),
-            subscriptionName: "test_subscription_name",
-        };
         capturedOutput = [];
     });
 
@@ -94,7 +94,7 @@ describe("Testing of pubsub subscriber service WITH DEFAULT batch size", () => {
         await expect(testApp).rejects.toThrow();
     });
 
-    it("verifying 'message' event listner gets messages and sends downstream", async () => {
+    it("verifying 'message' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
             if (event === "message") {
                 for (let i = 1; i <= MAX_MSG_BATCH_SIZE_SUBSCRIBER; i++) {
@@ -103,7 +103,7 @@ describe("Testing of pubsub subscriber service WITH DEFAULT batch size", () => {
                         ackId: `ackId-${i}`,
                         data: `This is message ${i}`,
                         attributes: {
-                            event_type: "TestEvent",
+                            eventType: "TestEvent",
                             dt: new Date().toUTCString(),
                         },
                         publishTime: new Date().toUTCString(),
@@ -126,32 +126,21 @@ describe("Testing of pubsub subscriber service WITH DEFAULT batch size", () => {
     });
 });
 
-describe("Testing of pubsub subscriber service WITH USER SPECIFIED batch size", () => {
-    let testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration;
+describe("Testing pubsub subscriber WITH USER SPECIFIED batch size", () => {
+    const testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration = {
+        projectId: "test_project_id",
+        clientEmail: "test@testserver.com",
+        privateKey: "test_private_key",
+        encoder: new JsonMessageEncoder(),
+        subscriptionName: "test_subscription_name",
+        maxMsgBatchSize: 10,
+    };
+
     beforeEach(() => {
-        testConfig = {
-            projectId: "test_project_id",
-            clientEmail: "test@testserver.com",
-            privateKey: "test_private_key",
-            encoder: new JsonMessageEncoder(),
-            subscriptionName: "test_subscription_name",
-            maxMsgBatchSize: 10,
-        };
         capturedOutput = [];
     });
 
-    it("Verifying 'error' event listener", async () => {
-        mockHandlerFunction = (event: string, callback: (error: any) => void): void => {
-            if (event === "error") {
-                callback(new Error("This is a test error"));
-            }
-        };
-        const source = pubSubSource({ ...testConfig });
-        const testApp = createTestApp(source);
-        await expect(testApp).rejects.toThrow();
-    });
-
-    it("verifying 'message' event listner gets messages and sends downstream with batch size", async () => {
+    it("verifying 'message' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
             if (event === "message") {
                 for (let i = 1; i <= testConfig.maxMsgBatchSize; i++) {
@@ -160,7 +149,7 @@ describe("Testing of pubsub subscriber service WITH USER SPECIFIED batch size", 
                         ackId: `ackId-${i}`,
                         data: `This is message ${i}`,
                         attributes: {
-                            event_type: "TestEvent",
+                            eventType: "TestEvent",
                             dt: new Date().toUTCString(),
                         },
                         publishTime: new Date().toUTCString(),
@@ -183,47 +172,39 @@ describe("Testing of pubsub subscriber service WITH USER SPECIFIED batch size", 
     });
 });
 
-describe("Testing with message preprocessor mentioned", () => {
-    let testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration;
+describe("Testing pubsub subscriber with message preprocessor", () => {
     function pubSubMessagePreprocessor(): IPubSubMessagePreprocessor {
         return {
-            process(payload: string): IPubSubMessage {
+            process(payload: any): IPubSubMessage {
                 return {
                     attributes: {
-                        event_type: "TestEvent",
-                        dt: new Date().toUTCString(),
+                        eventType: "TestEvent",
+                        dt: payload.publishTime,
                     },
-                    data: payload,
+                    data: {
+                        id: payload.id,
+                        data: payload.data,
+                    },
                 };
             },
         };
     }
 
+    const testConfig: IGcpAuthConfiguration & IPubSubSubscriberConfiguration = {
+        projectId: "test_project_id",
+        clientEmail: "test@testserver.com",
+        privateKey: "test_private_key",
+        encoder: new JsonMessageEncoder(),
+        subscriptionName: "test_subscription_name",
+        maxMsgBatchSize: 5,
+        preprocessor: pubSubMessagePreprocessor(),
+    };
+
     beforeEach(() => {
-        testConfig = {
-            projectId: "test_project_id",
-            clientEmail: "test@testserver.com",
-            privateKey: "test_private_key",
-            encoder: new JsonMessageEncoder(),
-            subscriptionName: "test_subscription_name",
-            maxMsgBatchSize: 5,
-            preprocessor: pubSubMessagePreprocessor(),
-        };
         capturedOutput = [];
     });
 
-    it("Verifying 'error' event listener", async () => {
-        mockHandlerFunction = (event: string, callback: (error: any) => void): void => {
-            if (event === "error") {
-                callback(new Error("This is a test error"));
-            }
-        };
-        const source = pubSubSource({ ...testConfig });
-        const testApp = createTestApp(source);
-        await expect(testApp).rejects.toThrow();
-    });
-
-    it("verifying 'message' event listner gets messages and sends downstream with batch size", async () => {
+    it("verifying 'message' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
             if (event === "message") {
                 for (let i = 1; i <= testConfig.maxMsgBatchSize; i++) {
