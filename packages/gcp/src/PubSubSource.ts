@@ -1,5 +1,13 @@
+/*
+Copyright (c) Walmart Inc.
+
+This source code is licensed under the Apache 2.0 license found in the
+LICENSE file in the root directory of this source tree.
+*/
+
 import { PubSub, Subscription } from "@google-cloud/pubsub";
 import {
+    AsyncPipe,
     EventSourcedMetadata,
     failSpan,
     IComponentContext,
@@ -7,23 +15,20 @@ import {
     ILogger,
     IMessage,
     IMetadata,
+    IMetrics,
     IRequireInitialization,
     isEmbeddable,
     MessageRef,
-    sleep,
+    OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { IGcpAuthConfiguration, IPubSubMessage, IPubSubSubscriberConfiguration } from "./index";
 import { FORMAT_HTTP_HEADERS, Tracer, Tags, Span } from "opentracing";
-import { AttributeNames } from "./model";
-
-export interface IBufferToJSON {
-    type: string;
-    data: any[];
-}
-
-enum GooglePubSubTracingTagKeys {
-    SubscriptionName = "google.pubsub.subscription_name",
-}
+import {
+    AttributeNames,
+    PubSubMetricResults,
+    PubSubMetrics,
+    PubSubOpenTracingTagKeys,
+} from "./model";
 
 /*
  * implements pull delivery with limits on max number of unacknowledged messages
@@ -34,7 +39,8 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
     private done: boolean = false;
     private tracer: Tracer;
     private logger: ILogger;
-    private messages: any[] = [];
+    private metrics: IMetrics;
+    private pipe = new AsyncPipe<MessageRef>();
 
     constructor(private readonly config: IGcpAuthConfiguration & IPubSubSubscriberConfiguration) {
         this.subscriber = new PubSub({
@@ -53,49 +59,41 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.logger = context.logger;
+        this.metrics = context.metrics;
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
-        this.subscriber.on("message", (message) => this.messages.push(message));
-        this.subscriber.on("error", (error) => {
-            throw error;
-        });
-
-        while (!this.done) {
-            if (this.messages.length !== 0) {
-                const message: any = this.messages.shift();
-
-                const { attributes, data } = this.config.preprocessor
+        this.subscriber.on("message", async (message) => {
+            const { attributes, data } = this.config.preprocessor
                     ? this.config.preprocessor.process(message)
                     : (message as IPubSubMessage);
+                    const event_type = attributes[AttributeNames.eventType];
 
-                const event_type = attributes[AttributeNames.eventType];
+            let protoOrJsonPayload = data;
+            if (
+                !isEmbeddable(this.config.encoder) &&
+                data.type &&
+                data.type === "Buffer" &&
+                Array.isArray(data.data)
+            ) {
+                protoOrJsonPayload = data.data;
+            }
+    
+            const msg = this.decode(protoOrJsonPayload, event_type);
+    
+            const spanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, attributes);
+            const span = this.tracer.startSpan("Processing Google PubSub Message", {
+                childOf: spanContext,
+            });
+    
+            this.spanLogAndSetTags(span, this.start.name);
 
-                let protoOrJsonPayload = data;
-                if (
-                    !isEmbeddable(this.config.encoder) &&
-                    data.type &&
-                    data.type === "Buffer" &&
-                    Array.isArray(data.data)
-                ) {
-                    protoOrJsonPayload = data.data;
-                }
+            const metadata: IMetadata = {
+                [EventSourcedMetadata.EventType]: event_type,
+                [EventSourcedMetadata.Timestamp]: attributes[AttributeNames.timestamp],
+            };
 
-                const msg = this.decode(protoOrJsonPayload, event_type);
-
-                const spanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, attributes);
-                const span = this.tracer.startSpan("Processing Google PubSub Message", {
-                    childOf: spanContext,
-                });
-
-                this.spanLogAndSetTags(span);
-
-                const metadata: IMetadata = {
-                    [EventSourcedMetadata.EventType]: event_type,
-                    [EventSourcedMetadata.Timestamp]: attributes[AttributeNames.timestamp],
-                };
-
-                const msgRef = new MessageRef(metadata, msg, span.context());
+            const msgRef = new MessageRef(metadata, msg, span.context());
 
                 msgRef.once(
                     "released",
@@ -107,6 +105,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                                     subscriptionName: this.config.subscriptionName,
                                     "projectId:": this.config.projectId,
                                 });
+                                this.emitMetrics(event_type, PubSubMetricResults.Error);
                                 failSpan(span, error);
                             } else {
                                 message.ack();
@@ -115,6 +114,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                                     subscriptionName: this.config.subscriptionName,
                                     "projectId:": this.config.projectId,
                                 });
+                                this.emitMetrics(event_type, PubSubMetricResults.Success);
                             }
                         } finally {
                             span.finish();
@@ -122,14 +122,21 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                     }
                 );
 
-                yield msgRef;
+            if (!this.done) {
+                await this.pipe.send(msgRef);
             }
-            await sleep(50);
-        }
+        });
+
+        this.subscriber.on("error", (error) => {
+            throw error;
+        });
+
+        yield* this.pipe;
     }
 
     public async stop(): Promise<void> {
         this.done = true;
+        await this.pipe.close();
     }
 
     public async dispose(): Promise<void> {
@@ -139,7 +146,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
         }
     }
 
-    private decode(payload: any, event_type: string): IMessage {
+    private decode(payload: any, event_type: any): IMessage {
         if (isEmbeddable(this.config.encoder)) {
             return this.config.encoder.decode(
                 this.config.encoder.fromJsonEmbedding(payload),
@@ -149,14 +156,19 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
         return this.config.encoder.decode(payload, event_type);
     }
 
-    private spanLogAndSetTags(span: Span): void {
+    private spanLogAndSetTags(span: Span, funcName: string): void {
+        span.log({ subscription_name: this.config.subscriptionName });
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_CONSUMER);
-        span.setTag(Tags.MESSAGE_BUS_DESTINATION, this.config.subscriptionName);
-        span.setTag(Tags.COMPONENT, "cookie-cutter-gcp");
-        span.setTag(Tags.DB_INSTANCE, this.config.subscriptionName);
-        span.setTag(Tags.DB_TYPE, "GooglePubSub");
-        span.setTag(Tags.PEER_SERVICE, "GooglePubSub");
-        span.setTag(Tags.SAMPLING_PRIORITY, 1);
-        span.setTag(GooglePubSubTracingTagKeys.SubscriptionName, this.config.subscriptionName);
+        span.setTag(Tags.COMPONENT, "cookie-cutter-pubSub");
+        span.setTag(OpenTracingTagKeys.FunctionName, funcName);
+        span.setTag(PubSubOpenTracingTagKeys.SubscriberName, this.config.subscriptionName);
+    }
+
+    private emitMetrics(event_type: any, result: PubSubMetricResults): void {
+        this.metrics.increment(PubSubMetrics.MsgSubscribed, {
+            subscription_name: this.config.subscriptionName,
+            event_type,
+            result,
+        });
     }
 }

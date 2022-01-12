@@ -27,7 +27,7 @@ import {
 import { GcsClient } from "./GcsClient";
 import { GcsSink } from "./GcsSink";
 import { PubSubSink } from "./PubSubSink";
-import { IBufferToJSON, PubSubSource } from "./PubSubSource";
+import { PubSubSource } from "./PubSubSource";
 
 export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
 
@@ -81,6 +81,11 @@ export interface IGcsClient {
 
 export interface IBigQueryClient {
     putObject(spanContext: SpanContext, body: any[] | any, table: string): Promise<void>;
+}
+
+export interface IBufferToJSON {
+    type: string;
+    data: any[];
 }
 
 export function gcsClient(configuration: IGCSConfiguration): IGcsClient & IRequireInitialization {

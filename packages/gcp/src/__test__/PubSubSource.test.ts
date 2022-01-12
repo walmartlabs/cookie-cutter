@@ -1,3 +1,10 @@
+/*
+Copyright (c) Walmart Inc.
+
+This source code is licensed under the Apache 2.0 license found in the
+LICENSE file in the root directory of this source tree.
+*/
+
 import {
     Application,
     CancelablePromise,
@@ -7,7 +14,7 @@ import {
     IDispatchContext,
     IInputSource,
     JsonMessageEncoder,
-    ParallelismMode,
+    //ParallelismMode,
     sleep,
 } from "@walmartlabs/cookie-cutter-core";
 import {
@@ -16,9 +23,10 @@ import {
     IPubSubSubscriberConfiguration,
     MAX_MSG_BATCH_SIZE_SUBSCRIBER,
     pubSubSource,
+    IPubSubMessage,
 } from "..";
+
 import { AttributeNames } from "../model";
-import { IPubSubMessage } from "../index";
 
 let mockHandlerFunction;
 let capturedOutput: any[] = [];
@@ -45,7 +53,8 @@ class TestEvent {
 
 function createTestApp(source: IInputSource): CancelablePromise<void> {
     const handler = {
-        onTestEvent: (msg: TestEvent, ctx: IDispatchContext) => {
+        onTestEvent: async (msg: TestEvent, ctx: IDispatchContext): Promise<void> => {
+            console.log(`********* Received message ${msg}`);
             ctx.publish(TestEvent, new TestEvent(msg.value), {
                 [AttributeNames.eventType]: "TestEvent",
             });
@@ -61,13 +70,7 @@ function createTestApp(source: IInputSource): CancelablePromise<void> {
         .output()
         .published(new CapturingOutputSink(capturedOutput))
         .done()
-        .run({
-            sink: { mode: ErrorHandlingMode.LogAndContinue },
-            dispatch: { mode: ErrorHandlingMode.LogAndContinue },
-            parallelism: {
-                mode: ParallelismMode.Serial,
-            },
-        });
+        .run(ErrorHandlingMode.LogAndContinue);
 }
 
 describe("Testing pubsub subscriber WITH DEFAULT batch size", () => {
@@ -83,7 +86,7 @@ describe("Testing pubsub subscriber WITH DEFAULT batch size", () => {
         capturedOutput = [];
     });
 
-    it("Verifying 'error' event listener", async () => {
+    it("Verifies 'error' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (error: any) => void): void => {
             if (event === "error") {
                 callback(new Error("This is a test error"));
@@ -94,7 +97,7 @@ describe("Testing pubsub subscriber WITH DEFAULT batch size", () => {
         await expect(testApp).rejects.toThrow();
     });
 
-    it("verifying 'message' event listener", async () => {
+    it("verifies 'message' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
             if (event === "message") {
                 for (let i = 1; i <= MAX_MSG_BATCH_SIZE_SUBSCRIBER; i++) {
@@ -140,7 +143,7 @@ describe("Testing pubsub subscriber WITH USER SPECIFIED batch size", () => {
         capturedOutput = [];
     });
 
-    it("verifying 'message' event listener", async () => {
+    it("verifies 'message' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
             if (event === "message") {
                 for (let i = 1; i <= testConfig.maxMsgBatchSize; i++) {
@@ -204,7 +207,7 @@ describe("Testing pubsub subscriber with message preprocessor", () => {
         capturedOutput = [];
     });
 
-    it("verifying 'message' event listener", async () => {
+    it("verifies 'message' event listener", async () => {
         mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
             if (event === "message") {
                 for (let i = 1; i <= testConfig.maxMsgBatchSize; i++) {
