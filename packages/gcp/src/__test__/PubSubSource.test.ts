@@ -14,7 +14,7 @@ import {
     IDispatchContext,
     IInputSource,
     JsonMessageEncoder,
-    //ParallelismMode,
+    // ParallelismMode,
     sleep,
 } from "@walmartlabs/cookie-cutter-core";
 import {
@@ -54,7 +54,6 @@ class TestEvent {
 function createTestApp(source: IInputSource): CancelablePromise<void> {
     const handler = {
         onTestEvent: async (msg: TestEvent, ctx: IDispatchContext): Promise<void> => {
-            console.log(`********* Received message ${msg}`);
             ctx.publish(TestEvent, new TestEvent(msg.value), {
                 [AttributeNames.eventType]: "TestEvent",
             });
@@ -98,7 +97,10 @@ describe("Testing pubsub subscriber WITH DEFAULT batch size", () => {
     });
 
     it("verifies 'message' event listener", async () => {
-        mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
+        mockHandlerFunction = async (
+            event: string,
+            callback: (msg: any) => void
+        ): Promise<void> => {
             if (event === "message") {
                 for (let i = 1; i <= MAX_MSG_BATCH_SIZE_SUBSCRIBER; i++) {
                     const message = {
@@ -144,7 +146,10 @@ describe("Testing pubsub subscriber WITH USER SPECIFIED batch size", () => {
     });
 
     it("verifies 'message' event listener", async () => {
-        mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
+        mockHandlerFunction = async (
+            event: string,
+            callback: (msg: any) => void
+        ): Promise<void> => {
             if (event === "message") {
                 for (let i = 1; i <= testConfig.maxMsgBatchSize; i++) {
                     const message = {
@@ -208,7 +213,10 @@ describe("Testing pubsub subscriber with message preprocessor", () => {
     });
 
     it("verifies 'message' event listener", async () => {
-        mockHandlerFunction = (event: string, callback: (msg: any) => void): void => {
+        mockHandlerFunction = async (
+            event: string,
+            callback: (msg: any) => void
+        ): Promise<void> => {
             if (event === "message") {
                 for (let i = 1; i <= testConfig.maxMsgBatchSize; i++) {
                     const message = {

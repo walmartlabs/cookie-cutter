@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.
 
 import { PubSub, Subscription } from "@google-cloud/pubsub";
 import {
-    AsyncPipe,
+    BoundedPriorityQueue,
     EventSourcedMetadata,
     failSpan,
     IComponentContext,
@@ -40,7 +40,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
     private tracer: Tracer;
     private logger: ILogger;
     private metrics: IMetrics;
-    private pipe = new AsyncPipe<MessageRef>();
+    private queue: BoundedPriorityQueue<any>;
 
     constructor(private readonly config: IGcpAuthConfiguration & IPubSubSubscriberConfiguration) {
         this.subscriber = new PubSub({
@@ -54,6 +54,8 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
                 maxMessages: this.config.maxMsgBatchSize,
             },
         });
+
+        this.queue = new BoundedPriorityQueue<any>(this.config.maxMsgBatchSize);
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -65,9 +67,9 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
     public async *start(): AsyncIterableIterator<MessageRef> {
         this.subscriber.on("message", async (message) => {
             const { attributes, data } = this.config.preprocessor
-                    ? this.config.preprocessor.process(message)
-                    : (message as IPubSubMessage);
-                    const event_type = attributes[AttributeNames.eventType];
+                ? this.config.preprocessor.process(message)
+                : (message as IPubSubMessage);
+            const event_type = attributes[AttributeNames.eventType];
 
             let protoOrJsonPayload = data;
             if (
@@ -78,14 +80,14 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
             ) {
                 protoOrJsonPayload = data.data;
             }
-    
+
             const msg = this.decode(protoOrJsonPayload, event_type);
-    
+
             const spanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, attributes);
             const span = this.tracer.startSpan("Processing Google PubSub Message", {
                 childOf: spanContext,
             });
-    
+
             this.spanLogAndSetTags(span, this.start.name);
 
             const metadata: IMetadata = {
@@ -95,48 +97,49 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
 
             const msgRef = new MessageRef(metadata, msg, span.context());
 
-                msgRef.once(
-                    "released",
-                    async (_msg: MessageRef, _value?: any, error?: Error): Promise<void> => {
-                        try {
-                            if (error) {
-                                this.logger.error(`Unable to release message`, error, {
-                                    id: message.id,
-                                    subscriptionName: this.config.subscriptionName,
-                                    "projectId:": this.config.projectId,
-                                });
-                                this.emitMetrics(event_type, PubSubMetricResults.Error);
-                                failSpan(span, error);
-                            } else {
-                                message.ack();
-                                this.logger.debug(`Message processed`, {
-                                    id: message.id,
-                                    subscriptionName: this.config.subscriptionName,
-                                    "projectId:": this.config.projectId,
-                                });
-                                this.emitMetrics(event_type, PubSubMetricResults.Success);
-                            }
-                        } finally {
-                            span.finish();
+            msgRef.once(
+                "released",
+                async (_msg: MessageRef, _value?: any, error?: Error): Promise<void> => {
+                    try {
+                        if (error) {
+                            this.logger.error(`Unable to release message`, error, {
+                                id: message.id,
+                                subscriptionName: this.config.subscriptionName,
+                                "projectId:": this.config.projectId,
+                            });
+                            this.emitMetrics(event_type, PubSubMetricResults.Error);
+                            failSpan(span, error);
+                        } else {
+                            message.ack();
+                            this.logger.debug(`Message processed`, {
+                                id: message.id,
+                                subscriptionName: this.config.subscriptionName,
+                                "projectId:": this.config.projectId,
+                            });
+                            this.emitMetrics(event_type, PubSubMetricResults.Success);
                         }
+                    } finally {
+                        span.finish();
                     }
-                );
+                }
+            );
 
             if (!this.done) {
-                await this.pipe.send(msgRef);
+                await this.queue.enqueue(msgRef);
             }
         });
 
         this.subscriber.on("error", (error) => {
+            this.queue.close();
             throw error;
         });
 
-        yield* this.pipe;
+        yield* this.queue.iterate();
     }
 
     public async stop(): Promise<void> {
         this.done = true;
-        await this.pipe.close();
+        this.queue.close();
     }
 
     public async dispose(): Promise<void> {
