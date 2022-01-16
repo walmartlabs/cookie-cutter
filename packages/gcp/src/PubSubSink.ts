@@ -22,6 +22,12 @@ import {
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { PubSub, Attributes } from "@google-cloud/pubsub";
 import { IGcpAuthConfiguration, IPubSubPublisherConfiguration } from ".";
+import {
+    AttributeNames,
+    PubSubMetricResults,
+    PubSubMetrics,
+    PubSubOpenTracingTagKeys,
+} from "./model";
 
 interface IPayloadWithAttributes {
     payload: Buffer;
@@ -29,28 +35,9 @@ interface IPayloadWithAttributes {
     spanContext: SpanContext;
 }
 
-enum PubSubMetricResults {
-    Success = "success",
-    Error = "error",
-}
-
-enum PubSubMetrics {
-    MsgPublished = "cookie_cutter.pubsub_sink.msg_published",
-}
-
 export enum PubSubMetadata {
     Topic = "topic",
 }
-
-enum PubSubOpenTracingTagKeys {
-    TopicName = "pubSub.topic",
-}
-
-export const AttributeNames = {
-    eventType: "eventType",
-    timestamp: "dt",
-    contentType: "mimeType",
-};
 
 /*
  * Output sink to produce to Google's PubSub topics.
