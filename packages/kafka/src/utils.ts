@@ -14,7 +14,7 @@ import * as uuid from "uuid";
 export function generateClientId(clientIdPrefix?: string) {
     const clientId = `${getRootProjectPackageInfo().name}-${uuid.v4()}`;
     if (clientIdPrefix) {
-        return `${clientIdPrefix}-${clientId}`;    
+        return `${clientIdPrefix}-${clientId}`;
     }
     return clientId;
 }

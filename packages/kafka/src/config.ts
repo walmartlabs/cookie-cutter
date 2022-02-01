@@ -193,7 +193,7 @@ export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
     public get compressionMode(): KafkaPublisherCompressionMode {
         return config.noop();
     }
-    
+
     @config.field(config.converters.string)
     public set clientIdPrefix(_: string) {
         config.noop();
