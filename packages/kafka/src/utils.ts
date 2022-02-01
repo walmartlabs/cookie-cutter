@@ -11,8 +11,12 @@ import * as LZ4Codec from "kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
 import * as uuid from "uuid";
 
-export function generateClientId() {
-    return `${getRootProjectPackageInfo().name}-${uuid.v4()}`;
+export function generateClientId(clientIdPrefix?: string) {
+    const clientId = `${getRootProjectPackageInfo().name}-${uuid.v4()}`;
+    if (clientIdPrefix) {
+        return `${clientIdPrefix}-${clientId}`;    
+    }
+    return clientId;
 }
 
 export function loadCompressionPlugins() {

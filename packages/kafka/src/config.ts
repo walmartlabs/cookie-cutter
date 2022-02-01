@@ -37,6 +37,14 @@ export class KafkaClientConfiguration implements IKafkaClientConfiguration {
     public get requestTimeout(): number {
         return config.noop();
     }
+
+    @config.field(config.converters.string)
+    public set clientIdPrefix(_: string) {
+        config.noop();
+    }
+    public get clientIdPrefix(): string {
+        return config.noop();
+    }
 }
 
 @config.section
@@ -183,6 +191,14 @@ export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
         config.noop();
     }
     public get compressionMode(): KafkaPublisherCompressionMode {
+        return config.noop();
+    }
+    
+    @config.field(config.converters.string)
+    public set clientIdPrefix(_: string) {
+        config.noop();
+    }
+    public get clientIdPrefix(): string {
         return config.noop();
     }
 }

@@ -103,6 +103,12 @@ export interface IKafkaClientConfiguration {
      * https://kafka.js.org/docs/configuration#request-timeout
      */
     readonly requestTimeout?: number;
+
+    /*
+     * Use ClientIdPrefix to quickly identify kafka client.
+     * https://kafka.js.org/docs/configuration#broker-discovery
+     */
+    readonly clientIdPrefix?: string;
 }
 
 export enum KafkaMessagePublishingStrategy {
@@ -150,6 +156,11 @@ export interface IKafkaPublisherConfiguration {
      * Defaults to `None`.
      */
     readonly compressionMode?: KafkaPublisherCompressionMode;
+    /*
+     * Use ClientIdPrefix to quickly identify kafka client.
+     * https://kafka.js.org/docs/configuration#broker-discovery
+     */
+    readonly clientIdPrefix?: string;
 }
 
 export interface IKafkaTopic {
