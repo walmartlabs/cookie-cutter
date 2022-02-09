@@ -30,7 +30,8 @@
             "module-protobuf",
             "module-prometheus",
             "module-redis",
-            "module-s3"
+            "module-s3",
+            "module-google-pubsub"
         ]
     }
 }

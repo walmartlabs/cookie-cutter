@@ -40,7 +40,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
     private tracer: Tracer;
     private logger: ILogger;
     private metrics: IMetrics;
-    private queue: BoundedPriorityQueue<any>;
+    private queue: BoundedPriorityQueue<MessageRef>;
 
     constructor(private readonly config: IGcpAuthConfiguration & IPubSubSubscriberConfiguration) {
         this.subscriber = new PubSub({
@@ -55,7 +55,7 @@ export class PubSubSource implements IInputSource, IRequireInitialization {
             },
         });
 
-        this.queue = new BoundedPriorityQueue<any>(this.config.maxMsgBatchSize);
+        this.queue = new BoundedPriorityQueue<MessageRef>(this.config.maxMsgBatchSize);
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
