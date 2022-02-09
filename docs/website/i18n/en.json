@@ -50,6 +50,9 @@
       "module-azure": {
         "title": "Azure"
       },
+      "module-google-pubsub": {
+        "title": "Google PubSub"
+      },
       "module-grpc": {
         "title": "gRPC"
       },

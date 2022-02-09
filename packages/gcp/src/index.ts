@@ -26,9 +26,10 @@ import {
 } from "./config";
 import { GcsClient } from "./GcsClient";
 import { GcsSink } from "./GcsSink";
+import { AttributeNames } from "./model";
 import { PubSubSink } from "./PubSubSink";
 import { PubSubSource } from "./PubSubSource";
-
+export { AttributeNames };
 export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
 
 export interface IGCSConfiguration {
