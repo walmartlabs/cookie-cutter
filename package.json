@@ -13,6 +13,7 @@
     "lodash": "^4.17.21",
     "underscore": "^1.12.1",
     "hosted-git-info": "^2.8.9",
+    "nanoid":"^3.1.31",
     "json-schema": "^0.4.0"
   },
   "engines": {
