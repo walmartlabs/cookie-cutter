@@ -91,6 +91,16 @@ describe("QueueClient", () => {
                     dequeueCount: 1,
                     messageText: '{ "headers": {"event_type": "event"}, "payload":"data"}',
                 },
+                {
+                    messageId: 124,
+                    insertedOn: new Date(),
+                    expiresOn: new Date(),
+                    popReceipt: "pop124",
+                    nextVisibleOn: new Date(),
+                    dequeueCount: 1,
+                    messageText:
+                        "{ &quot;headers&quot;: {&quot;event_type&quot;: &quot;event&quot;}, &quot;payload&quot;:&quot;data&quot;}",
+                },
             ],
             _response: {
                 status: 200,
@@ -211,8 +221,9 @@ describe("QueueClient", () => {
         const client = new QueueClient(configuration);
         it("should read messages with defaults", async () => {
             const messages = await client.read(span.context());
-            expect(messages).toHaveLength(1);
+            expect(messages).toHaveLength(2);
             expect(messages[0].headers[QueueMetadata.MessageId]).toBe(123);
+            expect(messages[1].headers[QueueMetadata.MessageId]).toBe(124);
             expect(receiveMessages).toBeCalledWith({
                 numOfMessages: undefined,
                 visibilityTimeout: undefined,
