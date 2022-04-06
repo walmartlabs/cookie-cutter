@@ -99,7 +99,15 @@ const QUEUE_NOT_FOUND_ERROR_CODE = 404;
 
 export class EnvelopeQueueMessagePreprocessor implements IQueueMessagePreprocessor {
     public process(payload: string): IQueueMessage {
-        return JSON.parse(payload) as {
+        // https://github.com/walmartlabs/cookie-cutter/issues/324
+        // https://azure.github.io/azure-storage-node/services_queue_queuemessageencoder.js.html#sunlight-1-line-171
+        const textToDecode = payload
+            .replace(/&amp;/gm, "&")
+            .replace(/&lt;/gm, "<")
+            .replace(/&gt;/gm, ">")
+            .replace(/&quot;/gm, '"')
+            .replace(/&apos;/gm, "'");
+        return JSON.parse(textToDecode) as {
             headers: Record<string, string>;
             payload: unknown;
         };
