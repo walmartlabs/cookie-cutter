@@ -92,33 +92,33 @@ jobs:
   #     - name: Yarn Test
   #       run: yarn test
 
-  test-windows:
-    name: Windows Node 10 Test
-    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: smoke
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Windows Node 10
-        uses: actions/setup-node@v2-beta
-        with:
-          node-version: "10"
-        env:
-          YARN_GPG: no # Windows build agent will hang without this
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile
-      - name: Yarn Build
-        run: yarn build
-      - name: Yarn Test
-        run: yarn test
+  # test-windows:
+  #   name: Windows Node 10 Test
+  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+  #   needs: smoke
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #     - name: Setup Windows Node 10
+  #       uses: actions/setup-node@v2-beta
+  #       with:
+  #         node-version: "10"
+  #       env:
+  #         YARN_GPG: no # Windows build agent will hang without this
+  #     - name: Install Yarn 1.21.1
+  #       run: yarn set version 1.21.1
+  #     - name: Install Dependencies
+  #       run: yarn install --frozen-lockfile
+  #     - name: Yarn Build
+  #       run: yarn build
+  #     - name: Yarn Test
+  #       run: yarn test
 
   integration-azure:
     name: Azure Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: windows-latest
     steps:
       - name: Checkout Code
@@ -149,7 +149,7 @@ jobs:
   integration-mssql:
     name: MSSQL Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -170,7 +170,7 @@ jobs:
   integration-amqp:
     name: AMQP Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -191,7 +191,7 @@ jobs:
   integration-kafka:
     name: Kafka Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -212,7 +212,7 @@ jobs:
   integration-prometheus:
     name: Prometheus Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -233,7 +233,7 @@ jobs:
   integration-s3:
     name: S3 Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -254,7 +254,7 @@ jobs:
   integration-redis:
     name: Redis Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu, test-windows]
+    needs: [test-ubuntu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
