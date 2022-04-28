@@ -2,11 +2,9 @@ name: Cookie Cutter Build Workflow
 
 on:
   push:
-    branches: [ master, develop, 'release/**']
+    branches: [ master ]
   pull_request:
-    branches: [ master, develop, 'release/**' ]
-  schedule:
-    - cron:  '0 4 * * *'
+    branches: [ master ]
 
 jobs:
   smoke:
