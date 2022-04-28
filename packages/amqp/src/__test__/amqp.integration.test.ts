@@ -20,7 +20,7 @@ import {
 import { IAmqpConfiguration, amqpSink, amqpSource } from "..";
 import * as amqp from "amqplib";
 
-jest.setTimeout(10000);
+jest.setTimeout(15000);
 
 async function waitForServer() {
     const options: amqp.Options.Connect = {
