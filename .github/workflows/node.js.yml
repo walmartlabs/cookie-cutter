@@ -38,14 +38,14 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Yarn Build
         run: yarn build
-      - name: Yarn Lint
-        run: yarn lint
-      - name: Yarn Test
-        run: yarn test
-      - name: Yarn Audit
-        if: ${{ github.event_name == 'schedule' }}
-        run: yarn audit
-        # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
+      # - name: Yarn Lint
+      #   run: yarn lint
+      # - name: Yarn Test
+      #   run: yarn test
+      # - name: Yarn Audit
+      #   if: ${{ github.event_name == 'schedule' }}
+      #   run: yarn audit
+      #   # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
 
   # test-ubuntu-node-12:
   #   name: Ubuntu Node 12 Test
@@ -104,7 +104,7 @@ jobs:
       - name: Setup Windows Node 16
         uses: actions/setup-node@v2-beta
         with:
-          node-version: "10"
+          node-version: "12"
         env:
           YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
