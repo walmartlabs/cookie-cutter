@@ -116,7 +116,7 @@ jobs:
       - name: Yarn Test
         run: yarn test
 
-  #  # Disable until we can fix Windows Build Issue
+  # # # Disable until we can fix Windows Build Issue
   # integration-azure:
   #   name: Azure Integration
   #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
