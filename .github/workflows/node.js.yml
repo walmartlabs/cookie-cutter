@@ -113,7 +113,6 @@ jobs:
       - name: Check Versions
         run:  | 
               node --version
-              nvm --version
               npm install node-gyp@latest
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
