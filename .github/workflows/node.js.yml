@@ -10,34 +10,34 @@ on:
 
 jobs:
   smoke:
-    # name: Ubuntu Node 16 Smoke
-    # runs-on: ubuntu-latest
-    # outputs:
-    #   commit_message: ${{ steps.output_message.outputs.commit_message }}
-    # steps:
-    #   - name: Checkout Code
-    #     uses: actions/checkout@v2
-    #     with: # required for git log to access the correct commits
-    #       ref: ${{ github.event.pull_request.head.sha }}
-    #   - name: Get Commit Message
-    #     run: echo "COMMIT_MESSAGE=$(git log --format=oneline -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
-    #   - name: Set Output Commit Message
-    #     id: output_message
-    #     env:
-    #       COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
-    #     run: |
-    #           echo "::set-output name=commit_message::$COMMIT_MESSAGE"
-    #           echo Commit Message: "$COMMIT_MESSAGE"
-    #   - name: Setup Ubuntu Node 16
-    #     uses: actions/setup-node@v2-beta
-    #     with:
-    #       node-version: "16"
-    #   - name: Install Yarn 1.21.1
-    #     run: yarn set version 1.21.1
-    #   - name: Install Dependencies
-    #     run: yarn install --frozen-lockfile
-    #   - name: Yarn Build
-    #     run: yarn build
+    name: Ubuntu Node 16 Smoke
+    runs-on: ubuntu-latest
+    outputs:
+      commit_message: ${{ steps.output_message.outputs.commit_message }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with: # required for git log to access the correct commits
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Commit Message
+        run: echo "COMMIT_MESSAGE=$(git log --format=oneline -n 1 ${{ github.event.after }})" >> $GITHUB_ENV
+      - name: Set Output Commit Message
+        id: output_message
+        env:
+          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
+        run: |
+              echo "::set-output name=commit_message::$COMMIT_MESSAGE"
+              echo Commit Message: "$COMMIT_MESSAGE"
+      - name: Setup Ubuntu Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      # - name: Yarn Build
+      #   run: yarn build
       # - name: Yarn Lint
       #   run: yarn lint
       # - name: Yarn Test
