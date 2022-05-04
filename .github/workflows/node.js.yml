@@ -138,12 +138,12 @@ jobs:
           node-version: "16"
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
-      - name: Install Dependencies
       - name: Check Versions
         run:  | 
               node --version
               python --version
               npm install node-gyp@latest
+      - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Run Integrate
         env:
