@@ -92,66 +92,66 @@ jobs:
   #     - name: Yarn Test
   #       run: yarn test
 
-  # # Disable until we can fix Windows Build Issue
-  # test-windows:
-  #   name: Windows Node 16 Test
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: smoke
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Windows Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #       env:
-  #         YARN_GPG: no # Windows build agent will hang without this
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Yarn Build
-  #       run: yarn build
-  #     - name: Yarn Test
-  #       run: yarn test
+  # # # Run on Windows 2019, Node 10 until we can fix Windows Build Issue for Latest Windows, Node 16
+  test-windows:
+    name: Windows 2019 Node 10 Test
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: smoke
+    runs-on: windows-2019
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Windows Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10.24.1"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Test
+        run: yarn test
 
-  #  # Disable until we can fix Windows Build Issue
-  # integration-azure:
-  #   name: Azure Integration
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-ubuntu-node-12]
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Windows Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Run Integrate
-  #       env:
-  #         YARN_GPG: no # Windows build agent will hang without this
-  #         NODE_TLS_REJECT_UNAUTHORIZED: "0"
-  #         COSMOS_SECRET_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-  #         AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
-  #         AZURE_STORAGE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-  #         AZURE_STORAGE_ACCOUNT: "devstoreaccount1"
-  #         AZURE_STORAGE_URL: "http://127.0.0.1:10000/devstoreaccount1"
-  #         RUNNING_IN_CI: "1"
-  #       run: |
-  #             PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
-  #             PowerShell -File packages/azure/start_emulators.ps1
-  #             PowerShell -File packages/azure/run_integration_tests.ps1
+  # # # Run on Windows 2019, Node 10 until we can fix Windows Build Issue for Latest Windows, Node 16
+  integration-azure:
+    name: Azure Integration
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [test-ubuntu-node-12, test-windows]
+    runs-on: windows-2019
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Windows Node 10
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "10.24.1"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Run Integrate
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+          NODE_TLS_REJECT_UNAUTHORIZED: "0"
+          COSMOS_SECRET_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+          AZURE_STORAGE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+          AZURE_STORAGE_ACCOUNT: "devstoreaccount1"
+          AZURE_STORAGE_URL: "http://127.0.0.1:10000/devstoreaccount1"
+          RUNNING_IN_CI: "1"
+        run: |
+              PowerShell -c "Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine"
+              PowerShell -File packages/azure/start_emulators.ps1
+              PowerShell -File packages/azure/run_integration_tests.ps1
 
   integration-mssql:
     name: MSSQL Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-ubuntu-node-12, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -172,7 +172,7 @@ jobs:
   integration-amqp:
     name: AMQP Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-ubuntu-node-12, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -193,7 +193,7 @@ jobs:
   integration-kafka:
     name: Kafka Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-ubuntu-node-12, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -214,7 +214,7 @@ jobs:
   integration-prometheus:
     name: Prometheus Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-ubuntu-node-12, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -235,7 +235,7 @@ jobs:
   integration-s3:
     name: S3 Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-ubuntu-node-12, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -256,7 +256,7 @@ jobs:
   integration-redis:
     name: Redis Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-ubuntu-node-12, test-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code

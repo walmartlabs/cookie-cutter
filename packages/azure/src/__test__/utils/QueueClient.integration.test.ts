@@ -26,7 +26,7 @@ const client = new QueueClient({
     createQueueIfNotExists: true,
 });
 
-jest.setTimeout(10000);
+jest.setTimeout(90000);
 
 describe("Blob Client", () => {
     describe("Queue Creation", () => {
