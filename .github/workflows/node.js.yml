@@ -111,7 +111,7 @@ jobs:
       - name: Install Yarn 1.21.1
         run: yarn set version 1.21.1
       - name: Install Latest Node Gyp
-        run: npm install node-gyp@latest
+        run: yarn install node-gyp@latest
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
