@@ -36,16 +36,16 @@ jobs:
         run: yarn set version 1.21.1
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
-      - name: Yarn Build
-        run: yarn build
-      - name: Yarn Lint
-        run: yarn lint
-      - name: Yarn Test
-        run: yarn test
-      - name: Yarn Audit
-        if: ${{ github.event_name == 'schedule' }}
-        run: yarn audit
-        # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
+      # - name: Yarn Build
+      #   run: yarn build
+      # - name: Yarn Lint
+      #   run: yarn lint
+      # - name: Yarn Test
+      #   run: yarn test
+      # - name: Yarn Audit
+      #   if: ${{ github.event_name == 'schedule' }}
+      #   run: yarn audit
+      #   # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
 
   test-ubuntu-node-12:
     name: Ubuntu Node 12 Test
@@ -94,7 +94,7 @@ jobs:
 
   # # Disable until we can fix Windows Build Issue
   test-windows:
-    name: Windows Node 16 Test
+    name: Windows Node 10 Test
     # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: windows-latest
@@ -102,10 +102,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Setup Windows Node 16
+      - name: Setup Windows Node 10
         uses: actions/setup-node@v2-beta
         with:
-          node-version: "16"
+          node-version: "10.24.1"
         env:
           YARN_GPG: no # Windows build agent will hang without this
       - name: Install Yarn 1.21.1
