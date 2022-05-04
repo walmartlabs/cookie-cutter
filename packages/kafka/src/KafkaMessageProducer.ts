@@ -47,8 +47,8 @@ namespace CompressionTypes {
                 return kafkajs.CompressionTypes.GZIP;
             case KafkaPublisherCompressionMode.Snappy:
                 return kafkajs.CompressionTypes.Snappy;
-            case KafkaPublisherCompressionMode.LZ4:
-                return kafkajs.CompressionTypes.LZ4;
+            // case KafkaPublisherCompressionMode.LZ4:
+            //     return kafkajs.CompressionTypes.LZ4;
             default:
                 throw new Error("Unknown KafkaPublisherCompressionMode");
         }

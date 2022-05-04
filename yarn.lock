@@ -4353,11 +4353,6 @@ cssstyle@^2.3.0:
   dependencies:
     cssom "~0.3.6"
 
-cuint@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/cuint/-/cuint-0.2.2.tgz#408086d409550c2631155619e9fa7bcadc3b991b"
-  integrity sha1-QICG1AlVDCYxFVYZ6fp7ytw7mRs=
-
 currently-unhandled@^0.4.1:
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/currently-unhandled/-/currently-unhandled-0.4.1.tgz#988df33feab191ef799a61369dd76c17adf957ea"
@@ -7812,13 +7807,6 @@ jws@^4.0.0:
     jwa "^2.0.0"
     safe-buffer "^5.0.1"
 
-kafkajs-lz4@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/kafkajs-lz4/-/kafkajs-lz4-1.2.1.tgz#89b94aa66d65c4cfac992cbab8f0a14757d8a399"
-  integrity sha512-+dGdRcVtHXEYmuwyPFuO0g7kTf+L97EPdm+wMk1h5jmHW/39NVWRaaw2WIeXuCRW7m9LnM3VzyvmSpqf6qZPfA==
-  dependencies:
-    lz4 "~0.6.0"
-
 kafkajs-snappy@1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/kafkajs-snappy/-/kafkajs-snappy-1.1.0.tgz#0bc20fb069147b00b34b64f7fb2394e8b2b9747d"
@@ -8218,16 +8206,6 @@ lru-cache@^6.0.0:
   integrity sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==
   dependencies:
     yallist "^4.0.0"
-
-lz4@~0.6.0:
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/lz4/-/lz4-0.6.5.tgz#ae8b7522681b6ab155023e6c56bf73087090122b"
-  integrity sha512-KSZcJU49QZOlJSItaeIU3p8WoAvkTmD9fJqeahQXNu1iQ/kR0/mQLdbrK8JY9MY8f6AhJoMrihp1nu1xDbscSQ==
-  dependencies:
-    buffer "^5.2.1"
-    cuint "^0.2.2"
-    nan "^2.13.2"
-    xxhashjs "^0.2.2"
 
 macos-release@^2.2.0:
   version "2.4.1"
@@ -12244,13 +12222,6 @@ xtend@^4.0.0, xtend@~4.0.0, xtend@~4.0.1:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.2.tgz#bb72779f5fa465186b1f438f674fa347fdb5db54"
   integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
-
-xxhashjs@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/xxhashjs/-/xxhashjs-0.2.2.tgz#8a6251567621a1c46a5ae204da0249c7f8caa9d8"
-  integrity sha512-AkTuIuVTET12tpsVIQo+ZU6f/qDmKuRUcjaqR+OIvm+aCBsZ95i7UVY5WJ9TMsSaZ0DA2WxoZ4acu0sPH+OKAw==
-  dependencies:
-    cuint "^0.2.2"
 
 y18n@^3.2.0, y18n@^5.0.5:
   version "5.0.8"
