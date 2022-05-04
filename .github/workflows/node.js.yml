@@ -97,8 +97,8 @@ jobs:
     name: Windows Node 10 Test
     # if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
-    runs-on: windows-latest
-    # runs-on: windows-2019
+    # runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
