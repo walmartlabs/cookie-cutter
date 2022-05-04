@@ -125,7 +125,7 @@ export enum KafkaPublisherCompressionMode {
     /** Messages will be compressed with the Snappy algorithm before being published. */
     Snappy,
     /** Messages will be compressed with the LZ4 algorithm before being published. */
-    // LZ4,
+    LZ4,
 }
 
 export interface IKafkaPublisherConfiguration {
