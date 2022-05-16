@@ -189,7 +189,6 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                             const runTime = (currentPerformanceTime - startTime) / 1000;
                             this.metrics.timing(GrpcMetrics.RequestProcessingTime, runTime, {
                                 path: method.path,
-                                peer: call.getPeer(),
                             });
                         }
                     );
