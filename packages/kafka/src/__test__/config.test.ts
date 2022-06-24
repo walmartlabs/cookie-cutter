@@ -72,7 +72,7 @@ describe("KafkaSubscriptionConfiguration", () => {
         ]);
     });
 
-    it("has correct additional headers in the config", async() => {
+    it("has correct additional headers in the config", async () => {
         const actual = config.parse(KafkaSubscriptionConfiguration, {
             additionalHeaderNames: {
                 add1: "additional_1",

@@ -32,6 +32,10 @@ describe("KafkaSource", () => {
     const topicName = "topic";
     const consumerGroupId = "consumer-group";
     const broker = "broker:9092";
+    const additionalHeaderName1 = "additional-header-1";
+    const additionalHeaderName2 = "additional-header-2";
+    const additionalHeaderValue1 = "custom header value 1";
+    const additionalHeaderValue2 = "custom header value 2";
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -52,8 +56,8 @@ describe("KafkaSource", () => {
                 key: Buffer.from("key"),
                 headers: {
                     "X-Message-Type": "application/json",
-                    "additional_header_1": "custom header 1",
-                    "additional_header_2": "custom header 2",
+                    [additionalHeaderName1]: additionalHeaderValue1,
+                    [additionalHeaderName2]: additionalHeaderValue2,
                 },
                 timestamp: "1554845507549",
                 value: Buffer.from(encoder.encode({ type: "test", payload: { foo: "bar" } })),
@@ -75,8 +79,8 @@ describe("KafkaSource", () => {
                 eos: true,
                 headerNames: DefaultKafkaHeaderNames,
                 additionalHeaderNames: {
-                    "add1": "additional_header_1",
-                    "add2": "additional_header_2",
+                    header1: additionalHeaderName1,
+                    header2: additionalHeaderName2,
                 },
                 preprocessor: {
                     process: (msg) => msg,
@@ -101,8 +105,8 @@ describe("KafkaSource", () => {
                 expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
             expect(received.metadata(KafkaMetadata.ExactlyOnceSemantics)).toEqual(true);
             expect(received.metadata(KafkaMetadata.ConsumerGroupId)).toEqual(consumerGroupId);
-            expect(received.metadata("add1")).toEqual(rawMessage.headers["additional_header_1"]);
-            expect(received.metadata("add2")).toEqual(rawMessage.headers["additional_header_2"]);
+            expect(received.metadata("header1")).toEqual(additionalHeaderValue1);
+            expect(received.metadata("header2")).toEqual(additionalHeaderValue2);
         });
 
         it("should attempt to add offsets for non-transactional messages when releasing", async () => {

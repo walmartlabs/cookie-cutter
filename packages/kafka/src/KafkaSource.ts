@@ -142,7 +142,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                 }
                 if (this.config.additionalHeaderNames) {
                     const headerKeys: string[] = Object.keys(this.config.additionalHeaderNames);
-                    for (let headerKey of headerKeys) {
+                    for (const headerKey of headerKeys) {
                         if (
                             headers[this.config.additionalHeaderNames[headerKey]] &&
                             !fromHeaders[headerKey]

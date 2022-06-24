@@ -151,10 +151,10 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
     }
 
     @config.field(config.converters.none)
-    public set additionalHeaderNames(_: { [key: string ]: string }) {
+    public set additionalHeaderNames(_: { [key: string]: string }) {
         config.noop();
     }
-    public get additionalHeaderNames(): { [key: string ]: string } {
+    public get additionalHeaderNames(): { [key: string]: string } {
         return config.noop();
     }
 }

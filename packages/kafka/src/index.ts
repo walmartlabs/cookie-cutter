@@ -95,7 +95,7 @@ export interface IKafkaSubscriptionConfiguration {
      * Useful when consuming messages that have additional information in the message header that
      * needs to be available in message metadata.
      */
-    readonly additionalHeaderNames?: { [key: string]: string }
+    readonly additionalHeaderNames?: { [key: string]: string };
 }
 
 export interface IKafkaClientConfiguration {
