@@ -50,7 +50,11 @@ describe("KafkaSource", () => {
                 offset,
                 partition,
                 key: Buffer.from("key"),
-                headers: { "X-Message-Type": "application/json" },
+                headers: {
+                    "X-Message-Type": "application/json",
+                    "additional_header_1": "custom header 1",
+                    "additional_header_2": "custom header 2",
+                },
                 timestamp: "1554845507549",
                 value: Buffer.from(encoder.encode({ type: "test", payload: { foo: "bar" } })),
             };
@@ -70,6 +74,10 @@ describe("KafkaSource", () => {
                 encoder,
                 eos: true,
                 headerNames: DefaultKafkaHeaderNames,
+                additionalHeaderNames: {
+                    "add1": "additional_header_1",
+                    "add2": "additional_header_2",
+                },
                 preprocessor: {
                     process: (msg) => msg,
                 },
@@ -82,7 +90,6 @@ describe("KafkaSource", () => {
                 received = message;
                 await source.stop();
             }
-
             expect(received).toBeDefined();
             expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
             expect(received.metadata(KafkaMetadata.Partition)).toEqual(rawMessage.partition);
@@ -94,6 +101,8 @@ describe("KafkaSource", () => {
                 expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
             expect(received.metadata(KafkaMetadata.ExactlyOnceSemantics)).toEqual(true);
             expect(received.metadata(KafkaMetadata.ConsumerGroupId)).toEqual(consumerGroupId);
+            expect(received.metadata("add1")).toEqual(rawMessage.headers["additional_header_1"]);
+            expect(received.metadata("add2")).toEqual(rawMessage.headers["additional_header_2"]);
         });
 
         it("should attempt to add offsets for non-transactional messages when releasing", async () => {

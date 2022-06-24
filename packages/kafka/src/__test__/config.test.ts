@@ -71,4 +71,18 @@ describe("KafkaSubscriptionConfiguration", () => {
             { name: "topic3", offsetResetStrategy: KafkaOffsetResetStrategy.Earliest },
         ]);
     });
+
+    it("has correct additional headers in the config", async() => {
+        const actual = config.parse(KafkaSubscriptionConfiguration, {
+            additionalHeaderNames: {
+                add1: "additional_1",
+                add2: "additional_2",
+            },
+        });
+
+        expect(actual.additionalHeaderNames).toMatchObject({
+            add1: "additional_1",
+            add2: "additional_2",
+        });
+    });
 });
