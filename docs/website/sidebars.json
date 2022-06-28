@@ -31,7 +31,8 @@
             "module-prometheus",
             "module-redis",
             "module-s3",
-            "module-google-pubsub"
+            "module-google-pubsub",
+            "module-mqtt"
         ]
     }
 }

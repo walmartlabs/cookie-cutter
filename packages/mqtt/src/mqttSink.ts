@@ -1,0 +1,155 @@
+import {
+    failSpan,
+    IComponentContext,
+    IDisposable,
+    ILogger,
+    IMetrics,
+    IOutputSink,
+    IOutputSinkGuarantees,
+    IPublishedMessage,
+    IRequireInitialization,
+    OpenTracingTagKeys,
+    OutputSinkConsistencyLevel,
+} from "@walmartlabs/cookie-cutter-core";
+import { IMqttAuthConfig, IMqttPublisherConfiguration } from ".";
+import * as mqtt from "mqtt";
+import { Span, Tags, Tracer } from "opentracing";
+import {
+    AttributeNames,
+    IPayloadWithAttributes,
+    MqttMetricResults,
+    MqttMetrics,
+    MQTTOpenTracingTagKeys,
+} from "./model";
+
+/*
+    A MQTT publisher client that publishes messages to a broker
+*/
+export class MqttPublisherSink
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    private readonly client: mqtt.MqttClient;
+    private tracer: Tracer;
+    private logger: ILogger;
+    private metrics: IMetrics;
+    private readonly spanOperationName: string = "Publish to MQTT broker";
+    private readonly spanTagComponent: string = "cookie-cutter-mqtt";
+
+    public constructor(private readonly config: IMqttAuthConfig & IMqttPublisherConfiguration) {
+        this.client = mqtt.connect({
+            port: this.config.hostPort,
+            hostname: this.config.hostName,
+        });
+    }
+
+    public async initialize(context: IComponentContext): Promise<void> {
+        this.tracer = context.tracer;
+        this.logger = context.logger;
+        this.metrics = context.metrics;
+
+        this.client.on("connect", (packet: mqtt.IConnackPacket) => {
+            this.logger.info("Publisher made connection to server", {
+                cmd: packet.cmd,
+                returnCode: packet.returnCode,
+                reasonCode: packet.reasonCode,
+            });
+        });
+
+        this.client.on("error", (error: Error) => {
+            throw error;
+        });
+    }
+
+    public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
+        for (const message of output) {
+            this.client.publish(
+                this.config.topic,
+                message.message.payload,
+                { qos: this.config.qos },
+                (error: Error) => {
+                    const formattedMsg: IPayloadWithAttributes = this.formattedMessage(message);
+
+                    const span: Span = this.tracer.startSpan(this.spanOperationName, {
+                        childOf: formattedMsg.spanContext,
+                    });
+
+                    this.spanLogAndSetTags(span, this.sink.name, this.config.topic);
+
+                    if (error) {
+                        this.logger.error("Writing message to broker failed", {
+                            message,
+                            error,
+                            topic: this.config.topic,
+                            hostName: this.config.hostName,
+                            hostPort: this.config.hostPort,
+                        });
+
+                        this.emitMetrics(
+                            this.config.topic,
+                            formattedMsg.attributes[AttributeNames.eventType],
+                            MqttMetricResults.error
+                        );
+                        failSpan(span, error);
+                    } else {
+                        this.emitMetrics(
+                            this.config.topic,
+                            formattedMsg.attributes[AttributeNames.eventType],
+                            MqttMetricResults.success
+                        );
+
+                        this.logger.debug("Message published to broker", {
+                            topic: this.config.topic,
+                            hostName: this.config.hostName,
+                            hostPort: this.config.hostPort,
+                        });
+                    }
+
+                    span.finish();
+                }
+            );
+        }
+    }
+
+    private emitMetrics(topic: string, eventType: string, result: MqttMetricResults): void {
+        this.metrics.increment(MqttMetrics.MsgPublished, {
+            topic,
+            eventType,
+            result,
+        });
+    }
+
+    private formattedMessage(message: IPublishedMessage): IPayloadWithAttributes {
+        const timestamp: string = new Date().getUTCDate().toString();
+        const payload: Buffer = Buffer.from(this.config.encoder.encode(message.message));
+        const attributes: any = {
+            [AttributeNames.timestamp]: timestamp,
+            [AttributeNames.eventType]: message.message.type,
+            [AttributeNames.contentType]: this.config.encoder.mimeType,
+        };
+
+        return {
+            payload,
+            attributes,
+            spanContext: message.spanContext,
+        };
+    }
+
+    private spanLogAndSetTags(span: Span, funcName: string, topic: string): void {
+        span.log({ topic });
+        span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_MESSAGING_PRODUCER);
+        span.setTag(Tags.COMPONENT, this.spanTagComponent);
+        span.setTag(OpenTracingTagKeys.FunctionName, funcName);
+        span.setTag(MQTTOpenTracingTagKeys.topic, topic);
+    }
+
+    public async dispose(): Promise<void> {
+        this.client.removeAllListeners();
+        this.client.end(true);
+    }
+
+    public get guarantees(): IOutputSinkGuarantees {
+        return {
+            consistency: OutputSinkConsistencyLevel.None,
+            idempotent: false,
+        };
+    }
+}
