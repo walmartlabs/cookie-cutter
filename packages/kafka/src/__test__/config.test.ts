@@ -75,14 +75,14 @@ describe("KafkaSubscriptionConfiguration", () => {
     it("has correct additional headers in the config", async () => {
         const actual = config.parse(KafkaSubscriptionConfiguration, {
             additionalHeaderNames: {
-                add1: "additional_1",
-                add2: "additional_2",
+                internal_header_one: "raw_message_header_one",
+                internal_header_two: "raw_message_header_two",
             },
         });
 
         expect(actual.additionalHeaderNames).toMatchObject({
-            add1: "additional_1",
-            add2: "additional_2",
+            internal_header_one: "raw_message_header_one",
+            internal_header_two: "raw_message_header_two",
         });
     });
 });
