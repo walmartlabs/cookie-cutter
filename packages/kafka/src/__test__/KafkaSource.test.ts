@@ -59,6 +59,7 @@ describe("KafkaSource", () => {
                     "X-Message-Type": "application/json",
                     rawHeader: "raw header value",
                     externalHeader: "external header value",
+                    ignoredHeader: "this header is ignored",
                 },
                 timestamp: "1554845507549",
                 value: Buffer.from(encoder.encode({ type: "test", payload: { foo: "bar" } })),
@@ -110,6 +111,7 @@ describe("KafkaSource", () => {
                     rawMessage.headers[rawHeaderName]
                 );
             }
+            expect(received.metadata("ignoredHeader")).toBeUndefined();
         });
 
         it("should attempt to add offsets for non-transactional messages when releasing", async () => {
