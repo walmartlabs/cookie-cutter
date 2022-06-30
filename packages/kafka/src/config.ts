@@ -149,6 +149,14 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
     public get sessionTimeout(): number {
         return config.noop();
     }
+
+    @config.field(config.converters.none)
+    public set additionalHeaderNames(_: { [key: string]: string }) {
+        config.noop();
+    }
+    public get additionalHeaderNames(): { [key: string]: string } {
+        return config.noop();
+    }
 }
 
 @config.section
