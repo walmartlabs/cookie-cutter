@@ -63,7 +63,7 @@ export class MqttPublisherSink
         for (const message of output) {
             this.client.publish(
                 this.config.topic,
-                message.message.payload,
+                Buffer.from(JSON.stringify(message.message)),
                 { qos: this.config.qos },
                 (error: Error) => {
                     const formattedMsg: IPayloadWithAttributes = this.formattedMessage(message);
@@ -109,7 +109,7 @@ export class MqttPublisherSink
         }
     }
 
-    private emitMetrics(topic: string, eventType: string, result: MqttMetricResults): void {
+    private emitMetrics(topic: string, eventType: string, result: string): void {
         this.metrics.increment(MqttMetrics.MsgPublished, {
             topic,
             eventType,

@@ -6,9 +6,9 @@ import {
     IPublishedMessage,
 } from "@walmartlabs/cookie-cutter-core";
 import { MQTTPublisherConfiguration, MQTTSubscriberConfiguration } from "./config";
-import { MqttPublisherSink } from "./mqttSink";
-import { MqttSubscriberSource } from "./mqttSource";
+import { MqttPublisherSink } from "./MqttSink";
 import { QoS } from "mqtt";
+import { MqttSubscriberSource } from "./MqttSource";
 
 export enum MqttMetadata {
     topic = "topic",

@@ -42,9 +42,7 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
         this.tracer = context.tracer;
         this.logger = context.logger;
         this.metrics = context.metrics;
-    }
 
-    public async *start(): AsyncIterableIterator<MessageRef> {
         this.client.on("connect", (packet: mqtt.IConnackPacket) => {
             this.logger.info("Subscriber made connection to server", {
                 cmd: packet.cmd,
@@ -55,7 +53,20 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
             this.client.subscribe(this.config.topic, { qos: this.config.qos });
         });
 
+        this.client.on("error", (error: Error) => {
+            this.queue.close();
+            throw error;
+        });
+    }
+
+    public async *start(): AsyncIterableIterator<MessageRef> {
         this.client.on("message", async (topic: string, payload: Buffer) => {
+            this.metrics.increment(MqttMetrics.MsgReceived, {
+                hostName: this.config.hostName,
+                port: this.config.hostPort,
+                topic: this.config.topic,
+            });
+
             const { attributes, data } = this.config.prepreprocessor
                 ? this.config.prepreprocessor.process(payload)
                 : (JSON.parse(payload.toString()) as IMqttMessage);
@@ -119,16 +130,11 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
             }
         });
 
-        this.client.on("error", (error: Error) => {
-            this.queue.close();
-            throw error;
-        });
-
         yield* this.queue.iterate();
     }
 
-    private emitMetrics(eventType: any, result: MqttMetricResults): void {
-        this.metrics.increment(MqttMetrics.MsgReceived, {
+    private emitMetrics(eventType: any, result: string): void {
+        this.metrics.increment(MqttMetrics.MsgProcessed, {
             topic: this.config.topic.toString(),
             eventType,
             port: this.config.hostPort,
@@ -162,6 +168,7 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
     }
 
     public async dispose(): Promise<void> {
+        this.client.unsubscribe(this.config.topic);
         this.client.removeAllListeners();
         this.client.end(true);
     }

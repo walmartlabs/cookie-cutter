@@ -54,10 +54,10 @@ function createTestAp(
         .input()
         .add(new StaticInputSource(inputs))
         .done()
+        .dispatch(handler)
         .output()
         .published(sink)
         .done()
-        .dispatch(handler)
         .run(ErrorHandlingMode.LogAndContinue);
 }
 

@@ -22,6 +22,7 @@ import { AttributeNames } from "../model";
 let mockHandlerFunction: jest.Mock;
 let capturedOutput: any[] = [];
 const mockMqttSubscribe: jest.Mock = jest.fn();
+const mockMqttUnsubscribe: jest.Mock = jest.fn();
 const testSleepTime: number = 50;
 const mockTestQos1: number = 1;
 const mockTestQos2: number = 2;
@@ -34,6 +35,7 @@ jest.mock("mqtt", () => {
             return {
                 on: mockHandlerFunction,
                 subscribe: mockMqttSubscribe,
+                unsubscribe: mockMqttUnsubscribe,
                 removeAllListeners: jest.fn(),
                 end: jest.fn(),
             };
@@ -105,6 +107,7 @@ describe.each([
 
         afterEach(() => {
             mockMqttSubscribe.mockClear();
+            mockMqttUnsubscribe.mockClear();
         });
 
         it("Verifies if CONNECT handler works as expected", async () => {
@@ -124,6 +127,7 @@ describe.each([
             testApp.cancel();
             await testApp;
             expect(mockMqttSubscribe).toBeCalledTimes(1);
+            expect(mockMqttUnsubscribe).toBeCalledTimes(1);
         });
 
         it("Verifies if MESSAGE handler works as expected", async () => {
@@ -159,6 +163,7 @@ describe.each([
             testApp.cancel();
             await testApp;
             expect(capturedOutput.length).toBe(testNumberMessages);
+            expect(mockMqttUnsubscribe).toBeCalledTimes(1);
         });
 
         it("Verifies if ERROR handler works as expected", async () => {
@@ -171,6 +176,7 @@ describe.each([
             const source: IInputSource = mqttSource({ ...testConfig });
             const testApp: any = createTestApp(source);
             await expect(testApp).rejects.toThrow();
+            expect(mockMqttUnsubscribe).toBeCalledTimes(1);
         });
     }
 );
@@ -193,6 +199,10 @@ describe("Testing mqtt subscriber preprocessor", () => {
 
     beforeEach(() => {
         capturedOutput = [];
+    });
+
+    afterEach(() => {
+        mockMqttUnsubscribe.mockClear();
     });
 
     it("Verifies with preprocessor works as expected", async () => {
@@ -232,6 +242,7 @@ describe("Testing mqtt subscriber preprocessor", () => {
         testApp.cancel();
         await testApp;
         expect(capturedOutput.length).toBe(testNumberMessages);
+        expect(mockMqttUnsubscribe).toBeCalledTimes(1);
     });
 
     it("Verifies with preprocessor works as expected with data being buffer", async () => {
@@ -272,5 +283,6 @@ describe("Testing mqtt subscriber preprocessor", () => {
         testApp.cancel();
         await testApp;
         expect(capturedOutput.length).toBe(testNumberMessages);
+        expect(mockMqttUnsubscribe).toBeCalledTimes(1);
     });
 });

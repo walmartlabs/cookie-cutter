@@ -26,4 +26,5 @@ export enum MqttMetricResults {
 export enum MqttMetrics {
     MsgPublished = "cookie_cutter.mqtt_sink.msg_published",
     MsgReceived = "cookie_cutter.mqtt_source.msg_received",
+    MsgProcessed = "cookie_cutter.mqtt_source.msg_processed",
 }

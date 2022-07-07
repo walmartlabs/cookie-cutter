@@ -33,7 +33,7 @@ The available configuration options are
 | topic | name of the subscribed topic where the message was received from |
 | _prepreprocessor_ | optional preprocessing function that allows for manipulation of the incoming message before decoding the message's payload. This can for instance be used for messages that are enveloped in some way |
 | _queueSize_ | the max number of messages that are being processed at a time, default value is 10 |
-| _qos_ | quality of service that can `only` take values 0, 1, and 2. Default value is 0  |
+| _qos_ | quality of service that can `only` take values 0 (`at most once`), 1 (`at least once`), and 2 (`exactly once`). Default value is 0  |
 
 ### Metadata
 
@@ -47,7 +47,8 @@ The available configuration options are
 
 | Name | Description | Type | Tags |
 | ---- | ----------- | ---- | ---- |
-| cookie_cutter.mqtt_source.msg_received | increases the number of messages received from topic | `increment` | `topic`, `eventType`, `port`, `hostName`, `result`[^1] |
+| cookie_cutter.mqtt_source.msg_received | increases the number of messages received from topic that was processed | `increment` | `topic`, `eventType`, `port`, `hostName`, `result`[^1] |
+| cookie_cutter.mqtt_source.msg_received | increases the number of messages that is received from the broker | `increment` | `hostName`, `port`, `topic` | 
 
 ## mqttSink
 
@@ -77,7 +78,7 @@ The available configuration options are
 | hostPort | MQTT broker's host port where the service is listening on |
 | encoder | defines how the raw data received from MQTT broker should be converted into message objects |
 | topic | name of the subscribed topic where the message was received from |
-| _qos_ | quality of service that can `only` take values 0, 1, and 2. Default value is 0  |
+| _qos_ | quality of service that can `only` take values 0 (`at most once`), 1 (`at least once`), and 2 (`exactly once`). Default value is 0  |
 
 ### Publishing to Mqtt broker
 
@@ -100,7 +101,7 @@ Application.create()
         }))
         .done()
     // ...
-    .run ();
+    .run();
 ```
 
 ### Metrics
