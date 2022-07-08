@@ -14,13 +14,13 @@
     },
     "dependencies": {
         "redis": "3.1.2",
-        "nanoid": "^3.3.0"
+        "nanoid": "3.3.4"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "devDependencies": {
-        "@types/redis": "2.8.28",
+        "@types/redis": "2.8.32",
         "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "scripts": {
