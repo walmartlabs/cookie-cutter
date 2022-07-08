@@ -7,18 +7,12 @@
     "examples/*"
   ],
   "resolutions": {
-    "ws": "^7.4.6",
-    "y18n": "^5.0.5",
-    "lodash": "^4.17.21",
-    "underscore": "^1.12.1",
-    "hosted-git-info": "^2.8.9",
     "json-schema": "^0.4.0",
     "protobufjs": "^6.11.3",
-    "google-gax": "2.28.1",
-    "async": "^3.0.0"
+    "moment": "^2.29.4"
   },
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=12.0.0"
   },
   "devDependencies": {
     "@types/jest": "27.0.3",
