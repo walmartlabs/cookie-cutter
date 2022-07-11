@@ -189,7 +189,7 @@ describe("Testing mqtt subscriber preprocessor", () => {
                 return {
                     attributes: {
                         eventType: TestEvent.name,
-                        dt: new Date().getUTCDate(),
+                        dt: Date.now().toString(),
                     },
                     data: JSON.stringify(data),
                 };

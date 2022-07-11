@@ -1,5 +1,6 @@
 import {
     BoundedPriorityQueue,
+    DefaultComponentContext,
     EventSourcedMetadata,
     failSpan,
     IComponentContext,
@@ -21,7 +22,7 @@ import { AttributeNames, MqttMetricResults, MqttMetrics, MQTTOpenTracingTagKeys 
 
 export class MqttSubscriberSource implements IInputSource, IRequireInitialization, IDisposable {
     private done: boolean = false;
-    private readonly client: mqtt.Client;
+    private client: mqtt.Client;
     private tracer: Tracer;
     private logger: ILogger;
     private metrics: IMetrics;
@@ -30,10 +31,9 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
     private readonly spanTagComponent: string = "cookie-cutter-mqtt";
 
     public constructor(private readonly config: IMqttAuthConfig & IMqttSubscriberConfiguration) {
-        this.client = mqtt.connect({
-            port: this.config.hostPort,
-            hostname: this.config.hostName,
-        });
+        this.tracer = DefaultComponentContext.tracer;
+        this.logger = DefaultComponentContext.logger;
+        this.metrics = DefaultComponentContext.metrics;
 
         this.queue = new BoundedPriorityQueue<MessageRef>(this.config.queueSize);
     }
@@ -42,6 +42,11 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
         this.tracer = context.tracer;
         this.logger = context.logger;
         this.metrics = context.metrics;
+
+        this.client = mqtt.connect({
+            port: this.config.hostPort,
+            hostname: this.config.hostName,
+        });
 
         this.client.on("connect", (packet: mqtt.IConnackPacket) => {
             this.logger.info("Subscriber made connection to server", {

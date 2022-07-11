@@ -1,4 +1,5 @@
 import {
+    DefaultComponentContext,
     failSpan,
     IComponentContext,
     IDisposable,
@@ -27,7 +28,7 @@ import {
 */
 export class MqttPublisherSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
-    private readonly client: mqtt.MqttClient;
+    private client: mqtt.MqttClient;
     private tracer: Tracer;
     private logger: ILogger;
     private metrics: IMetrics;
@@ -35,16 +36,20 @@ export class MqttPublisherSink
     private readonly spanTagComponent: string = "cookie-cutter-mqtt";
 
     public constructor(private readonly config: IMqttAuthConfig & IMqttPublisherConfiguration) {
-        this.client = mqtt.connect({
-            port: this.config.hostPort,
-            hostname: this.config.hostName,
-        });
+        this.tracer = DefaultComponentContext.tracer;
+        this.logger = DefaultComponentContext.logger;
+        this.metrics = DefaultComponentContext.metrics;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.logger = context.logger;
         this.metrics = context.metrics;
+
+        this.client = mqtt.connect({
+            port: this.config.hostPort,
+            hostname: this.config.hostName,
+        });
 
         this.client.on("connect", (packet: mqtt.IConnackPacket) => {
             this.logger.info("Publisher made connection to server", {
@@ -61,13 +66,13 @@ export class MqttPublisherSink
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         for (const message of output) {
+            const formattedMsg: IPayloadWithAttributes = this.formattedMessage(message);
+
             this.client.publish(
                 this.config.topic,
-                Buffer.from(JSON.stringify(message.message)),
+                Buffer.from(JSON.stringify(formattedMsg)),
                 { qos: this.config.qos },
                 (error: Error) => {
-                    const formattedMsg: IPayloadWithAttributes = this.formattedMessage(message);
-
                     const span: Span = this.tracer.startSpan(this.spanOperationName, {
                         childOf: formattedMsg.spanContext,
                     });
@@ -118,7 +123,8 @@ export class MqttPublisherSink
     }
 
     private formattedMessage(message: IPublishedMessage): IPayloadWithAttributes {
-        const timestamp: string = new Date().getUTCDate().toString();
+        // const timestamp: string = new Date().getUTCDate().toString();
+        const timestamp: string = Date.now().toString();
         const payload: Buffer = Buffer.from(this.config.encoder.encode(message.message));
         const attributes: any = {
             [AttributeNames.timestamp]: timestamp,

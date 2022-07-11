@@ -47,8 +47,8 @@ The available configuration options are
 
 | Name | Description | Type | Tags |
 | ---- | ----------- | ---- | ---- |
-| cookie_cutter.mqtt_source.msg_received | increases the number of messages received from topic that was processed | `increment` | `topic`, `eventType`, `port`, `hostName`, `result`[^1] |
-| cookie_cutter.mqtt_source.msg_received | increases the number of messages that is received from the broker | `increment` | `hostName`, `port`, `topic` | 
+| cookie_cutter.mqtt_source.msg_processed | increases the number of messages received from topic that were processed | `increment` | `topic`, `eventType`, `port`, `hostName`, `result`[^1] |
+| cookie_cutter.mqtt_source.msg_received | increases the number of messages that were received from the broker | `increment` | `hostName`, `port`, `topic` | 
 
 ## mqttSink
 
