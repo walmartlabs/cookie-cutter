@@ -29,7 +29,9 @@ export interface IMqttPreprocessor {
 
 export interface IMqttAuthConfig {
     readonly hostName: string;
-    readonly hostPort: number;
+    readonly hostPort?: number;
+    readonly username?: string;
+    readonly password?: string;
 }
 
 export interface IMqttPublisherConfiguration {
@@ -50,6 +52,7 @@ export function mqttSink(
     configuration: IMqttAuthConfig & IMqttPublisherConfiguration
 ): IOutputSink<IPublishedMessage> {
     configuration = config.parse(MQTTPublisherConfiguration, configuration, {
+        hostPort: 1883,
         qos: 0,
     });
 
@@ -60,6 +63,7 @@ export function mqttSource(
     configuration: IMqttAuthConfig & IMqttSubscriberConfiguration
 ): IInputSource {
     configuration = config.parse(MQTTSubscriberConfiguration, configuration, {
+        hostPort: 1883,
         queueSize: 10,
         qos: 0,
     });

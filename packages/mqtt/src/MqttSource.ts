@@ -46,6 +46,8 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
         this.client = mqtt.connect({
             port: this.config.hostPort,
             hostname: this.config.hostName,
+            username: this.config.username,
+            password: this.config.password,
         });
 
         this.client.on("connect", (packet: mqtt.IConnackPacket) => {

@@ -49,6 +49,8 @@ export class MqttPublisherSink
         this.client = mqtt.connect({
             port: this.config.hostPort,
             hostname: this.config.hostName,
+            username: this.config.username,
+            password: this.config.password,
         });
 
         this.client.on("connect", (packet: mqtt.IConnackPacket) => {
@@ -123,7 +125,6 @@ export class MqttPublisherSink
     }
 
     private formattedMessage(message: IPublishedMessage): IPayloadWithAttributes {
-        // const timestamp: string = new Date().getUTCDate().toString();
         const timestamp: string = Date.now().toString();
         const payload: Buffer = Buffer.from(this.config.encoder.encode(message.message));
         const attributes: any = {
