@@ -139,7 +139,7 @@ jobs:
         run: yarn test
 
   test-windows-2019-16:
-    name: Windows Node 16 Test
+    name: Windows 2019 Node 16 Test
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: windows-2019
@@ -162,7 +162,7 @@ jobs:
         run: yarn test
 
   test-windows-2019-14:
-    name: Windows Node 14 Test
+    name: Windows 2019 Node 14 Test
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: windows-2019
@@ -185,7 +185,7 @@ jobs:
         run: yarn test
 
   test-windows-2019-12:
-    name: Windows Node 12 Test
+    name: Windows 2019 Node 12 Test
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: smoke
     runs-on: windows-2019
