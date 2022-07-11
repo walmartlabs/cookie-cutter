@@ -115,6 +115,97 @@ jobs:
       - name: Yarn Test
         run: yarn test
 
+  test-windows-14:
+    name: Windows Node 14 Test
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: smoke
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Windows Node 14
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "14"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Test
+        run: yarn test
+
+  test-windows-2019-16:
+    name: Windows Node 16 Test
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: smoke
+    runs-on: windows-2019
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Windows Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Test
+        run: yarn test
+
+  test-windows-2019-14:
+    name: Windows Node 14 Test
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: smoke
+    runs-on: windows-2019
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Windows Node 14
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "14"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Test
+        run: yarn test
+
+  test-windows-2019-12:
+    name: Windows Node 12 Test
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: smoke
+    runs-on: windows-2019
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Windows Node 12
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "12"
+        env:
+          YARN_GPG: no # Windows build agent will hang without this
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Test
+        run: yarn test
 
   # test-windows-12:
   #   name: Windows Node 12 Test
