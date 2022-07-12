@@ -81,7 +81,7 @@ export class MQTTPublisherConfiguration extends MQTTAuthConfig
 export class MQTTSubscriberConfiguration extends MQTTAuthConfig
     implements IMqttSubscriberConfiguration {
     @config.field(config.converters.none)
-    public set prepreprocessor(_: IMqttPreprocessor) {
+    public set preprocessor(_: IMqttPreprocessor) {
         config.noop();
     }
 

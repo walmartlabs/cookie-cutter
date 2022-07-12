@@ -1,5 +1,3 @@
-import { SpanContext } from "opentracing";
-
 export enum AttributeNames {
     eventType = "eventType",
     timestamp = "dt",
@@ -8,14 +6,6 @@ export enum AttributeNames {
 
 export enum MQTTOpenTracingTagKeys {
     topic = "mqtt.topic",
-}
-
-export interface IPayloadWithAttributes {
-    payload: Buffer;
-    attributes: {
-        [key: string]: string;
-    };
-    spanContext: SpanContext;
 }
 
 export enum MqttMetricResults {

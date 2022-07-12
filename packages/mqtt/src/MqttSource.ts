@@ -74,22 +74,12 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
                 topic: this.config.topic,
             });
 
-            const { attributes, data } = this.config.prepreprocessor
-                ? this.config.prepreprocessor.process(payload)
+            const { attributes, data } = this.config.preprocessor
+                ? this.config.preprocessor.process(payload)
                 : (JSON.parse(payload.toString()) as IMqttMessage);
             const eventType: any = attributes[AttributeNames.eventType];
 
-            let protoOrJsonPayload: any = data;
-            if (
-                !isEmbeddable(this.config.encoder) &&
-                data.type &&
-                data.type === "Buffer" &&
-                Array.isArray(data.data)
-            ) {
-                protoOrJsonPayload = data.data;
-            }
-
-            const msg: IMessage = this.decode(protoOrJsonPayload, eventType);
+            const msg: IMessage = this.decode(data, eventType);
 
             const spanContext: SpanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, attributes);
             const span: Span = this.tracer.startSpan(this.spanOperationName, {

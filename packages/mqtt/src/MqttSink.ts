@@ -12,16 +12,10 @@ import {
     OpenTracingTagKeys,
     OutputSinkConsistencyLevel,
 } from "@walmartlabs/cookie-cutter-core";
-import { IMqttAuthConfig, IMqttPublisherConfiguration } from ".";
+import { IMqttAuthConfig, IMqttMessage, IMqttPublisherConfiguration } from ".";
 import * as mqtt from "mqtt";
 import { Span, Tags, Tracer } from "opentracing";
-import {
-    AttributeNames,
-    IPayloadWithAttributes,
-    MqttMetricResults,
-    MqttMetrics,
-    MQTTOpenTracingTagKeys,
-} from "./model";
+import { AttributeNames, MqttMetricResults, MqttMetrics, MQTTOpenTracingTagKeys } from "./model";
 
 /*
     A MQTT publisher client that publishes messages to a broker
@@ -68,7 +62,7 @@ export class MqttPublisherSink
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         for (const message of output) {
-            const formattedMsg: IPayloadWithAttributes = this.formattedMessage(message);
+            const formattedMsg: IMqttMessage = this.formattedMessage(message);
 
             this.client.publish(
                 this.config.topic,
@@ -76,7 +70,7 @@ export class MqttPublisherSink
                 { qos: this.config.qos },
                 (error: Error) => {
                     const span: Span = this.tracer.startSpan(this.spanOperationName, {
-                        childOf: formattedMsg.spanContext,
+                        childOf: message.spanContext,
                     });
 
                     this.spanLogAndSetTags(span, this.sink.name, this.config.topic);
@@ -124,9 +118,9 @@ export class MqttPublisherSink
         });
     }
 
-    private formattedMessage(message: IPublishedMessage): IPayloadWithAttributes {
+    private formattedMessage(message: IPublishedMessage): IMqttMessage {
         const timestamp: string = Date.now().toString();
-        const payload: Buffer = Buffer.from(this.config.encoder.encode(message.message));
+        const data: Buffer = Buffer.from(this.config.encoder.encode(message.message));
         const attributes: any = {
             [AttributeNames.timestamp]: timestamp,
             [AttributeNames.eventType]: message.message.type,
@@ -134,9 +128,8 @@ export class MqttPublisherSink
         };
 
         return {
-            payload,
+            data,
             attributes,
-            spanContext: message.spanContext,
         };
     }
 

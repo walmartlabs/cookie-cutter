@@ -191,7 +191,7 @@ describe("Testing mqtt subscriber preprocessor", () => {
                         eventType: TestEvent.name,
                         dt: Date.now().toString(),
                     },
-                    data: JSON.stringify(data),
+                    data: Buffer.from(JSON.stringify(data)),
                 };
             },
         };
@@ -211,7 +211,7 @@ describe("Testing mqtt subscriber preprocessor", () => {
             hostPort: 1234,
             encoder: new JsonMessageEncoder(),
             topic: mockSubscriberTopic,
-            prepreprocessor: mqttMessagePreprocessor(),
+            preprocessor: mqttMessagePreprocessor(),
         };
         const testNumberMessages: number = 3;
 
@@ -251,7 +251,7 @@ describe("Testing mqtt subscriber preprocessor", () => {
             hostPort: 1234,
             encoder: new JsonMessageEncoder(),
             topic: mockSubscriberTopic,
-            prepreprocessor: mqttMessagePreprocessor(),
+            preprocessor: mqttMessagePreprocessor(),
         };
 
         const testNumberMessages: number = 3;

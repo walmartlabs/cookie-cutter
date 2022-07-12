@@ -14,14 +14,11 @@ export enum MqttMetadata {
     topic = "topic",
 }
 
-export interface IBufferToJSON {
-    type: string;
-    data: any[];
-}
-
 export interface IMqttMessage {
-    attributes: any;
-    data: IBufferToJSON | any;
+    attributes: {
+        [key: string]: string;
+    };
+    data: Buffer;
 }
 export interface IMqttPreprocessor {
     process(payload: any): IMqttMessage;
@@ -41,7 +38,7 @@ export interface IMqttPublisherConfiguration {
 }
 
 export interface IMqttSubscriberConfiguration {
-    readonly prepreprocessor?: IMqttPreprocessor;
+    readonly preprocessor?: IMqttPreprocessor;
     readonly encoder: IMessageEncoder;
     readonly queueSize?: number;
     readonly topic: string | string[];
