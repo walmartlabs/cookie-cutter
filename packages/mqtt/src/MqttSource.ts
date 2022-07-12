@@ -17,7 +17,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { IMqttAuthConfig, IMqttMessage, IMqttSubscriberConfiguration, MqttMetadata } from ".";
 import * as mqtt from "mqtt";
-import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
+import { Span, Tags, Tracer } from "opentracing";
 import { AttributeNames, MqttMetricResults, MqttMetrics, MQTTOpenTracingTagKeys } from "./model";
 
 export class MqttSubscriberSource implements IInputSource, IRequireInitialization, IDisposable {
@@ -81,9 +81,8 @@ export class MqttSubscriberSource implements IInputSource, IRequireInitializatio
 
             const msg: IMessage = this.decode(data, eventType);
 
-            const spanContext: SpanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, attributes);
             const span: Span = this.tracer.startSpan(this.spanOperationName, {
-                childOf: spanContext,
+                childOf: undefined,
             });
 
             this.spanLogAndSetTags(span, this.start.name);
