@@ -65,7 +65,9 @@ function getTag(version) {
     return version.indexOf("-") > 0 ? "next" : "latest";
 }
 
-let buffer = execSync(`npm --version`, { encoding: "utf-8" });
+let buffer = execSync(`npm install -g npm@6.14.6`, { encoding: "utf-8" });
+console.log(buffer.toString())
+buffer = execSync(`npm --version`, { encoding: "utf-8" });
 console.log(buffer.toString())
 buffer = execSync(`yarn --version`, { encoding: "utf-8" });
 console.log(buffer.toString())
