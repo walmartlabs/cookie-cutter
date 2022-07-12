@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-jaeger",
-    "version": "1.5.0-alpha.1",
+    "version": "1.5.0-alpha.2",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
