@@ -4,7 +4,7 @@ const { join } = require("path");
 const { copyFileSync, unlinkSync } = require("fs");
 
 function yarn(cmd, parseResponse = true) {
-    const buffer = execSync(`yarn ${cmd} --json`, { encoding: "utf-8" });
+    const buffer = execSync(`yarn ${cmd}`, { encoding: "utf-8" });
     if (parseResponse) {
         const obj = JSON.parse(buffer);
         if (obj.type === "log") {
@@ -64,6 +64,6 @@ function getTag(version) {
     return version.indexOf("-") > 0 ? "next" : "latest";
 }
 
-for (const project of filter(yarn("workspaces info"))) {
+for (const project of filter(yarn("workspaces --json info"))) {
     deploy(project);
 }
