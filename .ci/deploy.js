@@ -64,9 +64,11 @@ function getTag(version) {
     return version.indexOf("-") > 0 ? "next" : "latest";
 }
 
+// NOTE: npm 8.11.0 does not return a proper JSON when running `npm show <pkg>` where the pkg is not published already and an error is thrown.
 execSync(`npm install -g npm@6.14.6`, { encoding: "utf-8" });
 console.log("npm version: ", execSync(`npm --version`, { encoding: "utf-8" }).toString());
 console.log("yarn version: ", execSync(`yarn --version`, { encoding: "utf-8" }).toString());
+// NOTE: `workspaces info --json` does not return a proper JSON for some versions of yarn
 for (const project of filter(yarn("workspaces --json info"))) {
     deploy(project);
 }
