@@ -276,8 +276,8 @@ jobs:
 
   publish-to-npm:
     name: Publish to NPM
-    # if: ${{ github.event_name == 'push' }}
-    # needs: smoke
+    if: ${{ github.event_name == 'push' }}
+    needs: smoke
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code

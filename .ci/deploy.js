@@ -51,8 +51,7 @@ function deploy(packagePath) {
         console.log(`publishing ${name}@${version} to ${tag}`);
         copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".yarnignore"))
         try {
-            // NOTE: disabled actual publish step while testing
-            // yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive`, false);
+            yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive`, false);
         } finally {
             unlinkSync(join(fullPath, ".yarnignore"));
         }
@@ -65,12 +64,9 @@ function getTag(version) {
     return version.indexOf("-") > 0 ? "next" : "latest";
 }
 
-let buffer = execSync(`npm install -g npm@6.14.6`, { encoding: "utf-8" });
-console.log(buffer.toString())
-buffer = execSync(`npm --version`, { encoding: "utf-8" });
-console.log(buffer.toString())
-buffer = execSync(`yarn --version`, { encoding: "utf-8" });
-console.log(buffer.toString())
+execSync(`npm install -g npm@6.14.6`, { encoding: "utf-8" });
+console.log("npm version: ", execSync(`npm --version`, { encoding: "utf-8" }).toString());
+console.log("yarn version: ", execSync(`yarn --version`, { encoding: "utf-8" }).toString());
 for (const project of filter(yarn("workspaces --json info"))) {
     deploy(project);
 }
