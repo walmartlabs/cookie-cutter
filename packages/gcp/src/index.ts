@@ -12,15 +12,25 @@ import {
     IRequireInitialization,
     IStoredMessage,
     IMessageEncoder,
+    IInputSource,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
 import { BigQueryClient } from "./BigQueryClient";
 import { BigQuerySink } from "./BigQuerySink";
 export { BigQueryMetadata } from "./BigQuerySink";
-import { BigQueryConfiguration, GCSConfiguration, PubSubPublisherConfiguration } from "./config";
+import {
+    BigQueryConfiguration,
+    GCSConfiguration,
+    PubSubPublisherConfiguration,
+    PubSubSubscriberConfiguration,
+} from "./config";
 import { GcsClient } from "./GcsClient";
 import { GcsSink } from "./GcsSink";
+import { AttributeNames } from "./model";
 import { PubSubSink } from "./PubSubSink";
+import { PubSubSource } from "./PubSubSource";
+export { AttributeNames };
+export const MAX_MSG_BATCH_SIZE_SUBSCRIBER = 20;
 
 export interface IGCSConfiguration {
     readonly projectId: string;
@@ -50,12 +60,33 @@ export interface IPubSubPublisherConfiguration {
     readonly maxPayloadSize?: number;
 }
 
+export interface IPubSubSubscriberConfiguration {
+    readonly encoder: IMessageEncoder;
+    readonly subscriptionName: string;
+    readonly maxMsgBatchSize?: number;
+    readonly preprocessor?: IPubSubMessagePreprocessor;
+}
+
+export interface IPubSubMessage {
+    attributes: any;
+    data: IBufferToJSON | any;
+}
+
+export interface IPubSubMessagePreprocessor {
+    process(payload: any): IPubSubMessage;
+}
+
 export interface IGcsClient {
     putObject(spanContext: SpanContext, body: Buffer, key: string): Promise<void>;
 }
 
 export interface IBigQueryClient {
     putObject(spanContext: SpanContext, body: any[] | any, table: string): Promise<void>;
+}
+
+export interface IBufferToJSON {
+    type: string;
+    data: any[];
 }
 
 export function gcsClient(configuration: IGCSConfiguration): IGcsClient & IRequireInitialization {
@@ -102,4 +133,13 @@ export function pubSubSink(
         maxPayloadSize: 5242880,
     });
     return new PubSubSink(configuration);
+}
+
+export function pubSubSource(
+    configuration: IGcpAuthConfiguration & IPubSubSubscriberConfiguration
+): IInputSource {
+    configuration = config.parse(PubSubSubscriberConfiguration, configuration, {
+        maxMsgBatchSize: MAX_MSG_BATCH_SIZE_SUBSCRIBER,
+    });
+    return new PubSubSource(configuration);
 }

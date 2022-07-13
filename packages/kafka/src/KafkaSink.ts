@@ -88,9 +88,9 @@ export class KafkaSink
             idempotent = true;
             this.useTransactionalProducer = true;
         }
-        const { broker, ssl } = this.config;
+        const { broker, ssl, clientIdPrefix } = this.config;
         const client = new kafkajs.Kafka({
-            clientId: generateClientId(),
+            clientId: generateClientId(clientIdPrefix),
             brokers: Array.isArray(broker) ? broker : [broker],
             ssl,
         });

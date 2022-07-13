@@ -50,11 +50,17 @@
       "module-azure": {
         "title": "Azure"
       },
+      "module-google-pubsub": {
+        "title": "Google PubSub"
+      },
       "module-grpc": {
         "title": "gRPC"
       },
       "module-kafka": {
         "title": "Kafka"
+      },
+      "module-mqtt": {
+        "title": "MQTT"
       },
       "module-mssql": {
         "title": "MSSQL"

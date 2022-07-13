@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-redis",
-    "version": "1.4.0",
+    "version": "1.5.0-beta.3",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -14,14 +14,14 @@
     },
     "dependencies": {
         "redis": "3.1.2",
-        "shortid": "^2.2.15"
+        "nanoid": "3.3.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "devDependencies": {
-        "@types/redis": "2.8.28",
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@types/redis": "2.8.32",
+        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "scripts": {
         "build": "tsc",

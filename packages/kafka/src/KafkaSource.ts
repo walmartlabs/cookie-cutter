@@ -140,6 +140,19 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                         fromHeaders[EventSourcedMetadata.Timestamp] = new Date(dt);
                     }
                 }
+                if (this.config.additionalHeaderNames) {
+                    const headerKeys: string[] = Object.keys(this.config.additionalHeaderNames);
+                    for (const headerKey of headerKeys) {
+                        if (
+                            headers[this.config.additionalHeaderNames[headerKey]] &&
+                            !fromHeaders[headerKey]
+                        ) {
+                            fromHeaders[headerKey] = headers[
+                                this.config.additionalHeaderNames[headerKey]
+                            ].toString();
+                        }
+                    }
+                }
                 const metadata: IKafkaMessageMetadata = {
                     ...fromHeaders,
                     [KafkaMetadata.Topic]: message.topic,

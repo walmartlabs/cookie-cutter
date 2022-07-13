@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-instana",
-    "version": "1.4.0",
+    "version": "1.5.0-beta.1",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,14 +13,14 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@instana/collector": "1.106.2",
+        "@instana/collector": "1.106.6",
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "scripts": {
         "build": "tsc",

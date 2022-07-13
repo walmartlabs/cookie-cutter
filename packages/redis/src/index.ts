@@ -17,7 +17,7 @@ import {
     ObjectNameMessageTypeMapper,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
-import { generate } from "shortid";
+import { nanoid } from "nanoid";
 
 import { RedisOptions } from "./config";
 import { RedisClient, IPELResult } from "./RedisClient";
@@ -153,7 +153,7 @@ export function redisStreamSource(configuration: IRedisInputStreamOptions): IInp
         port: 6379,
         db: 0,
         base64Encode: true,
-        consumerId: generate(),
+        consumerId: nanoid(),
         consumerGroupStartId: "$",
         batchSize: 10,
         blockTimeout: 100,
