@@ -59,6 +59,9 @@
       "module-kafka": {
         "title": "Kafka"
       },
+      "module-mssql": {
+        "title": "MSSQL"
+      },
       "module-prometheus": {
         "title": "Prometheus"
       },
