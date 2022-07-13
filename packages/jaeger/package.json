@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-jaeger",
-    "version": "1.5.0-alpha.1",
+    "version": "1.5.0-alpha.2",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,9 +13,9 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "jaeger-client": "^3.18.1",
+        "jaeger-client": "3.18.1",
         "opentracing": "0.14.4",
-        "prom-client": "^13.1.0"
+        "prom-client": "13.1.0"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
