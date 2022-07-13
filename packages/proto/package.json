@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-proto",
-    "version": "1.5.0-beta.1",
+    "version": "1.5.0-beta.2",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.5.0-beta",
-        "eval": "0.1.4"
+        "eval": "^0.1.8"
     },
     "scripts": {
         "build": "tsc",

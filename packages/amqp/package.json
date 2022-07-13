@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-amqp",
-    "version": "1.5.0-beta.0",
+    "version": "1.5.0-beta.1",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
         "amqplib": "^0.8.0"
     },
     "devDependencies": {
-        "@types/amqplib": "^0.5.17",
+        "@types/amqplib": "0.5.17",
         "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
     },
     "scripts": {
