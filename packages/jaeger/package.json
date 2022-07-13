@@ -18,10 +18,10 @@
         "prom-client": "13.1.0"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5",
+        "@walmartlabs/cookie-cutter-core": "^1.5.0",
         "@types/jaeger-client": "3.18.0"
     },
     "scripts": {

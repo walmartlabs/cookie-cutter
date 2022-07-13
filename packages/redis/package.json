@@ -17,11 +17,11 @@
         "nanoid": "3.3.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
         "@types/redis": "2.8.32",
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "scripts": {
         "build": "tsc",

@@ -18,10 +18,10 @@
         "@google-cloud/storage": "5.8.5"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "scripts": {
         "build": "tsc",

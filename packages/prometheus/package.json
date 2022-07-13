@@ -13,11 +13,11 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
         "@types/request-promise-native": "^1.0.18",
-        "@walmartlabs/cookie-cutter-core": "^1.5"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "scripts": {
         "build": "tsc",
