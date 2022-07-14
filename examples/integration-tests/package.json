@@ -8,7 +8,7 @@
         "@walmartlabs/cookie-cutter-grpc": "^1.5.0"
     },
     "devDependencies": {
-        "protobufjs": "^6.11.0"
+        "protobufjs": "6.11.3"
     },
     "scripts": {
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/tally.js tally.proto && pbts -o ./src/tally.d.ts ./src/tally.js",

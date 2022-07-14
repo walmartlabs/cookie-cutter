@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "validate.js": "^0.13.1"
+        "validate.js": "0.13.1"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "^1.5.0"

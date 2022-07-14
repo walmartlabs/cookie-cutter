@@ -16,7 +16,7 @@
         "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
-        "@types/request-promise-native": "^1.0.18",
+        "@types/request-promise-native": "1.0.18",
         "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "scripts": {
@@ -27,7 +27,7 @@
         "lint:fix": "yarn run lint --fix"
     },
     "dependencies": {
-        "request-promise-native": "^1.0.9",
-        "ip": "^1.1.8"
+        "request-promise-native": "1.0.9",
+        "ip": "1.1.8"
     }
 }
