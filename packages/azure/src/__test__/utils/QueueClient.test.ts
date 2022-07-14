@@ -160,56 +160,6 @@ describe("QueueClient", () => {
             await expect(result).rejects.toEqual(
                 new Error("Queue Message too big, must be less than 64kb, is: 173.423828125")
             );
-            error.statusCode = 413;
-            sendMessage.mockImplementationOnce(() => {
-                return Promise.reject(error);
-            });
-            const result = client.write(span.context(), bigText, headers);
-            expect(sendMessage).toBeCalled();
-            await expect(result).rejects.toEqual(error);
-        });
-
-        it("should retry on 404s if configured to", async () => {
-            const error = new Error("something bad happend") && { statusCode: 404 };
-            sendMessage.mockImplementationOnce(() => {
-                return Promise.reject(error);
-            });
-            sendMessage.mockImplementation(() => {
-                return success;
-            });
-            const configuredClient = new QueueClient({
-                ...configuration,
-                createQueueIfNotExists: true,
-            });
-            const result = await configuredClient.write(span.context(), payload, headers);
-            expect(sendMessage).toBeCalledTimes(2);
-            expect(create).toBeCalled();
-            expect(result).toBeDefined();
-        });
-        it("should not retry on 404s if not configured to", async () => {
-            const error = new Error("something bad happend") && { statusCode: 404 };
-            sendMessage.mockImplementationOnce(() => {
-                return Promise.reject(error);
-            });
-            const result = client.write(span.context(), payload, headers);
-            await expect(result).rejects.toMatchObject({ statusCode: 404 });
-            expect(create).not.toBeCalled();
-            expect(sendMessage).toBeCalledTimes(1);
-        });
-
-        it("should not retry on other errors (even if configured to)", async () => {
-            const error = new Error("something bad happend") && { statusCode: 401 };
-            sendMessage.mockImplementationOnce(() => {
-                return Promise.reject(error);
-            });
-            const configuredClient = new QueueClient({
-                ...configuration,
-                createQueueIfNotExists: true,
-            });
-            const result = configuredClient.write(span.context(), payload, headers);
-            await expect(result).rejects.toMatchObject({ statusCode: 401 });
-            expect(create).not.toBeCalled();
-            expect(sendMessage).toBeCalledTimes(1);
         });
 
         it("should error get back 413 from azure", async () => {
