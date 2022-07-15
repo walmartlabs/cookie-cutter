@@ -17,7 +17,7 @@
   "devDependencies": {
     "@types/jest": "27.0.3",
     "@types/long": "4.0.2",
-    "@types/node": "10.17.60",
+    "@types/node": "12.20.39",
     "glob": "7.1.7",
     "jest": "27.3.1",
     "jest-junit": "13.0.0",
