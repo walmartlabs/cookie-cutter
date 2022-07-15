@@ -1,8 +1,7 @@
 # 1.5
 
 ## CI/CD
-- Run build steps on Node 16 instead of Node 10.
-- Minimum Node is 12.0.0, however `"@types/node"` is still at `10.x.x`.
+- Run build steps on Node 16 instead of Node 10. Minimum Node is now 12.0.0.
 - Keep a build step running on Node 12 for backwards compatibility.
 
 ## All packages
