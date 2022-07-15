@@ -7,9 +7,10 @@
     "examples/*"
   ],
   "resolutions": {
-    "json-schema": "^0.4.0",
-    "protobufjs": "^6.11.3",
-    "moment": "^2.29.4"
+    "@types/prettier": "2.4.1",
+    "json-schema": "0.4.0",
+    "protobufjs": "6.11.3",
+    "moment": "2.29.4"
   },
   "engines": {
     "node": ">=12.0.0"
