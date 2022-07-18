@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-grpc",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,16 +13,16 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "change-case": "4.1.1",
+        "change-case": "4.1.2",
         "grpc": "1.24.11",
         "opentracing": "0.14.4"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0",
-        "protobufjs": "6.9.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0",
+        "protobufjs": "6.11.3"
     },
     "scripts": {
         "build": "tsc",

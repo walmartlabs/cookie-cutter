@@ -89,6 +89,13 @@ export interface IKafkaSubscriptionConfiguration {
      * Defaults to 30s, src: https://kafka.js.org/docs/consuming
      */
     readonly sessionTimeout?: number;
+
+    /**
+     * Additional header names.
+     * Useful when consuming messages that have additional information in the message header that
+     * needs to be available in message metadata.
+     */
+    readonly additionalHeaderNames?: { [key: string]: string };
 }
 
 export interface IKafkaClientConfiguration {
@@ -103,6 +110,12 @@ export interface IKafkaClientConfiguration {
      * https://kafka.js.org/docs/configuration#request-timeout
      */
     readonly requestTimeout?: number;
+
+    /*
+     * Use ClientIdPrefix to quickly identify kafka client.
+     * https://kafka.js.org/docs/configuration#broker-discovery
+     */
+    readonly clientIdPrefix?: string;
 }
 
 export enum KafkaMessagePublishingStrategy {
@@ -150,6 +163,11 @@ export interface IKafkaPublisherConfiguration {
      * Defaults to `None`.
      */
     readonly compressionMode?: KafkaPublisherCompressionMode;
+    /*
+     * Use ClientIdPrefix to quickly identify kafka client.
+     * https://kafka.js.org/docs/configuration#broker-discovery
+     */
+    readonly clientIdPrefix?: string;
 }
 
 export interface IKafkaTopic {

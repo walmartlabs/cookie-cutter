@@ -137,7 +137,6 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
 
                     this.metrics.increment(GrpcMetrics.RequestReceived, {
                         path: method.path,
-                        peer: call.getPeer(),
                     });
                     const metadata = call.metadata.getMap();
                     const spanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, metadata);
@@ -182,14 +181,12 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                             }
                             this.metrics.increment(GrpcMetrics.RequestProcessed, {
                                 path: method.path,
-                                peer: call.getPeer(),
                                 result: error ? GrpcMetricResult.Error : GrpcMetricResult.Success,
                             });
                             const currentPerformanceTime = performance.now();
                             const runTime = (currentPerformanceTime - startTime) / 1000;
                             this.metrics.timing(GrpcMetrics.RequestProcessingTime, runTime, {
                                 path: method.path,
-                                peer: call.getPeer(),
                             });
                         }
                     );

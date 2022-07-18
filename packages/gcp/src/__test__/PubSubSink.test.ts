@@ -21,7 +21,8 @@ import {
     IOutputSink,
 } from "@walmartlabs/cookie-cutter-core";
 import { IPubSubPublisherConfiguration, IGcpAuthConfiguration, pubSubSink } from "..";
-import { PubSubMetadata, AttributeNames } from "../PubSubSink";
+import { PubSubMetadata } from "../PubSubSink";
+import { AttributeNames } from "../model";
 
 jest.mock("@google-cloud/pubsub", () => {
     return {

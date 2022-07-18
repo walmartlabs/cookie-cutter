@@ -4,11 +4,11 @@
     "version": "0.0.0",
     "license": "Apache-2.0",
     "dependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0",
-        "@walmartlabs/cookie-cutter-grpc": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0",
+        "@walmartlabs/cookie-cutter-grpc": "^1.5.0"
     },
     "devDependencies": {
-        "protobufjs": "6.9.0"
+        "protobufjs": "6.11.3"
     },
     "scripts": {
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/tally.js tally.proto && pbts -o ./src/tally.d.ts ./src/tally.js",

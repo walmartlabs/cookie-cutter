@@ -18,6 +18,8 @@ import { CosmosClient } from "../../../utils";
 import { DummyState } from "../../dummystate";
 import { setup, teardown } from "../../integrationSetup";
 
+jest.setTimeout(90000);
+
 const url = "https://localhost:8081";
 const key = process.env.COSMOS_SECRET_KEY;
 const databaseId = "materialized-view-integration-test";

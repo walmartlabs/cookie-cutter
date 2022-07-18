@@ -60,6 +60,29 @@ describe("QueueClient", () => {
         },
     });
 
+    const mockMessages = [
+        {
+            messageId: 123,
+            insertedOn: new Date(),
+            expiresOn: new Date(),
+            popReceipt: "pop123",
+            nextVisibleOn: new Date(),
+            dequeueCount: 1,
+            messageText:
+                '{ "headers": {"event_type": "event"}, "payload": {"testKey":"testValue"}}',
+        },
+        {
+            messageId: 124,
+            insertedOn: new Date(),
+            expiresOn: new Date(),
+            popReceipt: "pop124",
+            nextVisibleOn: new Date(),
+            dequeueCount: 1,
+            messageText:
+                "{ &quot;headers&quot;: {&quot;event_type&quot;: &quot;event&quot;}, &quot;payload&quot;: {&quot;testKey&quot;:&quot;testValue&quot;}}",
+        },
+    ];
+
     const getQueueClient = jest.fn(() => {
         return {
             sendMessage,
@@ -81,17 +104,7 @@ describe("QueueClient", () => {
     });
     const receiveMessages = jest.fn(() => {
         return Promise.resolve({
-            receivedMessageItems: [
-                {
-                    messageId: 123,
-                    insertedOn: new Date(),
-                    expiresOn: new Date(),
-                    popReceipt: "pop123",
-                    nextVisibleOn: new Date(),
-                    dequeueCount: 1,
-                    messageText: '{ "headers": {"event_type": "event"}, "payload":"data"}',
-                },
-            ],
+            receivedMessageItems: mockMessages,
             _response: {
                 status: 200,
             },
@@ -211,8 +224,12 @@ describe("QueueClient", () => {
         const client = new QueueClient(configuration);
         it("should read messages with defaults", async () => {
             const messages = await client.read(span.context());
-            expect(messages).toHaveLength(1);
-            expect(messages[0].headers[QueueMetadata.MessageId]).toBe(123);
+            expect(messages).toHaveLength(mockMessages.length);
+            messages.forEach((message, i) => {
+                expect(message.headers[QueueMetadata.MessageId]).toBe(mockMessages[i].messageId);
+                expect(message.headers[QueueMetadata.PopReceipt]).toBe(mockMessages[i].popReceipt);
+                expect(message.payload).toStrictEqual({ testKey: "testValue" });
+            });
             expect(receiveMessages).toBeCalledWith({
                 numOfMessages: undefined,
                 visibilityTimeout: undefined,

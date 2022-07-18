@@ -22,6 +22,8 @@ import { cosmosMetadata, ICosmosDocument } from "../../utils";
 import { SpanContext } from "opentracing";
 import { isNullOrUndefined } from "util";
 
+jest.setTimeout(90000);
+
 const databaseId = "cosmos-client-integration-test";
 const collectionId = "data";
 const encoder = new JsonMessageEncoder();

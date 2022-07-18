@@ -4,9 +4,9 @@
     "version": "0.0.0",
     "license": "Apache-2.0",
     "dependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0",
-        "@walmartlabs/cookie-cutter-redis": "^1.4.0",
-        "config": "3.3.1"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0",
+        "@walmartlabs/cookie-cutter-redis": "^1.5.0",
+        "config": "3.3.7"
     },
     "scripts": {
         "build": "tsc",

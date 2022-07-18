@@ -7,31 +7,28 @@
     "examples/*"
   ],
   "resolutions": {
-    "lz4": "0.6.3",
-    "ws": "^7.4.6",
-    "y18n": "^5.0.5",
-    "lodash": "^4.17.21",
-    "underscore": "^1.12.1",
-    "hosted-git-info": "^2.8.9",
-    "json-schema": "^0.4.0"
+    "@types/prettier": "2.4.1",
+    "json-schema": "0.4.0",
+    "protobufjs": "6.11.3",
+    "moment": "2.29.4"
   },
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=12.0.0"
   },
   "devDependencies": {
-    "@types/jest": "27.0.2",
-    "@types/long": "4.0.1",
-    "@types/node": "10.17.30",
-    "glob": "7.1.6",
+    "@types/jest": "27.0.3",
+    "@types/long": "4.0.2",
+    "@types/node": "12.20.39",
+    "glob": "7.1.7",
     "jest": "27.3.1",
     "jest-junit": "13.0.0",
     "prettier": "1.19.1",
-    "semver": "7.3.2",
+    "semver": "7.3.7",
     "ts-jest": "27.0.7",
     "tslint": "6.1.3",
     "tslint-config-prettier": "1.18.0",
     "tslint-plugin-prettier": "2.3.0",
-    "typescript": "3.9.4"
+    "typescript": "3.9.10"
   },
   "scripts": {
     "build": "yarn workspaces run build",

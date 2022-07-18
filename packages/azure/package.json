@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-azure",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,19 +13,19 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@azure/cosmos": "3.9.1",
+        "@azure/cosmos": "3.9.5",
         "@azure/storage-queue": "^12.0.5",
         "@azure/storage-blob": "12.4.1",
         "lodash": "4.17.21",
         "opentracing": "0.14.4",
         "tunnel": "0.0.6",
-        "uuid": "8.3.0"
+        "uuid": "8.3.2"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.4.0"
+        "@walmartlabs/cookie-cutter-core": "^1.5.0"
     },
     "scripts": {
         "build": "tsc",

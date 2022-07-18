@@ -8,6 +8,8 @@ LICENSE file in the root directory of this source tree.
 import { BlobClient } from "../../utils";
 import { SpanContext } from "opentracing";
 
+jest.setTimeout(90000);
+
 describe("Blob Client", () => {
     const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
     const storageAccessKey = process.env.AZURE_STORAGE_ACCESS_KEY;
