@@ -13,10 +13,10 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@kubernetes/client-node": "0.17.0",
+        "@kubernetes/client-node": "0.15.1",
         "body-parser": "1.20.0",
         "express": "4.18.1",
-        "express-async-handler": "1.2.0",
+        "express-async-handler": "1.1.4",
         "fast-json-patch": "3.1.1",
         "lodash": "4.17.21",
         "opentracing": "0.14.7",
@@ -32,8 +32,8 @@
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "scripts": {
-        "build": "echo 'SKIP BUILD'",
-        "test": "echo 'SKIP TEST'",
+        "build": "tsc",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }

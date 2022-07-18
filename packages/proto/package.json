@@ -21,11 +21,12 @@
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
+        "uglify-js": "3.7.7",
         "eval": "0.1.8"
     },
     "scripts": {
         "build": "tsc",
-        "test": "echo 'SKIP TEST'",
+        "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }

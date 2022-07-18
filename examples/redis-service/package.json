@@ -9,8 +9,8 @@
         "config": "3.3.7"
     },
     "scripts": {
-        "build": "echo 'SKIP BUILD'",
-        "start": "echo 'SKIP START'",
+        "build": "tsc",
+        "start": "node dist/index",
         "test": "echo 'NO TESTS'",
         "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
