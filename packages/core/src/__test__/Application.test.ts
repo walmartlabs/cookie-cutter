@@ -38,7 +38,7 @@ import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
 import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
-jest.setTimeout(10000);
+jest.setTimeout(20000);
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
