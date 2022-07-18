@@ -32,7 +32,7 @@
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "scripts": {
-        "build": "echo 'SKIP BUILD",
+        "build": "echo 'SKIP BUILD'",
         "test": "echo 'SKIP TEST'",
         "lint": "echo 'SKIP LINT'",
         "lint:fix": "yarn run lint --fix"
