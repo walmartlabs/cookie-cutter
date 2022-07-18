@@ -9,10 +9,10 @@
         "config": "3.3.7"
     },
     "scripts": {
-        "build": "tsc",
-        "start": "node dist/index",
+        "build": "echo 'SKIP BUILD'",
+        "start": "echo 'SKIP START'",
         "test": "echo 'NO TESTS'",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "echo 'NO LINT'",
         "lint:fix": "yarn run lint --fix"
     }
 }
