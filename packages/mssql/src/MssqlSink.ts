@@ -97,7 +97,7 @@ class DynamicTableType extends sql.Table {
                     if (isObject(element) || isArray(element)) {
                         throw new Error(errorMessage);
                     }
-                    this.rows.add(element);
+                    this.rows.add(element as any);
                 }
             } else {
                 throw new Error(errorMessage);

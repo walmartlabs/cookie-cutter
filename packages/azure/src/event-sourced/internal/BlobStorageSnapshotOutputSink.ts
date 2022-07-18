@@ -58,7 +58,7 @@ export class BlobStorageSnapshotOutputSink
                     }
                 }
             } catch (e) {
-                if (!(e.statusCode === 404 && e.code === "BlobNotFound")) {
+                if (!((e as any).statusCode === 404 && (e as any).code === "BlobNotFound")) {
                     throw e;
                 }
             }

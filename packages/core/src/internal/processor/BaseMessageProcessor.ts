@@ -170,7 +170,7 @@ export abstract class BaseMessageProcessor implements IRequireInitialization {
                     maxAttempts: retry.maxAttempts,
                     finalAttempt: retry.isFinalAttempt(),
                 });
-                context.handlerResult.error = e;
+                context.handlerResult.error = e as any;
                 context.clear();
                 throw e;
             }

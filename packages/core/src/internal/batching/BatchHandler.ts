@@ -56,7 +56,7 @@ export class BatchHandler<T> {
                 successful: items.slice(0, completedContexts),
                 failed: items.slice(completedContexts),
                 error: {
-                    error: e,
+                    error: e as any,
                     retryable: e instanceof SequenceConflictError || this.mayRetry(items),
                 },
             };

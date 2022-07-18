@@ -224,8 +224,8 @@ describe("Materialized Views", () => {
             try {
                 await state.get(undefined, `@unknown/${streamId}`);
             } catch (error) {
-                expect(error.code).toBe(404);
-                expect(error.body.message).toContain("Resource Not Found");
+                expect((error as any).code).toBe(404);
+                expect((error as any).body.message).toContain("Resource Not Found");
             }
         });
 
@@ -312,7 +312,7 @@ describe("Materialized Views", () => {
                 }
             } catch (e) {
                 expect(e).toBeInstanceOf(SequenceConflictError);
-                expect(e.details).toMatchObject({
+                expect((e as any).details).toMatchObject({
                     key: streamId,
                     newSn: 1000,
                     expectedSn: 999,
@@ -351,7 +351,7 @@ describe("Materialized Views", () => {
                 }
             } catch (e) {
                 expect(e).toBeInstanceOf(SequenceConflictError);
-                expect(e.details).toMatchObject({
+                expect((e as any).details).toMatchObject({
                     key: streamId,
                     newSn: 2,
                     expectedSn: 1,

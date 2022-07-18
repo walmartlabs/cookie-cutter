@@ -215,7 +215,7 @@ export class KafkaSink
         } catch (e) {
             // This _probably_ means no messages were ever sent, so we don't need
             // to bubble up the error
-            if (e.type === "INVALID_TXN_STATE") {
+            if ((e as any).type === "INVALID_TXN_STATE") {
                 this.logger.warn(
                     "Received 'INVALID_TXN_STATE' error while aborting transaction. Ignoring.",
                     e

@@ -75,13 +75,13 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
 
             return true;
         } catch (error) {
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
 
             // 409 is returned if a container exists
-            if (error.statusCode === 409) {
+            if ((error as any).statusCode === 409) {
                 this.metrics.increment(
                     BlobMetrics.CreateContainer,
-                    this.generateMetricTags(BlobMetricResults.Success, error.statusCode)
+                    this.generateMetricTags(BlobMetricResults.Success, (error as any).statusCode)
                 );
 
                 return false;
@@ -89,7 +89,7 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
 
             this.metrics.increment(
                 BlobMetrics.CreateContainer,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
             failSpan(span, error);
 
@@ -114,20 +114,20 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
 
             return true;
         } catch (error) {
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
 
             // 409 is returned if it doesnt exist
-            if (error.statusCode === 409) {
+            if ((error as any).statusCode === 409) {
                 this.metrics.increment(
                     BlobMetrics.DeleteContainer,
-                    this.generateMetricTags(BlobMetricResults.Success, error.statusCode)
+                    this.generateMetricTags(BlobMetricResults.Success, (error as any).statusCode)
                 );
                 return false;
             }
 
             this.metrics.increment(
                 BlobMetrics.DeleteContainer,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
             failSpan(span, error);
 
@@ -160,10 +160,10 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.Write,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
 
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
             failSpan(span, error);
 
             throw error;
@@ -193,10 +193,10 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.ReadAsText,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
 
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
             failSpan(span, error);
 
             throw error;
@@ -225,10 +225,10 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.Exists,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
 
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
             failSpan(span, error);
 
             throw error;
@@ -258,10 +258,10 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.ListBlobs,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
 
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
             failSpan(span, error);
 
             throw error;
@@ -291,10 +291,10 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.DeleteFolder,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
 
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
             failSpan(span, error);
 
             throw error;
@@ -323,10 +323,10 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.DeleteBlob,
-                this.generateMetricTags(BlobMetricResults.Error, error.statusCode)
+                this.generateMetricTags(BlobMetricResults.Error, (error as any).statusCode)
             );
 
-            span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+            span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
             failSpan(span, error);
 
             throw error;

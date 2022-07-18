@@ -5,8 +5,8 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { Offsets, PartitionOffset, TopicPartitionOffsetAndMedata } from "kafkajs";
-import * as Long from "long";
+import { Offsets, PartitionOffset, TopicPartitionOffsetAndMetadata } from "kafkajs";
+import Long = require("long");
 
 // partition -> offset
 // Offset here is the offset of the kafka message that was last successfully
@@ -30,8 +30,8 @@ export class OffsetManager {
      * to ensure that new consumers begin from next message immediately after the one
      * that was successfully processed and about to be committed.
      */
-    public offsetsToCommit(): TopicPartitionOffsetAndMedata[] {
-        const offsets = new Array<TopicPartitionOffsetAndMedata>();
+    public offsetsToCommit(): TopicPartitionOffsetAndMetadata[] {
+        const offsets = new Array<TopicPartitionOffsetAndMetadata>();
         for (const [topic, partitionOffsets] of this._offsets.entries()) {
             for (const [partition, offset] of partitionOffsets.entries()) {
                 // skip any offsets that are "" which is used as a default value when a re-balance happens

@@ -37,7 +37,7 @@ describe("Blob Client", () => {
             try {
                 await client.queueMetadata(spanContext, newQueueName);
             } catch (error) {
-                expect(error.statusCode).toBe(404);
+                expect((error as any).statusCode).toBe(404);
             }
 
             const newClient = new QueueClient({
@@ -66,7 +66,7 @@ describe("Blob Client", () => {
             try {
                 await client.queueMetadata(spanContext, newQueueName);
             } catch (error) {
-                expect(error.statusCode).toBe(404);
+                expect((error as any).statusCode).toBe(404);
             }
 
             const newClient = new QueueClient({
@@ -85,7 +85,7 @@ describe("Blob Client", () => {
             try {
                 await newClient.write(spanContext, payload, headers);
             } catch (error) {
-                expect(error.statusCode).toBe(404);
+                expect((error as any).statusCode).toBe(404);
             }
         });
     });
@@ -120,8 +120,8 @@ describe("Blob Client", () => {
             try {
                 await client.write(spanContext, payload, headers);
             } catch (error) {
-                expect(error.statusCode).toBe(413);
-                expect(error.message).toBe(
+                expect((error as any).statusCode).toBe(413);
+                expect((error as any).message).toBe(
                     "Queue Message too big, must be less than 64kb, is: 1582.1474609375"
                 );
             }
@@ -180,7 +180,7 @@ describe("Blob Client", () => {
             try {
                 await client.queueMetadata(spanContext, "unknownqueue");
             } catch (error) {
-                expect(error.statusCode).toBe(404);
+                expect((error as any).statusCode).toBe(404);
             }
         });
     });

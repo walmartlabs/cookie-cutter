@@ -46,9 +46,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
             maxAge: options.maxTTL,
             noDisposeOnSet: true,
             dispose: (_, val) => {
-                if (!this.callbacksDisabledFor.has(val.key)) {
+                if (!this.callbacksDisabledFor.has((val as any).key)) {
                     for (const cb of this.callbacks.values()) {
-                        cb(val);
+                        cb(val as any);
                     }
                 }
             },

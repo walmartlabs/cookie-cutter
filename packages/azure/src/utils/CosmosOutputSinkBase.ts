@@ -76,13 +76,13 @@ export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable
         try {
             return await this.client.bulkInsert(documents, partitionKey, verifySn);
         } catch (e) {
-            if (isRetryableError(e)) {
-                if (e.headers && e.headers[RETRY_AFTER_MS]) {
-                    retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+            if (isRetryableError(e as any)) {
+                if ((e as any).headers && (e as any).headers[RETRY_AFTER_MS]) {
+                    retry.setNextRetryInterval(parseInt((e as any).headers[RETRY_AFTER_MS], 10));
                 }
                 throw e;
-            } else if (isSequenceConflict(e)) {
-                retry.bail(new SequenceConflictError(getSequenceConflictDetails(e)));
+            } else if (isSequenceConflict(e as any)) {
+                retry.bail(new SequenceConflictError(getSequenceConflictDetails(e as any)));
             } else {
                 retry.bail(e);
             }
@@ -119,9 +119,9 @@ export class CosmosOutputSinkBase implements IRequireInitialization, IDisposable
                 });
             }
         } catch (e) {
-            if (isRetryableError(e)) {
-                if (e.headers && e.headers[RETRY_AFTER_MS]) {
-                    retry.setNextRetryInterval(parseInt(e.headers[RETRY_AFTER_MS], 10));
+            if (isRetryableError(e as any)) {
+                if ((e as any).headers && (e as any).headers[RETRY_AFTER_MS]) {
+                    retry.setNextRetryInterval(parseInt((e as any).headers[RETRY_AFTER_MS], 10));
                 }
                 throw e;
             } else {

@@ -90,7 +90,7 @@ describe("Blob Client", () => {
             try {
                 await client.readAsText(spanContext, "unknownBlobId");
             } catch (error) {
-                expect(error.statusCode).toBe(404);
+                expect((error as any).statusCode).toBe(404);
             }
         });
     });

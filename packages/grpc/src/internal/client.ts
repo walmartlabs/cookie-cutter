@@ -95,7 +95,7 @@ export function createGrpcClient<T>(
 
         let ready = false;
         const whenReady = (span: Span) =>
-            new Promise((resolve, reject) => {
+            new Promise<void>((resolve, reject) => {
                 client.waitForReady(Date.now() + config.connectionTimeout!, (err) => {
                     if (err) {
                         failSpan(span, err);
@@ -138,7 +138,9 @@ export function createGrpcClient<T>(
                         await whenReady(span);
                     } catch (e) {
                         throw new Error(
-                            `Endpoint: ${config.endpoint}, Service: ${method.path}, Original Error: [${e.stack}]`
+                            `Endpoint: ${config.endpoint}, Service: ${
+                                method.path
+                            }, Original Error: [${(e as any).stack}]`
                         );
                     }
                 }
@@ -154,7 +156,7 @@ export function createGrpcClient<T>(
                             callOptions()
                         );
                     } catch (e) {
-                        if (e.code === status.UNAVAILABLE) {
+                        if ((e as any).code === status.UNAVAILABLE) {
                             throw e;
                         }
                         bail(e);
@@ -209,7 +211,9 @@ export function createGrpcClient<T>(
                         await whenReady(span);
                     } catch (e) {
                         throw new Error(
-                            `Endpoint: ${config.endpoint}, Service: ${method.path}, Original Error: [${e.stack}]`
+                            `Endpoint: ${config.endpoint}, Service: ${
+                                method.path
+                            }, Original Error: [${(e as any).stack}]`
                         );
                     }
                 }
@@ -250,7 +254,7 @@ export function createGrpcClient<T>(
                             );
                         });
                     } catch (e) {
-                        if (e.code === status.UNAVAILABLE) {
+                        if ((e as any).code === status.UNAVAILABLE) {
                             throw e;
                         }
                         bail(e);

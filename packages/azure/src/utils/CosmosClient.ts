@@ -270,11 +270,11 @@ export class CosmosClient
                 this.generateMetricTags(CosmosMetricResults.Success, { sproc_id: sprocID })
             );
         } catch (e) {
-            requestCharge = this.getRequestCharge(e.headers);
+            requestCharge = this.getRequestCharge((e as any).headers);
             spans.map((span) => {
                 failSpan(span, e);
             });
-            const metricResult = isSequenceConflict(e)
+            const metricResult = isSequenceConflict(e as any)
                 ? CosmosMetricResults.ErrorSequenceConflict
                 : CosmosMetricResults.Error;
             this.metrics.increment(
@@ -348,7 +348,7 @@ export class CosmosClient
             );
             return combinedResults;
         } catch (e) {
-            requestCharge += this.getRequestCharge(e.headers);
+            requestCharge += this.getRequestCharge((e as any).headers);
             failSpan(span, e);
             this.metrics.increment(
                 CosmosMetrics.Query,

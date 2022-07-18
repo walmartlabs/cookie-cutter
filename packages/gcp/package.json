@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-gcp",
-    "version": "1.5.0-beta.3",
+    "version": "1.6.0-beta.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,15 +13,15 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@google-cloud/bigquery": "5.5.0",
-        "@google-cloud/pubsub": "2.10.0",
-        "@google-cloud/storage": "5.8.5"
+        "@google-cloud/bigquery": "6.0.1",
+        "@google-cloud/pubsub": "3.0.1",
+        "@google-cloud/storage": "6.2.2"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "scripts": {
         "build": "tsc",

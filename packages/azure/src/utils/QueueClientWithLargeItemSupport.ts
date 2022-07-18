@@ -61,7 +61,7 @@ export class QueueClientWithLargeItemSupport {
         try {
             return await this.queueClient.write(spanContext, payload, headers, options);
         } catch (error) {
-            if (error.code !== 413) {
+            if ((error as any).code !== 413) {
                 throw error;
             }
             return this.writeLargeObject(spanContext, payload, headers, options);
