@@ -60,7 +60,8 @@ type Message = { type: string } & IProducerMessage<Buffer>;
  * participate in a "consume-transform-produce" loop between multiple topics.
  */
 export class KafkaSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private producer: kafkajs.Producer;
     private logger: ILogger;
     private messageProducer: KafkaMessageProducer;

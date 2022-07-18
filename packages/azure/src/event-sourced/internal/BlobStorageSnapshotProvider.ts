@@ -32,7 +32,8 @@ function retrieveSnapshotIndex(target: number, list: number[]): number {
 }
 
 export class BlobStorageSnapshotProvider<TSnapshot>
-    implements ISnapshotProvider<TSnapshot>, IRequireInitialization {
+    implements ISnapshotProvider<TSnapshot>, IRequireInitialization
+{
     private readonly client: BlobClient;
 
     constructor(config: IBlobStorageConfiguration) {

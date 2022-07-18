@@ -15,7 +15,7 @@ import {
 
 describe("QueueClientWithLargeItemSupport", () => {
     const tracer = new MockTracer();
-    const context = ({} as unknown) as SpanContext;
+    const context = {} as unknown as SpanContext;
     const payload = "hello world to queues";
     const headers = {};
     const messageQueueResult = {
@@ -47,8 +47,8 @@ describe("QueueClientWithLargeItemSupport", () => {
             write: mocks.queueWrite,
         };
         const client = new QueueClientWithLargeItemSupport(
-            (queue as unknown) as QueueClient,
-            (blob as unknown) as BlobClient
+            queue as unknown as QueueClient,
+            blob as unknown as BlobClient
         );
         return {
             blob,
@@ -82,7 +82,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             const error: Error & { code?: number } = new Error("test");
             error.code = 413;
             queue.write.mockRejectedValueOnce(error);
-            await client.initialize(({ tracer } as unknown) as IComponentContext);
+            await client.initialize({ tracer } as unknown as IComponentContext);
             await client.write(context, payload, headers);
             expect(queue.write).toBeCalledTimes(2);
             expect(blob.write).toBeCalled();

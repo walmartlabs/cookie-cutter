@@ -66,7 +66,7 @@ describe("KafkaSource", () => {
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
-                async function*(): AsyncIterableIterator<IRawKafkaMessage> {
+                async function* (): AsyncIterableIterator<IRawKafkaMessage> {
                     yield rawMessage;
                 }
             );
@@ -200,7 +200,7 @@ describe("KafkaSource", () => {
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
-                async function*(): AsyncIterableIterator<IRawKafkaMessage> {
+                async function* (): AsyncIterableIterator<IRawKafkaMessage> {
                     yield rawMessage;
                 }
             );
@@ -265,7 +265,7 @@ describe("KafkaSource", () => {
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
-                async function*(): AsyncIterableIterator<IRawKafkaMessage> {
+                async function* (): AsyncIterableIterator<IRawKafkaMessage> {
                     yield rawMessage;
                 }
             );

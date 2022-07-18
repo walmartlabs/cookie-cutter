@@ -29,7 +29,7 @@ const mockTestQos: number = 2;
 
 jest.mock("mqtt", () => {
     return {
-        connect: jest.fn(function(_testConfig: any): any {
+        connect: jest.fn(function (_testConfig: any): any {
             return {
                 on: mockHandlerFunction,
                 publish: mockMqttPublisher,

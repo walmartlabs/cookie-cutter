@@ -16,7 +16,8 @@ import {
 import { ServiceRegistry } from "./ServiceRegistry";
 
 export class ServiceRegistryBuilder
-    implements IServiceRegistryBuilder, IComponentBuilder<Lifecycle<IServiceRegistry>> {
+    implements IServiceRegistryBuilder, IComponentBuilder<Lifecycle<IServiceRegistry>>
+{
     private readonly serviceRegistry: ServiceRegistry;
 
     constructor(private readonly parent: IApplicationBuilder) {

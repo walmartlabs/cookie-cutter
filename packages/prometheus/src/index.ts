@@ -34,7 +34,8 @@ import {
 } from "./models";
 
 class PrometheusMetrics
-    implements IPrometheusMetric, IMetrics, IRequireInitialization, IDisposable {
+    implements IPrometheusMetric, IMetrics, IRequireInitialization, IDisposable
+{
     private logger: ILogger;
     private httpServer: HttpServer;
     private keyBucketsMap: Map<string, number[]>;

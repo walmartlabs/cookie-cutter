@@ -36,9 +36,7 @@ export class OffsetManager {
             for (const [partition, offset] of partitionOffsets.entries()) {
                 // skip any offsets that are "" which is used as a default value when a re-balance happens
                 if (offset) {
-                    const updatedOffset = Long.fromValue(offset)
-                        .add(1)
-                        .toString();
+                    const updatedOffset = Long.fromValue(offset).add(1).toString();
                     offsets.push({
                         topic,
                         partition,

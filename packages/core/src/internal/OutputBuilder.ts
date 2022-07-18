@@ -27,7 +27,8 @@ import { EpochManager } from "./EpochManager";
 export class OutputBuilder
     implements
         IOutputBuilder,
-        IComponentBuilder<Lifecycle<IOutputSink<BufferedDispatchContext>> & IMessageEnricher> {
+        IComponentBuilder<Lifecycle<IOutputSink<BufferedDispatchContext>> & IMessageEnricher>
+{
     private publishSink: Lifecycle<IOutputSink<IPublishedMessage>>;
     private storeSink: Lifecycle<IOutputSink<IStoredMessage | IStateVerification>>;
     private storeSinkSet: boolean;

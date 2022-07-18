@@ -43,7 +43,8 @@ export enum PubSubMetadata {
  * Output sink to produce to Google's PubSub topics.
  */
 export class PubSubSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private readonly producer: PubSub;
     private logger: ILogger;
     private tracer: Tracer;

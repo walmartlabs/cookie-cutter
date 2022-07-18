@@ -166,8 +166,10 @@ export class QueueConfiguration implements IQueueConfiguration {
 }
 
 @config.section
-export class QueueSourceConfiguration extends QueueConfiguration
-    implements IQueueSourceConfiguration {
+export class QueueSourceConfiguration
+    extends QueueConfiguration
+    implements IQueueSourceConfiguration
+{
     @config.field(config.converters.number)
     public set numOfMessages(_: number) {
         config.noop();

@@ -73,7 +73,8 @@ const SPROCS: Map<string, string> = new Map([
 ]);
 
 export class CosmosClient
-    implements ICosmosQueryClient, ICosmosWriteClient, IRequireInitialization, IDisposable {
+    implements ICosmosQueryClient, ICosmosWriteClient, IRequireInitialization, IDisposable
+{
     private metrics: IMetrics;
     private tracer: Tracer;
     private readonly client: Client;

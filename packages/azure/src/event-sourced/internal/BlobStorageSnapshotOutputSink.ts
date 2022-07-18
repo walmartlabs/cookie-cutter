@@ -19,7 +19,8 @@ import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
 
 export class BlobStorageSnapshotOutputSink
-    implements IOutputSink<IStoredMessage>, IRequireInitialization {
+    implements IOutputSink<IStoredMessage>, IRequireInitialization
+{
     private readonly client: BlobClient;
     private readonly frequency: number;
 

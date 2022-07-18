@@ -411,13 +411,11 @@ describe("Materialized Views", () => {
                         ]),
                         undefined
                     ),
-                ].map(
-                    (v: Promise<void>): Promise<boolean> => {
-                        return new Promise<boolean>((resolve) => {
-                            v.then(() => resolve(true)).catch(() => resolve(false));
-                        });
-                    }
-                )
+                ].map((v: Promise<void>): Promise<boolean> => {
+                    return new Promise<boolean>((resolve) => {
+                        v.then(() => resolve(true)).catch(() => resolve(false));
+                    });
+                })
             );
 
             expect(p).not.toBe([true, true]);

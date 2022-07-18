@@ -12,7 +12,7 @@
         "build": "echo 'SKIP BUILD'",
         "start": "echo 'SKIP START'",
         "test": "echo 'NO TESTS'",
-        "lint": "echo 'NO LINT'",
+        "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }
 }

@@ -28,7 +28,8 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IStateProvider<TState>,
         IStateCacheLifecycle<TState>,
         IRequireInitialization,
-        IDisposable {
+        IDisposable
+{
     private readonly cache: LRU<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
     private readonly callbacks: Set<(item: StateRef<TState>) => void>;

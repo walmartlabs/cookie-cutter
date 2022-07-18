@@ -11,7 +11,7 @@ jest.mock("../KafkaMessageProducer", () => {
     const { KafkaMessageProducer } = (jest as any).requireActual("../KafkaMessageProducer");
     return {
         // tslint:disable-next-line:object-literal-shorthand
-        KafkaMessageProducer: function(ctx, options) {
+        KafkaMessageProducer: function (ctx, options) {
             const producer = new KafkaMessageProducer(ctx, options);
             mockSendMessages = jest.fn((...args) => {
                 return producer.sendMessages(...args);

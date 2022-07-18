@@ -38,7 +38,7 @@ const mockTestMessageData: string = "this is test message";
 
 jest.mock("mqtt", () => {
     return {
-        connect: jest.fn(function(_testConfig: any): any {
+        connect: jest.fn(function (_testConfig: any): any {
             return {
                 on: mockHandlerFunction,
                 subscribe: mockMqttSubscribe,

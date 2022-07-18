@@ -30,7 +30,8 @@ interface IRequest {
 }
 
 export class BigQuerySink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private readonly client: Lifecycle<IBigQueryClient>;
     constructor(client: IBigQueryClient, readonly maxBatchSize: number) {
         this.client = makeLifecycle(client);

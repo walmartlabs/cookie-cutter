@@ -54,8 +54,10 @@ export class MQTTAuthConfig implements IMqttAuthConfig {
 }
 
 @config.section
-export class MQTTPublisherConfiguration extends MQTTAuthConfig
-    implements IMqttPublisherConfiguration {
+export class MQTTPublisherConfiguration
+    extends MQTTAuthConfig
+    implements IMqttPublisherConfiguration
+{
     @config.field(config.converters.none)
     public set encoder(_: IMessageEncoder) {
         config.noop();
@@ -85,8 +87,10 @@ export class MQTTPublisherConfiguration extends MQTTAuthConfig
 }
 
 @config.section
-export class MQTTSubscriberConfiguration extends MQTTAuthConfig
-    implements IMqttSubscriberConfiguration {
+export class MQTTSubscriberConfiguration
+    extends MQTTAuthConfig
+    implements IMqttSubscriberConfiguration
+{
     @config.field(config.converters.none)
     public set preprocessor(_: IMqttPreprocessor) {
         config.noop();

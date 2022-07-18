@@ -9,7 +9,8 @@ import { SpanContext } from "opentracing";
 import { IMessage, IState, IStateProvider, IStateType, StateRef } from "../model";
 
 export abstract class MaterializedViewStateProvider<TState extends IState<TSnapshot>, TSnapshot>
-    implements IStateProvider<TState> {
+    implements IStateProvider<TState>
+{
     constructor(protected readonly TState: IStateType<TState, TSnapshot>) {}
 
     public abstract get(

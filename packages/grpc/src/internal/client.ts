@@ -87,7 +87,7 @@ export function createGrpcClient<T>(
     for (const key of Object.keys(serviceDef)) {
         const method = serviceDef[key];
         if (method.requestStream) {
-            wrapper[key] = function() {
+            wrapper[key] = function () {
                 throw new Error("client-side streams are not supported");
             };
             continue;
@@ -123,7 +123,7 @@ export function createGrpcClient<T>(
         const retrier = createRetrier(config.behavior);
 
         if (method.responseStream) {
-            wrapper[key] = async function*(
+            wrapper[key] = async function* (
                 request: any,
                 spanContext: SpanContext
             ): AsyncIterableIterator<any> {
@@ -199,7 +199,7 @@ export function createGrpcClient<T>(
                 yield* pipe;
             };
         } else {
-            wrapper[key] = async function(request: any, spanContext: SpanContext): Promise<any> {
+            wrapper[key] = async function (request: any, spanContext: SpanContext): Promise<any> {
                 const startTime = performance.now();
                 this.metrics.increment(GrpcMetrics.RequestSent, {
                     path: method.path,

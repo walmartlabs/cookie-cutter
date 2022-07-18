@@ -34,7 +34,7 @@
     "scripts": {
         "build": "echo 'SKIP BUILD'",
         "test": "echo 'SKIP TEST'",
-        "lint": "echo 'SKIP LINT'",
+        "lint": "tslint --project tsconfig.json",
         "lint:fix": "yarn run lint --fix"
     }
 }

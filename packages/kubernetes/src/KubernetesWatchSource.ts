@@ -22,8 +22,10 @@ interface IK8sRequest {
     abort(): void;
 }
 
-export class KubernetesWatchSource extends KubernetesBase
-    implements IInputSource, IRequireInitialization {
+export class KubernetesWatchSource
+    extends KubernetesBase
+    implements IInputSource, IRequireInitialization
+{
     private readonly queue: BoundedPriorityQueue<MessageRef>;
     private pendingRequest: IK8sRequest | undefined;
     private done: boolean;

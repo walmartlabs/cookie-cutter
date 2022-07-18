@@ -161,7 +161,8 @@ function createSqlType(param: ITableTypeParam): sql.ISqlType {
 }
 
 export class MssqlSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private connectionPool: sql.ConnectionPool;
     private sprocMap: Map<string, ISprocDetails>;
     private tableMap: Map<string, ITableDetails>;

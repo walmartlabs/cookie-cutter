@@ -415,9 +415,9 @@ export class QueueClient implements IRequireInitialization {
                         messageObj.headers[QueueMetadata.TimeToLive] = (
                             result.expiresOn.getTime() - Date.now()
                         ).toString();
-                        messageObj.headers[
-                            QueueMetadata.VisibilityTimeout
-                        ] = result.nextVisibleOn.getTime().toString();
+                        messageObj.headers[QueueMetadata.VisibilityTimeout] = result.nextVisibleOn
+                            .getTime()
+                            .toString();
                         messageObj.headers[QueueMetadata.MessageId] = result.messageId;
                         messageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
 
