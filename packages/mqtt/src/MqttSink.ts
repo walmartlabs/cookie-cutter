@@ -81,7 +81,7 @@ export class MqttPublisherSink
                         childOf: message.spanContext,
                     });
 
-                    this.spanLogAndSetTags(span, this.sink.name, this.config.defaultTopic);
+                    this.spanLogAndSetTags(span, this.sink.name, topic);
 
                     if (error) {
                         this.logger.error("Writing message to broker failed", {

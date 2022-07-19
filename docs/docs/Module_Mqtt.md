@@ -61,7 +61,7 @@ Application.create()
             hostName: "test-broker",
             hostPort: "1234",
             ecnoder: new JsonMessageEncoder(),
-            topic: "test-topic",
+            defaultTopic: "test-topic",
         }))
         .done()
     // ....
@@ -77,7 +77,7 @@ The available configuration options are
 | hostName | MQTT broker's host name |
 | hostPort | MQTT broker's host port where the service is listening on |
 | encoder | defines how the raw data received from MQTT broker should be converted into message objects |
-| topic | name of the subscribed topic where the message was received from |
+| defaultTopic | name of topic where message is to be published to if topic not found in metadata |
 | _qos_ | quality of service that can `only` take values 0 (`at most once`), 1 (`at least once`), and 2 (`exactly once`). Default value is 0  |
 
 ### Publishing to Mqtt broker
@@ -97,12 +97,18 @@ Application.create()
             hostName: "test-broker",
             hostPort: "1234",
             ecnoder: new JsonMessageEncoder(),
-            topic: "test-topic",
+            defaultTopic: "test-topic",
         }))
         .done()
     // ...
     .run();
 ```
+
+### Metadata
+
+| Name | Description |
+| ---- | ----------- |
+| MqttMetadata.topic | if provided, message will be pusblished to this topic instead of `defaultTopic` |
 
 ### Metrics
 
