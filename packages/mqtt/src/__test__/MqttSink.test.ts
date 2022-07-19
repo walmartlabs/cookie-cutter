@@ -74,7 +74,7 @@ describe.each([
             hostName: "test.host.name",
             hostPort: 5678,
             encoder: new JsonMessageEncoder(),
-            topic: "test/publisher/topic",
+            defaultTopic: "test/publisher/topic",
         },
         [
             {
@@ -92,7 +92,7 @@ describe.each([
             hostName: "test.host.name",
             hostPort: 5678,
             encoder: new JsonMessageEncoder(),
-            topic: "test/publisher/topic",
+            defaultTopic: "test/publisher/topic",
             qos: mockTestQos as QoS,
         },
         [

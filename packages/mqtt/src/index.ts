@@ -40,7 +40,7 @@ export interface IMqttAuthConfig {
 
 export interface IMqttPublisherConfiguration {
     readonly encoder: IMessageEncoder;
-    readonly topic: string;
+    readonly defaultTopic: string;
     readonly qos?: QoS;
 }
 
