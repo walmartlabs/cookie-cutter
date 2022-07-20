@@ -72,6 +72,12 @@ export class MqttPublisherSink
             const formattedMsg: IMqttMessage = this.formattedMessage(message);
             const topic: string = message.metadata[MqttMetadata.topic] || this.config.defaultTopic;
 
+            if (!topic) {
+                throw new Error(
+                    "This message does not have a topic/default topic to be published too!"
+                );
+            }
+
             this.client.publish(
                 topic,
                 Buffer.from(JSON.stringify(formattedMsg)),
