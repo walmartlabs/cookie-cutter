@@ -66,11 +66,11 @@ export class MQTTPublisherConfiguration extends MQTTAuthConfig
     }
 
     @config.field(config.converters.string)
-    public set topic(_: string) {
+    public set defaultTopic(_: string) {
         config.noop();
     }
 
-    public get topic(): string {
+    public get defaultTopic(): string {
         return config.noop();
     }
 

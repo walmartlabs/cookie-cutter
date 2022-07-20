@@ -19,7 +19,7 @@ import {
     OpenTracingTagKeys,
     OutputSinkConsistencyLevel,
 } from "@walmartlabs/cookie-cutter-core";
-import { IMqttAuthConfig, IMqttMessage, IMqttPublisherConfiguration } from ".";
+import { IMqttAuthConfig, IMqttMessage, IMqttPublisherConfiguration, MqttMetadata } from ".";
 import * as mqtt from "mqtt";
 import { Span, Tags, Tracer } from "opentracing";
 import { AttributeNames, MqttMetricResults, MqttMetrics, MQTTOpenTracingTagKeys } from "./model";
@@ -70,9 +70,16 @@ export class MqttPublisherSink
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
         for (const message of output) {
             const formattedMsg: IMqttMessage = this.formattedMessage(message);
+            const topic: string = message.metadata[MqttMetadata.topic] || this.config.defaultTopic;
+
+            if (!topic) {
+                throw new Error(
+                    "This message does not have a topic/default topic to be published to!"
+                );
+            }
 
             this.client.publish(
-                this.config.topic,
+                topic,
                 Buffer.from(JSON.stringify(formattedMsg)),
                 { qos: this.config.qos },
                 (error: Error) => {
@@ -80,32 +87,32 @@ export class MqttPublisherSink
                         childOf: message.spanContext,
                     });
 
-                    this.spanLogAndSetTags(span, this.sink.name, this.config.topic);
+                    this.spanLogAndSetTags(span, this.sink.name, topic);
 
                     if (error) {
                         this.logger.error("Writing message to broker failed", {
                             message,
                             error,
-                            topic: this.config.topic,
+                            topic,
                             hostName: this.config.hostName,
                             hostPort: this.config.hostPort,
                         });
 
                         this.emitMetrics(
-                            this.config.topic,
+                            topic,
                             formattedMsg.attributes[AttributeNames.eventType],
                             MqttMetricResults.error
                         );
                         failSpan(span, error);
                     } else {
                         this.emitMetrics(
-                            this.config.topic,
+                            topic,
                             formattedMsg.attributes[AttributeNames.eventType],
                             MqttMetricResults.success
                         );
 
                         this.logger.debug("Message published to broker", {
-                            topic: this.config.topic,
+                            topic,
                             hostName: this.config.hostName,
                             hostPort: this.config.hostPort,
                         });
