@@ -60,7 +60,7 @@ function createTestAp(
         .output()
         .published(sink)
         .done()
-        .run(ErrorHandlingMode.LogAndContinue);
+        .run(ErrorHandlingMode.LogAndFail);
 }
 
 describe.each([
@@ -403,7 +403,7 @@ describe("Testing MQTT publisher WITHOUT default topic or mentioned in metadata"
             mockMessageHandlerWithoutTopicMetadata
         );
 
-        await testApp;
+        await expect(testApp).rejects.toThrow();
         expect(mockMqttPublisher).toBeCalledTimes(0);
     });
 });
