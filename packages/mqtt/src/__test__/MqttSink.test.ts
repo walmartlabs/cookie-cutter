@@ -44,7 +44,7 @@ class TestEvent {
     public constructor(public value: any) {}
 }
 
-function createTestAp(
+function createTestApp(
     inputs: StaticInputSourceType<IMessage | MessageRef>,
     sink: IOutputSink<IPublishedMessage>,
     mockMessageHandlerFunction: any
@@ -144,7 +144,7 @@ describe.each([
             );
 
             const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-            const testApp: any = createTestAp(
+            const testApp: any = createTestApp(
                 testMessages,
                 sink,
                 mockMessageHandlerWithoutTopicMetadata
@@ -169,7 +169,7 @@ describe.each([
             );
 
             const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-            const testApp: any = createTestAp(
+            const testApp: any = createTestApp(
                 testMessages,
                 sink,
                 mockMessageHandlerWithoutTopicMetadata
@@ -190,7 +190,7 @@ describe.each([
             });
 
             const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-            const testApp: any = createTestAp(
+            const testApp: any = createTestApp(
                 testMessages,
                 sink,
                 mockMessageHandlerWithoutTopicMetadata
@@ -284,7 +284,7 @@ describe.each([
             );
 
             const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-            const testApp: any = createTestAp(
+            const testApp: any = createTestApp(
                 testMessages,
                 sink,
                 mockMessageHandlerWithTopicMetadata
@@ -309,7 +309,7 @@ describe.each([
             );
 
             const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-            const testApp: any = createTestAp(
+            const testApp: any = createTestApp(
                 testMessages,
                 sink,
                 mockMessageHandlerWithTopicMetadata
@@ -330,7 +330,7 @@ describe.each([
             });
 
             const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-            const testApp: any = createTestAp(
+            const testApp: any = createTestApp(
                 testMessages,
                 sink,
                 mockMessageHandlerWithTopicMetadata
@@ -397,7 +397,7 @@ describe("Testing MQTT publisher WITHOUT default topic or mentioned in metadata"
         );
 
         const sink: IOutputSink<IPublishedMessage> = mqttSink({ ...testConfig });
-        const testApp: any = createTestAp(
+        const testApp: any = createTestApp(
             testMessages,
             sink,
             mockMessageHandlerWithoutTopicMetadata

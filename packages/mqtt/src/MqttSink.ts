@@ -74,7 +74,7 @@ export class MqttPublisherSink
 
             if (!topic) {
                 throw new Error(
-                    "This message does not have a topic/default topic to be published too!"
+                    "This message does not have a topic/default topic to be published to!"
                 );
             }
 
