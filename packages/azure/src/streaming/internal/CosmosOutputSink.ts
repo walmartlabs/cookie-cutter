@@ -10,8 +10,10 @@ import { isNullOrUndefined } from "util";
 import { ICosmosConfiguration } from "../..";
 import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
 
-export class CosmosOutputSink extends CosmosOutputSinkBase
-    implements IOutputSink<IPublishedMessage> {
+export class CosmosOutputSink
+    extends CosmosOutputSinkBase
+    implements IOutputSink<IPublishedMessage>
+{
     constructor(config: ICosmosConfiguration) {
         super(config);
     }

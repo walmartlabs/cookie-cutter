@@ -32,7 +32,8 @@ function retrieveSnapshotIndex(target: number, list: number[]): number {
 }
 
 export class BlobStorageSnapshotProvider<TSnapshot>
-    implements ISnapshotProvider<TSnapshot>, IRequireInitialization {
+    implements ISnapshotProvider<TSnapshot>, IRequireInitialization
+{
     private readonly client: BlobClient;
 
     constructor(config: IBlobStorageConfiguration) {
@@ -70,8 +71,8 @@ export class BlobStorageSnapshotProvider<TSnapshot>
             return [returnedSequenceNumber, JSON.parse(response) as TSnapshot];
         } catch (e) {
             if (
-                e.statusCode === 404 &&
-                (e.code === "BlobNotFound" || e.code === "ContainerNotFound")
+                (e as any).statusCode === 404 &&
+                ((e as any).code === "BlobNotFound" || (e as any).code === "ContainerNotFound")
             ) {
                 return [0, undefined];
             }

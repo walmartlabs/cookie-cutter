@@ -51,19 +51,17 @@ throwingFunction.mockImplementation((client: ThrowingClient): boolean => {
 });
 
 const asyncThrowingFunction: jest.Mock = jest.fn();
-asyncThrowingFunction.mockImplementation(
-    async (client: ThrowingClient): Promise<boolean> => {
-        if (client.errorsThrown === client.indexOfNonRetriableError) {
-            client.errorsThrown++;
-            throw new NonRetriableError();
-        }
-        if (client.errorsThrown < client.errorsToThrow) {
-            client.errorsThrown++;
-            throw new RetriableError();
-        }
-        return true;
+asyncThrowingFunction.mockImplementation(async (client: ThrowingClient): Promise<boolean> => {
+    if (client.errorsThrown === client.indexOfNonRetriableError) {
+        client.errorsThrown++;
+        throw new NonRetriableError();
     }
-);
+    if (client.errorsThrown < client.errorsToThrow) {
+        client.errorsThrown++;
+        throw new RetriableError();
+    }
+    return true;
+});
 
 const throwingFunctionWithBail: jest.Mock = jest.fn();
 throwingFunctionWithBail.mockImplementation(

@@ -19,7 +19,8 @@ import { IBlobStorageConfiguration } from "../..";
 import { BlobClient } from "../../utils";
 
 export class BlobStorageSnapshotOutputSink
-    implements IOutputSink<IStoredMessage>, IRequireInitialization {
+    implements IOutputSink<IStoredMessage>, IRequireInitialization
+{
     private readonly client: BlobClient;
     private readonly frequency: number;
 
@@ -58,7 +59,7 @@ export class BlobStorageSnapshotOutputSink
                     }
                 }
             } catch (e) {
-                if (!(e.statusCode === 404 && e.code === "BlobNotFound")) {
+                if (!((e as any).statusCode === 404 && (e as any).code === "BlobNotFound")) {
                     throw e;
                 }
             }

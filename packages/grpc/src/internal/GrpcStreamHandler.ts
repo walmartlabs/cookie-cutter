@@ -57,7 +57,7 @@ export class GrpcStreamHandler implements IRequireInitialization, IDisposable {
             }
 
             for await (const item of stream.pipe) {
-                await new Promise(async (resolve, reject) => {
+                await new Promise<void>(async (resolve, reject) => {
                     let written = false;
                     while (!written && !stream.call.cancelled) {
                         written = stream.call.write(item, () => {

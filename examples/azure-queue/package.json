@@ -4,10 +4,10 @@
     "version": "0.0.0",
     "license": "Apache-2.0",
     "dependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta",
-        "@walmartlabs/cookie-cutter-azure": "^1.5.0-beta",
-        "@walmartlabs/cookie-cutter-timer": "^1.5.0-beta",
-        "config": "^3.3.7"
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
+        "@walmartlabs/cookie-cutter-azure": "~1.6.0-beta",
+        "@walmartlabs/cookie-cutter-timer": "~1.6.0-beta",
+        "config": "3.3.7"
     },
     "scripts": {
         "build": "tsc",

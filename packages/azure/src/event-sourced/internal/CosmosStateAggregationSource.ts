@@ -25,7 +25,8 @@ import { ISnapshotProvider } from "..";
 import { ICosmosQueryClient } from "../..";
 
 export class CosmosStateAggregationSource<TSnapshot>
-    implements IStateAggregationSource<TSnapshot>, IRequireInitialization, IDisposable {
+    implements IStateAggregationSource<TSnapshot>, IRequireInitialization, IDisposable
+{
     private readonly client: Lifecycle<ICosmosQueryClient>;
     private readonly snapshot: Lifecycle<ISnapshotProvider<TSnapshot>>;
     private logger: ILogger;

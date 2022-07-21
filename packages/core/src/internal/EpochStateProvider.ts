@@ -24,7 +24,8 @@ export class EpochStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IStateProvider<TState>,
         IStateCacheLifecycle<TState>,
         IRequireInitialization,
-        IDisposable {
+        IDisposable
+{
     private readonly underlying: Lifecycle<IStateProvider<TState> & IStateCacheLifecycle<TState>>;
 
     public constructor(

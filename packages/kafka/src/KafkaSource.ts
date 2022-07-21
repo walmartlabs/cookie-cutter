@@ -123,14 +123,12 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                     );
                 }
                 if (headers[this.config.headerNames.stream]) {
-                    fromHeaders[EventSourcedMetadata.Stream] = headers[
-                        this.config.headerNames.stream
-                    ].toString();
+                    fromHeaders[EventSourcedMetadata.Stream] =
+                        headers[this.config.headerNames.stream].toString();
                 }
                 if (headers[this.config.headerNames.eventType]) {
-                    fromHeaders[EventSourcedMetadata.EventType] = headers[
-                        this.config.headerNames.eventType
-                    ].toString();
+                    fromHeaders[EventSourcedMetadata.EventType] =
+                        headers[this.config.headerNames.eventType].toString();
                 }
                 if (headers[this.config.headerNames.timestamp]) {
                     const dt = headers[this.config.headerNames.timestamp];
@@ -147,9 +145,8 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                             headers[this.config.additionalHeaderNames[headerKey]] &&
                             !fromHeaders[headerKey]
                         ) {
-                            fromHeaders[headerKey] = headers[
-                                this.config.additionalHeaderNames[headerKey]
-                            ].toString();
+                            fromHeaders[headerKey] =
+                                headers[this.config.additionalHeaderNames[headerKey]].toString();
                         }
                     }
                 }
@@ -170,93 +167,87 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                 // EoS configured KafkaSources no-op on a message release and
                 // rely on the KafkaSink to commit offsets for them
                 if (!this.config.eos) {
-                    msg.once(
-                        "released",
-                        async (msg, _, err): Promise<void> => {
-                            const offset: string = msg.metadata(KafkaMetadata.Offset);
-                            const topic: string = msg.metadata(KafkaMetadata.Topic);
-                            const partition: number = msg.metadata(KafkaMetadata.Partition);
-                            const epoch: number = msg.metadata(KafkaMetadata.ConsumerGroupEpoch);
+                    msg.once("released", async (msg, _, err): Promise<void> => {
+                        const offset: string = msg.metadata(KafkaMetadata.Offset);
+                        const topic: string = msg.metadata(KafkaMetadata.Topic);
+                        const partition: number = msg.metadata(KafkaMetadata.Partition);
+                        const epoch: number = msg.metadata(KafkaMetadata.ConsumerGroupEpoch);
 
-                            if (err || epoch !== this.consumer.epoch) {
-                                if (err) {
-                                    this.logger.error("Unable to release msg", err);
-                                } else {
-                                    this.logger.debug(
-                                        "Detected epoch mismatch, not committing offset",
-                                        {
-                                            offset,
-                                            topic,
-                                            partition,
-                                        }
-                                    );
-                                }
-
-                                failSpan(span, err || new Error("epoch mismatch"));
-                                this.metrics.increment(KafkaMetrics.MsgProcessed, {
-                                    topic,
-                                    event_type: type,
-                                    partition,
-                                    result: KafkaMetricResult.Error,
-                                });
-                                return;
+                        if (err || epoch !== this.consumer.epoch) {
+                            if (err) {
+                                this.logger.error("Unable to release msg", err);
+                            } else {
+                                this.logger.debug(
+                                    "Detected epoch mismatch, not committing offset",
+                                    {
+                                        offset,
+                                        topic,
+                                        partition,
+                                    }
+                                );
                             }
 
-                            // TODO - Only commit if above highwater mark
-                            this.consumer.addOffsets({
-                                topics: [{ topic, partitions: [{ partition, offset }] }],
-                            });
+                            failSpan(span, err || new Error("epoch mismatch"));
                             this.metrics.increment(KafkaMetrics.MsgProcessed, {
                                 topic,
                                 event_type: type,
                                 partition,
-                                result: KafkaMetricResult.Success,
+                                result: KafkaMetricResult.Error,
                             });
-                            span.finish();
+                            return;
                         }
-                    );
+
+                        // TODO - Only commit if above highwater mark
+                        this.consumer.addOffsets({
+                            topics: [{ topic, partitions: [{ partition, offset }] }],
+                        });
+                        this.metrics.increment(KafkaMetrics.MsgProcessed, {
+                            topic,
+                            event_type: type,
+                            partition,
+                            result: KafkaMetricResult.Success,
+                        });
+                        span.finish();
+                    });
                 } else {
-                    msg.once(
-                        "released",
-                        async (msg, __, err): Promise<void> => {
-                            const topic: string = msg.metadata(KafkaMetadata.Topic);
-                            const partition: string = msg.metadata(KafkaMetadata.Partition);
-                            const offset: string = msg.metadata(KafkaMetadata.Offset);
-                            const epoch: number = msg.metadata(KafkaMetadata.ConsumerGroupEpoch);
+                    msg.once("released", async (msg, __, err): Promise<void> => {
+                        const topic: string = msg.metadata(KafkaMetadata.Topic);
+                        const partition: string = msg.metadata(KafkaMetadata.Partition);
+                        const offset: string = msg.metadata(KafkaMetadata.Offset);
+                        const epoch: number = msg.metadata(KafkaMetadata.ConsumerGroupEpoch);
 
-                            if (err || epoch !== this.consumer.epoch) {
-                                if (err) {
-                                    this.logger.error("Unable to release msg", err);
-                                } else {
-                                    this.logger.debug(
-                                        "Detected epoch mismatch, not committing offset",
-                                        {
-                                            offset,
-                                            topic,
-                                            partition,
-                                        }
-                                    );
-                                }
-
-                                failSpan(span, err || new Error("epoch mismatch"));
-                                this.metrics.increment(KafkaMetrics.MsgProcessed, {
-                                    topic,
-                                    event_type: type,
-                                    partition,
-                                    result: KafkaMetricResult.Error,
-                                });
-                                return;
+                        if (err || epoch !== this.consumer.epoch) {
+                            if (err) {
+                                this.logger.error("Unable to release msg", err);
+                            } else {
+                                this.logger.debug(
+                                    "Detected epoch mismatch, not committing offset",
+                                    {
+                                        offset,
+                                        topic,
+                                        partition,
+                                    }
+                                );
                             }
 
+                            failSpan(span, err || new Error("epoch mismatch"));
                             this.metrics.increment(KafkaMetrics.MsgProcessed, {
                                 topic,
                                 event_type: type,
                                 partition,
-                                result: KafkaMetricResult.Success,
+                                result: KafkaMetricResult.Error,
                             });
-                            span.finish();
+                            return;
                         }
-                    );
+
+                        this.metrics.increment(KafkaMetrics.MsgProcessed, {
+                            topic,
+                            event_type: type,
+                            partition,
+                            result: KafkaMetricResult.Success,
+                        });
+                        span.finish();
+                    });
                 }
                 yield msg;
             } catch (e) {

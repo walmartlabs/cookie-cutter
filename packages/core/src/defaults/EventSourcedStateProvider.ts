@@ -23,7 +23,8 @@ import {
 import { ConventionBasedStateAggregator } from "./ConventionBasedStateAggregator";
 
 export class EventSourcedStateProvider<TState extends IState<TSnapshot>, TSnapshot>
-    implements IStateProvider<TState>, IRequireInitialization, IDisposable {
+    implements IStateProvider<TState>, IRequireInitialization, IDisposable
+{
     private readonly aggregator: IStateAggregator<TState, TSnapshot>;
     private readonly source: Lifecycle<IStateAggregationSource<TSnapshot>>;
 

@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-proto",
-    "version": "1.5.0-beta.2",
+    "version": "1.6.0-beta.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,15 +13,16 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "long": "4.0.0",
-        "protobufjs": "^6.11.0"
+        "long": "5.2.0",
+        "protobufjs": "6.11.3"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta"
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta",
-        "eval": "^0.1.8"
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
+        "uglify-js": "3.7.7",
+        "eval": "0.1.8"
     },
     "scripts": {
         "build": "tsc",

@@ -22,7 +22,8 @@ import * as amqp from "amqplib";
 import { Span, Tags, Tracer } from "opentracing";
 
 export class AmqpSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private tracer: Tracer;
     private conn: amqp.Connection;
     private channel: amqp.Channel;

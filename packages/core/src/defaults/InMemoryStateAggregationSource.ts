@@ -9,7 +9,8 @@ import { SpanContext } from "opentracing";
 import { IAggregableState, IMessage, IStateAggregationSource } from "../model";
 
 export class InMemoryStateAggregationSource<TSnapshot>
-    implements IStateAggregationSource<TSnapshot> {
+    implements IStateAggregationSource<TSnapshot>
+{
     constructor(private readonly storage: Map<string, IMessage[]>) {}
 
     public async load(

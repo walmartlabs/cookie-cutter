@@ -31,7 +31,8 @@ export class CompositeOutputSink
         IOutputSink<BufferedDispatchContext>,
         IRequireInitialization,
         IDisposable,
-        IMessageEnricher {
+        IMessageEnricher
+{
     private readonly coordinator: SinkCoordinator;
 
     constructor(

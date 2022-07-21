@@ -10,8 +10,10 @@ import { IBlobStorageSnapshotOutputSinkConfiguration } from "..";
 import { BlobStorageConfiguration } from "../../config";
 
 @config.section
-export class BlobStorageSnapshotOutputSinkConfiguration extends BlobStorageConfiguration
-    implements IBlobStorageSnapshotOutputSinkConfiguration {
+export class BlobStorageSnapshotOutputSinkConfiguration
+    extends BlobStorageConfiguration
+    implements IBlobStorageSnapshotOutputSinkConfiguration
+{
     @config.field(config.converters.number)
     public set frequency(_: number) {
         config.noop();

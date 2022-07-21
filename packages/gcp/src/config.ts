@@ -113,8 +113,10 @@ export class GcpAuthConfiguration implements IGcpAuthConfiguration {
 }
 
 @config.section
-export class PubSubPublisherConfiguration extends GcpAuthConfiguration
-    implements IPubSubPublisherConfiguration {
+export class PubSubPublisherConfiguration
+    extends GcpAuthConfiguration
+    implements IPubSubPublisherConfiguration
+{
     @config.field(config.converters.none)
     public set encoder(_: IMessageEncoder) {
         config.noop();
@@ -157,8 +159,10 @@ export class PubSubPublisherConfiguration extends GcpAuthConfiguration
 }
 
 @config.section
-export class PubSubSubscriberConfiguration extends GcpAuthConfiguration
-    implements IPubSubSubscriberConfiguration {
+export class PubSubSubscriberConfiguration
+    extends GcpAuthConfiguration
+    implements IPubSubSubscriberConfiguration
+{
     @config.field(config.converters.none)
     public set encoder(_: IMessageEncoder) {
         config.noop();

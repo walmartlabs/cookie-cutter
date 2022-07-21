@@ -32,9 +32,9 @@ let capturedOutput: any[] = [];
 
 jest.mock("@google-cloud/pubsub", () => {
     return {
-        PubSub: jest.fn(function(_testConfig) {
+        PubSub: jest.fn(function (_testConfig) {
             return {
-                subscription: jest.fn(function(_testSubName, _testSubOptions) {
+                subscription: jest.fn(function (_testSubName, _testSubOptions) {
                     return {
                         on: jest.fn(mockHandlerFunction),
                         removeAllListeners: jest.fn(),

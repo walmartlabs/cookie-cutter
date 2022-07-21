@@ -87,7 +87,7 @@ export function createGrpcClient<T>(
     for (const key of Object.keys(serviceDef)) {
         const method = serviceDef[key];
         if (method.requestStream) {
-            wrapper[key] = function() {
+            wrapper[key] = function () {
                 throw new Error("client-side streams are not supported");
             };
             continue;
@@ -95,7 +95,7 @@ export function createGrpcClient<T>(
 
         let ready = false;
         const whenReady = (span: Span) =>
-            new Promise((resolve, reject) => {
+            new Promise<void>((resolve, reject) => {
                 client.waitForReady(Date.now() + config.connectionTimeout!, (err) => {
                     if (err) {
                         failSpan(span, err);
@@ -123,7 +123,7 @@ export function createGrpcClient<T>(
         const retrier = createRetrier(config.behavior);
 
         if (method.responseStream) {
-            wrapper[key] = async function*(
+            wrapper[key] = async function* (
                 request: any,
                 spanContext: SpanContext
             ): AsyncIterableIterator<any> {
@@ -138,7 +138,9 @@ export function createGrpcClient<T>(
                         await whenReady(span);
                     } catch (e) {
                         throw new Error(
-                            `Endpoint: ${config.endpoint}, Service: ${method.path}, Original Error: [${e.stack}]`
+                            `Endpoint: ${config.endpoint}, Service: ${
+                                method.path
+                            }, Original Error: [${(e as any).stack}]`
                         );
                     }
                 }
@@ -154,7 +156,7 @@ export function createGrpcClient<T>(
                             callOptions()
                         );
                     } catch (e) {
-                        if (e.code === status.UNAVAILABLE) {
+                        if ((e as any).code === status.UNAVAILABLE) {
                             throw e;
                         }
                         bail(e);
@@ -197,7 +199,7 @@ export function createGrpcClient<T>(
                 yield* pipe;
             };
         } else {
-            wrapper[key] = async function(request: any, spanContext: SpanContext): Promise<any> {
+            wrapper[key] = async function (request: any, spanContext: SpanContext): Promise<any> {
                 const startTime = performance.now();
                 this.metrics.increment(GrpcMetrics.RequestSent, {
                     path: method.path,
@@ -209,7 +211,9 @@ export function createGrpcClient<T>(
                         await whenReady(span);
                     } catch (e) {
                         throw new Error(
-                            `Endpoint: ${config.endpoint}, Service: ${method.path}, Original Error: [${e.stack}]`
+                            `Endpoint: ${config.endpoint}, Service: ${
+                                method.path
+                            }, Original Error: [${(e as any).stack}]`
                         );
                     }
                 }
@@ -250,7 +254,7 @@ export function createGrpcClient<T>(
                             );
                         });
                     } catch (e) {
-                        if (e.code === status.UNAVAILABLE) {
+                        if ((e as any).code === status.UNAVAILABLE) {
                             throw e;
                         }
                         bail(e);

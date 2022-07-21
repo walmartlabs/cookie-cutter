@@ -28,7 +28,8 @@ import { AttributeNames, MqttMetricResults, MqttMetrics, MQTTOpenTracingTagKeys 
     A MQTT publisher client that publishes messages to a broker
 */
 export class MqttPublisherSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private client: mqtt.MqttClient;
     private tracer: Tracer;
     private logger: ILogger;

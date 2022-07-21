@@ -47,26 +47,26 @@ jobs:
         run: yarn audit
         # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
 
-  test-ubuntu-node-12:
-    name: Ubuntu Node 12 Test
-    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: smoke
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 12
-        uses: actions/setup-node@v2-beta
-        with:
-          node-version: "12"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile
-      - name: Yarn Build
-        run: yarn build
-      - name: Yarn Test
-        run: yarn test
+  # test-ubuntu-node-12:
+  #   name: Ubuntu Node 12 Test
+  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+  #   needs: smoke
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #     - name: Setup Ubuntu Node 12
+  #       uses: actions/setup-node@v2-beta
+  #       with:
+  #         node-version: "12"
+  #     - name: Install Yarn 1.21.1
+  #       run: yarn set version 1.21.1
+  #     - name: Install Dependencies
+  #       run: yarn install --frozen-lockfile
+  #     - name: Yarn Build
+  #       run: yarn build
+  #     - name: Yarn Test
+  #       run: yarn test
 
   test-macOS:
     name: MacOS Node 16 Test
@@ -93,17 +93,17 @@ jobs:
 
   # # # # Disable until we can fix Windows Build Issue for for Node 12+
   # test-windows:
-  #   name: Windows 2019 Node 10 Test
+  #   name: Windows Test
   #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
   #   needs: smoke
-  #   runs-on: windows-2019
+  #   runs-on: windows-latest
   #   steps:
   #     - name: Checkout Code
   #       uses: actions/checkout@v2
-  #     - name: Setup Windows Node 10
+  #     - name: Setup Windows Node 16
   #       uses: actions/setup-node@v2-beta
   #       with:
-  #         node-version: "10.24.1"
+  #         node-version: "16"
   #       env:
   #         YARN_GPG: no # Windows build agent will hang without this
   #     - name: Install Yarn 1.21.1
@@ -120,15 +120,16 @@ jobs:
   #   name: Azure Integration
   #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
   #   # needs: [test-ubuntu-node-12, test-windows]
-  #   needs: [test-ubuntu-node-12]
-  #   runs-on: windows-2019
+  #   # needs: [test-macOS]
+  #   needs: [smoke]
+  #   runs-on: windows-latest
   #   steps:
   #     - name: Checkout Code
   #       uses: actions/checkout@v2
-  #     - name: Setup Windows Node 10
+  #     - name: Setup Windows Node 16
   #       uses: actions/setup-node@v2-beta
   #       with:
-  #         node-version: "10.24.1"
+  #         node-version: "16"
   #     - name: Install Yarn 1.21.1
   #       run: yarn set version 1.21.1
   #     - name: Install Dependencies
@@ -151,7 +152,7 @@ jobs:
   integration-mssql:
     name: MSSQL Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12, test-macOS]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -172,7 +173,7 @@ jobs:
   integration-amqp:
     name: AMQP Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12, test-macOS]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -193,7 +194,7 @@ jobs:
   integration-kafka:
     name: Kafka Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12, test-macOS]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -214,7 +215,7 @@ jobs:
   integration-prometheus:
     name: Prometheus Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12, test-macOS]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -235,7 +236,7 @@ jobs:
   integration-s3:
     name: S3 Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12, test-macOS]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -256,7 +257,7 @@ jobs:
   integration-redis:
     name: Redis Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12, test-macOS]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
