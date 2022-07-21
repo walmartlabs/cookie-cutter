@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "mssql": "8.1.2",
+        "mssql": "6.3.2",
         "opentracing": "0.14.7"
     },
     "peerDependencies": {
@@ -21,7 +21,7 @@
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
-        "@types/mssql": "8.0.3"
+        "@types/mssql": "6.0.8"
     },
     "scripts": {
         "build": "tsc",

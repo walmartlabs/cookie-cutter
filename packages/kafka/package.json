@@ -14,7 +14,7 @@
     },
     "dependencies": {
         "change-case": "4.1.2",
-        "kafkajs": "2.1.0",
+        "kafkajs": "1.16.0",
         "kafkajs-snappy": "1.1.0",
         "kafkajs-lz4": "1.2.1",
         "long": "5.2.0",
