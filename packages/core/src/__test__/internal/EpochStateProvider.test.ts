@@ -51,7 +51,6 @@ describe("EpochStateProvider", () => {
         expect(stateRef.epoch).toBe(2);
     });
 
-    // TODO: find issue with this test
     it("resets epoch counter when item is evicted from cache", async () => {
         const { cache, storage, epochs } = cacheFactory();
         for (let i = 0; i < 100; i++) {
