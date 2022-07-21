@@ -52,7 +52,7 @@ describe("EpochStateProvider", () => {
     });
 
     // TODO: find issue with this test
-    it.skip("resets epoch counter when item is evicted from cache", async () => {
+    it("resets epoch counter when item is evicted from cache", async () => {
         const { cache, storage, epochs } = cacheFactory();
         for (let i = 0; i < 100; i++) {
             storage.set(`key-${i}`, [{ type: Increment.name, payload: new Increment(1) }]);
