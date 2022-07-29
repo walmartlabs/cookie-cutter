@@ -133,10 +133,10 @@ describe("Kafka Integration Tests", () => {
             await admin.createTopics({
                 waitForLeaders: true,
                 topics: [
-                    { topic: producerShutdownTopic, numPartitions: 1 },
-                    { topic: produceConsumerTopic, numPartitions: 1 },
-                    { topic: assignMetadataTopic, numPartitions: 1 },
-                    { topic: multiplePartitionsTopic, numPartitions: 3 },
+                    { topic: producerShutdownTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: produceConsumerTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: assignMetadataTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: multiplePartitionsTopic, numPartitions: 3, replicationFactor: 1 },
                 ],
             });
         });
@@ -275,8 +275,11 @@ describe("Kafka Integration Tests", () => {
                     });
                 }
                 // check offsets were committed correctly
-                const offsets = await admin.fetchOffsets({ groupId, topic: produceConsumerTopic });
-                expect(offsets).toMatchObject([{ partition: 0, offset: "5" }]);
+                const topics = await admin.fetchOffsets({
+                    groupId,
+                    topics: [produceConsumerTopic],
+                });
+                expect(topics[0].partitions).toMatchObject([{ partition: 0, offset: "5" }]);
             }
         });
 
@@ -380,8 +383,11 @@ describe("Kafka Integration Tests", () => {
                 expect(keys).toEqual(
                     expect.arrayContaining([testKeyOne, testKeyTwo, streamId, null])
                 );
-                const offsets = await admin.fetchOffsets({ groupId, topic: assignMetadataTopic });
-                expect(offsets).toMatchObject([{ partition: 0, offset: "4" }]);
+                const topics = await admin.fetchOffsets({
+                    groupId,
+                    topics: [assignMetadataTopic],
+                });
+                expect(topics[0].partitions).toMatchObject([{ partition: 0, offset: "4" }]);
             }
         });
 
@@ -456,11 +462,12 @@ describe("Kafka Integration Tests", () => {
             } finally {
                 expect(receivedKafkaMessages.length).toBeLessThanOrEqual(expNumConsumedMsgs);
                 expect(partitions).toEqual(expect.arrayContaining([0, 0, 0, 1, 1, 1, 2, 2, 2]));
-                const offsets = await admin.fetchOffsets({
+                const topics = await admin.fetchOffsets({
                     groupId: consumerGroupId,
-                    topic: multiplePartitionsTopic,
+                    topics: [multiplePartitionsTopic],
                 });
-                expect(offsets).toMatchObject([
+                // tslint:disable-next-line:no-console
+                expect(topics[0].partitions).toMatchObject([
                     { partition: 0, offset: "3" },
                     { partition: 1, offset: "3" },
                     { partition: 2, offset: "3" },
@@ -586,16 +593,18 @@ describe("Kafka Integration Tests", () => {
                 await secondConsumer;
             } finally {
                 expect(processedMsgs).toBe(expNumMsgsFirstConsumer + expNumMsgsSecondConsumer);
-                const testTopicOffsets = await admin.fetchOffsets({
+                const testTopics = await admin.fetchOffsets({
                     groupId: consumerGroupId,
-                    topic: testTopicNormal,
+                    topics: [testTopicNormal],
                 });
-                expect(testTopicOffsets).toMatchObject([{ partition: 0, offset: "2" }]);
-                const testTopicCompactedOffsets = await admin.fetchOffsets({
+                expect(testTopics[0].partitions).toMatchObject([{ partition: 0, offset: "2" }]);
+                const testTopicsCompacted = await admin.fetchOffsets({
                     groupId: consumerGroupId,
-                    topic: testTopicCompacted,
+                    topics: [testTopicCompacted],
                 });
-                expect(testTopicCompactedOffsets).toMatchObject([{ partition: 0, offset: "2" }]);
+                expect(testTopicsCompacted[0].partitions).toMatchObject([
+                    { partition: 0, offset: "2" },
+                ]);
             }
         });
     });
@@ -612,7 +621,7 @@ describe("Kafka Integration Tests", () => {
                 await admin.connect();
                 await admin.createTopics({
                     waitForLeaders: true,
-                    topics: [{ topic: testTopic, numPartitions: 2 }],
+                    topics: [{ topic: testTopic, numPartitions: 2, replicationFactor: 1 }],
                 });
             } finally {
                 await admin.disconnect();
@@ -750,7 +759,7 @@ describe("Kafka Integration Tests", () => {
             await admin.connect();
             await admin.createTopics({
                 waitForLeaders: true,
-                topics: [{ topic: snappyTopic, numPartitions: 1 }],
+                topics: [{ topic: snappyTopic, numPartitions: 1, replicationFactor: 1 }],
             });
             producer = client.producer();
             await producer.connect();
