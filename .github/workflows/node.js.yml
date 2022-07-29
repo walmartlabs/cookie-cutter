@@ -49,8 +49,8 @@ jobs:
 
   master-audit:
     name: Ubuntu Node 16 Master Audit
-    # if: ${{ github.event_name == 'schedule' }}
-    # needs: smoke
+    if: ${{ github.event_name == 'schedule' }}
+    needs: smoke
     runs-on: ubuntu-latest
     outputs:
       commit_message: ${{ steps.output_message.outputs.commit_message }}
