@@ -297,6 +297,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                     const iMessageHeaders: IMessageHeaders = {};
                     for (const key of Object.keys(headers)) {
                         if (!isString(headers[key])) {
+                            // TODO: handle: https://kafka.js.org/docs/migration-guide-v2.0.0#consumer-supporting-duplicate-header-keys
                             iMessageHeaders[key] = (headers[key] as Buffer).toString();
                         } else {
                             iMessageHeaders[key] = headers[key] as string;
