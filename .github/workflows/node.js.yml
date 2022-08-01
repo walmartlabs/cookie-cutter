@@ -49,7 +49,7 @@ jobs:
 
   master-audit:
     name: Ubuntu Master Audit
-    # if: ${{ github.event_name == 'schedule' }} // DISABLE FOR TEST
+    if: ${{ github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     outputs:
       commit_message: ${{ steps.output_message.outputs.commit_message }}
@@ -171,89 +171,89 @@ jobs:
   #             PowerShell -File packages/azure/start_emulators.ps1
   #             PowerShell -File packages/azure/run_integration_tests.ps1
 
-  # integration-mssql:
-  #   name: MSSQL Integration
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-macOS]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Ubuntu Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Yarn Build
-  #       run: cd packages/core && yarn build && cd ../mssql && yarn build
-  #     - name: Yarn Integrate
-  #       run: cd packages/mssql && yarn integrate
+  integration-mssql:
+    name: MSSQL Integration
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [test-macOS]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: cd packages/core && yarn build && cd ../mssql && yarn build
+      - name: Yarn Integrate
+        run: cd packages/mssql && yarn integrate
 
-  # integration-amqp:
-  #   name: AMQP Integration
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-macOS]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Ubuntu Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Yarn Build
-  #       run: cd packages/core && yarn build && cd ../amqp && yarn build
-  #     - name: Yarn Integrate
-  #       run: cd packages/amqp && yarn integrate
+  integration-amqp:
+    name: AMQP Integration
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [test-macOS]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: cd packages/core && yarn build && cd ../amqp && yarn build
+      - name: Yarn Integrate
+        run: cd packages/amqp && yarn integrate
 
-  # integration-kafka:
-  #   name: Kafka Integration
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-macOS]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Ubuntu Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Yarn Build
-  #       run: cd packages/core && yarn build && cd ../kafka && yarn build
-  #     - name: Yarn Integrate
-  #       run: cd packages/kafka && yarn integrate
+  integration-kafka:
+    name: Kafka Integration
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [test-macOS]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: cd packages/core && yarn build && cd ../kafka && yarn build
+      - name: Yarn Integrate
+        run: cd packages/kafka && yarn integrate
 
-  # integration-prometheus:
-  #   name: Prometheus Integration
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-macOS]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Ubuntu Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Yarn Build
-  #       run: cd packages/core && yarn build && cd ../prometheus && yarn build
-  #     - name: Yarn Integrate
-  #       run: cd packages/prometheus && yarn integrate
+  integration-prometheus:
+    name: Prometheus Integration
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [test-macOS]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: cd packages/core && yarn build && cd ../prometheus && yarn build
+      - name: Yarn Integrate
+        run: cd packages/prometheus && yarn integrate
 
   integration-s3:
     name: S3 Integration
@@ -276,26 +276,26 @@ jobs:
       - name: Yarn Integrate
         run: cd packages/s3 && yarn integrate
 
-  # integration-redis:
-  #   name: Redis Integration
-  #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-macOS]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Ubuntu Node 16
-  #       uses: actions/setup-node@v2-beta
-  #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
-  #     - name: Install Dependencies
-  #       run: yarn install --frozen-lockfile
-  #     - name: Yarn Build
-  #       run: cd packages/core && yarn build && cd ../redis && yarn build
-  #     - name: Yarn Integrate
-  #       run: cd packages/redis && yarn integrate
+  integration-redis:
+    name: Redis Integration
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [test-macOS]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: cd packages/core && yarn build && cd ../redis && yarn build
+      - name: Yarn Integrate
+        run: cd packages/redis && yarn integrate
 
   publish-to-npm:
     name: Publish to NPM
