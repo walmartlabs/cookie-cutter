@@ -50,7 +50,6 @@ jobs:
   master-audit:
     name: Ubuntu Node 16 Master Audit
     if: ${{ github.event_name == 'schedule' }}
-    needs: smoke
     runs-on: ubuntu-latest
     outputs:
       commit_message: ${{ steps.output_message.outputs.commit_message }}
@@ -94,7 +93,7 @@ jobs:
   test-macOS:
     name: MacOS Node 16 Test
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: smoke
+    needs: [smoke, master-audit]
     runs-on: macOS-latest
     steps:
       - name: Checkout Code
