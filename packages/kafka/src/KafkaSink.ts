@@ -249,9 +249,11 @@ export class KafkaSink
             headers[this.config.headerNames.stream] = msg.metadata[EventSourcedMetadata.Stream];
         }
 
-        if (msg.metadata[EventSourcedMetadata.SequenceNumber]) {
-            headers[this.config.headerNames.sequenceNumber] =
-                msg.metadata[EventSourcedMetadata.SequenceNumber];
+        const seqNumHeader = msg.metadata[EventSourcedMetadata.SequenceNumber];
+        if (seqNumHeader) {
+            headers[this.config.headerNames.sequenceNumber] = Array.isArray(seqNumHeader)
+                ? seqNumHeader[0]
+                : seqNumHeader;
         }
 
         const possibleKey =

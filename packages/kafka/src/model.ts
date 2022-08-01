@@ -11,7 +11,7 @@ import { KafkaMetadata } from ".";
 
 export interface IMessageHeaders {
     // TODO: [key: string]: string | [string]; to handle: https://kafka.js.org/docs/migration-guide-v2.0.0#consumer-supporting-duplicate-header-keys
-    [key: string]: string;
+    [key: string]: string | string[];
 }
 
 export interface IRawKafkaMessage {

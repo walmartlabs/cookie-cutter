@@ -116,37 +116,42 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                     codedMessage = new EncodedMessage(this.config.encoder, type, message.value);
                 }
                 const fromHeaders: { [key: string]: any } = {};
-                if (headers[this.config.headerNames.sequenceNumber]) {
-                    fromHeaders[EventSourcedMetadata.SequenceNumber] = parseInt(
-                        headers[this.config.headerNames.sequenceNumber],
-                        10
-                    );
+                const seqNumHeader = headers[this.config.headerNames.sequenceNumber];
+                if (seqNumHeader) {
+                    fromHeaders[EventSourcedMetadata.SequenceNumber] = Array.isArray(seqNumHeader)
+                        ? parseInt(seqNumHeader[0], 10)
+                        : parseInt(seqNumHeader, 10);
                 }
-                if (headers[this.config.headerNames.stream]) {
-                    fromHeaders[EventSourcedMetadata.Stream] =
-                        headers[this.config.headerNames.stream].toString();
+                const streamHeader = headers[this.config.headerNames.stream];
+                if (streamHeader) {
+                    fromHeaders[EventSourcedMetadata.Stream] = Array.isArray(streamHeader)
+                        ? streamHeader[0].toString()
+                        : streamHeader.toString();
                 }
-                if (headers[this.config.headerNames.eventType]) {
-                    fromHeaders[EventSourcedMetadata.EventType] =
-                        headers[this.config.headerNames.eventType].toString();
+                const eventTypeHeaders = headers[this.config.headerNames.eventType];
+                if (eventTypeHeaders) {
+                    fromHeaders[EventSourcedMetadata.EventType] = Array.isArray(eventTypeHeaders)
+                        ? eventTypeHeaders[0].toString()
+                        : eventTypeHeaders.toString();
                 }
-                if (headers[this.config.headerNames.timestamp]) {
-                    const dt = headers[this.config.headerNames.timestamp];
+                const dt = headers[this.config.headerNames.timestamp];
+                if (dt) {
                     if (typeof dt === "string") {
                         fromHeaders[EventSourcedMetadata.Timestamp] = new Date(parseInt(dt, 10));
                     } else if (typeof dt === "number") {
                         fromHeaders[EventSourcedMetadata.Timestamp] = new Date(dt);
+                    } else if (Array.isArray(dt)) {
+                        fromHeaders[EventSourcedMetadata.Timestamp] = new Date(parseInt(dt[0], 10));
                     }
                 }
                 if (this.config.additionalHeaderNames) {
                     const headerKeys: string[] = Object.keys(this.config.additionalHeaderNames);
                     for (const headerKey of headerKeys) {
-                        if (
-                            headers[this.config.additionalHeaderNames[headerKey]] &&
-                            !fromHeaders[headerKey]
-                        ) {
-                            fromHeaders[headerKey] =
-                                headers[this.config.additionalHeaderNames[headerKey]].toString();
+                        const extraHeader = headers[this.config.additionalHeaderNames[headerKey]];
+                        if (extraHeader && !fromHeaders[headerKey]) {
+                            fromHeaders[headerKey] = Array.isArray(extraHeader)
+                                ? extraHeader[0].toString()
+                                : extraHeader.toString();
                         }
                     }
                 }
