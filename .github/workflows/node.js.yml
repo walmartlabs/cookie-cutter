@@ -48,7 +48,7 @@ jobs:
         # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
 
   master-audit:
-    name: Ubuntu Node 16 Master Audit
+    name: Ubuntu Master Audit
     if: ${{ github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     outputs:
