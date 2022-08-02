@@ -47,43 +47,44 @@ jobs:
         run: yarn audit
         # run: /bin/bash -c 'yarn audit; [[ $? -ge 8 ]] && exit 1 || exit 0'
 
-  test-ubuntu-node-12:
-    name: Ubuntu Node 12 Test
-    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: smoke
+  master-audit:
+    name: Ubuntu Master Audit
     runs-on: ubuntu-latest
+    outputs:
+      commit_message: ${{ steps.output_message.outputs.commit_message }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 12
+        with: # required for git log to access the correct commits
+          ref: master
+      - name: Setup Ubuntu Node 16
+        if: ${{ github.event_name == 'schedule' }}
         uses: actions/setup-node@v2-beta
         with:
-          node-version: "12"
+          node-version: "16"
       - name: Install Yarn 1.21.1
+        if: ${{ github.event_name == 'schedule' }}
         run: yarn set version 1.21.1
       - name: Install Dependencies
+        if: ${{ github.event_name == 'schedule' }}
         run: yarn install --frozen-lockfile
-      - name: Yarn Build
-        run: yarn build
-      - name: Yarn Test
-        run: yarn test
+      - name: Yarn Audit
+        if: ${{ github.event_name == 'schedule' }}
+        run: yarn audit
 
-  # # Disable until we can move to Yarn 2
-  # test-macOS:
-  #   name: MacOS Node 16 Test
+  # test-ubuntu-node-12:
+  #   name: Ubuntu Node 12 Test
   #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
   #   needs: smoke
-  #   runs-on: macOS-latest
+  #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout Code
   #       uses: actions/checkout@v2
-  #     - name: Setup MacOS Node 16
+  #     - name: Setup Ubuntu Node 12
   #       uses: actions/setup-node@v2-beta
   #       with:
-  #         node-version: "16"
+  #         node-version: "12"
   #     - name: Install Yarn 1.21.1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   #       run: yarn set version 1.21.1
   #     - name: Install Dependencies
   #       run: yarn install --frozen-lockfile
@@ -92,9 +93,32 @@ jobs:
   #     - name: Yarn Test
   #       run: yarn test
 
-  # # Disable until we can fix Windows Build Issue
+  test-macOS:
+    name: MacOS Node 16 Test
+    if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
+    needs: [smoke, master-audit]
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup MacOS Node 16
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16"
+      - name: Install Yarn 1.21.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Yarn Build
+        run: yarn build
+      - name: Yarn Test
+        run: yarn test
+
+  # # # # Disable until we can fix Windows Build Issue for for Node 12+
   # test-windows:
-  #   name: Windows Node 16 Test
+  #   name: Windows Test
   #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
   #   needs: smoke
   #   runs-on: windows-latest
@@ -116,11 +140,13 @@ jobs:
   #     - name: Yarn Test
   #       run: yarn test
 
-  #  # Disable until we can fix Windows Build Issue
+  # # # # Disable until we can fix Windows Build Issue for for Node 12+
   # integration-azure:
   #   name: Azure Integration
   #   if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-  #   needs: [test-ubuntu-node-12]
+  #   # needs: [test-ubuntu-node-12, test-windows]
+  #   # needs: [test-macOS]
+  #   needs: [smoke]
   #   runs-on: windows-latest
   #   steps:
   #     - name: Checkout Code
@@ -151,7 +177,7 @@ jobs:
   integration-mssql:
     name: MSSQL Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -172,7 +198,7 @@ jobs:
   integration-amqp:
     name: AMQP Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -193,7 +219,7 @@ jobs:
   integration-kafka:
     name: Kafka Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -214,7 +240,7 @@ jobs:
   integration-prometheus:
     name: Prometheus Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -235,7 +261,7 @@ jobs:
   integration-s3:
     name: S3 Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -256,7 +282,7 @@ jobs:
   integration-redis:
     name: Redis Integration
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
-    needs: [test-ubuntu-node-12]
+    needs: [test-macOS]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code

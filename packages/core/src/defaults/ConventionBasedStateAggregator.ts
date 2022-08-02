@@ -9,7 +9,8 @@ import { IAggregableState, IMessage, IState, IStateAggregator, IStateType } from
 import { prettyEventName } from "../utils";
 
 export class ConventionBasedStateAggregator<TState extends IState<TSnapshot>, TSnapshot>
-    implements IStateAggregator<TState, TSnapshot> {
+    implements IStateAggregator<TState, TSnapshot>
+{
     constructor(
         private readonly TState: IStateType<TState, TSnapshot>,
         private readonly target: any

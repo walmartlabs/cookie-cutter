@@ -28,7 +28,8 @@ import { getCollectionInfo } from "../../utils/helpers";
 
 export class CosmosStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     extends MaterializedViewStateProvider<TState, TSnapshot>
-    implements IRequireInitialization, IDisposable {
+    implements IRequireInitialization, IDisposable
+{
     private readonly client: Lifecycle<ICosmosQueryClient>;
     constructor(
         TState: IStateType<TState, TSnapshot>,

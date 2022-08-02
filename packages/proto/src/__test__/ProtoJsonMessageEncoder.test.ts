@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import * as Long from "long";
+import Long = require("long");
 import { pbjsStaticModuleRegistry, ProtoJsonMessageEncoder } from "..";
 import { loadTestProto } from "./helper";
 

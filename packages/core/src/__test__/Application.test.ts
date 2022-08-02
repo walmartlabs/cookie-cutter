@@ -38,7 +38,7 @@ import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
 import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
-jest.setTimeout(10000);
+jest.setTimeout(20000);
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
@@ -186,7 +186,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     .done()
                     .run(ErrorHandlingMode.LogAndFail, mode);
             } catch (e) {
-                err = e;
+                err = e as any;
             }
             expect(err).toMatchObject(
                 new Error(`test failed: init: true, run: false, dispose: true`)
@@ -223,7 +223,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     .done()
                     .run(ErrorHandlingMode.LogAndFail, mode);
             } catch (e) {
-                err = e;
+                err = e as any;
             }
             expect(err).toMatchObject(
                 new Error(`test failed: init: true, run: false, dispose: true`)
@@ -1069,7 +1069,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, target, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(throwSink).toHaveBeenCalledTimes(3);
                 expectLogNthCall(mockLogError, 2, notFinalAttempt);
@@ -1087,7 +1087,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, target, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(bailSink).toHaveBeenCalledTimes(1);
                 expectLogNthCall(mockLogError, 1, isFinalAttempt);
@@ -1104,7 +1104,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, target, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
                 expect(capture.length).toBe(1);
@@ -1118,7 +1118,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, target, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(throwSink).toHaveBeenCalledTimes(3);
                 expectLogNthCall(mockLogError, 2, notFinalAttempt);
@@ -1134,7 +1134,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, target, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(bailSink).toHaveBeenCalledTimes(1);
                 expectLogNthCall(mockLogError, 1, isFinalAttempt);
@@ -1149,7 +1149,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, target, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(bailSeqConSink).toHaveBeenCalledTimes(2);
                 expect(capture.length).toBe(1);
@@ -1192,7 +1192,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, targetThrow, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(targetThrow.onTest).toHaveBeenCalledTimes(3);
                 expectLogNthCall(mockLogError, 2, notFinalAttempt);
@@ -1209,7 +1209,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, targetBail, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(targetBail.onTest).toHaveBeenCalledTimes(1);
                 expectLogNthCall(mockLogError, 1, isFinalAttempt);
@@ -1225,7 +1225,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, targetThrow, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(targetThrow.onTest).toHaveBeenCalledTimes(3);
                 expectLogNthCall(mockLogError, 2, notFinalAttempt);
@@ -1240,7 +1240,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 try {
                     await runApplication(source, targetBail, store, capture, appBehavior);
                 } catch (e) {
-                    err = e;
+                    err = e as any;
                 }
                 expect(targetBail.onTest).toHaveBeenCalledTimes(1);
                 expectLogNthCall(mockLogError, 1, isFinalAttempt);

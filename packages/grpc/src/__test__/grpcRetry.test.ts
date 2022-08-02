@@ -12,7 +12,7 @@ jest.mock("grpc", () => {
     return {
         ...grpc,
         makeGenericClientConstructor: () => {
-            return function() {
+            return function () {
                 return {
                     ...grpc.makeGenericClientConstructor,
                     waitForReady: (_: any, callback: any): void => {
@@ -138,7 +138,7 @@ describe("grpc retry", () => {
             mockMakeServerStreamRequest = () => {
                 throw throwError;
             };
-            mockMakeUnaryRequest = function() {
+            mockMakeUnaryRequest = function () {
                 arguments[6](throwError, undefined);
             };
         });
@@ -182,7 +182,7 @@ describe("grpc retry", () => {
             mockMakeServerStreamRequest = () => {
                 throw retryError;
             };
-            mockMakeUnaryRequest = function() {
+            mockMakeUnaryRequest = function () {
                 arguments[6](retryError, undefined);
             };
         });
@@ -226,7 +226,7 @@ describe("grpc retry", () => {
         let counter = 0;
         beforeEach(() => {
             counter = 0;
-            mockMakeUnaryRequest = function() {
+            mockMakeUnaryRequest = function () {
                 counter++;
                 if (counter === 1 || counter === 2) {
                     arguments[6](retryError, undefined);

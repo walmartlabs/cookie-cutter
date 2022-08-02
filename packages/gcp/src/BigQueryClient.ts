@@ -88,8 +88,8 @@ export class BigQueryClient implements IBigQueryClient, IRequireInitialization {
                 error: e instanceof Error ? e.message : "",
             });
             let detailedErrorMsg = e;
-            if (e.errors) {
-                detailedErrorMsg = e.errors;
+            if ((e as any).errors) {
+                detailedErrorMsg = (e as any).errors;
             }
             this.logger.error(
                 "An error occurred while inserting data into big query",

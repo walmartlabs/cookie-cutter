@@ -89,8 +89,8 @@ export function noop(): any {
 export function field<T>(TSection: new () => T);
 export function field(convertFn: ValueConvertFn);
 export function field<T>(sectionOrConvertFn: (new () => T) | ValueConvertFn) {
-    return function(_: any, propertyKeyName: string, descriptor: TypedPropertyDescriptor<T>) {
-        descriptor.set = function(value: any) {
+    return function (_: any, propertyKeyName: string, descriptor: TypedPropertyDescriptor<T>) {
+        descriptor.set = function (value: any) {
             if (verifyIsSection(this)) {
                 const self: ISection = this;
                 if (isValueConvertFn(sectionOrConvertFn)) {
@@ -118,7 +118,7 @@ export function field<T>(sectionOrConvertFn: (new () => T) | ValueConvertFn) {
                 }
             }
         };
-        descriptor.get = function(): any {
+        descriptor.get = function (): any {
             if (verifyIsSection(this)) {
                 return this.__values[propertyKeyName];
             }
@@ -137,7 +137,7 @@ export enum TimeSpanTargetUnit {
 export const converters = {
     none: (val: any): any => val,
     listOf: (itemConverter: ValueConvertFn, separator: string = ","): ValueConvertFn => {
-        return function(val: any): any {
+        return function (val: any): any {
             let items: any[];
             if (isNullOrUndefined(val)) {
                 items = [];
@@ -160,7 +160,7 @@ export const converters = {
         };
     },
     enum: (TEnum: any): ValueConvertFn => {
-        return function(val: any): any {
+        return function (val: any): any {
             if (isNullOrUndefined(val)) {
                 return val;
             }
@@ -245,7 +245,7 @@ export const converters = {
         target: TimeSpanTargetUnit,
         source: TimeSpanTargetUnit = TimeSpanTargetUnit.Milliseconds
     ): ValueConvertFn => {
-        return function(val: any): any {
+        return function (val: any): any {
             if (isNullOrUndefined(val)) {
                 return val;
             }

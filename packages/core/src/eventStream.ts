@@ -27,7 +27,10 @@ export function createEventStreamHandler<TState extends IState<TSnapshot>, TSnap
     const handler = {};
     for (const prop of Object.getOwnPropertyNames(aggregator.__proto__)) {
         if (prop.startsWith("on")) {
-            handler[prop] = async function(msg: any, ctx: IDispatchContext<TState>): Promise<void> {
+            handler[prop] = async function (
+                msg: any,
+                ctx: IDispatchContext<TState>
+            ): Promise<void> {
                 const key = ctx.metadata<string>(EventSourcedMetadata.Stream);
                 const sn = ctx.metadata<number>(EventSourcedMetadata.SequenceNumber);
 

@@ -48,8 +48,10 @@ export class KafkaClientConfiguration implements IKafkaClientConfiguration {
 }
 
 @config.section
-export class KafkaBrokerConfiguration extends KafkaClientConfiguration
-    implements IKafkaBrokerConfiguration {
+export class KafkaBrokerConfiguration
+    extends KafkaClientConfiguration
+    implements IKafkaBrokerConfiguration
+{
     @config.field(config.converters.listOf(config.converters.string))
     public set broker(_: string | string[]) {
         config.noop();
@@ -84,8 +86,10 @@ export class KafkaBrokerConfiguration extends KafkaClientConfiguration
 }
 
 @config.section
-export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
-    implements IKafkaSubscriptionConfiguration {
+export class KafkaSubscriptionConfiguration
+    extends KafkaBrokerConfiguration
+    implements IKafkaSubscriptionConfiguration
+{
     @config.field(config.converters.string)
     public set group(_: string) {
         config.noop();
@@ -149,11 +153,21 @@ export class KafkaSubscriptionConfiguration extends KafkaBrokerConfiguration
     public get sessionTimeout(): number {
         return config.noop();
     }
+
+    @config.field(config.converters.none)
+    public set additionalHeaderNames(_: { [key: string]: string }) {
+        config.noop();
+    }
+    public get additionalHeaderNames(): { [key: string]: string } {
+        return config.noop();
+    }
 }
 
 @config.section
-export class KafkaPublisherConfiguration extends KafkaBrokerConfiguration
-    implements IKafkaPublisherConfiguration {
+export class KafkaPublisherConfiguration
+    extends KafkaBrokerConfiguration
+    implements IKafkaPublisherConfiguration
+{
     @config.field(config.converters.string)
     public set defaultTopic(_: string) {
         config.noop();

@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-kafka",
-    "version": "1.5.0-beta.1",
+    "version": "1.6.0-beta.0",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,18 +13,18 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "change-case": "4.1.1",
-        "kafkajs": "1.15.0",
+        "change-case": "4.1.2",
+        "kafkajs": "1.16.0",
         "kafkajs-snappy": "1.1.0",
         "kafkajs-lz4": "1.2.1",
-        "long": "4.0.0",
-        "murmurhash": "1.0.0",
-        "opentracing": "0.14.4",
-        "uuid": "8.3.0"
+        "long": "5.2.0",
+        "murmurhash": "2.0.1",
+        "opentracing": "0.14.7",
+        "uuid": "8.3.2"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "^1.5.0-beta",
-        "ip": "1.1.5"
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
+        "ip": "1.1.8"
     },
     "scripts": {
         "build": "tsc",

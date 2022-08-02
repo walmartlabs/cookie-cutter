@@ -182,7 +182,7 @@ describe("s3Client", () => {
                 "clientkey"
             );
         } catch (e) {
-            error = e;
+            error = e as any;
         }
         expect(error.message).toEqual("The specified bucket does not exist");
     });
@@ -205,7 +205,7 @@ describe("s3Client", () => {
             await mp.send(Buffer.from(part3));
             await mp.complete();
         } catch (e) {
-            error = e;
+            error = e as any;
         }
         expect(error).toBeUndefined();
     });

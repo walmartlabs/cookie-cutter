@@ -97,7 +97,7 @@ class DynamicTableType extends sql.Table {
                     if (isObject(element) || isArray(element)) {
                         throw new Error(errorMessage);
                     }
-                    this.rows.add(element);
+                    this.rows.add(element as any);
                 }
             } else {
                 throw new Error(errorMessage);
@@ -161,7 +161,8 @@ function createSqlType(param: ITableTypeParam): sql.ISqlType {
 }
 
 export class MssqlSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     private connectionPool: sql.ConnectionPool;
     private sprocMap: Map<string, ISprocDetails>;
     private tableMap: Map<string, ITableDetails>;

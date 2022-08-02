@@ -28,7 +28,8 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IStateProvider<TState>,
         IStateCacheLifecycle<TState>,
         IRequireInitialization,
-        IDisposable {
+        IDisposable
+{
     private readonly cache: LRU<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
     private readonly callbacks: Set<(item: StateRef<TState>) => void>;
@@ -46,9 +47,9 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
             maxAge: options.maxTTL,
             noDisposeOnSet: true,
             dispose: (_, val) => {
-                if (!this.callbacksDisabledFor.has(val.key)) {
+                if (!this.callbacksDisabledFor.has((val as any).key)) {
                     for (const cb of this.callbacks.values()) {
-                        cb(val);
+                        cb(val as any);
                     }
                 }
             },

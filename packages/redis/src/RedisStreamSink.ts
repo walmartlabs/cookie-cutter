@@ -33,7 +33,8 @@ export enum RedisMetricResult {
 }
 
 export class RedisStreamSink
-    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
+    implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
+{
     public guarantees: IOutputSinkGuarantees;
     private client: Lifecycle<IRedisClient>;
     private metrics: IMetrics;

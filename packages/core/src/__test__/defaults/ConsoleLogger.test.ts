@@ -29,7 +29,7 @@ describe("ConsoleLogger", () => {
     let capturedLogs = [];
     beforeAll(() => {
         // tslint:disable:no-console
-        console.log = function() {
+        console.log = function () {
             capturedLogs.push([].slice.call(arguments));
         };
     });

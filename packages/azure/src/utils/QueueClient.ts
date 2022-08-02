@@ -295,13 +295,13 @@ export class QueueClient implements IRequireInitialization {
                     return resolve({ headers, payload });
                 } catch (error) {
                     failSpan(span, error);
-                    span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+                    span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
                     span.finish();
                     this.metrics.increment(
                         QueueMetrics.Write,
                         this.generateMetricTags(
                             queueName,
-                            error.statusCode,
+                            (error as any).statusCode,
                             QueueMetricResults.Error
                         )
                     );
@@ -415,9 +415,9 @@ export class QueueClient implements IRequireInitialization {
                         messageObj.headers[QueueMetadata.TimeToLive] = (
                             result.expiresOn.getTime() - Date.now()
                         ).toString();
-                        messageObj.headers[
-                            QueueMetadata.VisibilityTimeout
-                        ] = result.nextVisibleOn.getTime().toString();
+                        messageObj.headers[QueueMetadata.VisibilityTimeout] = result.nextVisibleOn
+                            .getTime()
+                            .toString();
                         messageObj.headers[QueueMetadata.MessageId] = result.messageId;
                         messageObj.headers[QueueMetadata.PopReceipt] = result.popReceipt;
 
@@ -429,12 +429,16 @@ export class QueueClient implements IRequireInitialization {
             } catch (error) {
                 span.log({ error });
                 span.setTag(Tags.ERROR, true);
-                span.setTag(Tags.HTTP_STATUS_CODE, error.statusCode);
+                span.setTag(Tags.HTTP_STATUS_CODE, (error as any).statusCode);
                 span.finish();
 
                 this.metrics.increment(
                     QueueMetrics.Read,
-                    this.generateMetricTags(queueName, error.statusCode, QueueMetricResults.Error)
+                    this.generateMetricTags(
+                        queueName,
+                        (error as any).statusCode,
+                        QueueMetricResults.Error
+                    )
                 );
 
                 reject(error);
@@ -487,7 +491,11 @@ export class QueueClient implements IRequireInitialization {
 
                 this.metrics.increment(
                     QueueMetrics.MarkAsProcessed,
-                    this.generateMetricTags(queueName, error.statusCode, QueueMetricResults.Error)
+                    this.generateMetricTags(
+                        queueName,
+                        (error as any).statusCode,
+                        QueueMetricResults.Error
+                    )
                 );
                 reject(error);
             }
@@ -532,7 +540,11 @@ export class QueueClient implements IRequireInitialization {
 
                 this.metrics.increment(
                     QueueMetrics.QueueMetadata,
-                    this.generateMetricTags(queueName, error.statusCode, QueueMetricResults.Error)
+                    this.generateMetricTags(
+                        queueName,
+                        (error as any).statusCode,
+                        QueueMetricResults.Error
+                    )
                 );
                 reject(error);
             }

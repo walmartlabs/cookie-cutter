@@ -28,8 +28,10 @@ interface IK8sMessage {
     msgRef: MessageRef;
 }
 
-export class KubernetesPollSource extends KubernetesBase
-    implements IInputSource, IRequireInitialization {
+export class KubernetesPollSource
+    extends KubernetesBase
+    implements IInputSource, IRequireInitialization
+{
     private running: boolean = false;
     private queryProvider: Lifecycle<IK8sQueryProvider>;
     private queryPath: string;

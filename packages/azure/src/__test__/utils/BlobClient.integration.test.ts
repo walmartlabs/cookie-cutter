@@ -8,7 +8,7 @@ LICENSE file in the root directory of this source tree.
 import { BlobClient } from "../../utils";
 import { SpanContext } from "opentracing";
 
-jest.setTimeout(10000);
+jest.setTimeout(90000);
 
 describe("Blob Client", () => {
     const storageAccount = process.env.AZURE_STORAGE_ACCOUNT;
@@ -90,7 +90,7 @@ describe("Blob Client", () => {
             try {
                 await client.readAsText(spanContext, "unknownBlobId");
             } catch (error) {
-                expect(error.statusCode).toBe(404);
+                expect((error as any).statusCode).toBe(404);
             }
         });
     });

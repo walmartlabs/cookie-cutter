@@ -26,7 +26,8 @@ import { sleep, waitForPendingIO } from "../utils";
 import { roundRobinIterators } from "./helpers";
 
 export class CompositeInputSource
-    implements IInputSource, IRequireInitialization, IDisposable, IMessageMetricAnnotator {
+    implements IInputSource, IRequireInitialization, IDisposable, IMessageMetricAnnotator
+{
     private logger: ILogger;
 
     constructor(

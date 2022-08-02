@@ -43,6 +43,11 @@ describe("KafkaSource", () => {
         let encoder: JsonMessageEncoder;
         let rawMessage: IRawKafkaMessage;
 
+        const additionalHeaders: { [key: string]: string } = {
+            rawHeader: "rawHeader",
+            internalHeader: "externalHeader",
+        };
+
         beforeEach(() => {
             encoder = new JsonMessageEncoder();
             rawMessage = {
@@ -50,13 +55,18 @@ describe("KafkaSource", () => {
                 offset,
                 partition,
                 key: Buffer.from("key"),
-                headers: { "X-Message-Type": "application/json" },
+                headers: {
+                    "X-Message-Type": "application/json",
+                    rawHeader: "raw header value",
+                    externalHeader: "external header value",
+                    ignoredHeader: "this header is ignored",
+                },
                 timestamp: "1554845507549",
                 value: Buffer.from(encoder.encode({ type: "test", payload: { foo: "bar" } })),
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
-                async function*(): AsyncIterableIterator<IRawKafkaMessage> {
+                async function* (): AsyncIterableIterator<IRawKafkaMessage> {
                     yield rawMessage;
                 }
             );
@@ -70,6 +80,7 @@ describe("KafkaSource", () => {
                 encoder,
                 eos: true,
                 headerNames: DefaultKafkaHeaderNames,
+                additionalHeaderNames: additionalHeaders,
                 preprocessor: {
                     process: (msg) => msg,
                 },
@@ -90,10 +101,17 @@ describe("KafkaSource", () => {
             expect(received.metadata(KafkaMetadata.Key)).toEqual(rawMessage.key.toString());
             expect(received.metadata(KafkaMetadata.Timestamp)).toEqual(
                 new Date(parseInt(rawMessage.timestamp, 10))
-            ),
-                expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
+            );
+            expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
             expect(received.metadata(KafkaMetadata.ExactlyOnceSemantics)).toEqual(true);
             expect(received.metadata(KafkaMetadata.ConsumerGroupId)).toEqual(consumerGroupId);
+            for (const internalHeaderName of Object.keys(additionalHeaders)) {
+                const rawHeaderName: string = additionalHeaders[internalHeaderName];
+                expect(received.metadata(internalHeaderName)).toEqual(
+                    rawMessage.headers[rawHeaderName]
+                );
+            }
+            expect(received.metadata("ignoredHeader")).toBeUndefined();
         });
 
         it("should attempt to add offsets for non-transactional messages when releasing", async () => {
@@ -182,7 +200,7 @@ describe("KafkaSource", () => {
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
-                async function*(): AsyncIterableIterator<IRawKafkaMessage> {
+                async function* (): AsyncIterableIterator<IRawKafkaMessage> {
                     yield rawMessage;
                 }
             );
@@ -214,8 +232,8 @@ describe("KafkaSource", () => {
             expect(received.metadata(KafkaMetadata.Key)).toEqual(rawMessage.key.toString());
             expect(received.metadata(KafkaMetadata.Timestamp)).toEqual(
                 new Date(parseInt(rawMessage.timestamp, 10))
-            ),
-                expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
+            );
+            expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
             expect(received.metadata(KafkaMetadata.ExactlyOnceSemantics)).toEqual(true);
             expect(received.metadata(KafkaMetadata.ConsumerGroupId)).toEqual(consumerGroupId);
         });
@@ -247,7 +265,7 @@ describe("KafkaSource", () => {
             };
 
             (KafkaConsumer.prototype.consume as any).mockImplementationOnce(
-                async function*(): AsyncIterableIterator<IRawKafkaMessage> {
+                async function* (): AsyncIterableIterator<IRawKafkaMessage> {
                     yield rawMessage;
                 }
             );
@@ -286,8 +304,8 @@ describe("KafkaSource", () => {
             expect(received.metadata(KafkaMetadata.Key)).toEqual(rawMessage.key.toString());
             expect(received.metadata(KafkaMetadata.Timestamp)).toEqual(
                 new Date(parseInt(rawMessage.timestamp, 10))
-            ),
-                expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
+            );
+            expect(received.metadata(KafkaMetadata.Topic)).toEqual(topicName);
             expect(received.metadata(KafkaMetadata.ExactlyOnceSemantics)).toEqual(true);
             expect(received.metadata(KafkaMetadata.ConsumerGroupId)).toEqual(consumerGroupId);
         });

@@ -186,7 +186,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Error,
-                errorType: e instanceof RedisError ? e.name : "NonRedisError",
+                errorType: e instanceof RedisError ? (e as any).name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -227,7 +227,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             this.metrics.increment(RedisClientMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
-                errorType: e instanceof RedisError ? e.name : "NonRedisError",
+                errorType: e instanceof RedisError ? (e as any).name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -283,7 +283,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 db,
                 streamName,
                 result: RedisMetricResults.Error,
-                errorType: e instanceof RedisError ? e.name : "NonRedisError",
+                errorType: e instanceof RedisError ? (e as any).name : "NonRedisError",
             });
             throw e;
         } finally {
@@ -318,7 +318,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             return response;
         } catch (err) {
             const alreadyExistsErrorMessage = "BUSYGROUP Consumer Group name already exists";
-            if (suppressAlreadyExistsError && err.message === alreadyExistsErrorMessage) {
+            if (suppressAlreadyExistsError && (err as any).message === alreadyExistsErrorMessage) {
                 this.metrics.increment(RedisClientMetrics.XGroup, {
                     db,
                     streamName,
@@ -335,7 +335,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                errorType: err instanceof RedisError ? err.name : "NonRedisError",
+                errorType: err instanceof RedisError ? (err as any).name : "NonRedisError",
             });
 
             throw err;
@@ -369,7 +369,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                errorType: err instanceof RedisError ? err.name : "NonRedisError",
+                errorType: err instanceof RedisError ? (err as any).name : "NonRedisError",
             });
 
             throw err;
@@ -459,7 +459,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                errorType: error instanceof RedisError ? error.name : "NonRedisError",
+                errorType: error instanceof RedisError ? (error as any).name : "NonRedisError",
             });
             throw error;
         } finally {
@@ -498,7 +498,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                errorType: err instanceof RedisError ? err.name : "NonRedisError",
+                errorType: err instanceof RedisError ? (err as any).name : "NonRedisError",
             });
 
             throw err;
@@ -558,7 +558,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                errorType: error instanceof RedisError ? error.name : "NonRedisError",
+                errorType: error instanceof RedisError ? (error as any).name : "NonRedisError",
             });
             throw error;
         } finally {

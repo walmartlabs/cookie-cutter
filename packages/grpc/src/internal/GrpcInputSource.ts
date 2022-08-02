@@ -137,7 +137,6 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
 
                     this.metrics.increment(GrpcMetrics.RequestReceived, {
                         path: method.path,
-                        peer: call.getPeer(),
                     });
                     const metadata = call.metadata.getMap();
                     const spanContext = this.tracer.extract(FORMAT_HTTP_HEADERS, metadata);
@@ -155,44 +154,39 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                     span.setTag(GrpcOpenTracingTagKeys.ProtoType, type);
 
                     const msgRef = new MessageRef(meta, msg, span.context());
-                    msgRef.once(
-                        "released",
-                        async (_, value, error): Promise<void> => {
-                            if (error) {
-                                failSpan(span, error);
-                            }
-                            span.finish();
-                            if (!isStreaming(call)) {
-                                if (isError(value)) {
-                                    error = value;
-                                    value = undefined;
-                                }
-
-                                const callback: sendUnaryData<any> = args[1];
-                                if (value !== undefined) {
-                                    callback(undefined, value);
-                                } else if (error !== undefined) {
-                                    callback(this.createError(error), null);
-                                } else {
-                                    callback(
-                                        this.createError("not implemented", status.UNIMPLEMENTED),
-                                        null
-                                    );
-                                }
-                            }
-                            this.metrics.increment(GrpcMetrics.RequestProcessed, {
-                                path: method.path,
-                                peer: call.getPeer(),
-                                result: error ? GrpcMetricResult.Error : GrpcMetricResult.Success,
-                            });
-                            const currentPerformanceTime = performance.now();
-                            const runTime = (currentPerformanceTime - startTime) / 1000;
-                            this.metrics.timing(GrpcMetrics.RequestProcessingTime, runTime, {
-                                path: method.path,
-                                peer: call.getPeer(),
-                            });
+                    msgRef.once("released", async (_, value, error): Promise<void> => {
+                        if (error) {
+                            failSpan(span, error);
                         }
-                    );
+                        span.finish();
+                        if (!isStreaming(call)) {
+                            if (isError(value)) {
+                                error = value;
+                                value = undefined;
+                            }
+
+                            const callback: sendUnaryData<any> = args[1];
+                            if (value !== undefined) {
+                                callback(undefined, value);
+                            } else if (error !== undefined) {
+                                callback(this.createError(error), null);
+                            } else {
+                                callback(
+                                    this.createError("not implemented", status.UNIMPLEMENTED),
+                                    null
+                                );
+                            }
+                        }
+                        this.metrics.increment(GrpcMetrics.RequestProcessed, {
+                            path: method.path,
+                            result: error ? GrpcMetricResult.Error : GrpcMetricResult.Success,
+                        });
+                        const currentPerformanceTime = performance.now();
+                        const runTime = (currentPerformanceTime - startTime) / 1000;
+                        this.metrics.timing(GrpcMetrics.RequestProcessingTime, runTime, {
+                            path: method.path,
+                        });
+                    });
 
                     if (!(await this.queue.enqueue(msgRef))) {
                         await msgRef.release(undefined, new Error("service unavailable"));

@@ -16,7 +16,8 @@ import {
 } from "../model";
 
 export class InMemoryMaterializedViewStateOutputSink<TSnapshot>
-    implements IOutputSink<IStoredMessage | IStateVerification> {
+    implements IOutputSink<IStoredMessage | IStateVerification>
+{
     constructor(private readonly storage: Map<string, { seqNum: number; data: TSnapshot }>) {}
 
     public sink(output: IterableIterator<IStoredMessage | IStateVerification>): Promise<void> {

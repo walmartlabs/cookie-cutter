@@ -48,7 +48,8 @@ export interface IK8sQueryProvider {
 
 @config.section
 class K8sAdmissionControllerSourceConfiguration
-    implements IK8sAdmissionControllerSourceConfiguration {
+    implements IK8sAdmissionControllerSourceConfiguration
+{
     @config.field(config.converters.string)
     public set privateKey(_: string) {
         config.noop();
