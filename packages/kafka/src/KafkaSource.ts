@@ -99,9 +99,20 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
             });
 
             const headers = message.headers || {};
-            const type =
-                headers[this.config.headerNames.eventType] &&
-                headers[this.config.headerNames.eventType].toString();
+            let type: string;
+            const eventTypeHeaders = headers[this.config.headerNames.eventType];
+            if (eventTypeHeaders) {
+                if (Array.isArray(eventTypeHeaders)) {
+                    if (eventTypeHeaders.length === 0 || eventTypeHeaders.length > 1) {
+                        const errStr = `Header contains an array with ${eventTypeHeaders.length} values for ${this.config.headerNames.eventType}, expected only 1`;
+                        this.logger.error(errStr);
+                        throw new Error(errStr);
+                    }
+                    type = eventTypeHeaders[0];
+                } else {
+                    type = eventTypeHeaders;
+                }
+            }
             try {
                 let codedMessage: IMessage;
                 if (!message.value) {
@@ -118,29 +129,47 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                 const fromHeaders: { [key: string]: any } = {};
                 const seqNumHeader = headers[this.config.headerNames.sequenceNumber];
                 if (seqNumHeader) {
-                    fromHeaders[EventSourcedMetadata.SequenceNumber] = Array.isArray(seqNumHeader)
-                        ? parseInt(seqNumHeader[0], 10)
-                        : parseInt(seqNumHeader, 10);
+                    if (Array.isArray(seqNumHeader)) {
+                        if (seqNumHeader.length === 0 || seqNumHeader.length > 1) {
+                            const errStr = `Header contains an array with ${seqNumHeader.length} values for ${this.config.headerNames.sequenceNumber}, expected only 1`;
+                            this.logger.error(errStr);
+                            throw new Error(errStr);
+                        }
+                        fromHeaders[EventSourcedMetadata.SequenceNumber] = parseInt(
+                            seqNumHeader[0],
+                            10
+                        );
+                    } else {
+                        fromHeaders[EventSourcedMetadata.SequenceNumber] = parseInt(
+                            seqNumHeader,
+                            10
+                        );
+                    }
                 }
                 const streamHeader = headers[this.config.headerNames.stream];
                 if (streamHeader) {
-                    fromHeaders[EventSourcedMetadata.Stream] = Array.isArray(streamHeader)
-                        ? streamHeader[0].toString()
-                        : streamHeader.toString();
+                    if (Array.isArray(streamHeader)) {
+                        if (streamHeader.length === 0 || streamHeader.length > 1) {
+                            const errStr = `Header contains an array with ${streamHeader.length} values for ${this.config.headerNames.stream}, expected only 1`;
+                            this.logger.error(errStr);
+                            throw new Error(errStr);
+                        }
+                        fromHeaders[EventSourcedMetadata.Stream] = streamHeader[0];
+                    } else {
+                        fromHeaders[EventSourcedMetadata.Stream] = streamHeader;
+                    }
                 }
-                const eventTypeHeaders = headers[this.config.headerNames.eventType];
-                if (eventTypeHeaders) {
-                    fromHeaders[EventSourcedMetadata.EventType] = Array.isArray(eventTypeHeaders)
-                        ? eventTypeHeaders[0].toString()
-                        : eventTypeHeaders.toString();
-                }
+                fromHeaders[EventSourcedMetadata.EventType] = type;
                 const dt = headers[this.config.headerNames.timestamp];
                 if (dt) {
                     if (typeof dt === "string") {
                         fromHeaders[EventSourcedMetadata.Timestamp] = new Date(parseInt(dt, 10));
-                    } else if (typeof dt === "number") {
-                        fromHeaders[EventSourcedMetadata.Timestamp] = new Date(dt);
                     } else if (Array.isArray(dt)) {
+                        if (dt.length === 0 || dt.length > 1) {
+                            const errStr = `Header contains an array with ${dt.length} values for ${this.config.headerNames.timestamp}, expected only 1`;
+                            this.logger.error(errStr);
+                            throw new Error(errStr);
+                        }
                         fromHeaders[EventSourcedMetadata.Timestamp] = new Date(parseInt(dt[0], 10));
                     }
                 }
@@ -150,8 +179,8 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                         const extraHeader = headers[this.config.additionalHeaderNames[headerKey]];
                         if (extraHeader && !fromHeaders[headerKey]) {
                             fromHeaders[headerKey] = Array.isArray(extraHeader)
-                                ? extraHeader[0].toString()
-                                : extraHeader.toString();
+                                ? extraHeader
+                                : extraHeader;
                         }
                     }
                 }
