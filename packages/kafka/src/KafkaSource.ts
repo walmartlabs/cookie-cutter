@@ -103,7 +103,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
             const eventTypeHeaders = headers[this.config.headerNames.eventType];
             if (eventTypeHeaders) {
                 if (Array.isArray(eventTypeHeaders)) {
-                    if (eventTypeHeaders.length === 0 || eventTypeHeaders.length > 1) {
+                    if (eventTypeHeaders.length > 1) {
                         const errStr = `Header contains an array with ${eventTypeHeaders.length} values for ${this.config.headerNames.eventType}, expected only 1`;
                         this.logger.error(errStr);
                         throw new Error(errStr);
@@ -130,7 +130,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                 const seqNumHeader = headers[this.config.headerNames.sequenceNumber];
                 if (seqNumHeader) {
                     if (Array.isArray(seqNumHeader)) {
-                        if (seqNumHeader.length === 0 || seqNumHeader.length > 1) {
+                        if (seqNumHeader.length > 1) {
                             const errStr = `Header contains an array with ${seqNumHeader.length} values for ${this.config.headerNames.sequenceNumber}, expected only 1`;
                             this.logger.error(errStr);
                             throw new Error(errStr);
@@ -149,7 +149,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                 const streamHeader = headers[this.config.headerNames.stream];
                 if (streamHeader) {
                     if (Array.isArray(streamHeader)) {
-                        if (streamHeader.length === 0 || streamHeader.length > 1) {
+                        if (streamHeader.length > 1) {
                             const errStr = `Header contains an array with ${streamHeader.length} values for ${this.config.headerNames.stream}, expected only 1`;
                             this.logger.error(errStr);
                             throw new Error(errStr);
@@ -165,7 +165,7 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                     if (typeof dt === "string") {
                         fromHeaders[EventSourcedMetadata.Timestamp] = new Date(parseInt(dt, 10));
                     } else if (Array.isArray(dt)) {
-                        if (dt.length === 0 || dt.length > 1) {
+                        if (dt.length > 1) {
                             const errStr = `Header contains an array with ${dt.length} values for ${this.config.headerNames.timestamp}, expected only 1`;
                             this.logger.error(errStr);
                             throw new Error(errStr);

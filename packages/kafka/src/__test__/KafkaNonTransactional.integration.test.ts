@@ -15,15 +15,29 @@ import {
     IMessage,
     JsonMessageEncoder,
     MessageRef,
+    config,
     sleep,
     StaticInputSource,
     StaticInputSourceType,
     waitForPendingIO,
+    DefaultComponentContext,
+    IInputSourceContext,
+    IComponentContext,
 } from "@walmartlabs/cookie-cutter-core";
 import * as ip from "ip";
 import * as kafkajs from "kafkajs";
 import * as ot from "opentracing";
-import { KafkaMetadata, kafkaSink, kafkaSource } from "..";
+import {
+    DefaultKafkaHeaderNames,
+    IKafkaBrokerConfiguration,
+    IKafkaClientConfiguration,
+    IKafkaSubscriptionConfiguration,
+    KafkaMetadata,
+    kafkaSink,
+    kafkaSource,
+} from "..";
+import { KafkaSubscriptionConfiguration } from "../config";
+import { KafkaSource } from "../KafkaSource";
 const { CompressionTypes, CompressionCodecs } = require("kafkajs");
 const SnappyCodec = require("kafkajs-snappy");
 
@@ -104,6 +118,34 @@ function consumer(
         .input()
         .add(
             kafkaSource({
+                broker,
+                encoder: new JsonMessageEncoder(),
+                group: testGroup,
+                topics: testTopic,
+                offsetCommitInterval: commitInterval,
+            })
+        )
+        .done()
+        .dispatch(handler)
+        .run(retryMode);
+}
+
+function consumerWithHeaders(
+    handler: any,
+    testTopic: string,
+    testGroup: string,
+    retryMode: ErrorHandlingMode,
+    kafkaSourceConfig: any,
+    commitInterval?: number
+): CancelablePromise<void> {
+    const broker = generateBrokerAddr();
+
+    return Application.create()
+        .logger(new ConsoleLogger())
+        .input()
+        .add(
+            kafkaSource({
+                ...kafkaSourceConfig,
                 broker,
                 encoder: new JsonMessageEncoder(),
                 group: testGroup,
@@ -466,7 +508,6 @@ describe("Kafka Integration Tests", () => {
                     groupId: consumerGroupId,
                     topics: [multiplePartitionsTopic],
                 });
-                // tslint:disable-next-line:no-console
                 expect(topics[0].partitions).toMatchObject([
                     { partition: 0, offset: "3" },
                     { partition: 1, offset: "3" },
@@ -770,12 +811,12 @@ describe("Kafka Integration Tests", () => {
                     {
                         key: "key1",
                         value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
-                        headers: { event_type: ShoppingCartCreated.name },
+                        headers: { [DefaultKafkaHeaderNames.eventType]: ShoppingCartCreated.name },
                     },
                     {
                         key: "key2",
                         value: JSON.stringify({ shoppingCartId: shoppingCartIds[1] }),
-                        headers: { event_type: ShoppingCartCreated.name },
+                        headers: { [DefaultKafkaHeaderNames.eventType]: ShoppingCartCreated.name },
                     },
                 ],
             });
@@ -788,7 +829,7 @@ describe("Kafka Integration Tests", () => {
             const groupId = "snappy-topic";
             const expNumConsumedMsgs = 2;
             const receivedKafkaMsg = [];
-            const receivedKafkaKeys = [];
+            // const receivedKafkaKeys = [];
             const appConsumer = consumer(
                 {
                     onShoppingCartCreated: async (
@@ -796,7 +837,7 @@ describe("Kafka Integration Tests", () => {
                         _: IDispatchContext
                     ): Promise<void> => {
                         receivedKafkaMsg.push(msg.shoppingCartId);
-                        receivedKafkaKeys.push(_.metadata(KafkaMetadata.Key));
+                        // receivedKafkaKeys.push(_.metadata(KafkaMetadata.Key));
                     },
                 },
                 snappyTopic,
@@ -820,6 +861,357 @@ describe("Kafka Integration Tests", () => {
                 expect(receivedKafkaMsg).toEqual(expect.arrayContaining(shoppingCartIds));
                 expect(receivedKafkaMsg.length).toBeLessThanOrEqual(expNumConsumedMsgs);
             }
+        });
+    });
+    describe("Message Headers with Array Values", () => {
+        type configType = IKafkaBrokerConfiguration &
+            IKafkaSubscriptionConfiguration &
+            IKafkaClientConfiguration;
+        function parseConfig(configuration: configType): configType {
+            return config.parse(KafkaSubscriptionConfiguration, configuration, {
+                consumeTimeout: 50,
+                offsetCommitInterval: 5000,
+                eos: false,
+                headerNames: DefaultKafkaHeaderNames,
+                preprocessor: {
+                    process: (msg) => msg,
+                },
+                connectionTimeout: 1000,
+                requestTimeout: 30000,
+            });
+        }
+        const MockInputSourceContext: IInputSourceContext = {
+            evict: () => {
+                return Promise.resolve();
+            },
+        };
+        const sucessTopic = `headers-arrays-success-integration-test-${new Date().getTime()}`;
+        const failTypeTopic = `headers-arrays-fail-type-integration-test-${new Date().getTime()}`;
+        const failSnTopic = `headers-arrays-fail-sn-integration-test-${new Date().getTime()}`;
+        const failStreamTopic = `headers-arrays-fail-stream-integration-test-${new Date().getTime()}`;
+        const failTimestampTopic = `headers-arrays-fail-timestamp-integration-test-${new Date().getTime()}`;
+        const shoppingCartIds = ["test-id-1", "test-id-2"];
+        const secondMessage = {
+            key: "key2",
+            value: JSON.stringify({ shoppingCartId: shoppingCartIds[1] }),
+            headers: { [DefaultKafkaHeaderNames.eventType]: ShoppingCartCreated.name },
+        };
+        const bufValue = Buffer.from("this was a buffer");
+        const buffElement1 = Buffer.from("this was a buffer element 1");
+        const buffElement2 = Buffer.from("this was a buffer element 2");
+        const bufArray = [buffElement1, buffElement2];
+        const strValue = "this was a string";
+        const strElement1 = "this was a string element 1";
+        const strElement2 = "this was a string element 2";
+        const strArray = [strElement1, strElement2];
+        let admin;
+        let producer: kafkajs.Producer;
+        beforeAll(async () => {
+            const client = new kafkajs.Kafka({
+                clientId: "admin",
+                brokers: [generateBrokerAddr()],
+            });
+            admin = client.admin();
+            await admin.connect();
+            await admin.createTopics({
+                waitForLeaders: true,
+                topics: [
+                    { topic: sucessTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: failTypeTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: failSnTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: failStreamTopic, numPartitions: 1, replicationFactor: 1 },
+                    { topic: failTimestampTopic, numPartitions: 1, replicationFactor: 1 },
+                ],
+            });
+            producer = client.producer();
+            await producer.connect();
+            await producer.send({
+                topic: sucessTopic,
+                compression: kafkajs.CompressionTypes.None,
+                messages: [
+                    {
+                        key: "key1",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
+                        headers: {
+                            [DefaultKafkaHeaderNames.eventType]: [ShoppingCartCreated.name],
+                            bufferHeader: bufValue,
+                            bufferArrayHeader: bufArray,
+                            stringHeader: strValue,
+                            stringArrayHeader: strArray,
+                        },
+                    },
+                ],
+            });
+            await producer.send({
+                topic: failTypeTopic,
+                compression: kafkajs.CompressionTypes.None,
+                messages: [
+                    {
+                        key: "key1",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
+                        headers: {
+                            [DefaultKafkaHeaderNames.eventType]: [
+                                ShoppingCartCreated.name,
+                                "second_event_type",
+                            ],
+                        },
+                    },
+                    secondMessage,
+                ],
+            });
+            await producer.send({
+                topic: failStreamTopic,
+                compression: kafkajs.CompressionTypes.None,
+                messages: [
+                    {
+                        key: "key1",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
+                        headers: {
+                            [DefaultKafkaHeaderNames.eventType]: [ShoppingCartCreated.name],
+                            [DefaultKafkaHeaderNames.stream]: ["first_stream", "second_stream"],
+                        },
+                    },
+                    secondMessage,
+                ],
+            });
+            await producer.send({
+                topic: failSnTopic,
+                compression: kafkajs.CompressionTypes.None,
+                messages: [
+                    {
+                        key: "key1",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
+                        headers: {
+                            [DefaultKafkaHeaderNames.eventType]: [ShoppingCartCreated.name],
+                            [DefaultKafkaHeaderNames.sequenceNumber]: ["101", "102"],
+                        },
+                    },
+                    secondMessage,
+                ],
+            });
+            await producer.send({
+                topic: failTimestampTopic,
+                compression: kafkajs.CompressionTypes.None,
+                messages: [
+                    {
+                        key: "key1",
+                        value: JSON.stringify({ shoppingCartId: shoppingCartIds[0] }),
+                        headers: {
+                            [DefaultKafkaHeaderNames.eventType]: [ShoppingCartCreated.name],
+                            [DefaultKafkaHeaderNames.timestamp]: ["100000", "200000"],
+                        },
+                    },
+                    secondMessage,
+                ],
+            });
+        });
+        let errorCall: jest.Mock;
+        let logger: any = jest.fn().mockImplementation(() => {
+            return {
+                info: jest.fn(),
+                debug: jest.fn(),
+                warn: jest.fn(),
+                error: errorCall,
+            };
+        })();
+        beforeEach(() => {
+            errorCall = jest.fn();
+            logger = jest.fn().mockImplementation(() => {
+                return {
+                    info: jest.fn(),
+                    debug: jest.fn(),
+                    warn: jest.fn(),
+                    error: errorCall,
+                };
+            })();
+        });
+        afterAll(async () => {
+            await producer.disconnect();
+            await admin.disconnect();
+        });
+        it("successfully parses headers of type Buffer | string | Buffer[] | string[]", async () => {
+            const groupId = "headers-topic-success";
+            const expNumConsumedMsgs = 1;
+            const receivedKafkaMsg = [];
+            const additionalHeaders: { [key: string]: string } = {
+                bufferHeader: "bufferHeader",
+                bufferArrayHeader: "bufferArrayHeader",
+                stringHeader: "stringHeader",
+                stringArrayHeader: "stringArrayHeader",
+            };
+            const receivedHeaderValues: { [key: string]: string } = {};
+            const appConsumer = consumerWithHeaders(
+                {
+                    onShoppingCartCreated: async (
+                        msg: ShoppingCartCreated,
+                        ctx: IDispatchContext
+                    ): Promise<void> => {
+                        receivedKafkaMsg.push(msg.shoppingCartId);
+                        receivedHeaderValues[DefaultKafkaHeaderNames.eventType] = ctx.metadata(
+                            DefaultKafkaHeaderNames.eventType
+                        );
+                        for (const headerName of Object.keys(additionalHeaders)) {
+                            receivedHeaderValues[headerName] = ctx.metadata(headerName);
+                        }
+                    },
+                },
+                sucessTopic,
+                groupId,
+                ErrorHandlingMode.LogAndFail,
+                {
+                    additionalHeaderNames: additionalHeaders,
+                }
+            );
+
+            try {
+                const checkKafkaPromise = new Promise<void>(async (resolve) => {
+                    while (receivedKafkaMsg.length < expNumConsumedMsgs) {
+                        await sleep(1000);
+                        await waitForPendingIO();
+                    }
+                    appConsumer.cancel();
+                    resolve();
+                });
+                await checkKafkaPromise;
+                await appConsumer;
+            } finally {
+                // check that we received expected msgs
+                expect(receivedKafkaMsg).toEqual(expect.arrayContaining([shoppingCartIds[0]]));
+                expect(receivedKafkaMsg.length).toBeLessThanOrEqual(expNumConsumedMsgs);
+                expect(receivedHeaderValues).toEqual({
+                    event_type: ShoppingCartCreated.name,
+                    bufferHeader: bufValue.toString(),
+                    bufferArrayHeader: [buffElement1.toString(), buffElement2.toString()],
+                    stringHeader: strValue,
+                    stringArrayHeader: strArray,
+                });
+            }
+        });
+        it(`fails on too many values for eventType (${DefaultKafkaHeaderNames.eventType})`, async () => {
+            const groupId = "headers-topic-fail-type";
+            const broker = generateBrokerAddr();
+            let configuration: configType = {
+                broker,
+                encoder: new JsonMessageEncoder(),
+                group: groupId,
+                topics: failTypeTopic,
+            };
+            configuration = parseConfig(configuration);
+            const source = new KafkaSource(configuration);
+            const context: IComponentContext = {
+                ...DefaultComponentContext,
+                logger,
+            };
+            await source.initialize(context);
+
+            let error;
+            try {
+                await source.start(MockInputSourceContext).next();
+            } catch (err) {
+                error = err;
+            } finally {
+                await source.stop();
+                await source.dispose();
+            }
+            expect(error).toBeDefined();
+            expect((error as Error).message).toMatch(/Header contains an array with/);
+            expect((error as Error).message).toMatch(
+                new RegExp("" + DefaultKafkaHeaderNames.eventType + "")
+            );
+        });
+        it(`fails on too many values for stream (${DefaultKafkaHeaderNames.stream})`, async () => {
+            const groupId = "headers-topic-fail-stream";
+            const broker = generateBrokerAddr();
+            let configuration: configType = {
+                broker,
+                encoder: new JsonMessageEncoder(),
+                group: groupId,
+                topics: failStreamTopic,
+            };
+            configuration = parseConfig(configuration);
+            const source = new KafkaSource(configuration);
+            const context: IComponentContext = {
+                ...DefaultComponentContext,
+                // logger: new ConsoleLogger(),
+                logger,
+            };
+            await source.initialize(context);
+
+            let error;
+            try {
+                await source.start(MockInputSourceContext).next();
+            } catch (err) {
+                error = err;
+            } finally {
+                await source.stop();
+                await source.dispose();
+            }
+            expect(error).toBeUndefined();
+            expect(errorCall).toBeCalledWith(
+                `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.stream}, expected only 1`
+            );
+        });
+        it(`fails on too many values for sequenceNumber (${DefaultKafkaHeaderNames.sequenceNumber})`, async () => {
+            const groupId = "headers-topic-fail-sn";
+            const broker = generateBrokerAddr();
+            let configuration: configType = {
+                broker,
+                encoder: new JsonMessageEncoder(),
+                group: groupId,
+                topics: failSnTopic,
+            };
+            configuration = parseConfig(configuration);
+            const source = new KafkaSource(configuration);
+            const context: IComponentContext = {
+                ...DefaultComponentContext,
+                logger,
+            };
+            await source.initialize(context);
+
+            let error;
+            try {
+                await source.start(MockInputSourceContext).next();
+            } catch (err) {
+                error = err;
+            } finally {
+                await source.stop();
+                await source.dispose();
+            }
+            expect(error).toBeUndefined();
+            expect(errorCall).toBeCalledWith(
+                `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.sequenceNumber}, expected only 1`
+            );
+        });
+        it(`fails on too many values for timestamp (${DefaultKafkaHeaderNames.timestamp})`, async () => {
+            const groupId = "headers-topic-fail-timestamp";
+            const broker = generateBrokerAddr();
+            let configuration: configType = {
+                broker,
+                encoder: new JsonMessageEncoder(),
+                group: groupId,
+                topics: failTimestampTopic,
+            };
+            configuration = parseConfig(configuration);
+            const source = new KafkaSource(configuration);
+            const context: IComponentContext = {
+                ...DefaultComponentContext,
+                logger,
+            };
+            await source.initialize(context);
+
+            let error;
+            try {
+                await source.start(MockInputSourceContext).next();
+            } catch (err) {
+                error = err;
+            } finally {
+                await source.stop();
+                await source.dispose();
+            }
+            expect(error).toBeUndefined();
+            expect(errorCall).toBeCalledWith(
+                `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.timestamp}, expected only 1`
+            );
         });
     });
 });
