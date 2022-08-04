@@ -101,18 +101,6 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
             const headers = message.headers || {};
             let type: string;
             try {
-                let codedMessage: IMessage;
-                if (!message.value) {
-                    // TODO - return actual message type for the message that was considered a tombstone event instead of overwriting to Tombstone
-                    // We do so that we can ensure that the message processing loop sequentially commits offsets for now instead of attempting
-                    // to commit offsets directly
-                    codedMessage = {
-                        type: Tombstone,
-                        payload: null,
-                    };
-                } else {
-                    codedMessage = new EncodedMessage(this.config.encoder, type, message.value);
-                }
                 const fromHeaders: { [key: string]: any } = {};
                 const eventTypeHeaders = headers[this.config.headerNames.eventType];
                 if (eventTypeHeaders) {
@@ -127,6 +115,18 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                         type = eventTypeHeaders;
                     }
                     fromHeaders[EventSourcedMetadata.EventType] = type;
+                }
+                let codedMessage: IMessage;
+                if (!message.value) {
+                    // TODO - return actual message type for the message that was considered a tombstone event instead of overwriting to Tombstone
+                    // We do so that we can ensure that the message processing loop sequentially commits offsets for now instead of attempting
+                    // to commit offsets directly
+                    codedMessage = {
+                        type: Tombstone,
+                        payload: null,
+                    };
+                } else {
+                    codedMessage = new EncodedMessage(this.config.encoder, type, message.value);
                 }
                 const seqNumHeader = headers[this.config.headerNames.sequenceNumber];
                 if (seqNumHeader) {

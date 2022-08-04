@@ -22,7 +22,6 @@ import {
     waitForPendingIO,
     DefaultComponentContext,
     IInputSourceContext,
-    IComponentContext,
 } from "@walmartlabs/cookie-cutter-core";
 import * as ip from "ip";
 import * as kafkajs from "kafkajs";
@@ -1003,26 +1002,6 @@ describe("Kafka Integration Tests", () => {
                 ],
             });
         });
-        let errorCall: jest.Mock;
-        let logger: any = jest.fn().mockImplementation(() => {
-            return {
-                info: jest.fn(),
-                debug: jest.fn(),
-                warn: jest.fn(),
-                error: errorCall,
-            };
-        })();
-        beforeEach(() => {
-            errorCall = jest.fn();
-            logger = jest.fn().mockImplementation(() => {
-                return {
-                    info: jest.fn(),
-                    debug: jest.fn(),
-                    warn: jest.fn(),
-                    error: errorCall,
-                };
-            })();
-        });
         afterAll(async () => {
             await producer.disconnect();
             await admin.disconnect();
@@ -1096,11 +1075,12 @@ describe("Kafka Integration Tests", () => {
             };
             configuration = parseConfig(configuration);
             const source = new KafkaSource(configuration);
-            const context: IComponentContext = {
+            const logger = new ConsoleLogger();
+            const spy = jest.spyOn(logger, "error");
+            await source.initialize({
                 ...DefaultComponentContext,
                 logger,
-            };
-            await source.initialize(context);
+            });
 
             let error;
             try {
@@ -1111,10 +1091,10 @@ describe("Kafka Integration Tests", () => {
                 await source.stop();
                 await source.dispose();
             }
-            expect(error).toBeDefined();
-            expect((error as Error).message).toMatch(/Header contains an array with/);
-            expect((error as Error).message).toMatch(
-                new RegExp("" + DefaultKafkaHeaderNames.eventType + "")
+            expect(error).toBeUndefined();
+            expect(spy).toHaveBeenNthCalledWith(
+                1,
+                `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.eventType}, expected only 1`
             );
         });
         it(`fails on too many values for stream (${DefaultKafkaHeaderNames.stream})`, async () => {
@@ -1128,11 +1108,12 @@ describe("Kafka Integration Tests", () => {
             };
             configuration = parseConfig(configuration);
             const source = new KafkaSource(configuration);
-            const context: IComponentContext = {
+            const logger = new ConsoleLogger();
+            const spy = jest.spyOn(logger, "error");
+            await source.initialize({
                 ...DefaultComponentContext,
                 logger,
-            };
-            await source.initialize(context);
+            });
 
             let error;
             try {
@@ -1144,7 +1125,8 @@ describe("Kafka Integration Tests", () => {
                 await source.dispose();
             }
             expect(error).toBeUndefined();
-            expect(errorCall).toBeCalledWith(
+            expect(spy).toHaveBeenNthCalledWith(
+                1,
                 `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.stream}, expected only 1`
             );
         });
@@ -1159,11 +1141,12 @@ describe("Kafka Integration Tests", () => {
             };
             configuration = parseConfig(configuration);
             const source = new KafkaSource(configuration);
-            const context: IComponentContext = {
+            const logger = new ConsoleLogger();
+            const spy = jest.spyOn(logger, "error");
+            await source.initialize({
                 ...DefaultComponentContext,
                 logger,
-            };
-            await source.initialize(context);
+            });
 
             let error;
             try {
@@ -1175,7 +1158,8 @@ describe("Kafka Integration Tests", () => {
                 await source.dispose();
             }
             expect(error).toBeUndefined();
-            expect(errorCall).toBeCalledWith(
+            expect(spy).toHaveBeenNthCalledWith(
+                1,
                 `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.sequenceNumber}, expected only 1`
             );
         });
@@ -1190,11 +1174,12 @@ describe("Kafka Integration Tests", () => {
             };
             configuration = parseConfig(configuration);
             const source = new KafkaSource(configuration);
-            const context: IComponentContext = {
+            const logger = new ConsoleLogger();
+            const spy = jest.spyOn(logger, "error");
+            await source.initialize({
                 ...DefaultComponentContext,
                 logger,
-            };
-            await source.initialize(context);
+            });
 
             let error;
             try {
@@ -1206,7 +1191,8 @@ describe("Kafka Integration Tests", () => {
                 await source.dispose();
             }
             expect(error).toBeUndefined();
-            expect(errorCall).toBeCalledWith(
+            expect(spy).toHaveBeenNthCalledWith(
+                1,
                 `Header contains an array with 2 values for ${DefaultKafkaHeaderNames.timestamp}, expected only 1`
             );
         });
