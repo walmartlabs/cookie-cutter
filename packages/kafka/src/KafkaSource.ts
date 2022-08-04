@@ -100,19 +100,6 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
 
             const headers = message.headers || {};
             let type: string;
-            const eventTypeHeaders = headers[this.config.headerNames.eventType];
-            if (eventTypeHeaders) {
-                if (Array.isArray(eventTypeHeaders)) {
-                    if (eventTypeHeaders.length > 1) {
-                        const errStr = `Header contains an array with ${eventTypeHeaders.length} values for ${this.config.headerNames.eventType}, expected only 1`;
-                        this.logger.error(errStr);
-                        throw new Error(errStr);
-                    }
-                    type = eventTypeHeaders[0];
-                } else {
-                    type = eventTypeHeaders;
-                }
-            }
             try {
                 let codedMessage: IMessage;
                 if (!message.value) {
@@ -127,6 +114,20 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                     codedMessage = new EncodedMessage(this.config.encoder, type, message.value);
                 }
                 const fromHeaders: { [key: string]: any } = {};
+                const eventTypeHeaders = headers[this.config.headerNames.eventType];
+                if (eventTypeHeaders) {
+                    if (Array.isArray(eventTypeHeaders)) {
+                        if (eventTypeHeaders.length > 1) {
+                            const errStr = `Header contains an array with ${eventTypeHeaders.length} values for ${this.config.headerNames.eventType}, expected only 1`;
+                            this.logger.error(errStr);
+                            throw new Error(errStr);
+                        }
+                        type = eventTypeHeaders[0];
+                    } else {
+                        type = eventTypeHeaders;
+                    }
+                    fromHeaders[EventSourcedMetadata.EventType] = type;
+                }
                 const seqNumHeader = headers[this.config.headerNames.sequenceNumber];
                 if (seqNumHeader) {
                     if (Array.isArray(seqNumHeader)) {
@@ -159,7 +160,6 @@ export class KafkaSource implements IInputSource, IRequireInitialization, IDispo
                         fromHeaders[EventSourcedMetadata.Stream] = streamHeader;
                     }
                 }
-                fromHeaders[EventSourcedMetadata.EventType] = type;
                 const dt = headers[this.config.headerNames.timestamp];
                 if (dt) {
                     if (typeof dt === "string") {

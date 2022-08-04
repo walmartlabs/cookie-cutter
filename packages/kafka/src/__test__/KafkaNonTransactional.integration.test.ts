@@ -829,7 +829,6 @@ describe("Kafka Integration Tests", () => {
             const groupId = "snappy-topic";
             const expNumConsumedMsgs = 2;
             const receivedKafkaMsg = [];
-            // const receivedKafkaKeys = [];
             const appConsumer = consumer(
                 {
                     onShoppingCartCreated: async (
@@ -837,7 +836,6 @@ describe("Kafka Integration Tests", () => {
                         _: IDispatchContext
                     ): Promise<void> => {
                         receivedKafkaMsg.push(msg.shoppingCartId);
-                        // receivedKafkaKeys.push(_.metadata(KafkaMetadata.Key));
                     },
                 },
                 snappyTopic,
@@ -1132,7 +1130,6 @@ describe("Kafka Integration Tests", () => {
             const source = new KafkaSource(configuration);
             const context: IComponentContext = {
                 ...DefaultComponentContext,
-                // logger: new ConsoleLogger(),
                 logger,
             };
             await source.initialize(context);
