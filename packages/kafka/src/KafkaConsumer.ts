@@ -29,7 +29,6 @@ import {
     RetryOptions,
 } from "kafkajs";
 import Long = require("long");
-import { isNumber, isString } from "util";
 import {
     IKafkaBrokerConfiguration,
     IKafkaClientConfiguration,
@@ -183,7 +182,8 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                 context
                     .evict(
                         (msg) =>
-                            isNumber(msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch)) &&
+                            typeof msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch) ===
+                                "number" &&
                             msg.metadata<number>(KafkaMetadata.ConsumerGroupEpoch) < epoch
                     )
                     .catch((e) => {
@@ -296,10 +296,21 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
                 for (const { offset, key, value, timestamp, headers } of messages) {
                     const iMessageHeaders: IMessageHeaders = {};
                     for (const key of Object.keys(headers)) {
-                        if (!isString(headers[key])) {
-                            iMessageHeaders[key] = (headers[key] as Buffer).toString();
+                        const header = headers[key];
+                        if (Array.isArray(header)) {
+                            if (header.length > 0 && typeof header[0] !== "string") {
+                                const stringArr: string[] = [];
+                                (header as Buffer[]).forEach((element) => {
+                                    stringArr.push((element as Buffer).toString());
+                                });
+                                iMessageHeaders[key] = stringArr;
+                            } else {
+                                iMessageHeaders[key] = header as string[];
+                            }
+                        } else if (typeof header !== "string") {
+                            iMessageHeaders[key] = header.toString();
                         } else {
-                            iMessageHeaders[key] = headers[key] as string;
+                            iMessageHeaders[key] = header;
                         }
                     }
                     if (this.done) {

@@ -58,7 +58,9 @@ describe("Kafka Integration Tests", () => {
             await admin.connect();
             await admin.createTopics({
                 waitForLeaders: true,
-                topics: [{ topic: topicName, numPartitions: 4, configEntries: [] }],
+                topics: [
+                    { topic: topicName, numPartitions: 4, replicationFactor: 1, configEntries: [] },
+                ],
             });
         } finally {
             await admin.disconnect();

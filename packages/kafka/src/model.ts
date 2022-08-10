@@ -10,7 +10,7 @@ import * as ot from "opentracing";
 import { KafkaMetadata } from ".";
 
 export interface IMessageHeaders {
-    [key: string]: string;
+    [key: string]: string | string[];
 }
 
 export interface IRawKafkaMessage {

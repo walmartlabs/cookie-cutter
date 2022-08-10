@@ -1,3 +1,31 @@
+# 1.5
+
+## CI/CD
+- Run build steps on Node 16 instead of Node 10. Minimum Node is now 12.0.0.
+- Keep a build step running on Node 12 for backwards compatibility.
+
+## All packages
+- Update most dependencies to the latest patch version.
+
+## azure
+- Fix: message encoding/decoding inconsistency between `@azure/storage-queue` (in 1.4.0) and `azure-storage` (in 1.3.0 and lower).
+
+## core
+- Add logs to composite input source to debug erroring sources.
+
+## gcp
+- Add a PubSub source.
+
+## grpc
+- Remove the result of `call.getPeer()` from the metrics tags to reduce the cardinality of metrics.
+
+## kafka
+- Add an optional client id prefix for the automatically generated `clientId`.
+- Add an optional parameter that specifies additional header names to be pulled into the message metadata.
+
+## redis
+- Replace `shortid` with `nanoid` for generating the `consumerId`.
+
 # 1.4
 
 ## CI/CD
