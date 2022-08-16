@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { IGrpcServiceDefinition, IGrpcServiceMethod } from "..";
 
 /**

@@ -7,7 +7,6 @@
     "examples/*"
   ],
   "resolutions": {
-    "protobufjs": "6.11.3",
     "minipass": "3.2.1"
   },
   "engines": {

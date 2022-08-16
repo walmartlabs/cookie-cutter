@@ -282,7 +282,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient(undefined, { requestTimeout: 5 });
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/Deadline Exceeded/);
+            await expect(response).rejects.toThrowError(/Deadline exceeded/);
         } finally {
             app.cancel();
             await app;

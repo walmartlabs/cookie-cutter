@@ -26,7 +26,7 @@ import {
     Metadata,
     MethodDefinition,
     status,
-} from "grpc";
+} from "@grpc/grpc-js";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
 import { performance } from "perf_hooks";
 import { createGrpcConfiguration, createServiceDefinition } from ".";
