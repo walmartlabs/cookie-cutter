@@ -14,7 +14,6 @@
     },
     "dependencies": {
         "change-case": "4.1.2",
-        "grpc": "1.24.11",
         "@grpc/grpc-js": "1.6.8",
         "opentracing": "0.14.7"
     },
