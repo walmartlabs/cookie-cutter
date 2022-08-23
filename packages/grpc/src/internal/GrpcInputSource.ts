@@ -17,8 +17,6 @@ import {
     IRequireInitialization,
     MessageRef,
     OpenTracingTagKeys,
-    // sleep,
-    timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     sendUnaryData,
@@ -94,16 +92,14 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
         await this.streamHandler.initialize(context);
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>(async (resolve, reject) => {
             this.server.bindAsync(
                 `${this.config.host}:${this.config.port}`,
                 ServerCredentials.createInsecure(),
-                (error: Error | null, port: number) => {
-                    this.logger.info(`bindAsync port: ${port}`);
+                (error: Error | null, _: number) => {
                     if (error) {
-                        this.logger.error("bindAsync Error", error);
-                        // throw new Error("ERROR WARNING ERROR");
-                        reject(undefined);
+                        this.logger.error("Call to bindAsync returned error", error);
+                        reject(error);
                     }
                     resolve();
                 }
@@ -217,21 +213,20 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
     }
 
     public async stop(): Promise<void> {
-        await this.queue.close();
-        await this.streamHandler.dispose();
+        this.queue.close();
+    }
 
-        const graceful = new Promise<void>((resolve) => {
-            this.server.tryShutdown(() => {
+    public async dispose(): Promise<void> {
+        await this.streamHandler.dispose();
+        await new Promise<void>(async (resolve) => {
+            this.server.tryShutdown((error?: Error) => {
+                if (error) {
+                    this.logger.warn("gRPC server failed to shutdown gracefully, forcing shutdown");
+                    this.server.forceShutdown();
+                }
                 resolve();
             });
         });
-
-        try {
-            await timeout(graceful, 2000);
-        } catch (e) {
-            this.logger.warn("gRPC server failed to shutdown gracefully, forcing shutdown");
-            this.server.forceShutdown();
-        }
     }
 
     private createError(error: any, code?: status): ServerErrorResponse {
