@@ -98,7 +98,10 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                 ServerCredentials.createInsecure(),
                 (error: Error | null, _: number) => {
                     if (error) {
-                        this.logger.error("Call to bindAsync returned error", error);
+                        this.logger.error(
+                            `Call to bindAsync for ${this.config.host}:${this.config.port} returned error: `,
+                            error
+                        );
                         reject(error);
                     }
                     resolve();

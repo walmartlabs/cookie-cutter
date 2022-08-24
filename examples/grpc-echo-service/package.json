@@ -5,8 +5,7 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
-        "@walmartlabs/cookie-cutter-grpc": "~1.6.0-beta",
-        "inquirer": "9.0.0"
+        "@walmartlabs/cookie-cutter-grpc": "~1.6.0-beta"
     },
     "devDependencies": {
         "protobufjs": "6.11.3"
