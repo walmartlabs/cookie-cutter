@@ -12,7 +12,7 @@ import * as proto from "./proto";
 // tslint:disable-next-line:no-floating-promises
 (async () => {
     const client = grpcClient<proto.IChatService>({
-        endpoint: "localhost:5001",
+        endpoint: "0.0.0.0:5001",
         definition: proto.Def,
     });
 

@@ -17,18 +17,17 @@ import {
     IRequireInitialization,
     MessageRef,
     OpenTracingTagKeys,
-    timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import {
     sendUnaryData,
     Server,
     ServerCredentials,
+    ServerErrorResponse,
     ServerUnaryCall,
-    ServerWriteableStream,
-    ServiceError,
+    ServerWritableStream,
     setLogger,
     status,
-} from "grpc";
+} from "@grpc/grpc-js";
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
 import { performance } from "perf_hooks";
 import { isError } from "util";
@@ -93,11 +92,22 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
         await this.streamHandler.initialize(context);
-
-        this.server.bind(
-            `${this.config.host}:${this.config.port}`,
-            ServerCredentials.createInsecure()
-        );
+        await new Promise<void>(async (resolve, reject) => {
+            this.server.bindAsync(
+                `${this.config.host}:${this.config.port}`,
+                ServerCredentials.createInsecure(),
+                (error: Error | null, _: number) => {
+                    if (error) {
+                        this.logger.error(
+                            `Call to bindAsync for ${this.config.host}:${this.config.port} returned error: `,
+                            error
+                        );
+                        reject(error);
+                    }
+                    resolve();
+                }
+            );
+        });
 
         for (const def of this.config.definitions) {
             const spec = createServiceDefinition(def);
@@ -114,13 +124,14 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                 const type = convertOperationPath(method.path);
                 impl[key] = async (...args: any[]) => {
                     const startTime = performance.now();
-                    const call: ServerUnaryCall<any> | ServerWriteableStream<any> = args[0];
+                    const call: ServerUnaryCall<any, any> | ServerWritableStream<any, any> =
+                        args[0];
                     const msg: IMessage = {
                         payload: call.request,
                         type,
                     };
 
-                    function isStreaming(_: any): _ is ServerWriteableStream<any> {
+                    function isStreaming(_: any): _ is ServerWritableStream<any, any> {
                         return method.responseStream;
                     }
 
@@ -205,24 +216,23 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
     }
 
     public async stop(): Promise<void> {
-        await this.queue.close();
-        await this.streamHandler.dispose();
+        this.queue.close();
+    }
 
-        const graceful = new Promise<void>((resolve) => {
-            this.server.tryShutdown(() => {
+    public async dispose(): Promise<void> {
+        await this.streamHandler.dispose();
+        await new Promise<void>(async (resolve) => {
+            this.server.tryShutdown((error?: Error) => {
+                if (error) {
+                    this.logger.warn("gRPC server failed to shutdown gracefully, forcing shutdown");
+                    this.server.forceShutdown();
+                }
                 resolve();
             });
         });
-
-        try {
-            await timeout(graceful, 2000);
-        } catch (e) {
-            this.logger.warn("gRPC server failed to shutdown gracefully, forcing shutdown");
-            this.server.forceShutdown();
-        }
     }
 
-    private createError(error: any, code?: status): ServiceError {
+    private createError(error: any, code?: status): ServerErrorResponse {
         return {
             name: error.toString(),
             code: code || status.UNKNOWN,

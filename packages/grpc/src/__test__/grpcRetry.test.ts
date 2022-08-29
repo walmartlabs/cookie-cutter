@@ -7,8 +7,8 @@ LICENSE file in the root directory of this source tree.
 
 let mockMakeServerStreamRequest;
 let mockMakeUnaryRequest;
-jest.mock("grpc", () => {
-    const grpc = jest.requireActual("grpc");
+jest.mock("@grpc/grpc-js", () => {
+    const grpc = jest.requireActual("@grpc/grpc-js");
     return {
         ...grpc,
         makeGenericClientConstructor: () => {
@@ -35,7 +35,7 @@ import {
     IRequireInitialization,
     RetryMode,
 } from "@walmartlabs/cookie-cutter-core";
-import { status } from "grpc";
+import { status } from "@grpc/grpc-js";
 import { grpcClient, GrpcMetadata, grpcSource, IResponseStream } from "..";
 
 import * as proto from "./Sample";

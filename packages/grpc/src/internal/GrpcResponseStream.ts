@@ -6,13 +6,13 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { AsyncPipe } from "@walmartlabs/cookie-cutter-core";
-import { ServerWriteableStream } from "grpc";
+import { ServerWritableStream } from "@grpc/grpc-js";
 import { IResponseStream } from "..";
 
-export class GrpcResponseStream<T = any> implements IResponseStream<T> {
+export class GrpcResponseStream<T = any, D = any> implements IResponseStream<T> {
     public readonly pipe: AsyncPipe<T>;
 
-    constructor(public readonly call: ServerWriteableStream<T>) {
+    constructor(public readonly call: ServerWritableStream<T, D>) {
         this.pipe = new AsyncPipe();
     }
 

@@ -16,6 +16,7 @@ import {
     IRequireInitialization,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
+import { readFileSync } from "fs";
 import {
     CallOptions,
     Client,
@@ -25,7 +26,7 @@ import {
     Metadata,
     MethodDefinition,
     status,
-} from "grpc";
+} from "@grpc/grpc-js";
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
 import { performance } from "perf_hooks";
 import { createGrpcConfiguration, createServiceDefinition } from ".";
@@ -73,15 +74,32 @@ class ClientBase implements IRequireInitialization, IDisposable {
 }
 
 export function createGrpcClient<T>(
-    config: IGrpcClientConfiguration & IGrpcConfiguration
+    config: IGrpcClientConfiguration & IGrpcConfiguration,
+    certPath?: string
 ): T & IDisposable & IRequireInitialization {
     const serviceDef = createServiceDefinition(config.definition);
+    let client: Client;
     const ClientType = makeGenericClientConstructor(serviceDef, undefined, undefined);
-    const client = new ClientType(
-        config.endpoint,
-        credentials.createInsecure(),
-        createGrpcConfiguration(config)
-    );
+    if (certPath) {
+        const rootCert = readFileSync(certPath);
+        const channelCreds = credentials.createSsl(rootCert);
+
+        const metaCallback = (_params: any, callback: (arg0: null, arg1: Metadata) => void) => {
+            const meta = new Metadata();
+            meta.add("custom-auth-header", "token");
+            callback(null, meta);
+        };
+
+        const callCreds = credentials.createFromMetadataGenerator(metaCallback);
+        const combCreds = credentials.combineChannelCredentials(channelCreds, callCreds);
+        client = new ClientType(config.endpoint, combCreds, createGrpcConfiguration(config));
+    } else {
+        client = new ClientType(
+            config.endpoint,
+            credentials.createInsecure(),
+            createGrpcConfiguration(config)
+        );
+    }
 
     const wrapper: T & ClientBase = new ClientBase(client) as any;
     for (const key of Object.keys(serviceDef)) {

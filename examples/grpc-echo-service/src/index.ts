@@ -32,7 +32,7 @@ const app = Application.create()
     .input()
     .add(
         grpcSource({
-            host: "localhost",
+            host: "0.0.0.0",
             port: 5001,
             definitions: [Def],
         })
@@ -50,7 +50,7 @@ const app = Application.create()
 // tslint:disable-next-line:no-floating-promises
 (async () => {
     const client = grpcClient<IEchoService>({
-        endpoint: "localhost:5001",
+        endpoint: "0.0.0.0:5001",
         definition: Def,
     });
 
