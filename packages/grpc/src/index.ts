@@ -101,7 +101,8 @@ export function grpcMsg(operation: IGrpcServiceMethod, request: any): IMessage {
 }
 
 export function grpcClient<T>(
-    configuration: IGrpcClientConfiguration & IGrpcConfiguration
+    configuration: IGrpcClientConfiguration & IGrpcConfiguration,
+    certPath?: string
 ): T & IRequireInitialization & IDisposable {
     configuration = config.parse<IGrpcClientConfiguration & IGrpcConfiguration>(
         GrpcClientConfiguration,
@@ -121,5 +122,5 @@ export function grpcClient<T>(
             },
         }
     );
-    return createGrpcClient<T>(configuration);
+    return createGrpcClient<T>(configuration, certPath);
 }
