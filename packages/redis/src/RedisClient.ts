@@ -208,13 +208,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     public async dispose(): Promise<void> {
         this.disposeInitiated = true;
         await this.client.quit();
-        setTimeout(async () => {
-            this.logger.warn(
-                "Waited 1s for client to Quit. Calling Disconnect and Unref on client"
-            );
-            await this.client.disconnect();
-            this.client.unref();
-        }, 1000).unref();
+        this.client.unref();
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
