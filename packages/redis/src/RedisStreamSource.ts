@@ -20,7 +20,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, Tags, Tracer } from "opentracing";
 
-import { IRedisInputStreamOptions, IRedisClient, IRedisMessage, RedisStreamMetadata } from ".";
+import { IRedisClient, IRedisInputStreamOptions, IRedisMessage, RedisStreamMetadata } from ".";
 import { RedisOpenTracingTagKeys, RedisClient } from "./RedisClient";
 
 export enum RedisMetrics {
@@ -69,7 +69,9 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                     this.config.consumerGroup,
                     this.config.consumerId,
                     this.config.batchSize,
-                    this.config.blockTimeout
+                    this.config.blockTimeout,
+                    this.config.payloadKey,
+                    this.config.typeNameKey
                 );
 
                 if (messages.length === 0) {
@@ -133,7 +135,9 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                         this.config.consumerGroup,
                         this.config.consumerId,
                         this.config.batchSize,
-                        this.config.blockTimeout
+                        this.config.blockTimeout,
+                        this.config.payloadKey,
+                        this.config.typeNameKey
                     );
 
                     // this variable ensures that we don't get stuck in the reclaim
@@ -284,6 +288,8 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 this.config.consumerGroup,
                 this.config.consumerId,
                 this.config.idleTimeout,
+                this.config.payloadKey,
+                this.config.typeNameKey,
                 pendingMessagesIds
             );
 

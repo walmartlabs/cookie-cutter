@@ -20,10 +20,22 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { RedisError } from "redis";
-import { isString, isNullOrUndefined } from "util";
+import {
+    AbortError,
+    ClientClosedError,
+    ConnectionTimeoutError,
+    createClient,
+    DisconnectsClientError,
+    ErrorReply,
+    ReconnectStrategyError,
+    RedisClientType,
+    RootNodesUnavailableError,
+    SocketClosedUnexpectedlyError,
+    WatchError,
+} from "redis";
+
+import { isNullOrUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
-import { RedisProxy, RawReadGroupResult, RawPELResult, RawXClaimResult } from "./RedisProxy";
 
 export enum RedisClientMetrics {
     Get = "cookie_cutter.redis_client.get",
@@ -58,30 +70,60 @@ export interface IPELResult {
     timesDelivered: number;
 }
 
-function parseRawPELResult(results: RawPELResult): IPELResult[] {
-    return results.map(([messageId, consumerId, idleTime, timesDelivered]) => ({
-        messageId,
-        consumerId,
-        idleTime,
-        timesDelivered,
-    }));
+type RawPELResult = {
+    id: string;
+    owner: string;
+    millisecondsSinceLastDelivery: number;
+    deliveriesCounter: number;
+};
+
+export type RawReadGroupResult = {
+    name: string | Buffer;
+    messages: { id: string | Buffer; message: { [x: string]: string | Buffer } }[];
+}[];
+
+type RawXClaimResult = {
+    id: string;
+    message: {
+        [x: string]: string;
+    };
+};
+
+function parseRawPELResult(results: RawPELResult[]): IPELResult[] {
+    return results.map(({ id, owner, millisecondsSinceLastDelivery, deliveriesCounter }) => {
+        return {
+            messageId: id,
+            consumerId: owner,
+            idleTime: millisecondsSinceLastDelivery,
+            timesDelivered: deliveriesCounter,
+        };
+    });
 }
 
 export function parseRawReadGroupResult(
-    results: RawReadGroupResult
+    results: RawReadGroupResult,
+    payloadKey: string,
+    typeNameKey: string
 ): { streamName: string; messageId: string; data?: string; type?: string }[] {
     return results.reduce((acc, curr) => {
-        const [streamName, streamValues = []] = curr;
-        for (const streamValue of streamValues) {
-            const [messageId, keyValues = []] = streamValue;
-
-            if (isNullOrUndefined(keyValues) || keyValues?.length < 1) {
+        const { name, messages } = curr;
+        const streamName = typeof name === "string" ? name : name.toString();
+        for (const msg of messages) {
+            const { id, message } = msg;
+            const messageId = typeof id === "string" ? id : id.toString();
+            if (isNullOrUndefined(message) || Object.keys(message).length < 1) {
                 acc.push({ streamName, messageId });
                 continue;
             }
 
-            // [RedisMetadata.OutputSinkStreamKey, serializedProto, type, typeName]
-            const [, data, , type] = keyValues;
+            let data = message[payloadKey];
+            if (data) {
+                data = typeof data === "string" ? data : data.toString();
+            }
+            let type = message[typeNameKey];
+            if (type) {
+                type = typeof type === "string" ? type : type.toString();
+            }
             acc.push({ streamName, messageId, data, type });
         }
         return acc;
@@ -89,19 +131,41 @@ export function parseRawReadGroupResult(
 }
 
 function extractXClaimValues(
-    results: RawXClaimResult
+    results: RawXClaimResult[],
+    payloadKey: string,
+    typeNameKey: string
 ): { messageId: string; data: string; type: string }[] {
     return results.reduce((acc, curr) => {
-        const [messageId, keyValues = []] = curr;
-
-        const [, data, , type] = keyValues;
-        acc.push({ messageId, data, type });
+        const { id, message } = curr;
+        acc.push({
+            messageId: id,
+            data: message[payloadKey],
+            type: message[typeNameKey],
+        });
         return acc;
     }, []);
 }
 
+function getErrorName(error: any): string {
+    if (
+        error instanceof AbortError ||
+        error instanceof WatchError ||
+        error instanceof ConnectionTimeoutError ||
+        error instanceof ClientClosedError ||
+        error instanceof DisconnectsClientError ||
+        error instanceof SocketClosedUnexpectedlyError ||
+        error instanceof RootNodesUnavailableError ||
+        error instanceof ReconnectStrategyError ||
+        error instanceof ErrorReply
+    ) {
+        return error.name;
+    }
+    return "NonRedisError";
+}
+
 export class RedisClient implements IRedisClient, IRequireInitialization, IDisposable {
-    private readonly client: RedisProxy;
+    private readonly client: RedisClientType;
+    private disposeInitiated: boolean = false;
     private readonly encoder: IMessageEncoder;
     private readonly typeMapper: IMessageTypeMapper;
 
@@ -112,28 +176,57 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     constructor(private readonly config: IRedisOptions) {
         this.encoder = config.encoder;
         this.typeMapper = config.typeMapper;
-        this.client = new RedisProxy(
-            this.config.host,
-            this.config.port,
-            this.config.db,
-            this.config.password
-        );
+        this.client = createClient({
+            socket: {
+                host: this.config.host,
+                port: this.config.port,
+            },
+            database: this.config.db,
+            password: this.config.password,
+        });
+        this.client.on("connected", () => {
+            this.logger.debug("Connection to Redis established");
+        });
+        this.client.on("error", (err) => {
+            this.logger.error("Redis Error", err);
+            throw err;
+        });
+        this.client.on("ready", () => {
+            this.logger.debug("Redis connection is ready");
+        });
+        this.client.on("reconnecting", () => {
+            this.logger.debug("Reconnecting to Redis");
+        });
+        this.client.on("end", () => {
+            this.logger.debug("Disconnected from Redis");
+            if (!this.disposeInitiated) {
+                throw new Error("connection to Redis lost");
+            }
+        });
     }
 
     public async dispose(): Promise<void> {
-        await this.client.dispose();
+        this.disposeInitiated = true;
+        await this.client.quit();
+        setTimeout(async () => {
+            this.logger.warn(
+                "Waited 1s for client to Quit. Calling Disconnect and Unref on client"
+            );
+            await this.client.disconnect();
+            this.client.unref();
+        }, 1000).unref();
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
         this.tracer = context.tracer;
         this.metrics = context.metrics;
         this.logger = context.logger;
-        await this.client.initialize(context);
+        await this.client.connect();
     }
 
     private getTypeName<T>(type: string | IClassType<T>): string {
         let typeName: string;
-        if (!isString(type)) {
+        if (typeof type !== "string") {
             typeName = this.typeMapper.map(type);
         } else {
             typeName = type;
@@ -186,7 +279,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 [MetricLabels.Type]: typeName,
                 db,
                 result: RedisMetricResults.Error,
-                errorType: e instanceof RedisError ? (e as any).name : "NonRedisError",
+                errorType: getErrorName(e),
             });
             throw e;
         } finally {
@@ -227,7 +320,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             this.metrics.increment(RedisClientMetrics.Get, {
                 db,
                 result: RedisMetricResults.Error,
-                errorType: e instanceof RedisError ? (e as any).name : "NonRedisError",
+                errorType: getErrorName(e),
             });
             throw e;
         } finally {
@@ -260,14 +353,22 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             const buf = Buffer.from(encodedBody);
             const storableValue = this.config.base64Encode ? buf.toString("base64") : buf;
 
-            const args: (string | Buffer)[] = [streamName];
+            let opts = {};
             if (!isNullOrUndefined(maxStreamLength)) {
-                args.push("MAXLEN", "~", maxStreamLength.toString());
+                opts = {
+                    TRIM: {
+                        strategy: "MAXLEN",
+                        strategyModifier: "~",
+                        threshold: maxStreamLength.toString(),
+                    },
+                };
             }
 
-            args.push(id, keys.payload, storableValue, keys.typeName, typeName);
-
-            const insertedId = await this.client.xadd.call(this.client, args);
+            const payload = {
+                [keys.payload]: storableValue,
+                [keys.typeName]: typeName,
+            };
+            const insertedId = await this.client.xAdd(streamName, id, payload, opts);
             this.metrics!.increment(RedisClientMetrics.XAdd, {
                 [MetricLabels.Type]: typeName,
                 db,
@@ -283,7 +384,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 db,
                 streamName,
                 result: RedisMetricResults.Error,
-                errorType: e instanceof RedisError ? (e as any).name : "NonRedisError",
+                errorType: getErrorName(e),
             });
             throw e;
         } finally {
@@ -302,20 +403,26 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         const span = this.tracer.startSpan("Redis Client xGroup Call", { childOf: context });
         this.spanLogAndSetTags(span, this.xGroup.name, this.config.db, undefined, streamName);
         try {
-            const response = await this.client.xgroup([
-                "create",
-                streamName,
-                consumerGroup,
-                consumerGroupStartId,
-                "mkstream",
-            ]);
+            const opts = {
+                MKSTREAM: true,
+            };
+            const response = await this.client.xGroupCreate(
+                streamName as any,
+                consumerGroup as any,
+                consumerGroupStartId as any,
+                opts as any
+            );
             this.metrics.increment(RedisClientMetrics.XGroup, {
                 db,
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Success,
             });
-            return response;
+            if (typeof response === "string") {
+                return response;
+            } else {
+                return response.toString();
+            }
         } catch (err) {
             const alreadyExistsErrorMessage = "BUSYGROUP Consumer Group name already exists";
             if (suppressAlreadyExistsError && (err as any).message === alreadyExistsErrorMessage) {
@@ -335,7 +442,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                errorType: err instanceof RedisError ? (err as any).name : "NonRedisError",
+                errorType: getErrorName(err),
             });
 
             throw err;
@@ -354,7 +461,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         const span = this.tracer.startSpan("Redis Client xAck Call", { childOf: context });
         this.spanLogAndSetTags(span, this.xAck.name, this.config.db, undefined, streamName);
         try {
-            const response = await this.client.xack(streamName, consumerGroup, id);
+            const response = await this.client.xAck(streamName, consumerGroup, id);
             this.metrics.increment(RedisClientMetrics.XAck, {
                 db,
                 streamName,
@@ -369,7 +476,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                errorType: err instanceof RedisError ? (err as any).name : "NonRedisError",
+                errorType: getErrorName(err),
             });
 
             throw err;
@@ -384,7 +491,9 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         consumerGroup: string,
         consumerName: string,
         count: number,
-        block: number
+        block: number,
+        payloadKey: string,
+        typeNameKey: string
     ): Promise<IRedisMessage[]> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client xReadGroupObject Call", {
@@ -392,27 +501,29 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         });
         const streamNames = streams.map((s) => s.name);
         const ids = streams.map((s) => s.id || ">");
+        const redisStreams = streams.map((s) => {
+            return { key: s.name, id: s.id || ">" };
+        });
 
         this.spanLogAndSetTags(span, this.xReadGroup.name, this.config.db, ids, streamNames);
 
         try {
-            const response = await this.client.xreadgroup([
-                "group",
-                consumerGroup,
-                consumerName,
-                "count",
-                String(count),
-                "block",
-                String(block),
-                "streams",
-                ...streamNames,
-                ...ids,
-            ]);
+            const opts = {
+                COUNT: String(count),
+                BLOCK: String(block),
+                // NOACK: true,
+            };
+            const response = await this.client.xReadGroup(
+                consumerGroup as any,
+                consumerName as any,
+                redisStreams as any,
+                opts as any
+            );
 
             // if the client returns null, early exit w/ an empty array
-            if (!response) return [];
+            if (!response || response.length < 1) return [];
 
-            const results = parseRawReadGroupResult(response);
+            const results = parseRawReadGroupResult(response, payloadKey, typeNameKey);
             const validMessages = results.filter((item) => !isNullOrUndefined(item.data));
             const invalidMessages = results.filter((item) => isNullOrUndefined(item.data));
 
@@ -459,7 +570,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                errorType: error instanceof RedisError ? (error as any).name : "NonRedisError",
+                errorType: getErrorName(error),
             });
             throw error;
         } finally {
@@ -471,19 +582,19 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         context: SpanContext,
         streamName: string,
         consumerGroup: string,
-        count
+        count: number
     ): Promise<IPELResult[]> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client xPending Call", { childOf: context });
         this.spanLogAndSetTags(span, this.xPending.name, this.config.db, undefined, streamName);
         try {
-            const results = await this.client.xpending([
-                streamName,
-                consumerGroup,
-                "-",
-                "+",
-                String(count),
-            ]);
+            const results = await this.client.xPendingRange(
+                streamName as any,
+                consumerGroup as any,
+                "-" as any,
+                "+" as any,
+                String(count) as any
+            );
             this.metrics.increment(RedisClientMetrics.XPending, {
                 db,
                 streamName,
@@ -498,7 +609,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 streamName,
                 consumerGroup,
                 result: RedisMetricResults.Error,
-                errorType: err instanceof RedisError ? (err as any).name : "NonRedisError",
+                errorType: getErrorName(err),
             });
 
             throw err;
@@ -513,6 +624,8 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         consumerGroup: string,
         consumerName: string,
         minIdleTime: number,
+        payloadKey: string,
+        typeNameKey: string,
         ids: string[]
     ): Promise<IRedisMessage[]> {
         if (ids.length < 1) return [];
@@ -522,17 +635,17 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         this.spanLogAndSetTags(span, this.xClaim.name, this.config.db, null, streamName);
 
         try {
-            const response = await this.client.xclaim([
-                streamName,
-                consumerGroup,
-                consumerName,
-                String(minIdleTime),
-                ...ids,
-            ]);
+            const response = await this.client.xClaim(
+                streamName as any,
+                consumerGroup as any,
+                consumerName as any,
+                String(minIdleTime) as any,
+                ids as any
+            );
 
-            if (!response) return [];
+            if (!response || response.length < 1) return [];
 
-            const results = extractXClaimValues(response);
+            const results = extractXClaimValues(response, payloadKey, typeNameKey);
             const messages: IRedisMessage[] = results.map(({ messageId, data, type }) => {
                 const buf = this.config.base64Encode
                     ? Buffer.from(data, "base64")
@@ -558,7 +671,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
                 consumerGroup,
                 consumerName,
                 result: RedisMetricResults.Error,
-                errorType: error instanceof RedisError ? (error as any).name : "NonRedisError",
+                errorType: getErrorName(error),
             });
             throw error;
         } finally {
