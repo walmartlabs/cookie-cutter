@@ -24,6 +24,9 @@ import { RedisClient, IPELResult } from "./RedisClient";
 import { RedisStreamSink } from "./RedisStreamSink";
 import { RedisStreamSource } from "./RedisStreamSource";
 
+export const DEFAULT_PAYLOAD_KEY = "redis.stream.key";
+export const DEFAULT_TYPENAME_KEY = "redis.stream.type";
+
 export interface IRedisOptions {
     readonly host: string;
     readonly port?: number;
@@ -43,6 +46,8 @@ export type IRedisInputStreamOptions = IRedisOptions & {
     readonly batchSize?: number;
     readonly idleTimeout?: number | null;
     readonly reclaimMessageInterval?: number | null;
+    readonly payloadKey?: string;
+    readonly typeNameKey?: string;
 };
 
 export type IRedisOutputStreamOptions = IRedisOptions & {
@@ -93,7 +98,9 @@ export interface IRedisClient {
         consumerGroup: string,
         consumerName: string,
         count: number,
-        block: number
+        block: number,
+        payloadKey: string,
+        typeNameKey: string
     ): Promise<IRedisMessage[]>;
     xGroup(
         context: SpanContext,
@@ -120,6 +127,8 @@ export interface IRedisClient {
         consumerGroup: string,
         consumerName: string,
         minIdleTime: number,
+        payloadKey: string,
+        typeNameKey: string,
         ids: string[]
     ): Promise<IRedisMessage[]>;
 }
@@ -141,8 +150,8 @@ export function redisStreamSink(
         port: 6379,
         db: 0,
         base64Encode: true,
-        payloadKey: "redis.stream.key",
-        typeNameKey: "redis.stream.type",
+        payloadKey: DEFAULT_PAYLOAD_KEY,
+        typeNameKey: DEFAULT_TYPENAME_KEY,
         typeMapper: new ObjectNameMessageTypeMapper(),
     });
     return new RedisStreamSink(configuration);
@@ -159,8 +168,8 @@ export function redisStreamSource(configuration: IRedisInputStreamOptions): IInp
         blockTimeout: 100,
         idleTimeout: 30000,
         reclaimMessageInterval: 60000,
-        payloadKey: "redis.stream.key",
-        typeNameKey: "redis.stream.type",
+        payloadKey: DEFAULT_PAYLOAD_KEY,
+        typeNameKey: DEFAULT_TYPENAME_KEY,
         typeMapper: new ObjectNameMessageTypeMapper(),
     });
     return new RedisStreamSource(configuration);

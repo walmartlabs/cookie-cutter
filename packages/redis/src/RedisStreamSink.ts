@@ -20,7 +20,6 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 
 import { IRedisClient, IRedisOutputStreamOptions, RedisStreamMetadata } from ".";
-import { ParserError, AggregateError } from "redis";
 import { RedisClient } from "./RedisClient";
 
 export enum RedisMetrics {
@@ -46,7 +45,7 @@ export class RedisStreamSink
         };
     }
 
-    async sink(output: IterableIterator<IPublishedMessage>, retry: RetrierContext): Promise<void> {
+    async sink(output: IterableIterator<IPublishedMessage>, _retry: RetrierContext): Promise<void> {
         let writeStream = this.config.stream;
         try {
             for (const msg of output) {
@@ -76,11 +75,8 @@ export class RedisStreamSink
                 result: RedisMetricResult.Error,
             });
 
-            if (err instanceof ParserError || err instanceof AggregateError) {
-                retry.bail(err);
-            } else {
-                throw err;
-            }
+            // TODO: investigate if any errors are not retriable
+            throw err;
         }
     }
 
