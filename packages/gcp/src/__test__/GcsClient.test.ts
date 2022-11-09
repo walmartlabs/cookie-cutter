@@ -35,18 +35,13 @@ describe("GcsClient", () => {
     describe("Proceeds with expected failure", () => {
         const err = "A DEFINED VALUE";
         const content = Buffer.from("CONTENTS TO BE WRITTEN");
-        const stream = new Readable();
+        const stream = new Readable({
+            read(_size) {
+                this.push(err);
+            },
+        });
 
         beforeEach(() => {
-            MockStorage.mockImplementation(() => {
-                return {
-                    bucket: () => mockBucket,
-                };
-            });
-            const mockBucket = {
-                file: (_) => mockFile,
-            };
-
             const mockFile = {
                 save: (_) => {
                     throw err;
@@ -55,6 +50,14 @@ describe("GcsClient", () => {
                     throw err;
                 },
             };
+            const mockBucket = {
+                file: (_) => mockFile,
+            };
+            MockStorage.mockImplementation(() => {
+                return {
+                    bucket: () => mockBucket,
+                };
+            });
         });
 
         it("rejects on error from gcs for put", async () => {
@@ -65,7 +68,7 @@ describe("GcsClient", () => {
             );
         });
 
-        xit("rejects on error from gcs for put stream", async () => {
+        it("rejects on error from gcs for put stream", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
             await expect(client.putObjectAsStream(span.context(), stream, "fileName")).rejects.toMatch(
@@ -77,23 +80,32 @@ describe("GcsClient", () => {
     describe("Proceeds with expected success", () => {
         const data = "CONTENTS TO BE WRITTEN";
         const content = Buffer.from(data);
-        const stream = new Readable();
-        stream.push(data);
+        const mockWritable = {
+            on: jest.fn().mockImplementation(function(this, event, handler) {
+                if (event === "finish") {
+                  handler();
+                }
+                return this;
+            }),
+        }
+        const mockStream = {
+            pipe: (_) => mockWritable,
+            ...{} as any,
+        }
+
         beforeEach(() => {
-            // tslint:disable-next-line: no-identical-functions
+            const mockFile = {
+                save: jest.fn(),
+                createWriteStream: jest.fn().mockImplementationOnce(() => mockWritable),
+            };
+            const mockBucket = {
+                file: (_) => mockFile,
+            };
             MockStorage.mockImplementation(() => {
                 return {
                     bucket: () => mockBucket,
                 };
             });
-            const mockBucket = {
-                file: (_) => mockFile,
-            };
-
-            const mockFile = {
-                save: jest.fn(),
-                createWriteStream: jest.fn(),
-            };
         });
 
         it("performs a successful write", async () => {
@@ -104,10 +116,10 @@ describe("GcsClient", () => {
             );
         });
 
-        xit("performs a successful write via readable stream", async () => {
+        it("performs a successful write via readable stream", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
-            await expect(client.putObjectAsStream(span.context(), stream, "fileName")).resolves.toBe(
+            await expect(client.putObjectAsStream(span.context(), mockStream, "fileName")).resolves.toBe(
                 undefined
             );
         });
