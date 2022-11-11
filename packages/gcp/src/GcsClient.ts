@@ -87,11 +87,7 @@ export class GcsClient implements IGcsClient, IRequireInitialization {
         }
     }
 
-    public putObjectAsStream(
-        context: SpanContext,
-        stream: Readable,
-        key: string
-    ): void {
+    public putObjectAsStream(context: SpanContext, stream: Readable, key: string): void {
         const bucket = this.config.bucketId;
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.putObject.name, bucket, key);
