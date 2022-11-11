@@ -56,7 +56,7 @@ describe("GcsClient", () => {
             });
         });
 
-        it("rejects on error from gcs for put", async () => {
+        it("rejects on error from gcs for put object", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
             await expect(client.putObject(span.context(), content, "fileName")).rejects.toMatch(
@@ -111,7 +111,7 @@ describe("GcsClient", () => {
             });
         });
 
-        it("performs a successful write", async () => {
+        it("successfully writes to gcs from a buffer", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
             await expect(client.putObject(span.context(), content, "fileName")).resolves.toBe(
@@ -119,7 +119,7 @@ describe("GcsClient", () => {
             );
         });
 
-        it("performs a successful write via readable stream", async () => {
+        it("successfully writes to gcs from a readable stream", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
             await expect(
