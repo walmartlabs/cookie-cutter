@@ -35,11 +35,7 @@ describe("GcsClient", () => {
     describe("Proceeds with expected failure", () => {
         const err = "A DEFINED VALUE";
         const content = Buffer.from("CONTENTS TO BE WRITTEN");
-        const stream = new Readable({
-            read(_size) {
-                this.push(err);
-            },
-        });
+        const stream = Readable.from(err);
 
         beforeEach(() => {
             const mockFile = {
