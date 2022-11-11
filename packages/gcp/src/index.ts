@@ -79,7 +79,7 @@ export interface IPubSubMessagePreprocessor {
 
 export interface IGcsClient {
     putObject(spanContext: SpanContext, body: Buffer, key: string): Promise<void>;
-    putObjectAsStream(context: SpanContext, stream: Readable, key: string): Promise<void>;
+    putObjectAsStream(context: SpanContext, stream: Readable, key: string): void;
 }
 
 export interface IBigQueryClient {
