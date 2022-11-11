@@ -87,20 +87,32 @@ export class GcsClient implements IGcsClient, IRequireInitialization {
         }
     }
 
-    public putObjectAsStream(context: SpanContext, stream: Readable, key: string): void {
+    public async putObjectAsStream(
+        context: SpanContext,
+        stream: Readable,
+        key: string
+    ): Promise<void> {
         const bucket = this.config.bucketId;
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.putObject.name, bucket, key);
-        const streamFileUpload = () => {
-            stream.pipe(this.bucket.file(key).createWriteStream()).on("finish", () => {
-                this.metrics.increment(GCSMetrics.PutStream, {
-                    bucket,
-                    result: GCSMetricResults.Success,
-                });
+        const streamFileUpload = async (): Promise<void> => {
+            return new Promise((resolve, reject) => {
+                stream
+                    .pipe(this.bucket.file(key).createWriteStream())
+                    .on("finish", () => {
+                        this.metrics.increment(GCSMetrics.PutStream, {
+                            bucket,
+                            result: GCSMetricResults.Success,
+                        });
+                        resolve();
+                    })
+                    .on("error", (error) => {
+                        reject(error.stack);
+                    });
             });
         };
         try {
-            streamFileUpload();
+            await streamFileUpload();
         } catch (e) {
             failSpan(span, e);
             this.metrics.increment(GCSMetrics.PutStream, {

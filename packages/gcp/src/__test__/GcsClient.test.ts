@@ -128,7 +128,6 @@ describe("GcsClient", () => {
             await expect(
                 client.putObjectAsStream(span.context(), mockReadStream, "fileName")
             ).resolves.toBe(undefined);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
             expect(mockWriteStream.buffer).toEqual(data);
         });
     });
