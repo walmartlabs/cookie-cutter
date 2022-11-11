@@ -79,7 +79,6 @@ export class GcsClient implements IGcsClient, IRequireInitialization {
             this.metrics.increment(GCSMetrics.PutObject, {
                 bucket,
                 result: GCSMetricResults.Error,
-                error: e instanceof Error ? e.message : "",
             });
             throw e;
         } finally {
@@ -118,7 +117,6 @@ export class GcsClient implements IGcsClient, IRequireInitialization {
             this.metrics.increment(GCSMetrics.PutStream, {
                 bucket,
                 result: GCSMetricResults.Error,
-                error: e instanceof Error ? e.message : "",
             });
             throw e;
         } finally {

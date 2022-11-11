@@ -96,6 +96,7 @@ describe("GcsClient", () => {
         const mockWriteStream = new WriteMemory();
 
         beforeEach(() => {
+            mockWriteStream.reset();
             const mockFile = {
                 save: jest.fn(),
                 createWriteStream: jest.fn().mockReturnValue(mockWriteStream),
