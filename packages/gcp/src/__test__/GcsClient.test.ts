@@ -8,7 +8,7 @@ LICENSE file in the root directory of this source tree.
 import { Storage } from "@google-cloud/storage";
 import { DefaultComponentContext, NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext } from "opentracing";
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 import { gcsClient, IGCSConfiguration } from "..";
 
 jest.mock("@google-cloud/storage", () => {
@@ -71,32 +71,38 @@ describe("GcsClient", () => {
         it("rejects on error from gcs for put stream", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
-            await expect(client.putObjectAsStream(span.context(), stream, "fileName")).rejects.toMatch(
-                err
-            );
+            await expect(
+                client.putObjectAsStream(span.context(), stream, "fileName")
+            ).rejects.toMatch(err);
         });
     });
 
     describe("Proceeds with expected success", () => {
         const data = "CONTENTS TO BE WRITTEN";
         const content = Buffer.from(data);
-        const mockWritable = {
-            on: jest.fn().mockImplementation(function(this, event, handler) {
-                if (event === "finish") {
-                  handler();
-                }
-                return this;
-            }),
+        const mockReadStream = Readable.from(data);
+
+        class WriteMemory extends Writable {
+            buffer = "";
+            constructor() {
+                super();
+            }
+
+            _write(chunk, _, next) {
+                this.buffer += chunk;
+                next();
+            }
+
+            reset() {
+                this.buffer = "";
+            }
         }
-        const mockStream = {
-            pipe: (_) => mockWritable,
-            ...{} as any,
-        }
+        const mockWriteStream = new WriteMemory();
 
         beforeEach(() => {
             const mockFile = {
                 save: jest.fn(),
-                createWriteStream: jest.fn().mockImplementationOnce(() => mockWritable),
+                createWriteStream: jest.fn().mockReturnValue(mockWriteStream),
             };
             const mockBucket = {
                 file: (_) => mockFile,
@@ -119,9 +125,11 @@ describe("GcsClient", () => {
         it("performs a successful write via readable stream", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
-            await expect(client.putObjectAsStream(span.context(), mockStream, "fileName")).resolves.toBe(
-                undefined
-            );
+            await expect(
+                client.putObjectAsStream(span.context(), mockReadStream, "fileName")
+            ).resolves.toBe(undefined);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            expect(mockWriteStream.buffer).toEqual(data);
         });
     });
 });
