@@ -15,10 +15,12 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
+import { Readable } from "stream";
 import { IGcsClient, IGCSConfiguration } from ".";
 
 enum GCSMetrics {
-    Put = "cookie_cutter.gcs_client.put",
+    PutObject = "cookie_cutter.gcs_client.put_object",
+    PutStream = "cookie_cutter.gcs_client.put_stream",
 }
 
 enum GCSMetricResults {
@@ -68,16 +70,53 @@ export class GcsClient implements IGcsClient, IRequireInitialization {
         this.spanLogAndSetTags(span, this.putObject.name, bucket, key);
         try {
             await this.bucket.file(key).save(body);
-            this.metrics.increment(GCSMetrics.Put, {
+            this.metrics.increment(GCSMetrics.PutObject, {
                 bucket,
                 result: GCSMetricResults.Success,
             });
         } catch (e) {
             failSpan(span, e);
-            this.metrics.increment(GCSMetrics.Put, {
+            this.metrics.increment(GCSMetrics.PutObject, {
                 bucket,
                 result: GCSMetricResults.Error,
-                error: e instanceof Error ? e.message : "",
+            });
+            throw e;
+        } finally {
+            span.finish();
+        }
+    }
+
+    public async putObjectAsStream(
+        context: SpanContext,
+        stream: Readable,
+        key: string
+    ): Promise<void> {
+        const bucket = this.config.bucketId;
+        const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
+        this.spanLogAndSetTags(span, this.putObject.name, bucket, key);
+        const streamFileUpload = async (): Promise<void> => {
+            return new Promise((resolve, reject) => {
+                stream
+                    .pipe(this.bucket.file(key).createWriteStream())
+                    .on("finish", () => {
+                        this.metrics.increment(GCSMetrics.PutStream, {
+                            bucket,
+                            result: GCSMetricResults.Success,
+                        });
+                        resolve();
+                    })
+                    .on("error", (error) => {
+                        reject(error.stack);
+                    });
+            });
+        };
+        try {
+            await streamFileUpload();
+        } catch (e) {
+            failSpan(span, e);
+            this.metrics.increment(GCSMetrics.PutStream, {
+                bucket,
+                result: GCSMetricResults.Error,
             });
             throw e;
         } finally {

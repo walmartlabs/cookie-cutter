@@ -8,6 +8,7 @@ LICENSE file in the root directory of this source tree.
 import { Storage } from "@google-cloud/storage";
 import { DefaultComponentContext, NullTracerBuilder } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext } from "opentracing";
+import { Readable, Writable } from "stream";
 import { gcsClient, IGCSConfiguration } from "..";
 
 jest.mock("@google-cloud/storage", () => {
@@ -34,57 +35,97 @@ describe("GcsClient", () => {
     describe("Proceeds with expected failure", () => {
         const err = "A DEFINED VALUE";
         const content = Buffer.from("CONTENTS TO BE WRITTEN");
+        const stream = Readable.from(err);
 
         beforeEach(() => {
+            const mockFile = {
+                save: (_) => {
+                    throw err;
+                },
+                createWriteStream: (_) => {
+                    throw err;
+                },
+            };
+            const mockBucket = {
+                file: (_) => mockFile,
+            };
             MockStorage.mockImplementation(() => {
                 return {
                     bucket: () => mockBucket,
                 };
             });
-            const mockBucket = {
-                file: (_) => mockFile,
-            };
-
-            const mockFile = {
-                save: (_) => {
-                    throw err;
-                },
-            };
         });
 
-        it("rejects on error from gcs for put", async () => {
+        it("rejects on error from gcs for put object", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
             await expect(client.putObject(span.context(), content, "fileName")).rejects.toMatch(
                 err
             );
         });
+
+        it("rejects on error from gcs for put stream", async () => {
+            const client = gcsClient(config);
+            await client.initialize(ctx);
+            await expect(
+                client.putObjectAsStream(span.context(), stream, "fileName")
+            ).rejects.toMatch(err);
+        });
     });
 
     describe("Proceeds with expected success", () => {
-        const content = Buffer.from("CONTENTS TO BE WRITTEN");
+        const data = "CONTENTS TO BE WRITTEN";
+        const content = Buffer.from(data);
+        const mockReadStream = Readable.from(data);
+
+        class WriteMemory extends Writable {
+            buffer = "";
+            constructor() {
+                super();
+            }
+
+            _write(chunk, _, next) {
+                this.buffer += chunk;
+                next();
+            }
+
+            reset() {
+                this.buffer = "";
+            }
+        }
+        const mockWriteStream = new WriteMemory();
+
         beforeEach(() => {
-            // tslint:disable-next-line: no-identical-functions
+            mockWriteStream.reset();
+            const mockFile = {
+                save: jest.fn(),
+                createWriteStream: jest.fn().mockReturnValue(mockWriteStream),
+            };
+            const mockBucket = {
+                file: (_) => mockFile,
+            };
             MockStorage.mockImplementation(() => {
                 return {
                     bucket: () => mockBucket,
                 };
             });
-            const mockBucket = {
-                file: (_) => mockFile,
-            };
-
-            const mockFile = {
-                save: jest.fn(),
-            };
         });
 
-        it("performs a successful write", async () => {
+        it("successfully writes to gcs from a buffer", async () => {
             const client = gcsClient(config);
             await client.initialize(ctx);
             await expect(client.putObject(span.context(), content, "fileName")).resolves.toBe(
                 undefined
             );
+        });
+
+        it("successfully writes to gcs from a readable stream", async () => {
+            const client = gcsClient(config);
+            await client.initialize(ctx);
+            await expect(
+                client.putObjectAsStream(span.context(), mockReadStream, "fileName")
+            ).resolves.toBe(undefined);
+            expect(mockWriteStream.buffer).toEqual(data);
         });
     });
 });

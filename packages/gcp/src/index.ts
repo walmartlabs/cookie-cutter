@@ -15,6 +15,7 @@ import {
     IInputSource,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
+import { Readable } from "stream";
 import { BigQueryClient } from "./BigQueryClient";
 import { BigQuerySink } from "./BigQuerySink";
 export { BigQueryMetadata } from "./BigQuerySink";
@@ -78,6 +79,7 @@ export interface IPubSubMessagePreprocessor {
 
 export interface IGcsClient {
     putObject(spanContext: SpanContext, body: Buffer, key: string): Promise<void>;
+    putObjectAsStream(spanContext: SpanContext, stream: Readable, key: string): Promise<void>;
 }
 
 export interface IBigQueryClient {
