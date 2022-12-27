@@ -107,6 +107,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         }
     }
 
+    public getInputQueueLength(): number {
+        return this.inputQueue.length;
+    }
+
     private async inputLoop(source: IInputSource): Promise<void> {
         const inputContext: IInputSourceContext = {
             evict: async (predicate: (MessageRef) => boolean): Promise<void> => {
