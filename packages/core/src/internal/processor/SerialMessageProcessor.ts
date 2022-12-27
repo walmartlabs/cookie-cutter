@@ -74,6 +74,11 @@ export class SerialMessageProcessor extends BaseMessageProcessor implements IMes
         }
     }
 
+    public getInputQueueLength(): number {
+        // It is no longer recommended to use serial mode so not adding this new functionality for it.
+        throw new Error("getInputQueueLength not supported for applications running in serial mode");
+    }
+
     private async handleMessage(
         msg: MessageRef,
         inputMessageMetricAnnotator: IMessageMetricAnnotator,

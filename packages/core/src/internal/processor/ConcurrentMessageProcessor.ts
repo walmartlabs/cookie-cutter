@@ -54,6 +54,10 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         this.outputQueue = new BoundedPriorityQueue(config.outputQueueCapacity);
     }
 
+    getInputQueueLength(): number {
+        return this.inputQueue.length;
+    }
+
     protected get name(): string {
         return ConcurrentMessageProcessor.name;
     }

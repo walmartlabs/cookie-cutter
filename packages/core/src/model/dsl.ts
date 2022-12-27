@@ -46,6 +46,7 @@ export interface IApplicationBuilder {
     services(): IServiceRegistryBuilder;
     output(): IOutputBuilder;
     if(predicate: boolean, action: (app: IApplicationBuilder) => void): IApplicationBuilder;
+    inputQueueLength(): number;
 }
 
 export interface IInputBuilder {
