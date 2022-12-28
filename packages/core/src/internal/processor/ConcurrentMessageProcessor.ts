@@ -44,7 +44,7 @@ const HIGH_PRIORITY = 1;
 export class ConcurrentMessageProcessor extends BaseMessageProcessor implements IMessageProcessor {
     protected readonly inputQueue: BoundedPriorityQueue<MessageRef>;
     protected readonly outputQueue: BoundedPriorityQueue<IQueueItem<BufferedDispatchContext>>;
-    private inputQueueOverCapacityTimestamp: number;
+    private lastHandledMessageTimestamp: number;
     private queueValidationTimer?: NodeJS.Timer | undefined;
 
     public constructor(
@@ -54,7 +54,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         super(processorConfig);
         this.inputQueue = new BoundedPriorityQueue(config.inputQueueCapacity);
         this.outputQueue = new BoundedPriorityQueue(config.outputQueueCapacity);
-        this.inputQueueOverCapacityTimestamp = -1;
+        this.lastHandledMessageTimestamp = new Date().getTime();
     }
 
     protected get name(): string {
@@ -73,15 +73,13 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
     private validateInputQueue(): Promise<void> {
         return new Promise((_, reject) => {
             this.queueValidationTimer = setInterval(() => {
-                if (this.inputQueue.length < this.config.inputQueueCapacity) {
-                    this.inputQueueOverCapacityTimestamp = -1;
-                } else {
-                    const currentTimestamp = new Date().getTime();
-                    if (this.inputQueueOverCapacityTimestamp <= 0) {
-                        this.inputQueueOverCapacityTimestamp = currentTimestamp;
-                    } else if(currentTimestamp - this.inputQueueOverCapacityTimestamp >= this.config.inputQueueValidationConfig.timeOutInMs) {
-                        const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
-                        reject(new Error(msg));
+                if (this.inputQueue?.length) {
+                    if (this.inputQueue.length >= this.config.inputQueueCapacity) {
+                        const currentTimestamp = new Date().getTime();
+                        if(currentTimestamp - this.lastHandledMessageTimestamp >= this.config.inputQueueValidationConfig.timeOutInMs) {
+                            const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
+                            reject(new Error(msg));
+                        }
                     }
                 }
             },
@@ -213,6 +211,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         dispatchRetrier: IRetrier
     ): Promise<void> {
         const eventType = prettyEventName(msg.payload.type);
+        this.lastHandledMessageTimestamp = new Date().getTime();
         let baseMetricTags: IMetricTags = {};
         let handlingInputSpan: Span | undefined;
         let handled: boolean = false;
