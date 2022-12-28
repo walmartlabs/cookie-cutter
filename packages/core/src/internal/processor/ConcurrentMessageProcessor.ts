@@ -44,6 +44,8 @@ const HIGH_PRIORITY = 1;
 export class ConcurrentMessageProcessor extends BaseMessageProcessor implements IMessageProcessor {
     protected readonly inputQueue: BoundedPriorityQueue<MessageRef>;
     protected readonly outputQueue: BoundedPriorityQueue<IQueueItem<BufferedDispatchContext>>;
+    private inputQueueOverCapacityTimestamp: number;
+    private queueValidationTimer?: NodeJS.Timer | undefined;
 
     public constructor(
         protected readonly config: IConcurrencyConfiguration,
@@ -52,6 +54,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         super(processorConfig);
         this.inputQueue = new BoundedPriorityQueue(config.inputQueueCapacity);
         this.outputQueue = new BoundedPriorityQueue(config.outputQueueCapacity);
+        this.inputQueueOverCapacityTimestamp = -1;
     }
 
     protected get name(): string {
@@ -65,6 +68,26 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             super.currentlyInflight.length
         );
         this.metrics.gauge(MessageProcessingMetrics.OutputQueue, this.outputQueue.length);
+    }
+
+    private validateInputQueue(): Promise<void> {
+        return new Promise((_, reject) => {
+            this.queueValidationTimer = setInterval(() => {
+                if (this.inputQueue.length < this.config.inputQueueCapacity) {
+                    this.inputQueueOverCapacityTimestamp = -1;
+                } else {
+                    const currentTimestamp = new Date().getTime();
+                    if (this.inputQueueOverCapacityTimestamp <= 0) {
+                        this.inputQueueOverCapacityTimestamp = currentTimestamp;
+                    } else if(currentTimestamp - this.inputQueueOverCapacityTimestamp >= this.config.inputQueueValidationConfig.timeOutInMs) {
+                        const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
+                        reject(new Error(msg));
+                    }
+                }
+            },
+            this.config.inputQueueValidationConfig.validationIntervalInMs);
+            this.queueValidationTimer.unref();
+        });
     }
 
     public async run(
@@ -86,7 +109,12 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 timer.unref();
             }
 
-            await Promise.all([
+            let applicationPromises = [];
+            if (this.config.inputQueueValidationConfig) {
+                applicationPromises = [this.validateInputQueue(), ...applicationPromises];
+            }
+
+            applicationPromises.push(...[
                 this.inputLoop(source),
                 this.processingLoop(
                     outputMessageEnricher,
@@ -96,6 +124,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 ),
                 this.outputLoop(sink, inputMessageMetricAnnotator, sinkRetrier),
             ]);
+            await Promise.all(applicationPromises);
         } catch (e) {
             this.inputQueue.close();
             this.outputQueue.close();
@@ -103,6 +132,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         } finally {
             if (timer) {
                 clearInterval(timer);
+            }
+            if (this.queueValidationTimer) {
+                clearInterval(this.queueValidationTimer);
             }
         }
     }

@@ -98,6 +98,11 @@ export interface IParallelismConfiguration {
     readonly concurrencyConfiguration?: IConcurrencyConfiguration;
 }
 
+export interface IQueueValidationConfig {
+    readonly validationIntervalInMs: number;
+    readonly timeOutInMs: number;
+}
+
 export interface IConcurrencyConfiguration {
     readonly emitMetricsForBatches?: boolean;
     readonly emitMetricsForQueues?: boolean;
@@ -109,6 +114,7 @@ export interface IConcurrencyConfiguration {
     readonly minimumBatchSize?: number;
     readonly maximumBatchSize?: number;
     readonly maximumParallelRpcRequests?: number;
+    readonly inputQueueValidationConfig?: IQueueValidationConfig;
 }
 
 export interface IApplicationRuntimeBehavior {
