@@ -45,7 +45,7 @@ const HIGH_PRIORITY = 1;
 export class ConcurrentMessageProcessor extends BaseMessageProcessor implements IMessageProcessor {
     protected readonly inputQueue: BoundedPriorityQueue<MessageRef>;
     protected readonly outputQueue: BoundedPriorityQueue<IQueueItem<BufferedDispatchContext>>;
-    private lastHandledMessageTimestamp: number;
+    private lastDispatchedMessageTimestamp: number;
     private queueValidationTimer?: NodeJS.Timer | undefined;
 
     public constructor(
@@ -55,7 +55,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         super(processorConfig);
         this.inputQueue = new BoundedPriorityQueue(config.inputQueueCapacity);
         this.outputQueue = new BoundedPriorityQueue(config.outputQueueCapacity);
-        this.lastHandledMessageTimestamp = new Date().getTime();
+        this.lastDispatchedMessageTimestamp = new Date().getTime();
     }
 
     protected get name(): string {
@@ -75,11 +75,11 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         return new Promise((resolve, reject) => {
             this.queueValidationTimer = setInterval(() => {
                 if (this.inputQueue.isClosed()) {
-                    resolve("Done");
+                    resolve("Queue already Closed");
                 }
                 if (this.inputQueue?.length >= this.config.inputQueueCapacity) {
                     const currentTimestamp = new Date().getTime();
-                    if(currentTimestamp - this.lastHandledMessageTimestamp >= this.config.healthCheck.inputQueueValidation.timeOutInMs) {
+                    if(currentTimestamp - this.lastDispatchedMessageTimestamp >= this.config.healthCheck.inputQueueValidation.timeOutInMs) {
                         const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
                         switch(this.config.healthCheck.inputQueueValidation.mode) {
                             case QueueFullHandlingMode.LogAndFail:
@@ -135,8 +135,8 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
 
             await Promise.all(processes);
         } catch (e) {
-            await this.inputQueue.close();
-            await this.outputQueue.close();
+            this.inputQueue.close();
+            this.outputQueue.close();
             throw e;
         } finally {
             if (timer) {
@@ -222,7 +222,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         dispatchRetrier: IRetrier
     ): Promise<void> {
         const eventType = prettyEventName(msg.payload.type);
-        this.lastHandledMessageTimestamp = new Date().getTime();
+        this.lastDispatchedMessageTimestamp = new Date().getTime();
         let baseMetricTags: IMetricTags = {};
         let handlingInputSpan: Span | undefined;
         let handled: boolean = false;
