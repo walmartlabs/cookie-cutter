@@ -109,6 +109,9 @@ export interface IQueueValidationConfig {
     readonly timeOutInMs: number;
 }
 
+export interface IHealthCheckConfig {
+    readonly inputQueueValidation?: IQueueValidationConfig;
+}
 export interface IConcurrencyConfiguration {
     readonly emitMetricsForBatches?: boolean;
     readonly emitMetricsForQueues?: boolean;
@@ -120,7 +123,7 @@ export interface IConcurrencyConfiguration {
     readonly minimumBatchSize?: number;
     readonly maximumBatchSize?: number;
     readonly maximumParallelRpcRequests?: number;
-    readonly inputQueueValidationConfig?: IQueueValidationConfig;
+    readonly healthCheck?: IHealthCheckConfig;
 }
 
 export interface IApplicationRuntimeBehavior {

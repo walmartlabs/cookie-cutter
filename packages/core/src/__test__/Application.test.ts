@@ -664,11 +664,13 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                   concurrencyConfiguration: {
                     inputQueueCapacity: 10,
                     outputQueueCapacity: 10,
-                    inputQueueValidationConfig: {
-                        timeOutInMs: 1,
-                        validationIntervalInMs: 0.5,
-                        mode: QueueFullHandlingMode.LogAndFail,
-                    }
+                    healthCheck: {
+                        inputQueueValidation: {
+                            timeOutInMs: 1,
+                            validationIntervalInMs: 0.5,
+                            mode: QueueFullHandlingMode.LogAndFail,
+                        },
+                    },
                   },
                 },
             };
@@ -702,11 +704,13 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                   concurrencyConfiguration: {
                     inputQueueCapacity: 1,
                     outputQueueCapacity: 1,
-                    inputQueueValidationConfig: {
-                        timeOutInMs: 1,
-                        validationIntervalInMs: 0.5,
-                        mode: QueueFullHandlingMode.LogAndContinue,
-                    }
+                    healthCheck: {
+                        inputQueueValidation: {
+                            timeOutInMs: 1,
+                            validationIntervalInMs: 0.5,
+                            mode: QueueFullHandlingMode.LogAndContinue,
+                        },
+                    },
                   },
                 },
             };
@@ -746,11 +750,13 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                   concurrencyConfiguration: {
                     inputQueueCapacity: 1,
                     outputQueueCapacity: 1,
-                    inputQueueValidationConfig: {
-                        timeOutInMs: 1,
-                        validationIntervalInMs: 0.5,
-                        mode: QueueFullHandlingMode.LogAndFail,
-                    }
+                    healthCheck: {
+                        inputQueueValidation: {
+                            timeOutInMs: 1,
+                            validationIntervalInMs: 0.5,
+                            mode: QueueFullHandlingMode.LogAndFail,
+                        },
+                    },
                   },
                 },
             };

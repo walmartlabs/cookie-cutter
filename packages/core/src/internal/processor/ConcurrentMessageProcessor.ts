@@ -79,9 +79,9 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 }
                 if (this.inputQueue?.length >= this.config.inputQueueCapacity) {
                     const currentTimestamp = new Date().getTime();
-                    if(currentTimestamp - this.lastHandledMessageTimestamp >= this.config.inputQueueValidationConfig.timeOutInMs) {
+                    if(currentTimestamp - this.lastHandledMessageTimestamp >= this.config.healthCheck.inputQueueValidation.timeOutInMs) {
                         const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
-                        switch(this.config.inputQueueValidationConfig.mode) {
+                        switch(this.config.healthCheck.inputQueueValidation.mode) {
                             case QueueFullHandlingMode.LogAndFail:
                                 reject(new Error(msg));
                                 break;
@@ -93,7 +93,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                     }
                 }
             },
-            this.config.inputQueueValidationConfig.validationIntervalInMs);
+            this.config.healthCheck.inputQueueValidation.validationIntervalInMs);
             this.queueValidationTimer.unref();
         });
     }
@@ -118,7 +118,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             }
 
             let processes = [];
-            if (this.config.inputQueueValidationConfig) {
+            if (this.config.healthCheck) {
                 processes.push(this.healthCheck());
             }
 
