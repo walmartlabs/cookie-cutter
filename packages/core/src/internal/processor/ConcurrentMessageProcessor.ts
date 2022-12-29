@@ -29,6 +29,7 @@ import {
     sleep,
     waitForPendingIO,
 } from "../..";
+import { QueueFullHandlingMode } from "../../model";
 import { BaseMessageProcessor, IInflightSignal } from "./BaseMessageProcessor";
 import { Batch } from "./Batch";
 import { ReprocessingContext } from "./ReprocessingContext";
@@ -70,15 +71,24 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         this.metrics.gauge(MessageProcessingMetrics.OutputQueue, this.outputQueue.length);
     }
 
-    private validateInputQueue(): Promise<void> {
-        return new Promise((_, reject) => {
+    private validateInputQueue() {
+        return new Promise((resolve, reject) => {
             this.queueValidationTimer = setInterval(() => {
-                if (this.inputQueue?.length) {
-                    if (this.inputQueue.length >= this.config.inputQueueCapacity) {
-                        const currentTimestamp = new Date().getTime();
-                        if(currentTimestamp - this.lastHandledMessageTimestamp >= this.config.inputQueueValidationConfig.timeOutInMs) {
-                            const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
-                            reject(new Error(msg));
+                if (this.inputQueue.isClosed()) {
+                    resolve("Done");
+                }
+                if (this.inputQueue?.length >= this.config.inputQueueCapacity) {
+                    const currentTimestamp = new Date().getTime();
+                    if(currentTimestamp - this.lastHandledMessageTimestamp >= this.config.inputQueueValidationConfig.timeOutInMs) {
+                        const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
+                        switch(this.config.inputQueueValidationConfig.mode) {
+                            case QueueFullHandlingMode.LogAndFail:
+                                reject(new Error(msg));
+                                break;
+                            case QueueFullHandlingMode.LogAndContinue:
+                            default:
+                                this.logger.warn(msg);
+                                break;
                         }
                     }
                 }
@@ -107,12 +117,12 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 timer.unref();
             }
 
-            let applicationPromises = [];
+            let processes = [];
             if (this.config.inputQueueValidationConfig) {
-                applicationPromises = [this.validateInputQueue(), ...applicationPromises];
+                processes.push(this.validateInputQueue());
             }
 
-            applicationPromises.push(...[
+            processes.push(...[
                 this.inputLoop(source),
                 this.processingLoop(
                     outputMessageEnricher,
@@ -122,10 +132,11 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 ),
                 this.outputLoop(sink, inputMessageMetricAnnotator, sinkRetrier),
             ]);
-            await Promise.all(applicationPromises);
+
+            await Promise.all(processes);
         } catch (e) {
-            this.inputQueue.close();
-            this.outputQueue.close();
+            await this.inputQueue.close();
+            await this.outputQueue.close();
             throw e;
         } finally {
             if (timer) {

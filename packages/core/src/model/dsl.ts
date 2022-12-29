@@ -82,6 +82,11 @@ export enum ErrorHandlingMode {
     LogAndRetryOrFail,
 }
 
+export enum QueueFullHandlingMode {
+    LogAndContinue = 1,
+    LogAndFail,
+}
+
 export enum RetryMode {
     Linear = 1,
     Exponential,
@@ -99,6 +104,7 @@ export interface IParallelismConfiguration {
 }
 
 export interface IQueueValidationConfig {
+    readonly mode: QueueFullHandlingMode;
     readonly validationIntervalInMs: number;
     readonly timeOutInMs: number;
 }
