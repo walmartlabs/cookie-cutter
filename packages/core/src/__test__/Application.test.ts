@@ -660,18 +660,18 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 dispatch: { mode: ErrorHandlingMode.LogAndFail },
                 sink: { mode: ErrorHandlingMode.LogAndFail },
                 parallelism: {
-                  mode: ParallelismMode.Concurrent,
-                  concurrencyConfiguration: {
-                    inputQueueCapacity: 10,
-                    outputQueueCapacity: 10,
-                    healthCheck: {
-                        inputQueueValidation: {
-                            timeOutInMs: 1,
-                            validationIntervalInMs: 0.5,
-                            mode: QueueFullHandlingMode.LogAndFail,
+                    mode: ParallelismMode.Concurrent,
+                    concurrencyConfiguration: {
+                        inputQueueCapacity: 10,
+                        outputQueueCapacity: 10,
+                        healthCheck: {
+                            inputQueueValidation: {
+                                timeOutInMs: 1,
+                                validationIntervalInMs: 0.5,
+                                mode: QueueFullHandlingMode.LogAndFail,
+                            },
                         },
                     },
-                  },
                 },
             };
 
@@ -691,27 +691,27 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 .published(new CapturingOutputSink(capture))
                 .done()
                 .run(runtime);
-            
+
             expect(capture.length).toBe(2);
         });
-        
+
         it("does not throw error if input queue length breaches capacity in LogAndContinue mode", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndContinue },
                 sink: { mode: ErrorHandlingMode.LogAndContinue },
                 parallelism: {
-                  mode: ParallelismMode.Concurrent,
-                  concurrencyConfiguration: {
-                    inputQueueCapacity: 1,
-                    outputQueueCapacity: 1,
-                    healthCheck: {
-                        inputQueueValidation: {
-                            timeOutInMs: 1,
-                            validationIntervalInMs: 0.5,
-                            mode: QueueFullHandlingMode.LogAndContinue,
+                    mode: ParallelismMode.Concurrent,
+                    concurrencyConfiguration: {
+                        inputQueueCapacity: 1,
+                        outputQueueCapacity: 1,
+                        healthCheck: {
+                            inputQueueValidation: {
+                                timeOutInMs: 1,
+                                validationIntervalInMs: 0.5,
+                                mode: QueueFullHandlingMode.LogAndContinue,
+                            },
                         },
                     },
-                  },
                 },
             };
 
@@ -733,9 +733,9 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                
+
                 expect(capture.length).toBe(2);
-            } catch(err) {
+            } catch (err) {
                 error = err;
             }
             expect(error).not.toBeDefined();
@@ -746,18 +746,18 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 dispatch: { mode: ErrorHandlingMode.LogAndFail },
                 sink: { mode: ErrorHandlingMode.LogAndFail },
                 parallelism: {
-                  mode: ParallelismMode.Concurrent,
-                  concurrencyConfiguration: {
-                    inputQueueCapacity: 1,
-                    outputQueueCapacity: 1,
-                    healthCheck: {
-                        inputQueueValidation: {
-                            timeOutInMs: 1,
-                            validationIntervalInMs: 0.5,
-                            mode: QueueFullHandlingMode.LogAndFail,
+                    mode: ParallelismMode.Concurrent,
+                    concurrencyConfiguration: {
+                        inputQueueCapacity: 1,
+                        outputQueueCapacity: 1,
+                        healthCheck: {
+                            inputQueueValidation: {
+                                timeOutInMs: 1,
+                                validationIntervalInMs: 0.5,
+                                mode: QueueFullHandlingMode.LogAndFail,
+                            },
                         },
                     },
-                  },
                 },
             };
 
@@ -778,9 +778,9 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .output()
                     .published(new CapturingOutputSink(capture))
                     .done()
-                    .run(runtime);       
-                await sleep(1000);         
-            } catch(err) {
+                    .run(runtime);
+                await sleep(1000);
+            } catch (err) {
                 error = err;
             }
             expect(error).toBeDefined();
