@@ -133,7 +133,9 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
         it("terminates gracefully with multiple inputs", async () => {
             let tally = 0;
             await Application.create()
-                .input()
+                .input({
+                    longest: true
+                })
                 .add(
                     new StaticInputSource([
                         { type: Increment.name, payload: new Increment(1) },
