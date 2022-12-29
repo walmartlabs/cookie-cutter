@@ -11,7 +11,7 @@ import { BoundedPriorityQueue } from "../utils";
 export async function* roundRobinIterators<T>(
     inputs: AsyncIterableIterator<T>[],
     logger: ILogger,
-    longest: boolean,
+    longest: boolean
 ): AsyncIterableIterator<T> {
     const pipe = new BoundedPriorityQueue<T>(1);
 

@@ -391,7 +391,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
 
     public input(options?: IInputOption): IInputBuilder {
         if (options) {
-            return this.inputBuilder = new InputBuilder(this, options);
+            return (this.inputBuilder = new InputBuilder(this, options));
         }
         return this.inputBuilder;
     }

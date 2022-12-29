@@ -134,7 +134,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             let tally = 0;
             await Application.create()
                 .input({
-                    longest: true
+                    longest: true,
                 })
                 .add(
                     new StaticInputSource([
