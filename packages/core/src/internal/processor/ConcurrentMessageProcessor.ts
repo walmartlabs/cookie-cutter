@@ -71,7 +71,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         this.metrics.gauge(MessageProcessingMetrics.OutputQueue, this.outputQueue.length);
     }
 
-    private validateInputQueue() {
+    private healthCheck() {
         return new Promise((resolve, reject) => {
             this.queueValidationTimer = setInterval(() => {
                 if (this.inputQueue.isClosed()) {
@@ -119,7 +119,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
 
             let processes = [];
             if (this.config.inputQueueValidationConfig) {
-                processes.push(this.validateInputQueue());
+                processes.push(this.healthCheck());
             }
 
             processes.push(...[
