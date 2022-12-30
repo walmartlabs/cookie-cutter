@@ -680,7 +680,6 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 .input()
                 .add(new StaticInputSource([inc(4), inc(8)]))
                 .done()
-                .logger(console)
                 .dispatch({
                     onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
                         await sleep(10);
@@ -718,11 +717,10 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             const capture = new Array();
             let error;
             try {
-                await Application.create()
+                const app = Application.create()
                     .input()
                     .add(new StaticInputSource([inc(4), inc(8)]))
                     .done()
-                    .logger(console)
                     .dispatch({
                         onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
                             await sleep(10);
@@ -733,7 +731,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-
+                await Promise.race([sleep(5000), app]);
                 expect(capture.length).toBe(2);
             } catch (err) {
                 error = err;
@@ -764,11 +762,10 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             const capture = new Array();
             let error;
             try {
-                await Application.create()
+                const app = Application.create()
                     .input()
                     .add(new StaticInputSource([inc(4), inc(8), inc(12)]))
                     .done()
-                    .logger(console)
                     .dispatch({
                         onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
                             await sleep(10);
@@ -779,7 +776,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await sleep(1000);
+                await Promise.race([sleep(5000), app]);
             } catch (err) {
                 error = err;
             }
