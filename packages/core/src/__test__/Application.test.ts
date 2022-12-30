@@ -655,7 +655,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             expect(published).toMatchObject([inc(1), inc(2)]);
         });
 
-        it("successfully validates input queue with length within capacity", async () => {
+        xit("successfully validates input queue with length within capacity", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndFail },
                 sink: { mode: ErrorHandlingMode.LogAndFail },
@@ -694,7 +694,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             expect(capture.length).toBe(2);
         });
 
-        it("does not throw error if input queue length breaches capacity in LogAndContinue mode", async () => {
+        xit("does not throw error if input queue length breaches capacity in LogAndContinue mode", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndContinue },
                 sink: { mode: ErrorHandlingMode.LogAndContinue },
@@ -739,7 +739,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             expect(error).not.toBeDefined();
         });
 
-        it("throws an error if input queue length breaches capacity in LogAndFail mode", async () => {
+        xit("throws an error if input queue length breaches capacity in LogAndFail mode", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndFail },
                 sink: { mode: ErrorHandlingMode.LogAndFail },
