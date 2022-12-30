@@ -690,7 +690,6 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 .published(new CapturingOutputSink(capture))
                 .done()
                 .run(runtime);
-            await Promise.race([sleep(1000), app]);
             app.cancel();
             expect(capture.length).toBe(2);
         });
@@ -733,7 +732,6 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await Promise.race([sleep(1000), app]);
                 expect(capture.length).toBe(2);
             } catch (err) {
                 error = err;
@@ -783,7 +781,6 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await Promise.race([sleep(1000), app]);
             } catch (err) {
                 error = err;
             } finally {
