@@ -96,6 +96,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                     }
                 }
             }, this.config.healthCheck.inputQueueValidation.validationIntervalInMs);
+            this.queueValidationTimer.unref();
         });
     }
 

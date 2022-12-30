@@ -41,6 +41,10 @@ import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./u
 
 jest.setTimeout(20000);
 
+afterAll( done => {
+    done();
+})
+
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
         it("routes all published messages to output sink", async () => {
