@@ -655,7 +655,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             expect(published).toMatchObject([inc(1), inc(2)]);
         });
 
-        xit("successfully validates input queue with length within capacity", async () => {
+        it("successfully validates input queue with length within capacity", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndFail },
                 sink: { mode: ErrorHandlingMode.LogAndFail },
@@ -676,7 +676,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             };
 
             const capture = new Array();
-            await Application.create()
+            const app = Application.create()
                 .input()
                 .add(new StaticInputSource([inc(4), inc(8)]))
                 .done()
@@ -690,11 +690,12 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 .published(new CapturingOutputSink(capture))
                 .done()
                 .run(runtime);
-
+            await Promise.race([sleep(1000), app]);
+            app.cancel();
             expect(capture.length).toBe(2);
         });
 
-        xit("does not throw error if input queue length breaches capacity in LogAndContinue mode", async () => {
+        it("does not throw error if input queue length breaches capacity in LogAndContinue mode", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndContinue },
                 sink: { mode: ErrorHandlingMode.LogAndContinue },
@@ -716,8 +717,9 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
 
             const capture = new Array();
             let error;
+            let app;
             try {
-                const app = Application.create()
+                app = Application.create()
                     .input()
                     .add(new StaticInputSource([inc(4), inc(8)]))
                     .done()
@@ -731,15 +733,19 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await Promise.race([sleep(5000), app]);
+                await Promise.race([sleep(1000), app]);
                 expect(capture.length).toBe(2);
             } catch (err) {
                 error = err;
+            } finally {
+                if (app) {
+                    app.cancel();
+                }
             }
             expect(error).not.toBeDefined();
         });
 
-        xit("throws an error if input queue length breaches capacity in LogAndFail mode", async () => {
+        it("throws an error if input queue length breaches capacity in LogAndFail mode", async () => {
             const runtime: IApplicationRuntimeBehavior = {
                 dispatch: { mode: ErrorHandlingMode.LogAndFail },
                 sink: { mode: ErrorHandlingMode.LogAndFail },
@@ -761,8 +767,9 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
 
             const capture = new Array();
             let error;
+            let app;
             try {
-                const app = Application.create()
+                app = Application.create()
                     .input()
                     .add(new StaticInputSource([inc(4), inc(8), inc(12)]))
                     .done()
@@ -776,9 +783,13 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await Promise.race([sleep(5000), app]);
+                await Promise.race([sleep(1000), app]);
             } catch (err) {
                 error = err;
+            } finally {
+                if (app) {
+                    app.cancel();
+                }
             }
             expect(error).toBeDefined();
         });
