@@ -112,6 +112,7 @@ export interface IQueueValidationConfig {
 export interface IHealthCheckConfig {
     readonly inputQueueValidation?: IQueueValidationConfig;
 }
+
 export interface IConcurrencyConfiguration {
     readonly emitMetricsForBatches?: boolean;
     readonly emitMetricsForQueues?: boolean;
