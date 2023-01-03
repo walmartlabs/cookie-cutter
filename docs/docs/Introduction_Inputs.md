@@ -50,7 +50,7 @@ You may add more than one input source to a Cookie Cutter application. The frame
 
 | Option   | Type | Default | Description |
 | -------- | -----| ------- | ----------- |
-| longest  | boolean | false | <b>True</b>: Cookie Cutter application will stop If one input source stops before the others. <br /> <b>False</b>: Cookie Cutter application will keep running until all input sources are exhausted. |
+| longest  | boolean | false | <b>False</b>: Cookie Cutter application will stop If one input source stops before the others. <br /> <b>True</b>: Cookie Cutter application will keep running until all input sources are exhausted. |
 
 Example:
 ```typescript
