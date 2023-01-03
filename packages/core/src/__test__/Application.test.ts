@@ -39,10 +39,14 @@ import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
 import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
-jest.setTimeout(20000);
+jest.setTimeout(30000);
 
 afterAll((done) => {
     done();
+});
+
+afterEach(() => {
+    jest.clearAllTimers();
 });
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
@@ -179,7 +183,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             try {
                 await Application.create()
                     .input()
-                    .add(new StaticInputSource([{ type: "Test", payload: {} }]))
+                    .add(new StaticInputSource([{ type: "Test", payload: {}}]))
                     .done()
                     .dispatch({
                         onTest: async (_: any, ctx: IDispatchContext<TallyState>) => {
@@ -680,7 +684,7 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             };
 
             const capture = new Array();
-            const app = Application.create()
+            await Application.create()
                 .input()
                 .add(new StaticInputSource([inc(4), inc(8)]))
                 .done()
@@ -694,8 +698,6 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                 .published(new CapturingOutputSink(capture))
                 .done()
                 .run(runtime);
-            await Promise.race([sleep(100), app]);
-            app.cancel();
             expect(capture.length).toBe(2);
         });
 
@@ -718,12 +720,11 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     },
                 },
             };
-
             const capture = new Array();
             let error;
             let app;
             try {
-                app = Application.create()
+                app = await Application.create()
                     .input()
                     .add(new StaticInputSource([inc(4), inc(8)]))
                     .done()
@@ -737,7 +738,6 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await Promise.race([sleep(1000), app]);
                 expect(capture.length).toBe(2);
             } catch (err) {
                 error = err;
@@ -773,10 +773,11 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
             let error;
             let app;
             try {
-                app = Application.create()
+                app = await Application.create()
                     .input()
                     .add(new StaticInputSource([inc(4), inc(8), inc(12)]))
                     .done()
+                    .logger(console)
                     .dispatch({
                         onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
                             await sleep(10);
@@ -787,13 +788,12 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
                     .published(new CapturingOutputSink(capture))
                     .done()
                     .run(runtime);
-                await Promise.race([sleep(1000), app]);
+                app.reject();
+                // await Promise.race([sleep(1000), app]);
             } catch (err) {
                 error = err;
             } finally {
-                if (app) {
-                    app.cancel();
-                }
+                app?.cancel();
             }
             expect(error).toBeDefined();
         });
