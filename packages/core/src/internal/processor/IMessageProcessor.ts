@@ -44,4 +44,6 @@ export interface IMessageProcessor extends IRequireInitialization {
         dispatchRetrier: IRetrier,
         sinkRetrier: IRetrier
     ): Promise<void>;
+
+    getInputQueueLength(): number;
 }

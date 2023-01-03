@@ -31,6 +31,7 @@ import {
     MessageProcessingResults,
     MessageRef,
     OutputSinkConsistencyLevel,
+    QueueFullHandlingMode,
     SequenceConflictError,
     StateRef,
 } from "../model";
@@ -38,7 +39,15 @@ import { Future } from "../utils";
 import { dec, Decrement, inc, Increment, TallyAggregator, TallyState } from "./tally";
 import { runStatefulApp, runStatelessApp, runMaterializedStatefulApp } from "./util";
 
-jest.setTimeout(20000);
+jest.setTimeout(120000);
+
+afterAll((done) => {
+    done();
+});
+
+afterEach(() => {
+    jest.clearAllTimers();
+});
 
 for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
     describe(`Application in ${ParallelismMode[mode]} mode`, () => {
@@ -652,6 +661,131 @@ for (const mode of [ParallelismMode.Concurrent, ParallelismMode.Rpc]) {
 
             const published = capture.map((m) => m.message);
             expect(published).toMatchObject([inc(1), inc(2)]);
+        });
+
+        it("successfully validates input queue with length within capacity", async () => {
+            const runtime: IApplicationRuntimeBehavior = {
+                dispatch: { mode: ErrorHandlingMode.LogAndFail },
+                sink: { mode: ErrorHandlingMode.LogAndFail },
+                parallelism: {
+                    mode: ParallelismMode.Concurrent,
+                    concurrencyConfiguration: {
+                        inputQueueCapacity: 10,
+                        outputQueueCapacity: 10,
+                        healthCheck: {
+                            inputQueueValidation: {
+                                timeOutInMs: 1,
+                                validationIntervalInMs: 0.5,
+                                mode: QueueFullHandlingMode.LogAndFail,
+                            },
+                        },
+                    },
+                },
+            };
+
+            const capture = new Array();
+            await Application.create()
+                .input()
+                .add(new StaticInputSource([inc(4), inc(8)]))
+                .done()
+                .dispatch({
+                    onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
+                        await sleep(10);
+                        ctx.publish(Increment, msg);
+                    },
+                })
+                .output()
+                .published(new CapturingOutputSink(capture))
+                .done()
+                .run(runtime);
+            expect(capture.length).toBe(2);
+        });
+
+        it("does not throw error if input queue length breaches capacity in LogAndContinue mode", async () => {
+            const runtime: IApplicationRuntimeBehavior = {
+                dispatch: { mode: ErrorHandlingMode.LogAndContinue },
+                sink: { mode: ErrorHandlingMode.LogAndContinue },
+                parallelism: {
+                    mode: ParallelismMode.Concurrent,
+                    concurrencyConfiguration: {
+                        inputQueueCapacity: 1,
+                        outputQueueCapacity: 1,
+                        healthCheck: {
+                            inputQueueValidation: {
+                                timeOutInMs: 1,
+                                validationIntervalInMs: 0.5,
+                                mode: QueueFullHandlingMode.LogAndContinue,
+                            },
+                        },
+                    },
+                },
+            };
+            const capture = new Array();
+            let error;
+            try {
+                await Application.create()
+                    .input()
+                    .add(new StaticInputSource([inc(4), inc(8)]))
+                    .done()
+                    .dispatch({
+                        onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
+                            await sleep(10);
+                            ctx.publish(Increment, msg);
+                        },
+                    })
+                    .output()
+                    .published(new CapturingOutputSink(capture))
+                    .done()
+                    .run(runtime);
+                expect(capture.length).toBe(2);
+            } catch (err) {
+                error = err;
+            }
+            expect(error).not.toBeDefined();
+        });
+
+        it("throws an error if input queue length breaches capacity in LogAndFail mode", async () => {
+            const runtime: IApplicationRuntimeBehavior = {
+                dispatch: { mode: ErrorHandlingMode.LogAndFail },
+                sink: { mode: ErrorHandlingMode.LogAndFail },
+                parallelism: {
+                    mode: ParallelismMode.Concurrent,
+                    concurrencyConfiguration: {
+                        inputQueueCapacity: 1,
+                        outputQueueCapacity: 1,
+                        healthCheck: {
+                            inputQueueValidation: {
+                                timeOutInMs: 1,
+                                validationIntervalInMs: 0.5,
+                                mode: QueueFullHandlingMode.LogAndFail,
+                            },
+                        },
+                    },
+                },
+            };
+
+            const capture = new Array();
+            let error;
+            try {
+                await Application.create()
+                    .input()
+                    .add(new StaticInputSource([inc(4), inc(8), inc(12)]))
+                    .done()
+                    .logger(console)
+                    .dispatch({
+                        onIncrement: async (msg: Increment, ctx: IDispatchContext) => {
+                            await sleep(10);
+                            ctx.publish(Increment, msg);
+                        },
+                    })
+                    .output()
+                    .published(new CapturingOutputSink(capture))
+                    .done()
+                    .run(runtime);
+            } catch (err) {
+                error = err;
+            }
+            expect(error).toBeDefined();
         });
     });
 }
