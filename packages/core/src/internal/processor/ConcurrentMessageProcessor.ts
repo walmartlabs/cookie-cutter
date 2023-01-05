@@ -29,6 +29,8 @@ import {
     sleep,
     waitForPendingIO,
 } from "../..";
+import { QueueFullHandlingMode } from "../../model";
+import { Future } from "../../utils";
 import { BaseMessageProcessor, IInflightSignal } from "./BaseMessageProcessor";
 import { Batch } from "./Batch";
 import { ReprocessingContext } from "./ReprocessingContext";
@@ -44,6 +46,9 @@ const HIGH_PRIORITY = 1;
 export class ConcurrentMessageProcessor extends BaseMessageProcessor implements IMessageProcessor {
     protected readonly inputQueue: BoundedPriorityQueue<MessageRef>;
     protected readonly outputQueue: BoundedPriorityQueue<IQueueItem<BufferedDispatchContext>>;
+    private lastDispatchedMessageTimestamp: number;
+    private queueValidationTimer?: NodeJS.Timer | undefined;
+    private isProcessorClosed: Future<void>;
 
     public constructor(
         protected readonly config: IConcurrencyConfiguration,
@@ -52,6 +57,8 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         super(processorConfig);
         this.inputQueue = new BoundedPriorityQueue(config.inputQueueCapacity);
         this.outputQueue = new BoundedPriorityQueue(config.outputQueueCapacity);
+        this.lastDispatchedMessageTimestamp = new Date().getTime();
+        this.isProcessorClosed = new Future<void>();
     }
 
     protected get name(): string {
@@ -65,6 +72,40 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             super.currentlyInflight.length
         );
         this.metrics.gauge(MessageProcessingMetrics.OutputQueue, this.outputQueue.length);
+    }
+
+    private healthCheck() {
+        return new Promise((resolve, reject) => {
+            this.queueValidationTimer = setInterval(() => {
+                if (this.inputQueue.isClosed()) {
+                    resolve("Queue already Closed");
+                }
+                const currentTimestamp = new Date().getTime();
+                if (
+                    this.inputQueue?.length >= this.config.inputQueueCapacity &&
+                    currentTimestamp - this.lastDispatchedMessageTimestamp >=
+                        this.config.healthCheck.inputQueueValidation.timeOutInMs
+                ) {
+                    const msg = `Input queue has reached it's capacity, currentLength: ${this.inputQueue.length}, capacity: ${this.config.inputQueueCapacity}`;
+                    this.metrics.increment(MessageProcessingMetrics.InputQueueValidation, {
+                        result: MessageProcessingResults.Failure,
+                    });
+                    switch (this.config.healthCheck.inputQueueValidation.mode) {
+                        case QueueFullHandlingMode.LogAndFail:
+                            reject(new Error(msg));
+                            break;
+                        case QueueFullHandlingMode.LogAndContinue:
+                        default:
+                            this.logger.warn(msg);
+                            break;
+                    }
+                } else {
+                    this.metrics.increment(MessageProcessingMetrics.InputQueueValidation, {
+                        result: MessageProcessingResults.Success,
+                    });
+                }
+            }, this.config.healthCheck.inputQueueValidation.validationIntervalInMs);
+        });
     }
 
     public async run(
@@ -86,25 +127,40 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
                 timer.unref();
             }
 
-            await Promise.all([
-                this.inputLoop(source),
-                this.processingLoop(
-                    outputMessageEnricher,
-                    inputMessageMetricAnnotator,
-                    serviceDiscovery,
-                    dispatchRetrier
-                ),
-                this.outputLoop(sink, inputMessageMetricAnnotator, sinkRetrier),
-            ]);
+            const processes = [];
+            if (this.config.healthCheck) {
+                processes.push(this.healthCheck());
+            }
+            processes.push(
+                ...[
+                    this.inputLoop(source),
+                    this.processingLoop(
+                        outputMessageEnricher,
+                        inputMessageMetricAnnotator,
+                        serviceDiscovery,
+                        dispatchRetrier
+                    ),
+                    this.outputLoop(sink, inputMessageMetricAnnotator, sinkRetrier),
+                ]
+            );
+            await Promise.all(processes);
         } catch (e) {
             this.inputQueue.close();
             this.outputQueue.close();
             throw e;
         } finally {
+            this.isProcessorClosed.resolve();
             if (timer) {
                 clearInterval(timer);
             }
+            if (this.queueValidationTimer) {
+                clearInterval(this.queueValidationTimer);
+            }
         }
+    }
+
+    public getInputQueueLength(): number {
+        return this.inputQueue.length;
     }
 
     private async inputLoop(source: IInputSource): Promise<void> {
@@ -115,7 +171,15 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
             },
         };
 
-        for await (const msg of source.start(inputContext)) {
+        const inputMessageIterator: AsyncIterableIterator<MessageRef> = source.start(inputContext);
+
+        // tslint:disable:no-floating-promises
+        this.isProcessorClosed.promise.then(async () => {
+            await source.stop();
+            inputMessageIterator.return();
+        });
+
+        for await (const msg of inputMessageIterator) {
             if (!(await this.inputQueue.enqueue(msg))) {
                 await msg.release(undefined, new Error("unavailable"));
             }
@@ -154,7 +218,6 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         for await (const msg of this.inputQueue.iterate()) {
             await msg.release(undefined, new Error("unavailable"));
         }
-
         this.outputQueue.close();
     }
 
@@ -177,6 +240,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         dispatchRetrier: IRetrier
     ): Promise<void> {
         const eventType = prettyEventName(msg.payload.type);
+        this.lastDispatchedMessageTimestamp = new Date().getTime();
         let baseMetricTags: IMetricTags = {};
         let handlingInputSpan: Span | undefined;
         let handled: boolean = false;

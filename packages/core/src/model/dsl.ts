@@ -46,6 +46,7 @@ export interface IApplicationBuilder {
     services(): IServiceRegistryBuilder;
     output(): IOutputBuilder;
     if(predicate: boolean, action: (app: IApplicationBuilder) => void): IApplicationBuilder;
+    inputQueueLength(): number;
 }
 
 export interface IInputBuilder {
@@ -81,6 +82,11 @@ export enum ErrorHandlingMode {
     LogAndRetryOrFail,
 }
 
+export enum QueueFullHandlingMode {
+    LogAndContinue = 1,
+    LogAndFail,
+}
+
 export enum RetryMode {
     Linear = 1,
     Exponential,
@@ -97,6 +103,16 @@ export interface IParallelismConfiguration {
     readonly concurrencyConfiguration?: IConcurrencyConfiguration;
 }
 
+export interface IQueueValidationConfig {
+    readonly mode: QueueFullHandlingMode;
+    readonly validationIntervalInMs: number;
+    readonly timeOutInMs: number;
+}
+
+export interface IHealthCheckConfig {
+    readonly inputQueueValidation?: IQueueValidationConfig;
+}
+
 export interface IConcurrencyConfiguration {
     readonly emitMetricsForBatches?: boolean;
     readonly emitMetricsForQueues?: boolean;
@@ -108,6 +124,7 @@ export interface IConcurrencyConfiguration {
     readonly minimumBatchSize?: number;
     readonly maximumBatchSize?: number;
     readonly maximumParallelRpcRequests?: number;
+    readonly healthCheck?: IHealthCheckConfig;
 }
 
 export interface IApplicationRuntimeBehavior {
