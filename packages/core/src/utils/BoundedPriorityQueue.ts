@@ -117,6 +117,10 @@ export class BoundedPriorityQueue<T> {
         }
     }
 
+    public isClosed(): boolean {
+        return this.closed;
+    }
+
     public async *iterate(): AsyncIterableIterator<T> {
         while (true) {
             try {

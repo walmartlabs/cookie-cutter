@@ -27,6 +27,7 @@ export enum MessageProcessingMetrics {
     InputQueue = "cookie_cutter.core.input_queue",
     OutputQueue = "cookie_cutter.core.output_queue",
     ConcurrentHandlers = "cookie_cutter.core.concurrent_handlers",
+    InputQueueValidation = "cookie_cutter.health_check.input_queue_validation",
 }
 
 export enum MessageProcessingResults {
@@ -39,6 +40,7 @@ export enum MessageProcessingResults {
     ErrFailedMsgRelease = "error.failed_msg_release",
     ErrReprocessing = "error.reprocessing",
     Unhandled = "unhandled",
+    Failure = "failure",
 }
 
 export interface IMessageMetricAnnotator {

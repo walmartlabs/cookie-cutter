@@ -71,6 +71,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
     private activeLogger: ILogger;
     private stateProvider: IStateProvider<any>;
     private messageTypeMapper: IMessageTypeMapper;
+    private processor?: IMessageProcessor;
 
     constructor() {
         this.inputBuilder = new InputBuilder(this);
@@ -101,6 +102,13 @@ export class ApplicationBuilder implements IApplicationBuilder {
         };
 
         return promise;
+    }
+
+    public inputQueueLength(): number {
+        if (this.processor) {
+            return this.processor.getInputQueueLength();
+        }
+        return 0;
     }
 
     private async internalRun(
@@ -232,7 +240,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
             this.activeLogger.error("failed to initialize component", e);
         }
 
-        const processor = processorFunc({
+        this.processor = processorFunc({
             dispatcher: this.dispatcher,
             logger: this.activeLogger,
             messageTypeMapper: this.messageTypeMapper,
@@ -243,7 +251,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
         });
 
         try {
-            await processor.initialize({
+            await this.processor.initialize({
                 metrics,
                 logger: this.activeLogger,
                 tracer,
@@ -281,7 +289,7 @@ export class ApplicationBuilder implements IApplicationBuilder {
                     }
                 });
             });
-            const done = processor.run(
+            const done = this.processor.run(
                 source,
                 source,
                 sink,
