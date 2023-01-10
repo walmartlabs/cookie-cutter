@@ -35,7 +35,7 @@ describe("roundRobinIterators", () => {
         }
     });
 
-    it("stops as soon as either iterator is exhausted while longest flag is true.", async () => {
+    it("stops as soon as either iterator is exhausted while longest flag is false.", async () => {
         const values1 = [1, 2, 3, 4, 5];
         const values2 = [10, 20, 30, 40, 50, 60];
         const it1 = iterator(values1);
