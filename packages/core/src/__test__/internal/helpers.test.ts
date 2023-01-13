@@ -25,32 +25,12 @@ describe("roundRobinIterators", () => {
         for await (const n of roundRobinIterators(
             [it1, it2],
             DefaultComponentContext.logger,
-            false
-        )) {
-            all.push(n);
-        }
-
-        for (const n of values1.concat(values2)) {
-            expect(all).toContain(n);
-        }
-    });
-
-    it("stops as soon as either iterator is exhausted while longest flag is false.", async () => {
-        const values1 = [1, 2, 3, 4, 5];
-        const values2 = [10, 20, 30, 40, 50, 60];
-        const it1 = iterator(values1);
-        const it2 = iterator(values2);
-
-        const all = [];
-        for await (const n of roundRobinIterators(
-            [it1, it2],
-            DefaultComponentContext.logger,
             true
         )) {
             all.push(n);
         }
 
-        for (const n of [1, 2, 3, 4, 5, 10, 20, 30, 40, 50]) {
+        for (const n of values1.concat(values2)) {
             expect(all).toContain(n);
         }
     });

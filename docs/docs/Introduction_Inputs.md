@@ -58,8 +58,8 @@ Application.create()
     .input({
         longest: true
     })
-        .add(new ExampleInputSource())
-        .done()
+    .add(new ExampleInputSource())
+    .done()
 ```
 ## Example Input Source
 

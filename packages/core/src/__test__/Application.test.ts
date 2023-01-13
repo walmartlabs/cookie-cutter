@@ -171,6 +171,82 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             expect(tally).toBe(1);
         });
 
+        it("terminates immediately with multiple inputs when longest mode is false", async () => {
+            let tally = 0;
+            await Application.create()
+                .input({
+                    longest: false,
+                })
+                .add(
+                    new StaticInputSource([
+                        { type: Increment.name, payload: new Increment(1) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                    ])
+                )
+                .add(
+                    new StaticInputSource([
+                        { type: Decrement.name, payload: new Decrement(1) },
+                        { type: Decrement.name, payload: new Decrement(1) },
+                        { type: Decrement.name, payload: new Decrement(1) },
+                    ])
+                )
+                .done()
+                .dispatch({
+                    onIncrement: async (msg: Increment) => {
+                        tally += msg.count;
+                    },
+                    onDecrement: async (msg: Decrement) => {
+                        tally -= msg.count;
+                    },
+                })
+                .run(ErrorHandlingMode.LogAndFail, mode);
+            if (mode === ParallelismMode.Serial) {
+                expect(tally).toBe(2);
+            } else {
+                expect(tally).toBe(4);
+            }
+        });
+
+        it("should not terminates untill all input sources are exhausted with multiple inputs when longest mode is true", async () => {
+            let tally = 0;
+            await Application.create()
+                .input({
+                    longest: true,
+                })
+                .add(
+                    new StaticInputSource([
+                        { type: Increment.name, payload: new Increment(1) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(2) },
+                    ])
+                )
+                .add(
+                    new StaticInputSource([
+                        { type: Decrement.name, payload: new Decrement(1) },
+                        { type: Decrement.name, payload: new Decrement(1) },
+                        { type: Decrement.name, payload: new Decrement(1) },
+                    ])
+                )
+                .done()
+                .dispatch({
+                    onIncrement: async (msg: Increment) => {
+                        tally += msg.count;
+                    },
+                    onDecrement: async (msg: Decrement) => {
+                        tally -= msg.count;
+                    },
+                })
+                .run(ErrorHandlingMode.LogAndFail, mode);
+            expect(tally).toBe(8);
+        });
+
         it("successfully terminates gracefully for publish sink errors", async () => {
             const publish: IOutputSink<IPublishedMessage> = {
                 guarantees: {
