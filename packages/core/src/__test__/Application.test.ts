@@ -172,7 +172,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
         });
 
         it("terminates immediately with multiple inputs when longest mode is false", async () => {
-            let tally = 0;
+            let tally = 10555555;
             await Application.create()
                 .input({
                     longest: false,
@@ -180,18 +180,18 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 .add(
                     new StaticInputSource([
                         { type: Increment.name, payload: new Increment(1) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(10) },
+                        { type: Increment.name, payload: new Increment(100) },
+                        { type: Increment.name, payload: new Increment(10000) },
+                        { type: Increment.name, payload: new Increment(100000) },
+                        { type: Increment.name, payload: new Increment(1000000) },
                     ])
                 )
                 .add(
                     new StaticInputSource([
-                        { type: Decrement.name, payload: new Decrement(1) },
-                        { type: Decrement.name, payload: new Decrement(1) },
-                        { type: Decrement.name, payload: new Decrement(1) },
+                        { type: Decrement.name, payload: new Decrement(3) },
+                        { type: Decrement.name, payload: new Decrement(30) },
+                        { type: Decrement.name, payload: new Decrement(300) },
                     ])
                 )
                 .done()
@@ -205,9 +205,9 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 })
                 .run(ErrorHandlingMode.LogAndFail, mode);
             if (mode === ParallelismMode.Serial) {
-                expect(tally).toBe(2);
+                expect(tally).toBe(10555333);
             } else {
-                expect(tally).toBe(4);
+                expect(tally).toBe(10565333);
             }
         });
 
@@ -220,11 +220,11 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                 .add(
                     new StaticInputSource([
                         { type: Increment.name, payload: new Increment(1) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
-                        { type: Increment.name, payload: new Increment(2) },
+                        { type: Increment.name, payload: new Increment(1) },
+                        { type: Increment.name, payload: new Increment(1) },
+                        { type: Increment.name, payload: new Increment(1) },
+                        { type: Increment.name, payload: new Increment(1) },
+                        { type: Increment.name, payload: new Increment(1) },
                     ])
                 )
                 .add(
@@ -244,7 +244,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                     },
                 })
                 .run(ErrorHandlingMode.LogAndFail, mode);
-            expect(tally).toBe(8);
+            expect(tally).toBe(3);
         });
 
         it("successfully terminates gracefully for publish sink errors", async () => {
