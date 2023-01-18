@@ -247,10 +247,12 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
         );
         this.consumer.on(
             this.consumer.events.CRASH,
-            ({ payload: { error, groupId } }: ConsumerCrashEvent) => {
-                this.logger.error("Kafkajs Crashed", { error, groupId });
-                // tslint:disable-next-line:no-floating-promises
-                this.pipe.throw(error);
+            ({ payload: { error, groupId, restart } }: ConsumerCrashEvent) => {
+                this.logger.error("Kafkajs Crashed", { error, groupId, restart });
+                if (!restart) {
+                    // tslint:disable-next-line:no-floating-promises
+                    this.pipe.throw(error);
+                }
             }
         );
         this.consumer.on(
