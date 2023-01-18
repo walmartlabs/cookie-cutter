@@ -182,9 +182,9 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
                         { type: Increment.name, payload: new Increment(1) },
                         { type: Increment.name, payload: new Increment(10) },
                         { type: Increment.name, payload: new Increment(100) },
+                        { type: Increment.name, payload: new Increment(1000) },
                         { type: Increment.name, payload: new Increment(10000) },
                         { type: Increment.name, payload: new Increment(100000) },
-                        { type: Increment.name, payload: new Increment(1000000) },
                     ])
                 )
                 .add(
@@ -207,7 +207,7 @@ for (const mode of [ParallelismMode.Serial, ParallelismMode.Concurrent, Parallel
             if (mode === ParallelismMode.Serial) {
                 expect(tally).toBe(10555333);
             } else {
-                expect(tally).toBe(10565333);
+                expect(tally).toBe(10556333);
             }
         });
 
