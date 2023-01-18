@@ -11,6 +11,7 @@ import {
     IApplicationBuilder,
     IComponentBuilder,
     IInputBuilder,
+    IInputOption,
     IInputSource,
     IMessageDeduper,
     IMessageEnricher,
@@ -27,7 +28,10 @@ export class InputBuilder
     private readonly annotators: IMessageMetricAnnotator[] = [];
     private deduper: IMessageDeduper;
 
-    constructor(private readonly parent: IApplicationBuilder) {
+    constructor(
+        private readonly parent: IApplicationBuilder,
+        private readonly options?: IInputOption
+    ) {
         this.deduper = new NullMessageDeduper();
     }
 
@@ -40,7 +44,8 @@ export class InputBuilder
             this.inputs,
             this.enrichers,
             this.annotators,
-            makeLifecycle(this.deduper)
+            makeLifecycle(this.deduper),
+            this.options
         );
     }
 

@@ -26,6 +26,7 @@ import {
     IComponentRuntimeBehavior,
     IDisposable,
     IInputBuilder,
+    IInputOption,
     IInputSource,
     ILogger,
     IMessageDispatcher,
@@ -396,7 +397,10 @@ export class ApplicationBuilder implements IApplicationBuilder {
         return this;
     }
 
-    public input(): IInputBuilder {
+    public input(options?: IInputOption): IInputBuilder {
+        if (options) {
+            return (this.inputBuilder = new InputBuilder(this, options));
+        }
         return this.inputBuilder;
     }
 

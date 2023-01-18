@@ -26,7 +26,7 @@ import { ITracerBuilder, ITracingBuilder } from "./tracing";
 export interface IApplicationBuilder {
     run(errorHandling: ErrorHandlingMode, parallelism?: ParallelismMode): CancelablePromise<void>;
     run(behavior?: IApplicationRuntimeBehavior): CancelablePromise<void>;
-    input(): IInputBuilder;
+    input(options?: IInputOption): IInputBuilder;
     typeMapper(mapper: IMessageTypeMapper): IApplicationBuilder;
     validate(validator: IMessageValidator): IApplicationBuilder;
     state<TState, T extends IStateProvider<TState>>(provider: T): IApplicationBuilder;
@@ -141,4 +141,8 @@ export interface IComponentRuntimeBehavior {
     readonly exponentBase?: number;
     readonly randomize?: boolean;
     readonly retries?: number;
+}
+
+export interface IInputOption {
+    readonly longest?: boolean;
 }

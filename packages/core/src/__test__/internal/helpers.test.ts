@@ -22,7 +22,11 @@ describe("roundRobinIterators", () => {
         const it2 = iterator(values2);
 
         const all = [];
-        for await (const n of roundRobinIterators([it1, it2], DefaultComponentContext.logger)) {
+        for await (const n of roundRobinIterators(
+            [it1, it2],
+            DefaultComponentContext.logger,
+            true
+        )) {
             all.push(n);
         }
 

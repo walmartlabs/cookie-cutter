@@ -10,6 +10,7 @@ import {
     EventProcessingMetadata,
     IComponentContext,
     IDisposable,
+    IInputOption,
     IInputSource,
     IInputSourceContext,
     ILogger,
@@ -34,7 +35,8 @@ export class CompositeInputSource
         private readonly inputs: Lifecycle<IInputSource>[],
         private readonly enrichers: IMessageEnricher[],
         private readonly annotators: IMessageMetricAnnotator[],
-        private readonly deduper: Lifecycle<IMessageDeduper>
+        private readonly deduper: Lifecycle<IMessageDeduper>,
+        private readonly options: IInputOption
     ) {
         this.logger = DefaultComponentContext.logger;
     }
@@ -57,7 +59,7 @@ export class CompositeInputSource
 
         let source = sources[0];
         if (sources.length > 1) {
-            source = roundRobinIterators(sources, this.logger);
+            source = roundRobinIterators(sources, this.logger, this.options?.longest ?? false);
         }
 
         let sequence = 0;

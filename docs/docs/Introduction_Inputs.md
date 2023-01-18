@@ -46,6 +46,21 @@ The lifecycle of a Cookie Cutter application is determined by its input source(s
 
 You may add more than one input source to a Cookie Cutter application. The framework will process the sources in a round-robin fashion as messages are available; if some of the sources only generate message sporadically it will keep processing messages from sources that have messages available to prevent the round-robin logic from stalling the application. Keep in mind though: there are no ordering guarantees for messages originating from different sources.
 
+### Input options
+
+| Option   | Type | Default | Description |
+| -------- | -----| ------- | ----------- |
+| longest  | boolean | false | <b>False</b>: Cookie Cutter application will stop If one input source stops before the others. <br /> <b>True</b>: Cookie Cutter application will keep running until all input sources are exhausted. |
+
+Example:
+```typescript
+Application.create()
+    .input({
+        longest: true
+    })
+    .add(new ExampleInputSource())
+    .done()
+```
 ## Example Input Source
 
 ```typescript 
