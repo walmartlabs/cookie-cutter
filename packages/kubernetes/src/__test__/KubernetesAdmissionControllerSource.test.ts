@@ -5,7 +5,14 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { V1Deployment, V1DeploymentStatus, V1DeploymentStrategy, V1LabelSelector, V1ObjectMeta, V1PodTemplateSpec } from "@kubernetes/client-node";
+import {
+    V1Deployment,
+    V1DeploymentStatus,
+    V1DeploymentStrategy,
+    V1LabelSelector,
+    V1ObjectMeta,
+    V1PodTemplateSpec,
+} from "@kubernetes/client-node";
 import {
     Application,
     CancelablePromise,
