@@ -69,7 +69,7 @@ export class KubernetesWatchSource
         this.currentContext = kubeConfig.getCurrentContext();
 
         if (this.queryProvider) {
-            const client = kubeConfig.makeApiClient(k8s.ApiextensionsV1beta1Api);
+            const client = kubeConfig.makeApiClient(k8s.ApiextensionsV1Api);
             const config = await this.queryProvider.getQueryConfig(client);
             if (config.queryPath) {
                 this.queryPath = config.queryPath;

@@ -42,7 +42,7 @@ export interface IK8sWatchConfiguration {
 
 export interface IK8sQueryProvider {
     readonly getQueryConfig: (
-        client: k8s.ApiextensionsV1beta1Api
+        client: k8s.ApiextensionsV1Api
     ) => Promise<{ readonly queryPath: string; readonly queryParams?: IWatchQueryParams }>;
 }
 
