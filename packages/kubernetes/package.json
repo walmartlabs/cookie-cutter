@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-kubernetes",
-    "version": "1.6.0-beta.0",
+    "version": "1.6.0-beta.1",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "@kubernetes/client-node": "0.15.1",
+        "@kubernetes/client-node": "0.16.3",
         "body-parser": "1.20.0",
         "express": "4.18.1",
         "express-async-handler": "1.1.4",

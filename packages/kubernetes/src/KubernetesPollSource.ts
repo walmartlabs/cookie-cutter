@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import * as k8s from "@kubernetes/client-node";
+import { ApiextensionsV1Api, KubeConfig } from "@kubernetes/client-node";
 import {
     IComponentContext,
     IInputSource,
@@ -17,7 +17,7 @@ import {
     timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import * as _ from "lodash";
-import * as request from "request";
+import request from "request";
 import { IK8sQueryProvider, IK8sWatchConfiguration, IWatchQueryParams } from ".";
 import { KubernetesBase } from "./KubernetesBaseSource";
 
@@ -62,7 +62,7 @@ export class KubernetesPollSource
     public async *start(): AsyncIterableIterator<MessageRef> {
         this.running = true;
 
-        const kubeConfig = new k8s.KubeConfig();
+        const kubeConfig = new KubeConfig();
         if (this.config.configFilePath) {
             kubeConfig.loadFromFile(this.config.configFilePath);
         } else {
@@ -74,7 +74,7 @@ export class KubernetesPollSource
         this.currentContext = kubeConfig.getCurrentContext();
 
         if (this.queryProvider) {
-            const client = kubeConfig.makeApiClient(k8s.ApiextensionsV1beta1Api);
+            const client = kubeConfig.makeApiClient(ApiextensionsV1Api);
             const config = await this.queryProvider.getQueryConfig(client);
             if (config.queryPath) {
                 this.queryPath = config.queryPath;
@@ -175,7 +175,7 @@ export class KubernetesPollSource
         }
     }
 
-    public poll(kubeConfig: k8s.KubeConfig, path: string, queryParams: any): Promise<any> {
+    public poll(kubeConfig: KubeConfig, path: string, queryParams: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             const cluster = kubeConfig.getCurrentCluster();
             if (!cluster) {

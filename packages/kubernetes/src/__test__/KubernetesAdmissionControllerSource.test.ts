@@ -5,7 +5,14 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import k8s = require("@kubernetes/client-node");
+import {
+    V1Deployment,
+    V1DeploymentStatus,
+    V1DeploymentStrategy,
+    V1LabelSelector,
+    V1ObjectMeta,
+    V1PodTemplateSpec,
+} from "@kubernetes/client-node";
 import {
     Application,
     CancelablePromise,
@@ -15,7 +22,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import * as fs from "fs";
 import * as path from "path";
-import * as rp from "request-promise-native";
+import rp from "request-promise-native";
 import {
     IK8sAdmissionReviewResponse,
     k8sAdmissionControllerSource,
@@ -46,21 +53,21 @@ function testApp(handler: any, emptyCreds?: boolean): CancelablePromise<void> {
 }
 
 describe("KubernetesAdmissionControllerSource", () => {
-    const testResource: k8s.V1Deployment = {
+    const testResource: V1Deployment = {
         apiVersion: "deployment/v1",
         kind: "Deployment",
-        metadata: new k8s.V1ObjectMeta(),
+        metadata: new V1ObjectMeta(),
         spec: {
             minReadySeconds: 0,
             paused: false,
             progressDeadlineSeconds: 0,
             replicas: 1,
             revisionHistoryLimit: 0,
-            selector: new k8s.V1LabelSelector(),
-            strategy: new k8s.V1DeploymentStrategy(),
-            template: new k8s.V1PodTemplateSpec(),
+            selector: new V1LabelSelector(),
+            strategy: new V1DeploymentStrategy(),
+            template: new V1PodTemplateSpec(),
         },
-        status: new k8s.V1DeploymentStatus(),
+        status: new V1DeploymentStatus(),
     };
     const testUid = "testUID";
     const testRequestBody = {
@@ -134,8 +141,8 @@ describe("KubernetesAdmissionControllerSource", () => {
                 msg: K8sAdmissionReviewRequest,
                 __: IDispatchContext
             ): Promise<IK8sAdmissionReviewResponse> => {
-                const mutation: k8s.V1Deployment = msg.request.object;
-                mutation.metadata = new k8s.V1ObjectMeta();
+                const mutation: V1Deployment = msg.request.object;
+                mutation.metadata = new V1ObjectMeta();
                 mutation.metadata.annotations = { new_annotation: "new" };
                 mutation.spec.replicas = 2;
                 delete mutation.spec.revisionHistoryLimit;

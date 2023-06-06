@@ -18,8 +18,8 @@ import {
     MessageRef,
 } from "@walmartlabs/cookie-cutter-core";
 import * as bodyParser from "body-parser";
-import * as express from "express";
-import * as asyncHandler from "express-async-handler";
+import express from "express";
+import asyncHandler from "express-async-handler";
 import { RequestHandler } from "express-serve-static-core";
 import * as jsonpatch from "fast-json-patch";
 import * as https from "https";

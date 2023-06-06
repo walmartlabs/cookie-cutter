@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import * as k8s from "@kubernetes/client-node";
+import { ApiextensionsV1Api } from "@kubernetes/client-node";
 import { config, IInputSource } from "@walmartlabs/cookie-cutter-core";
 import { KubernetesAdmissionControllerSource } from "./KubernetesAdmissionControllerSource";
 import { K8sResourceAdded, K8sResourceDeleted, K8sResourceModified } from "./KubernetesBaseSource";
@@ -42,7 +42,7 @@ export interface IK8sWatchConfiguration {
 
 export interface IK8sQueryProvider {
     readonly getQueryConfig: (
-        client: k8s.ApiextensionsV1beta1Api
+        client: ApiextensionsV1Api
     ) => Promise<{ readonly queryPath: string; readonly queryParams?: IWatchQueryParams }>;
 }
 

@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import k8s = require("@kubernetes/client-node");
+import { KubeConfig, ApiextensionsV1Api, Watch } from "@kubernetes/client-node";
 import {
     BoundedPriorityQueue,
     IComponentContext,
@@ -57,7 +57,7 @@ export class KubernetesWatchSource
     }
 
     public async *start(): AsyncIterableIterator<MessageRef> {
-        const kubeConfig = new k8s.KubeConfig();
+        const kubeConfig = new KubeConfig();
         if (this.config.configFilePath) {
             kubeConfig.loadFromFile(this.config.configFilePath);
         } else {
@@ -69,7 +69,7 @@ export class KubernetesWatchSource
         this.currentContext = kubeConfig.getCurrentContext();
 
         if (this.queryProvider) {
-            const client = kubeConfig.makeApiClient(k8s.ApiextensionsV1beta1Api);
+            const client = kubeConfig.makeApiClient(ApiextensionsV1Api);
             const config = await this.queryProvider.getQueryConfig(client);
             if (config.queryPath) {
                 this.queryPath = config.queryPath;
@@ -88,7 +88,7 @@ export class KubernetesWatchSource
         await this.abort();
     }
 
-    private startWatch(kubeConfig: k8s.KubeConfig) {
+    private startWatch(kubeConfig: KubeConfig) {
         if (this.done) {
             return;
         }
@@ -101,7 +101,7 @@ export class KubernetesWatchSource
 
         const RESTART_MSG = `watch didn't receive any items for ${this.reconnectTimeout}ms`;
 
-        const watch = new k8s.Watch(kubeConfig);
+        const watch = new Watch(kubeConfig);
         const watchPromise = new Promise<string>((resolve, reject) => {
             let pendingEnqueue: Promise<boolean>;
 
