@@ -79,6 +79,13 @@ export class MqttPublisherSink
                 );
             }
 
+            while (!this.client.connected) {
+                this.logger.error("Not connected to client", {
+                    hostName: this.config.hostName,
+                    hostPort: this.config.hostPort,
+                });
+            }
+
             this.client.publish(
                 topic,
                 Buffer.from(JSON.stringify(formattedMsg)),

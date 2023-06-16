@@ -35,6 +35,7 @@ jest.mock("mqtt", () => {
                 publish: mockMqttPublisher,
                 removeAllListeners: jest.fn(),
                 end: jest.fn(),
+                connected: true,
             };
         }),
     };
