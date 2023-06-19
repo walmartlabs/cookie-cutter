@@ -79,11 +79,13 @@ export class MqttPublisherSink
                 );
             }
 
-            while (!this.client.connected) {
+            if (!this.client.connected) {
                 this.logger.error("Not connected to client", {
                     hostName: this.config.hostName,
                     hostPort: this.config.hostPort,
                 });
+
+                throw new Error(`Connection could not be established with broker`);
             }
 
             this.client.publish(
