@@ -79,15 +79,6 @@ export class MqttPublisherSink
                 );
             }
 
-            if (!this.client.connected) {
-                this.logger.error("Not connected to client", {
-                    hostName: this.config.hostName,
-                    hostPort: this.config.hostPort,
-                });
-
-                throw new Error(`Connection could not be established with broker`);
-            }
-
             this.client.publish(
                 topic,
                 Buffer.from(JSON.stringify(formattedMsg)),
@@ -114,6 +105,8 @@ export class MqttPublisherSink
                             MqttMetricResults.error
                         );
                         failSpan(span, error);
+
+                        throw error;
                     } else {
                         this.emitMetrics(
                             topic,
