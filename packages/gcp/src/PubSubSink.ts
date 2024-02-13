@@ -33,10 +33,12 @@ interface IPayloadWithAttributes {
     payload: Buffer;
     attributes: Attributes;
     spanContext: SpanContext;
+    orderingKey: string;
 }
 
 export enum PubSubMetadata {
     Topic = "topic",
+    OrderingKey = "orderingKey"
 }
 
 /*
@@ -166,6 +168,7 @@ export class PubSubSink
             payload,
             attributes,
             spanContext: msg.spanContext,
+            orderingKey: msg.metadata[PubSubMetadata.OrderingKey],
         };
     }
 }
