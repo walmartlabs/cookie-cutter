@@ -210,8 +210,8 @@ describe("PubSubSink Tests", () => {
         ];
         const testApp = createTestApp(messagesWithTopic, sink, ErrorHandlingMode.LogAndContinue);
         await testApp;
-        expect(mockPubSub).toBeCalledTimes(1);
         expect(mockTopic).toBeCalledTimes(1);
+        expect(mockPubSub).toBeCalledTimes(1);
         messagesWithTopic.forEach((message) => {
             expect(mockTopic.mock.calls[0]).toContain(message.payload.topic);
             expect(mockTopic.mock.calls[0][1].messageOrdering).toBeTruthy();
