@@ -91,7 +91,7 @@ export class PubSubSink
             const topic = messagesByTopic.get(topicName);
 
             topic.payloadsWithAttributes.push(formattedMsg);
-            if (formattedMsg.orderingKey) {
+            if (!topic.messageOrdering && formattedMsg.orderingKey) {
                 topic.messageOrdering = true;
             }
         }

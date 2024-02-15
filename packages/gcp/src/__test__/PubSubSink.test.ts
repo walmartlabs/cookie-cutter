@@ -197,6 +197,35 @@ describe("PubSubSink Tests", () => {
             );
         });
     });
+    it("with orderingKey for one message and no ordering key for 2nd message", async () => {
+        const messagesWithTopic: IMessage[] = [
+            {
+                type: TestEvent.name,
+                payload: new TestEvent("A", "TopicA", "test-key1"),
+            },
+            {
+                type: TestEvent.name,
+                payload: new TestEvent("A", "TopicA"),
+            },
+        ];
+        const testApp = createTestApp(messagesWithTopic, sink, ErrorHandlingMode.LogAndContinue);
+        await testApp;
+        expect(mockPubSub).toBeCalledTimes(1);
+        expect(mockTopic).toBeCalledTimes(1);
+        messagesWithTopic.forEach((message) => {
+            expect(mockTopic.mock.calls[0]).toContain(message.payload.topic);
+            expect(mockTopic.mock.calls[0][1].messageOrdering).toBeTruthy();
+        });
+        expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
+        messagesWithTopic.forEach((message, idx) => {
+            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBe(
+                message.payload.orderingKey
+            );
+            expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
+                message.type
+            );
+        });
+    });
 
     it("rejects on error from PubSub topic", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndFail);
