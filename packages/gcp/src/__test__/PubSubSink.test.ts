@@ -46,7 +46,7 @@ function createTestApp(
                 metadata[PubSubMetadata.Topic] = msg.topic;
             }
             if (msg.orderingKey) {
-                metadata[PubSubMetadata.OrderingKey] = msg.orderingKey;
+                metadata[PubSubMetadata.Key] = msg.orderingKey;
             }
             ctx.publish(TestEvent, new TestEvent(msg.value), metadata);
         },
@@ -115,8 +115,10 @@ describe("PubSubSink Tests", () => {
         );
         expect(mockPublishFn).toBeCalledTimes(messagesWithoutTopic.length);
         messagesWithoutTopic.forEach((message, idx) => {
-            expect(mockPublishFn.mock.calls[idx][1][AttributeNames.eventType]).toBe(message.type);
-            expect(mockPublishFn.mock.calls[idx][1][AttributeNames.contentType]).toBe(
+            expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
+                message.type
+            );
+            expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.contentType]).toBe(
                 pubSubPublisherConfigurationWithDefaultTopic.encoder.mimeType
             );
         });
@@ -142,8 +144,10 @@ describe("PubSubSink Tests", () => {
         });
         expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
-            expect(mockPublishFn.mock.calls[idx][1][AttributeNames.eventType]).toBe(message.type);
-            expect(mockPublishFn.mock.calls[idx][1][AttributeNames.contentType]).toBe(
+            expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
+                message.type
+            );
+            expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.contentType]).toBe(
                 pubSubPublisherConfigurationWithDefaultTopic.encoder.mimeType
             );
         });
@@ -165,7 +169,7 @@ describe("PubSubSink Tests", () => {
         });
         expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
-            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.OrderingKey]).toBe(
+            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBe(
                 message.payload.orderingKey
             );
         });
@@ -187,7 +191,7 @@ describe("PubSubSink Tests", () => {
         });
         expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
-            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.OrderingKey]).toBeUndefined();
+            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBeUndefined();
             expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
                 message.type
             );

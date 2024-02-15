@@ -37,13 +37,13 @@ interface IPayloadWithAttributes {
 }
 
 interface IPubSubTopicPayload {
-    payloadWithAttributes: IPayloadWithAttributes[];
+    payloadsWithAttributes: IPayloadWithAttributes[];
     messageOrdering: boolean;
 }
 
 export enum PubSubMetadata {
     Topic = "topic",
-    OrderingKey = "orderingKey",
+    Key = "orderingKey",
 }
 
 /*
@@ -83,15 +83,17 @@ export class PubSubSink
             if (!messagesByTopic.has(topicName)) {
                 messagesByTopic.set(topicName, {
                     messageOrdering: false,
-                    payloadWithAttributes: [],
+                    payloadsWithAttributes: [],
                 });
             }
 
             const formattedMsg = this.formatMessage(msg);
             const topic = messagesByTopic.get(topicName);
 
-            topic.payloadWithAttributes.push(formattedMsg);
-            topic.messageOrdering = !!formattedMsg.orderingKey;
+            topic.payloadsWithAttributes.push(formattedMsg);
+            if (formattedMsg.orderingKey) {
+                topic.messageOrdering = true;
+            }
         }
         for (const [topic, messages] of messagesByTopic) {
             const batchPublisher = this.producer.topic(topic, {
@@ -102,7 +104,7 @@ export class PubSubSink
                 },
                 messageOrdering: messages.messageOrdering,
             });
-            for (const message of messages.payloadWithAttributes) {
+            for (const message of messages.payloadsWithAttributes) {
                 const span = this.tracer.startSpan(this.spanOperationName, {
                     childOf: message.spanContext,
                 });
@@ -123,7 +125,7 @@ export class PubSubSink
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    messages.payloadWithAttributes.forEach((message) =>
+                    messages.payloadsWithAttributes.forEach((message) =>
                         this.emitMetrics(
                             topic,
                             message.attributes[AttributeNames.eventType],
@@ -182,8 +184,8 @@ export class PubSubSink
             payload,
             attributes,
             spanContext: msg.spanContext,
-            ...(msg.metadata[PubSubMetadata.OrderingKey]
-                ? { orderingKey: msg.metadata[PubSubMetadata.OrderingKey] }
+            ...(msg.metadata[PubSubMetadata.Key]
+                ? { orderingKey: msg.metadata[PubSubMetadata.Key] }
                 : null),
         };
     }
