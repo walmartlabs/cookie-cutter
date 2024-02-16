@@ -154,6 +154,7 @@ describe("PubSubSink Tests", () => {
             expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBeUndefined();
         });
     });
+
     it("with orderingKey", async () => {
         const messagesWithTopic: IMessage[] = [
             {
