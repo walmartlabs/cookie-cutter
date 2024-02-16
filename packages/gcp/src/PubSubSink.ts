@@ -33,10 +33,17 @@ interface IPayloadWithAttributes {
     payload: Buffer;
     attributes: Attributes;
     spanContext: SpanContext;
+    orderingKey?: string;
+}
+
+interface IPubSubTopicPayload {
+    messages: IPayloadWithAttributes[];
+    messageOrdering: boolean;
 }
 
 export enum PubSubMetadata {
     Topic = "topic",
+    Key = "orderingKey",
 }
 
 /*
@@ -70,34 +77,45 @@ export class PubSubSink
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
-        const messagesByTopic: Map<string, IPayloadWithAttributes[]> = new Map();
+        const pubSubPayloadByTopic: Map<string, IPubSubTopicPayload> = new Map();
         for (const msg of output) {
-            const topic = msg.metadata[PubSubMetadata.Topic] || this.config.defaultTopic;
-            if (!messagesByTopic.has(topic)) {
-                messagesByTopic.set(topic, []);
+            const topicName = msg.metadata[PubSubMetadata.Topic] || this.config.defaultTopic;
+            if (!pubSubPayloadByTopic.has(topicName)) {
+                pubSubPayloadByTopic.set(topicName, {
+                    messageOrdering: false,
+                    messages: [],
+                });
             }
 
             const formattedMsg = this.formatMessage(msg);
-            messagesByTopic.get(topic).push(formattedMsg);
+            const topic = pubSubPayloadByTopic.get(topicName);
+
+            topic.messages.push(formattedMsg);
+            if (!topic.messageOrdering && formattedMsg.orderingKey) {
+                topic.messageOrdering = true;
+            }
         }
-        for (const [topic, messages] of messagesByTopic) {
+        for (const [topic, topicPayload] of pubSubPayloadByTopic) {
             const batchPublisher = this.producer.topic(topic, {
                 batching: {
                     maxBytes: this.config.maxPayloadSize,
                     maxMessages: this.config.maximumBatchSize,
                     maxMilliseconds: this.config.maximumBatchWaitTime,
                 },
+                messageOrdering: topicPayload.messageOrdering,
             });
-            for (const message of messages) {
+            for (const message of topicPayload.messages) {
                 const span = this.tracer.startSpan(this.spanOperationName, {
                     childOf: message.spanContext,
                 });
                 this.spanLogAndSetTags(span, this.sink.name, topic);
                 try {
-                    const messageId = await batchPublisher.publish(
-                        message.payload,
-                        message.attributes
-                    );
+                    const messageId = await batchPublisher.publishMessage({
+                        data: message.payload,
+                        attributes: message.attributes,
+                        orderingKey: message.orderingKey,
+                    });
+
                     span.log({ messageId });
                     this.emitMetrics(
                         topic,
@@ -107,7 +125,7 @@ export class PubSubSink
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    messages.forEach((message) =>
+                    topicPayload.messages.forEach((message) =>
                         this.emitMetrics(
                             topic,
                             message.attributes[AttributeNames.eventType],
@@ -166,6 +184,9 @@ export class PubSubSink
             payload,
             attributes,
             spanContext: msg.spanContext,
+            orderingKey: msg.metadata[PubSubMetadata.Key]
+                ? msg.metadata[PubSubMetadata.Key]
+                : undefined,
         };
     }
 }
