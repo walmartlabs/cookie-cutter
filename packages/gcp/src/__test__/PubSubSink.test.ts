@@ -141,6 +141,7 @@ describe("PubSubSink Tests", () => {
         expect(mockTopic).toBeCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
             expect(mockTopic.mock.calls[idx]).toContain(message.payload.topic);
+            expect(mockTopic.mock.calls[idx][1].messageOrdering).toBeFalsy();
         });
         expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
@@ -150,6 +151,7 @@ describe("PubSubSink Tests", () => {
             expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.contentType]).toBe(
                 pubSubPublisherConfigurationWithDefaultTopic.encoder.mimeType
             );
+            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBeUndefined();
         });
     });
     it("with orderingKey", async () => {
@@ -174,29 +176,7 @@ describe("PubSubSink Tests", () => {
             );
         });
     });
-    it("without orderingKey", async () => {
-        const messagesWithTopic: IMessage[] = [
-            {
-                type: TestEvent.name,
-                payload: new TestEvent("A", "TopicA"),
-            },
-        ];
-        const testApp = createTestApp(messagesWithTopic, sink, ErrorHandlingMode.LogAndContinue);
-        await testApp;
-        expect(mockPubSub).toBeCalledTimes(1);
-        expect(mockTopic).toBeCalledTimes(messagesWithTopic.length);
-        messagesWithTopic.forEach((message, idx) => {
-            expect(mockTopic.mock.calls[idx]).toContain(message.payload.topic);
-            expect(mockTopic.mock.calls[idx][1].messageOrdering).toBeFalsy();
-        });
-        expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
-        messagesWithTopic.forEach((message, idx) => {
-            expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBeUndefined();
-            expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
-                message.type
-            );
-        });
-    });
+
     it("with orderingKey for one message and no ordering key for 2nd message", async () => {
         const messagesWithTopic: IMessage[] = [
             {

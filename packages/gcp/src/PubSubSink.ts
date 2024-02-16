@@ -184,9 +184,9 @@ export class PubSubSink
             payload,
             attributes,
             spanContext: msg.spanContext,
-            ...(msg.metadata[PubSubMetadata.Key]
-                ? { orderingKey: msg.metadata[PubSubMetadata.Key] }
-                : null),
+            orderingKey: msg.metadata[PubSubMetadata.Key]
+                ? msg.metadata[PubSubMetadata.Key]
+                : undefined,
         };
     }
 }
