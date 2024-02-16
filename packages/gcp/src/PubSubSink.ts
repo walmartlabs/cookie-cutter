@@ -37,7 +37,7 @@ interface IPayloadWithAttributes {
 }
 
 interface IPubSubTopicPayload {
-    payloadsWithAttributes: IPayloadWithAttributes[];
+    messages: IPayloadWithAttributes[];
     messageOrdering: boolean;
 }
 
@@ -77,34 +77,34 @@ export class PubSubSink
     }
 
     public async sink(output: IterableIterator<IPublishedMessage>): Promise<void> {
-        const messagesByTopic: Map<string, IPubSubTopicPayload> = new Map();
+        const pubSubPayloadByTopic: Map<string, IPubSubTopicPayload> = new Map();
         for (const msg of output) {
             const topicName = msg.metadata[PubSubMetadata.Topic] || this.config.defaultTopic;
-            if (!messagesByTopic.has(topicName)) {
-                messagesByTopic.set(topicName, {
+            if (!pubSubPayloadByTopic.has(topicName)) {
+                pubSubPayloadByTopic.set(topicName, {
                     messageOrdering: false,
-                    payloadsWithAttributes: [],
+                    messages: [],
                 });
             }
 
             const formattedMsg = this.formatMessage(msg);
-            const topic = messagesByTopic.get(topicName);
+            const topic = pubSubPayloadByTopic.get(topicName);
 
-            topic.payloadsWithAttributes.push(formattedMsg);
+            topic.messages.push(formattedMsg);
             if (!topic.messageOrdering && formattedMsg.orderingKey) {
                 topic.messageOrdering = true;
             }
         }
-        for (const [topic, messages] of messagesByTopic) {
+        for (const [topic, topicPayload] of pubSubPayloadByTopic) {
             const batchPublisher = this.producer.topic(topic, {
                 batching: {
                     maxBytes: this.config.maxPayloadSize,
                     maxMessages: this.config.maximumBatchSize,
                     maxMilliseconds: this.config.maximumBatchWaitTime,
                 },
-                messageOrdering: messages.messageOrdering,
+                messageOrdering: topicPayload.messageOrdering,
             });
-            for (const message of messages.payloadsWithAttributes) {
+            for (const message of topicPayload.messages) {
                 const span = this.tracer.startSpan(this.spanOperationName, {
                     childOf: message.spanContext,
                 });
@@ -125,7 +125,7 @@ export class PubSubSink
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    messages.payloadsWithAttributes.forEach((message) =>
+                    topicPayload.messages.forEach((message) =>
                         this.emitMetrics(
                             topic,
                             message.attributes[AttributeNames.eventType],
