@@ -33,7 +33,7 @@ interface IPayloadWithAttributes {
     payload: Buffer;
     attributes: Attributes;
     spanContext: SpanContext;
-    orderingKey: string;
+    orderingKey?: string;
 }
 
 interface IPubSubTopicPayload {
