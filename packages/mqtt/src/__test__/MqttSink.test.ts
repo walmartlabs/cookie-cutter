@@ -35,6 +35,7 @@ jest.mock("mqtt", () => {
                 publish: mockMqttPublisher,
                 removeAllListeners: jest.fn(),
                 end: jest.fn(),
+                connected: true,
             };
         }),
     };
@@ -150,8 +151,7 @@ describe.each([
                 mockMessageHandlerWithoutTopicMetadata
             );
 
-            await testApp;
-            expect(mockMqttPublisher).toBeCalledTimes(testMessages.length);
+            await expect(testApp).rejects.toThrow();
         });
 
         it("Verifies if CONNECT handler WITHOUT ERROR generated works as expected", async () => {
@@ -290,8 +290,7 @@ describe.each([
                 mockMessageHandlerWithTopicMetadata
             );
 
-            await testApp;
-            expect(mockMqttPublisher).toBeCalledTimes(testMessages.length);
+            await expect(testApp).rejects.toThrow();
         });
 
         it("Verifies if CONNECT handler WITHOUT ERROR generated works as expected", async () => {
