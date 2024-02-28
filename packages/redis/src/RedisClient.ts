@@ -32,6 +32,7 @@ import {
     RootNodesUnavailableError,
     SocketClosedUnexpectedlyError,
     WatchError,
+    SetOptions,
 } from "redis";
 
 import { isNullOrUndefined } from "util";
@@ -247,7 +248,8 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         context: SpanContext,
         type: string | IClassType<T>,
         body: T,
-        key: string
+        key: string,
+        options?: SetOptions,
     ): Promise<void> {
         const db = this.config.db;
         const span = this.tracer.startSpan("Redis Client putObject Call", { childOf: context });
@@ -261,7 +263,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         const buf = Buffer.from(encodedBody);
         const storableValue = this.config.base64Encode ? buf.toString("base64") : buf;
         try {
-            await this.client.set(key, storableValue);
+            await this.client.set(key, storableValue, options);
             this.metrics.increment(RedisClientMetrics.Set, {
                 [MetricLabels.Type]: typeName,
                 db,
