@@ -39,7 +39,7 @@ import {
     GrpcResponseStream,
     GrpcStreamHandler,
 } from ".";
-import { GrpcMetadata, IGrpcConfiguration, IGrpcServerConfiguration } from "..";
+import { GrpcMetadata, IGrpcConfiguration, IGrpcServerConfiguration, IGrpcServerOptions } from "..";
 import { GrpcOpenTracingTagKeys } from "./helper";
 
 enum GrpcMetrics {
@@ -59,11 +59,10 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
     private logger: ILogger;
     private tracer: Tracer;
     private metrics: IMetrics;
-    private apiKey: string;
 
     constructor(
         private readonly config: IGrpcServerConfiguration & IGrpcConfiguration,
-        apiKey?: string
+        private readonly options?: IGrpcServerOptions
     ) {
         if (!config.skipNoStreamingValidation) {
             for (const def of config.definitions) {
@@ -84,7 +83,6 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
         this.logger = DefaultComponentContext.logger;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
-        this.apiKey = apiKey;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -208,7 +206,7 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                             path: method.path,
                         });
                     });
-                    if (this.apiKey) {
+                    if (this.options?.apiKey) {
                         if (!this.isApiKeyValid(call.metadata)) {
                             await msgRef.release(
                                 undefined,
@@ -259,10 +257,7 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
     }
 
     private isApiKeyValid(meta: Metadata) {
-        const headerValue = meta.get("custom-auth-header");
-        if (!headerValue || headerValue.length < 1 || headerValue[0].toString() !== this.apiKey) {
-            return false;
-        }
-        return true;
+        const headerValue = meta.get("authorization");
+        return headerValue?.[0]?.toString() === this.options.apiKey;
     }
 }

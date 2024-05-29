@@ -22,7 +22,9 @@ import {
     GrpcMetadata,
     grpcSource,
     IGrpcClientConfiguration,
+    IGrpcClientOptions,
     IGrpcConfiguration,
+    IGrpcServerOptions,
     IResponseStream,
 } from "..";
 import { sample } from "./Sample";
@@ -79,7 +81,11 @@ export const SampleServiceDefinition = {
     },
 };
 
-function testApp(handler: any, host?: string, apiKey?: string): CancelablePromise<void> {
+function testApp(
+    handler: any,
+    host?: string,
+    options?: IGrpcServerOptions
+): CancelablePromise<void> {
     return Application.create()
         .input()
         .add(
@@ -90,7 +96,7 @@ function testApp(handler: any, host?: string, apiKey?: string): CancelablePromis
                     definitions: [SampleServiceDefinition],
                     skipNoStreamingValidation: true,
                 },
-                apiKey
+                options
             )
         )
         .done()
@@ -101,7 +107,7 @@ function testApp(handler: any, host?: string, apiKey?: string): CancelablePromis
 async function createClient(
     host?: string,
     config?: Partial<IGrpcClientConfiguration & IGrpcConfiguration>,
-    apiKey?: string
+    options?: IGrpcClientOptions
 ): Promise<ISampleService & IRequireInitialization & IDisposable> {
     const client = grpcClient<ISampleService & IRequireInitialization & IDisposable>(
         {
@@ -109,8 +115,7 @@ async function createClient(
             definition: SampleServiceDefinition,
             ...config,
         },
-        undefined,
-        apiKey
+        options
     );
     return client;
 }
@@ -146,10 +151,10 @@ describe("gRPC source", () => {
                 },
             },
             undefined,
-            apiKey
+            { apiKey }
         );
         try {
-            const client = await createClient(undefined, undefined, apiKey);
+            const client = await createClient(undefined, undefined, { apiKey });
             const response = await client.NoStreaming({ id: 15 });
             expect(response).toMatchObject({ name: "15" });
         } finally {
@@ -278,7 +283,7 @@ describe("gRPC source", () => {
                 },
             },
             undefined,
-            apiKey
+            { apiKey }
         );
         try {
             const client = await createClient();

@@ -30,7 +30,7 @@ import {
 import { FORMAT_HTTP_HEADERS, Span, SpanContext, Tags, Tracer } from "opentracing";
 import { performance } from "perf_hooks";
 import { createGrpcConfiguration, createServiceDefinition } from ".";
-import { IGrpcClientConfiguration, IGrpcConfiguration } from "..";
+import { IGrpcClientConfiguration, IGrpcClientOptions, IGrpcConfiguration } from "..";
 
 enum GrpcMetrics {
     RequestSent = "cookie_cutter.grpc_client.request_sent",
@@ -41,7 +41,6 @@ enum GrpcMetricResult {
     Success = "success",
     Error = "error",
 }
-const DEFAULT_API_KEY = "token";
 
 class ClientBase implements IRequireInitialization, IDisposable {
     private pendingStreams: Set<ClientReadableStream<any>>;
@@ -76,24 +75,27 @@ class ClientBase implements IRequireInitialization, IDisposable {
 
 export function createGrpcClient<T>(
     config: IGrpcClientConfiguration & IGrpcConfiguration,
-    certPath?: string,
-    apiKey?: string
+    options?: IGrpcClientOptions
 ): T & IDisposable & IRequireInitialization {
     const serviceDef = createServiceDefinition(config.definition);
     let client: Client;
     const ClientType = makeGenericClientConstructor(serviceDef, undefined, undefined);
+    const certPath = options?.certPath;
+    const apiKey = options?.apiKey;
     if (certPath) {
         const rootCert = readFileSync(certPath);
         const channelCreds = credentials.createSsl(rootCert);
 
-        const metaCallback = (_params: any, callback: (arg0: null, arg1: Metadata) => void) => {
-            const meta = new Metadata();
-            meta.add("custom-auth-header", apiKey || DEFAULT_API_KEY);
-            callback(null, meta);
-        };
-
-        const callCreds = credentials.createFromMetadataGenerator(metaCallback);
-        const combCreds = credentials.combineChannelCredentials(channelCreds, callCreds);
+        let combCreds = channelCreds;
+        if (apiKey) {
+            const metaCallback = (_params: any, callback: (arg0: null, arg1: Metadata) => void) => {
+                const meta = new Metadata();
+                meta.add("authorization", apiKey);
+                callback(null, meta);
+            };
+            const callCreds = credentials.createFromMetadataGenerator(metaCallback);
+            combCreds = credentials.combineChannelCredentials(channelCreds, callCreds);
+        }
         client = new ClientType(config.endpoint, combCreds, createGrpcConfiguration(config));
     } else {
         client = new ClientType(
@@ -169,7 +171,7 @@ export function createGrpcClient<T>(
                     try {
                         const meta = createTracingMetadata(wrapper.tracer, span);
                         if (!certPath && apiKey) {
-                            meta.set("custom-auth-header", apiKey);
+                            meta.set("authorization", apiKey);
                         }
                         return client.makeServerStreamRequest(
                             method.path,
@@ -247,7 +249,7 @@ export function createGrpcClient<T>(
                         return await new Promise((resolve, reject) => {
                             const meta = createTracingMetadata(wrapper.tracer, span);
                             if (!certPath && apiKey) {
-                                meta.set("custom-auth-header", apiKey);
+                                meta.set("authorization", apiKey);
                             }
                             client.makeUnaryRequest(
                                 method.path,
