@@ -107,7 +107,7 @@ function testApp(
 async function createClient(
     host?: string,
     config?: Partial<IGrpcClientConfiguration & IGrpcConfiguration>,
-    options?: IGrpcClientOptions
+    options?: string | IGrpcClientOptions
 ): Promise<ISampleService & IRequireInitialization & IDisposable> {
     const client = grpcClient<ISampleService & IRequireInitialization & IDisposable>(
         {
