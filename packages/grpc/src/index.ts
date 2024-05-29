@@ -80,7 +80,8 @@ export interface IResponseStream<TResponse> {
 }
 
 export function grpcSource(
-    configuration: IGrpcServerConfiguration & IGrpcConfiguration
+    configuration: IGrpcServerConfiguration & IGrpcConfiguration,
+    apiKey?: string
 ): IInputSource & IRequireInitialization {
     configuration = config.parse<IGrpcServerConfiguration & IGrpcConfiguration>(
         GrpcSourceConfiguration,
@@ -90,7 +91,7 @@ export function grpcSource(
             allocator: Buffer,
         }
     );
-    return new GrpcInputSource(configuration);
+    return new GrpcInputSource(configuration, apiKey);
 }
 
 export function grpcMsg(operation: IGrpcServiceMethod, request: any): IMessage {
@@ -102,7 +103,8 @@ export function grpcMsg(operation: IGrpcServiceMethod, request: any): IMessage {
 
 export function grpcClient<T>(
     configuration: IGrpcClientConfiguration & IGrpcConfiguration,
-    certPath?: string
+    certPath?: string,
+    apiKey?: string
 ): T & IRequireInitialization & IDisposable {
     configuration = config.parse<IGrpcClientConfiguration & IGrpcConfiguration>(
         GrpcClientConfiguration,
@@ -122,5 +124,5 @@ export function grpcClient<T>(
             },
         }
     );
-    return createGrpcClient<T>(configuration, certPath);
+    return createGrpcClient<T>(configuration, certPath, apiKey);
 }

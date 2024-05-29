@@ -41,6 +41,7 @@ enum GrpcMetricResult {
     Success = "success",
     Error = "error",
 }
+const DEFAULT_API_KEY = "token";
 
 class ClientBase implements IRequireInitialization, IDisposable {
     private pendingStreams: Set<ClientReadableStream<any>>;
@@ -75,7 +76,8 @@ class ClientBase implements IRequireInitialization, IDisposable {
 
 export function createGrpcClient<T>(
     config: IGrpcClientConfiguration & IGrpcConfiguration,
-    certPath?: string
+    certPath?: string,
+    apiKey?: string
 ): T & IDisposable & IRequireInitialization {
     const serviceDef = createServiceDefinition(config.definition);
     let client: Client;
@@ -86,7 +88,7 @@ export function createGrpcClient<T>(
 
         const metaCallback = (_params: any, callback: (arg0: null, arg1: Metadata) => void) => {
             const meta = new Metadata();
-            meta.add("custom-auth-header", "token");
+            meta.add("custom-auth-header", apiKey || DEFAULT_API_KEY);
             callback(null, meta);
         };
 
@@ -165,12 +167,16 @@ export function createGrpcClient<T>(
 
                 const stream = await retrier.retry((bail) => {
                     try {
+                        const meta = createTracingMetadata(wrapper.tracer, span);
+                        if (!certPath && apiKey) {
+                            meta.set("custom-auth-header", apiKey);
+                        }
                         return client.makeServerStreamRequest(
                             method.path,
                             method.requestSerialize,
                             method.responseDeserialize,
                             request,
-                            createTracingMetadata(wrapper.tracer, span),
+                            meta,
                             callOptions()
                         );
                     } catch (e) {
@@ -239,12 +245,16 @@ export function createGrpcClient<T>(
                 return await retrier.retry(async (bail) => {
                     try {
                         return await new Promise((resolve, reject) => {
+                            const meta = createTracingMetadata(wrapper.tracer, span);
+                            if (!certPath && apiKey) {
+                                meta.set("custom-auth-header", apiKey);
+                            }
                             client.makeUnaryRequest(
                                 method.path,
                                 method.requestSerialize,
                                 method.responseDeserialize,
                                 request,
-                                createTracingMetadata(wrapper.tracer, span),
+                                meta,
                                 callOptions(),
                                 (error, value) => {
                                     this.metrics.increment(GrpcMetrics.RequestProcessed, {

@@ -19,6 +19,7 @@ import {
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
 import {
+    Metadata,
     sendUnaryData,
     Server,
     ServerCredentials,
@@ -58,8 +59,12 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
     private logger: ILogger;
     private tracer: Tracer;
     private metrics: IMetrics;
+    private apiKey: string;
 
-    constructor(private readonly config: IGrpcServerConfiguration & IGrpcConfiguration) {
+    constructor(
+        private readonly config: IGrpcServerConfiguration & IGrpcConfiguration,
+        apiKey?: string
+    ) {
         if (!config.skipNoStreamingValidation) {
             for (const def of config.definitions) {
                 for (const key of Object.keys(def)) {
@@ -79,6 +84,7 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
         this.logger = DefaultComponentContext.logger;
         this.tracer = DefaultComponentContext.tracer;
         this.metrics = DefaultComponentContext.metrics;
+        this.apiKey = apiKey;
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
@@ -180,7 +186,11 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                             if (value !== undefined) {
                                 callback(undefined, value);
                             } else if (error !== undefined) {
-                                callback(this.createError(error), null);
+                                if ((error as ServerErrorResponse).code !== undefined) {
+                                    callback(error, null);
+                                } else {
+                                    callback(this.createError(error), null);
+                                }
                             } else {
                                 callback(
                                     this.createError("not implemented", status.UNIMPLEMENTED),
@@ -198,7 +208,15 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
                             path: method.path,
                         });
                     });
-
+                    if (this.apiKey) {
+                        if (!this.isApiKeyValid(call.metadata)) {
+                            await msgRef.release(
+                                undefined,
+                                this.createError("Invalid API Key", status.UNAUTHENTICATED)
+                            );
+                            return;
+                        }
+                    }
                     if (!(await this.queue.enqueue(msgRef))) {
                         await msgRef.release(undefined, new Error("service unavailable"));
                     }
@@ -238,5 +256,13 @@ export class GrpcInputSource implements IInputSource, IRequireInitialization {
             code: code || status.UNKNOWN,
             message: error.toString(),
         };
+    }
+
+    private isApiKeyValid(meta: Metadata) {
+        const headerValue = meta.get("custom-auth-header");
+        if (!headerValue || headerValue.length < 1 || headerValue[0].toString() !== this.apiKey) {
+            return false;
+        }
+        return true;
     }
 }
