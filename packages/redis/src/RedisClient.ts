@@ -34,7 +34,6 @@ import {
     WatchError,
 } from "redis";
 
-import { isNullOrUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 
 export enum RedisClientMetrics {
@@ -163,6 +162,10 @@ function getErrorName(error: any): string {
     return "NonRedisError";
 }
 
+function isNullOrUndefined(value: any): boolean {
+    return value === null || value === undefined;
+}
+
 export class RedisClient implements IRedisClient, IRequireInitialization, IDisposable {
     private readonly client: RedisClientType;
     private disposeInitiated: boolean = false;
@@ -180,7 +183,11 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             socket: {
                 host: this.config.host,
                 port: this.config.port,
+                tls: this.config.tls,
+                ca: this.config.ca,
             },
+            url: this.config.url,
+            username: this.config.username,
             database: this.config.db,
             password: this.config.password,
         });

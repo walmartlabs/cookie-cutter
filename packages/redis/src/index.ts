@@ -28,6 +28,10 @@ export const DEFAULT_PAYLOAD_KEY = "redis.stream.key";
 export const DEFAULT_TYPENAME_KEY = "redis.stream.type";
 
 export interface IRedisOptions {
+    readonly url?: string;
+    readonly tls?: boolean;
+    readonly ca?: Buffer;
+    readonly username?: string;
     readonly host: string;
     readonly port?: number;
     readonly db?: number;

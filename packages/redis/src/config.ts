@@ -11,6 +11,42 @@ import { IRedisOptions } from ".";
 @config.section
 export class RedisOptions implements IRedisOptions {
     @config.field(config.converters.string)
+    public set url(_: string) {
+        config.noop();
+    }
+
+    public get url(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set username(_: string) {
+        config.noop();
+    }
+
+    public get username(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.boolean)
+    public set tls(_: boolean) {
+        config.noop();
+    }
+
+    public get tls(): boolean {
+        return config.noop();
+    }
+    
+    @config.field(config.converters.Buffer)
+    public set ca(_: Buffer) {
+        config.noop();
+    }
+
+    public get ca(): Buffer {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
     public set host(_: string) {
         config.noop();
     }
