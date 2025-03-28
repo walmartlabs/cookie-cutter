@@ -37,12 +37,12 @@ export class RedisOptions implements IRedisOptions {
         return config.noop();
     }
     
-    @config.field(config.converters.Buffer)
-    public set ca(_: Buffer) {
+    @config.field(config.converters.string)
+    public set ca(_: string) {
         config.noop();
     }
 
-    public get ca(): Buffer {
+    public get ca(): string {
         return config.noop();
     }
 
