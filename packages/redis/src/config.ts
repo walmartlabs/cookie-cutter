@@ -10,14 +10,6 @@ import { IRedisOptions } from ".";
 
 @config.section
 export class RedisOptions implements IRedisOptions {
-    @config.field(config.converters.string)
-    public set url(_: string) {
-        config.noop();
-    }
-
-    public get url(): string {
-        return config.noop();
-    }
 
     @config.field(config.converters.string)
     public set username(_: string) {
@@ -37,15 +29,6 @@ export class RedisOptions implements IRedisOptions {
         return config.noop();
     }
     
-    @config.field(config.converters.string)
-    public set ca(_: string) {
-        config.noop();
-    }
-
-    public get ca(): string {
-        return config.noop();
-    }
-
     @config.field(config.converters.string)
     public set host(_: string) {
         config.noop();
