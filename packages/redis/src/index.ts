@@ -29,6 +29,7 @@ export const DEFAULT_TYPENAME_KEY = "redis.stream.type";
 
 export interface IRedisOptions {
     readonly tls?: boolean;
+    readonly caPath?: string;
     readonly username?: string;
     readonly host: string;
     readonly port?: number;

@@ -10,6 +10,14 @@ import { IRedisOptions } from ".";
 
 @config.section
 export class RedisOptions implements IRedisOptions {
+    @config.field(config.converters.string)
+    public set caPath(_: string) {
+        config.noop();
+    }
+
+    public get caPath(): string {
+        return config.noop();
+    }
 
     @config.field(config.converters.string)
     public set username(_: string) {
@@ -28,7 +36,7 @@ export class RedisOptions implements IRedisOptions {
     public get tls(): boolean {
         return config.noop();
     }
-    
+
     @config.field(config.converters.string)
     public set host(_: string) {
         config.noop();
