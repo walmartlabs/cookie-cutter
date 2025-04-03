@@ -33,7 +33,7 @@ import {
     SocketClosedUnexpectedlyError,
     WatchError,
 } from "redis";
-
+import { readFileSync } from "fs";
 import { isNullOrUndefined } from "util";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 
@@ -180,7 +180,10 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             socket: {
                 host: this.config.host,
                 port: this.config.port,
+                tls: this.config.tls,
+                ca: this.config.caPath ? readFileSync(this.config.caPath) : undefined,
             },
+            username: this.config.username,
             database: this.config.db,
             password: this.config.password,
         });
