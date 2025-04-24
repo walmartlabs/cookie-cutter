@@ -37,12 +37,29 @@ export class RedisOptions implements IRedisOptions {
         return config.noop();
     }
 
+    @config.field(config.converters.boolean)
+    public set checkServerIdentity(_: boolean) {
+        config.noop();
+    }
+
+    public get checkServerIdentity(): boolean {
+        return config.noop();
+    }
+
     @config.field(config.converters.string)
     public set host(_: string) {
         config.noop();
     }
     public get host(): string {
         return config.noop();
+    }
+
+    @config.field(config.converters.listOf(config.converters.string, ","))
+    public get clusterHostUrls(): string[] {
+        return config.noop();
+    }
+    public set clusterHostUrls(_: string[]) {
+        config.noop();
     }
 
     @config.field(config.converters.number)

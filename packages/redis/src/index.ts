@@ -31,12 +31,14 @@ export interface IRedisOptions {
     readonly tls?: boolean;
     readonly caPath?: string;
     readonly username?: string;
-    readonly host: string;
+    readonly host?: string;
+    readonly clusterHostUrls?: string[];
     readonly port?: number;
     readonly db?: number;
     readonly password?: string;
     readonly encoder: IMessageEncoder;
     readonly typeMapper?: IMessageTypeMapper;
+    readonly checkServerIdentity?: boolean;
     readonly base64Encode?: boolean;
 }
 

@@ -25,10 +25,12 @@ import {
     ClientClosedError,
     ConnectionTimeoutError,
     createClient,
+    createCluster,
     DisconnectsClientError,
     ErrorReply,
     ReconnectStrategyError,
     RedisClientType,
+    RedisClusterType,
     RootNodesUnavailableError,
     SocketClosedUnexpectedlyError,
     WatchError,
@@ -164,7 +166,7 @@ function getErrorName(error: any): string {
 }
 
 export class RedisClient implements IRedisClient, IRequireInitialization, IDisposable {
-    private readonly client: RedisClientType;
+    private readonly client: RedisClientType | RedisClusterType;
     private disposeInitiated: boolean = false;
     private readonly encoder: IMessageEncoder;
     private readonly typeMapper: IMessageTypeMapper;
@@ -176,17 +178,38 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
     constructor(private readonly config: IRedisOptions) {
         this.encoder = config.encoder;
         this.typeMapper = config.typeMapper;
-        this.client = createClient({
-            socket: {
-                host: this.config.host,
-                port: this.config.port,
-                tls: this.config.tls,
-                ca: this.config.caPath ? readFileSync(this.config.caPath) : undefined,
-            },
-            username: this.config.username,
-            database: this.config.db,
-            password: this.config.password,
-        });
+        const socketConfig = {
+            tls: this.config.tls,
+            ca: this.config.caPath ? readFileSync(this.config.caPath) : undefined,
+            ...(this.config.checkServerIdentity === false && {
+                checkServerIdentity: () => undefined,
+            }),
+        };
+        if (config.clusterHostUrls && config.clusterHostUrls.length > 0) {
+            this.client = createCluster({
+                rootNodes: config.clusterHostUrls.map((url) => ({ url })),
+                defaults: {
+                    password: this.config.password,
+                    username: this.config.username,
+                    socket: socketConfig,
+                },
+            });
+        } else if (this.config.host && this.config.port) {
+            this.client = createClient({
+                socket: {
+                    ...socketConfig,
+                    host: this.config.host,
+                    port: this.config.port,
+                },
+                username: this.config.username,
+                database: this.config.db,
+                password: this.config.password,
+            });
+        } else {
+            throw new Error(
+                "Invalid Redis configuration: either hostUrls or host and port must be provided."
+            );
+        }
         this.client.on("connected", () => {
             this.logger.debug("Connection to Redis established");
         });
@@ -213,7 +236,6 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         // Avoid use of quit() to prevent hangs on the unconnected clients beacuse it closes the client gracefully and wait for all the commands before closing. Issue: https://github.com/redis/node-redis/issues/2723
         // Immediately terminates the connection without waiting for any pending commands with disconnect().
         await this.client.disconnect();
-        this.client.unref();
     }
 
     public async initialize(context: IComponentContext): Promise<void> {
