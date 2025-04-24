@@ -26,6 +26,24 @@ export function createRedisClient(): Lifecycle<IRedisClient> {
     );
 }
 
+export function createRedisClusterClient(): Lifecycle<IRedisClient> {
+    return makeLifecycle(
+        redisClient({
+            clusterHostUrls: ["redis://localhost:6379"],
+            encoder: new JsonMessageEncoder(),
+            typeMapper: new ObjectNameMessageTypeMapper(),
+        })
+    );
+}
+
+export function createInvaildRedisClient(): Lifecycle<IRedisClient> {
+    return makeLifecycle(
+        redisClient({
+            encoder: new JsonMessageEncoder(),
+            typeMapper: new ObjectNameMessageTypeMapper(),
+        })
+    );
+}
 export class RepublishMessageDispatcher implements IMessageDispatcher {
     canDispatch(_: IMessage): boolean {
         return true;
