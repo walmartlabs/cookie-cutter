@@ -29,6 +29,7 @@ export enum RedisMetrics {
     MsgsClaimed = "cookie_cutter.redis_consumer.input_msgs_claimed",
     PendingMsgSize = "cookie_cutter.redis_consumer.pending_msg_size",
     IncomingBatchSize = "cookie_cutter.redis_consumer.incoming_batch_size",
+    MsgAcknowledged = "cookie_cutter.redis_consumer.input_msg_acknowledged",
 }
 
 export enum RedisMetricResult {
@@ -235,7 +236,16 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
 
             const count = await this.client.xAck(span.context(), stream, consumerId, messageId);
             if (count !== 1) {
-                throw new Error("not found in PEL");
+                // Log the error but don't throw, to prevent blocking the message release process
+                // This approach prioritizes system stability (preventing deadlocks) over strict message processing guarantees. In a distributed system, this is often a reasonable tradeoff, as you can address message acknowledgment issues through monitoring and alerts rather than causing the entire application to hang.
+                this.logger.error(`Message ack returned ${count} (expected 1), message likely not in PEL`,
+                    { messageId, stream, consumerId });
+                this.logger.error("failed to ack message", { messageId, stream, consumerId });
+                this.metrics.increment(RedisMetrics.MsgAcknowledged, {
+                    stream_name: stream,
+                    consumer_group: consumerId,
+                    result: RedisMetricResult.Error,
+                });
             }
 
             this.metrics.increment(RedisMetrics.MsgProcessed, {
@@ -250,11 +260,6 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
                 consumer_group: consumerId,
                 result: RedisMetricResult.Error,
             });
-
-            if (!err) {
-                this.logger.error("failed to ack message", e, { messageId, stream, consumerId });
-                throw e;
-            }
         } finally {
             span.finish();
         }
