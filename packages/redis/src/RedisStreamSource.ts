@@ -238,9 +238,8 @@ export class RedisStreamSource implements IInputSource, IRequireInitialization, 
             if (count !== 1) {
                 // Log the error but don't throw, to prevent blocking the message release process
                 // This approach prioritizes system stability (preventing deadlocks) over strict message processing guarantees. In a distributed system, this is often a reasonable tradeoff, as you can address message acknowledgment issues through monitoring and alerts rather than causing the entire application to hang.
-                this.logger.error(`Message ack returned ${count} (expected 1), message likely not in PEL`,
-                    { messageId, stream, consumerId });
-                this.logger.error("failed to ack message", { messageId, stream, consumerId });
+                this.logger.error("Message ack returned (expected 1), message likely not in PEL",
+                    { messageId, stream, consumerId, xAckCount: count });
                 this.metrics.increment(RedisMetrics.MsgAcknowledged, {
                     stream_name: stream,
                     consumer_group: consumerId,
