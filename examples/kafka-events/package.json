@@ -9,10 +9,10 @@
     },
     "scripts": {
         "build": "tsc",
-        "start:publisher": "node dist/publisher",
-        "start:consumer": "node dist/consumer",
+        "start:publisher": "bun dist/publisher.js",
+        "start:consumer": "bun dist/consumer.js",
         "test": "echo '- no tests -'",
         "lint": "tslint --project tsconfig.json",
-        "lint:fix": "yarn run lint --fix"
+        "lint:fix": "bun run lint --fix"
     }
 }

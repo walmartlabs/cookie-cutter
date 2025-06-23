@@ -4,14 +4,14 @@ This examples demonstrates how to build gRPC servers with streaming responses an
 
 ## How to Run
 
-```
-yarn start:server
+```bash
+bun run start:server
 ```
 
 then as many times as you'd like
 
-```
-yarn start:client
+```bash
+bun run start:client
 ```
 
 Afterwards you'll see an interactive prompt in each client that will allow all clients to exchange messages.

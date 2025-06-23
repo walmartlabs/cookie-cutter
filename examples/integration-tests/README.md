@@ -4,8 +4,8 @@ This example demonstrates how to use Cookie Cutter to write end-to-end integrati
 
 ## How to Run
 
-```
-yarn test
+```bash
+bun run test
 ```
 
 ## Output

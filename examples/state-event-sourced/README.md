@@ -5,7 +5,7 @@ This example demonstrates how to use Cookie Cutter to manage event sourced state
 ## How to Run
 
 ```bash
-yarn start
+bun run start
 ```
 
 ## Output

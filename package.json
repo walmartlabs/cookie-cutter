@@ -28,11 +28,11 @@
     "typescript": "4.7.4"
   },
   "scripts": {
-    "build": "yarn workspaces run build",
-    "test": "yarn workspaces run test",
-    "lint": "yarn workspaces run lint",
-    "lint:fix": "yarn workspaces run lint:fix",
-    "license-headers": "node fix-headers.js",
-    "bump-version": "node bump-version.js"
+    "build": "bun workspaces run build",
+    "test": "bun workspaces run test",
+    "lint": "bun workspaces run lint",
+    "lint:fix": "bun workspaces run lint:fix",
+    "license-headers": "bun fix-headers.js",
+    "bump-version": "bun bump-version.js"
   }
 }

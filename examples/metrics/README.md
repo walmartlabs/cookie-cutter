@@ -5,7 +5,7 @@ This example demonstrates built-in and custom metrics with Cookie Cutter. It imp
 ## How to Run
 
 ```bash
-yarn start
+bun run start
 ```
 
 ## Output

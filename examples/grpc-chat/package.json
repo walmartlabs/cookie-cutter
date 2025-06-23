@@ -15,10 +15,10 @@
         "prebuild": "pbjs -t static-module -w commonjs -o ./src/chat.js chat.proto && pbts -o ./src/chat.d.ts ./src/chat.js",
         "build": "tsc",
         "postbuild": "pbjs -t static-module -w commonjs -o ./dist/chat.js chat.proto",
-        "start:server": "node dist/server",
-        "start:client": "node dist/client",
+        "start:server": "bun dist/server.js",
+        "start:client": "bun dist/client.js",
         "test": "echo '- no tests -'",
         "lint": "tslint --project tsconfig.json",
-        "lint:fix": "yarn run lint --fix"
+        "lint:fix": "bun run lint --fix"
     }
 }

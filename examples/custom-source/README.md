@@ -5,7 +5,7 @@ This example demonstrates how to create a custom input source.
 ## How to Run
 
 ```bash
-yarn start
+bun run start
 ```
 
 ## Output

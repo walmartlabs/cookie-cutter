@@ -18,14 +18,14 @@ The scripts contained here set up emulators for Cosmos DB and Azure Storage in a
 
 -   Make sure that the `core` package is built. As it is required by other packages.
 
-    Run `yarn && yarn build` at this path `cookie-cutter/packages/core`
+    Run `bun install && bun run build` at this path `cookie-cutter/packages/core`
     Do the same if you want to build other packages.
 
--   `yarn integrate`
+-   `bun run integrate`
 
     start VM, run setup steps, run tests and destroy VM.
 
--   `yarn integrate --keep`
+-   `bun run integrate --keep`
 
     leaves the VM running post test runs. Speeds up test re-runs.
 

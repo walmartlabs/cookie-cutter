@@ -7,7 +7,7 @@ This example demonstrates how to use Cookie Cutter to project messages from one 
 Before running this example, please adjust the code to include your Kafka connection details.
 
 ```bash
-yarn start
+bun run start
 ```
 
 ## Output

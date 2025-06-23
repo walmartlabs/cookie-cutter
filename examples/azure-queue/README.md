@@ -5,8 +5,8 @@ This example demonstrates how to use an azure queue source and sink.
 ## How to Run
 
 ```bash
-yarn build
-yarn start
+bun run build
+bun run start
 ```
 
 ## Output

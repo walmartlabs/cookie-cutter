@@ -19,6 +19,8 @@ An opinionated framework for building event-driven and request/response based mi
 
 The documentation is available [here](https://walmartlabs.github.io/cookie-cutter).
 
+> **Note:** This project now uses [Bun](https://bun.sh/) as its primary JavaScript toolkit. Please use `bun install`, `bun run <script>`, etc., instead of `yarn` or `npm`.
+
 ## Packages
 
 | Package | Stable | Beta |

@@ -7,13 +7,13 @@ This example demonstrates how to produce and consume messages from a specified q
 Before running this example, please adjust the code to include your AMQP Broker (RabbitMQ) connection details.
 
 ```bash
-yarn start:producer
+bun run start:producer
 ```
 
 then
 
 ```bash
-yarn start:consumer
+bun run start:consumer
 ```
 
 ## Output (consumer)

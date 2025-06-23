@@ -7,13 +7,13 @@ This example demonstrates how to subscribe to an event stream from Kafka and han
 Before running this example, please adjust the code to include your Kafka connection details.
 
 ```bash
-yarn start:publisher
+bun run start:publisher
 ```
 
 then
 
 ```bash
-yarn start:consumer
+bun run start:consumer
 ```
 
 ## Output (consumer)

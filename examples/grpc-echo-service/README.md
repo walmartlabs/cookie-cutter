@@ -4,8 +4,8 @@ This examples demonstrates how to implement a simple non-streaming gRPC server.
 
 ## How to Run
 
-```
-yarn start
+```bash
+bun run start
 ```
 
 ## Output

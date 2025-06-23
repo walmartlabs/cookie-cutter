@@ -11,9 +11,9 @@
     },
     "scripts": {
         "build": "tsc",
-        "start": "node dist/index",
+        "start": "bun dist/index.js",
         "test": "echo 'NO TESTS'",
         "lint": "tslint --project tsconfig.json",
-        "lint:fix": "yarn run lint --fix"
+        "lint:fix": "bun run lint --fix"
     }
 }

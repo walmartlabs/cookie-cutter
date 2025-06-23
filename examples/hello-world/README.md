@@ -5,7 +5,7 @@ This example demonstrates how to setup a minimal service with Cookie Cutter that
 ## How to Run
 
 ```bash
-yarn start
+bun run start
 ```
 
 ## Output

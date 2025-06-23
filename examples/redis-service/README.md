@@ -5,8 +5,8 @@ This examples demonstrates how to use a Redis Service inside a message handler
 ## How to Run
 
 ```bash
-yarn build
-yarn start
+bun run build
+bun run start
 ```
 
 ## Output
