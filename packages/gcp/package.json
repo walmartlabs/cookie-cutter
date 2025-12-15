@@ -21,7 +21,10 @@
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
+        "@types/node": "^18",
+        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
+        "typescript": "^5.2",
+        "undici-types": "^7.16.0"
     },
     "scripts": {
         "build": "tsc",
