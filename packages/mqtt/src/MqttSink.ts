@@ -105,6 +105,8 @@ export class MqttPublisherSink
                             MqttMetricResults.error
                         );
                         failSpan(span, error);
+
+                        throw error;
                     } else {
                         this.emitMetrics(
                             topic,
