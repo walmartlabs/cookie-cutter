@@ -236,8 +236,7 @@ describe("PubSubSink Tests", () => {
         mockPublishFn.mockImplementation(() => {
             throw err;
         });
-        await expect(testApp).resolves.toBeUndefined();
-        expect(mockPublishFn).toBeCalledTimes(messagesWithoutTopic.length);
+        await expect(testApp).rejects.toThrowError();
     });
 
     it("times out publish attempts and continues processing", async () => {

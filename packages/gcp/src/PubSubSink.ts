@@ -140,6 +140,7 @@ export class PubSubSink
                             topic,
                             eventType,
                         });
+                        throw e;
                     }
                 } finally {
                     span.finish();
