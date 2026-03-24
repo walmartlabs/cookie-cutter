@@ -312,7 +312,7 @@ describe("PubSubSink Tests", () => {
         });
     });
 
-    it("emits error metrics and logs when publish times out", async () => {
+    it("emits timeout metrics and warning logs when publish times out", async () => {
         const metrics = {
             increment: jest.fn(),
             gauge: jest.fn(),
@@ -340,21 +340,18 @@ describe("PubSubSink Tests", () => {
         await (sink as any).initialize(ctx);
         await expect(
             sink.sink([createPublishedMessage(messagesWithoutTopic[0])][Symbol.iterator]())
-        ).rejects.toThrow(timeoutError);
+        ).resolves.toBeUndefined();
 
         expect(metrics.increment).toHaveBeenCalledWith(PubSubMetrics.MsgPublished, {
             topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
             event_type: TestEvent.name,
-            result: PubSubMetricResults.Error,
+            result: PubSubMetricResults.Timeout,
         });
-        expect(logger.error).toHaveBeenCalledWith(
-            "Failed to publish message to PubSub",
-            timeoutError,
-            {
-                topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
-                eventType: TestEvent.name,
-            }
-        );
-        expect(logger.warn).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith("PubSub publish timed out, skipping", {
+            topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            eventType: TestEvent.name,
+            publishTimeoutMs: 5,
+        });
+        expect(logger.error).not.toHaveBeenCalled();
     });
 });

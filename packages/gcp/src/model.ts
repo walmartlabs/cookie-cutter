@@ -14,6 +14,7 @@ export const AttributeNames = {
 export enum PubSubMetricResults {
     Success = "success",
     Error = "error",
+    Timeout = "timeout",
 }
 
 export enum PubSubMetrics {

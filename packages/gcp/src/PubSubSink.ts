@@ -28,7 +28,6 @@ import {
     PubSubMetrics,
     PubSubOpenTracingTagKeys,
 } from "./model";
-
 interface IPayloadWithAttributes {
     payload: Buffer;
     attributes: Attributes;
@@ -127,18 +126,21 @@ export class PubSubSink
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    topicPayload.messages.forEach((message) =>
-                        this.emitMetrics(
+                    if (this.isPublishTimeoutError(e)) {
+                        this.emitMetrics(topic, eventType, PubSubMetricResults.Timeout);
+                        this.logger.warn("PubSub publish timed out, skipping", {
                             topic,
-                            message.attributes[AttributeNames.eventType],
-                            PubSubMetricResults.Error
-                        )
-                    );
-                    this.logger.error("Failed to publish message to PubSub", e, {
-                        topic,
-                        eventType,
-                    });
-                    throw e;
+                            eventType,
+                            publishTimeoutMs: this.config.publishTimeoutMs,
+                        });
+                    } else {
+                        this.emitMetrics(topic, eventType, PubSubMetricResults.Error);
+                        this.logger.error("Failed to publish message to PubSub", e, {
+                            topic,
+                            eventType,
+                        });
+                        throw e;
+                    }
                 } finally {
                     span.finish();
                 }
@@ -181,6 +183,11 @@ export class PubSubSink
             topic,
             event_type: eventType,
         });
+    }
+
+    private isPublishTimeoutError(error: any): boolean {
+        // 4 is the code for timeout
+        return error?.code === 4;
     }
 
     private formatMessage(msg: IPublishedMessage): IPayloadWithAttributes {
