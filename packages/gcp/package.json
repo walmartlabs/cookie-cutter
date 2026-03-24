@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-gcp",
-    "version": "1.6.0-beta.4",
+    "version": "1.6.0-beta.5",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -14,7 +14,7 @@
     },
     "dependencies": {
         "@google-cloud/bigquery": "8.1.1",
-        "@google-cloud/pubsub": "5.2.0",
+        "@google-cloud/pubsub": "5.3.0",
         "@google-cloud/storage": "7.18.0"
     },
     "peerDependencies": {

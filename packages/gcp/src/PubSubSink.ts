@@ -28,7 +28,6 @@ import {
     PubSubMetrics,
     PubSubOpenTracingTagKeys,
 } from "./model";
-
 interface IPayloadWithAttributes {
     payload: Buffer;
     attributes: Attributes;
@@ -102,12 +101,17 @@ export class PubSubSink
                     maxMessages: this.config.maximumBatchSize,
                     maxMilliseconds: this.config.maximumBatchWaitTime,
                 },
+                gaxOpts: {
+                    timeout: this.config.publishTimeoutMs,
+                },
                 messageOrdering: topicPayload.messageOrdering,
             });
             for (const message of topicPayload.messages) {
                 const span = this.tracer.startSpan(this.spanOperationName, {
                     childOf: message.spanContext,
                 });
+                const eventType = message.attributes[AttributeNames.eventType];
+                const startTime = performance.now();
                 this.spanLogAndSetTags(span, this.sink.name, topic);
                 try {
                     const messageId = await batchPublisher.publishMessage({
@@ -115,24 +119,28 @@ export class PubSubSink
                         attributes: message.attributes,
                         orderingKey: message.orderingKey,
                     });
-
                     span.log({ messageId });
-                    this.emitMetrics(
-                        topic,
-                        message.attributes[AttributeNames.eventType],
-                        PubSubMetricResults.Success
-                    );
+                    this.emitMetrics(topic, eventType, PubSubMetricResults.Success);
+                    const runTime = (performance.now() - startTime) / 1000;
+                    this.emitPublishTimingMetric(topic, eventType, runTime);
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    topicPayload.messages.forEach((message) =>
-                        this.emitMetrics(
+                    if (this.isPublishTimeoutError(e)) {
+                        this.emitMetrics(topic, eventType, PubSubMetricResults.Timeout);
+                        this.logger.warn("PubSub publish timed out, skipping", {
                             topic,
-                            message.attributes[AttributeNames.eventType],
-                            PubSubMetricResults.Error
-                        )
-                    );
-                    throw e;
+                            eventType,
+                            publishTimeoutMs: this.config.publishTimeoutMs,
+                        });
+                    } else {
+                        this.emitMetrics(topic, eventType, PubSubMetricResults.Error);
+                        this.logger.error("Failed to publish message to PubSub", e, {
+                            topic,
+                            eventType,
+                        });
+                        throw e;
+                    }
                 } finally {
                     span.finish();
                 }
@@ -168,6 +176,18 @@ export class PubSubSink
             event_type: eventType,
             result,
         });
+    }
+
+    private emitPublishTimingMetric(topic: string, eventType: string, runTime: number) {
+        this.metrics.timing(PubSubMetrics.PublishTime, runTime, {
+            topic,
+            event_type: eventType,
+        });
+    }
+
+    private isPublishTimeoutError(error: any): boolean {
+        // 4 is the code for timeout/deadline-exceeded. https://grpc.io/docs/guides/status-codes/
+        return error?.code === 4;
     }
 
     private formatMessage(msg: IPublishedMessage): IPayloadWithAttributes {

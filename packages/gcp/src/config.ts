@@ -156,6 +156,14 @@ export class PubSubPublisherConfiguration
     public get maxPayloadSize(): number {
         return config.noop();
     }
+
+    @config.field(config.converters.timespan)
+    public set publishTimeoutMs(_: number) {
+        config.noop();
+    }
+    public get publishTimeoutMs(): number {
+        return config.noop();
+    }
 }
 
 @config.section
