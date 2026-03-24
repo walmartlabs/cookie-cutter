@@ -20,7 +20,7 @@ import {
     failSpan,
 } from "@walmartlabs/cookie-cutter-core";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { PubSub, Attributes, Topic } from "@google-cloud/pubsub";
+import { PubSub, Attributes } from "@google-cloud/pubsub";
 import { IGcpAuthConfiguration, IPubSubPublisherConfiguration } from ".";
 import {
     AttributeNames,
@@ -39,13 +39,6 @@ interface IPayloadWithAttributes {
 interface IPubSubTopicPayload {
     messages: IPayloadWithAttributes[];
     messageOrdering: boolean;
-}
-
-class PubSubPublishTimeoutError extends Error {
-    constructor(timeoutMs: number) {
-        super(`PubSub publish timed out after ${timeoutMs}ms`);
-        this.name = "PubSubPublishTimeoutError";
-    }
 }
 
 export enum PubSubMetadata {
@@ -109,6 +102,9 @@ export class PubSubSink
                     maxMessages: this.config.maximumBatchSize,
                     maxMilliseconds: this.config.maximumBatchWaitTime,
                 },
+                gaxOpts: {
+                    timeout: this.config.publishTimeoutMs,
+                },
                 messageOrdering: topicPayload.messageOrdering,
             });
             for (const message of topicPayload.messages) {
@@ -119,7 +115,11 @@ export class PubSubSink
                 const startTime = performance.now();
                 this.spanLogAndSetTags(span, this.sink.name, topic);
                 try {
-                    const messageId = await this.publishMessageWithTimeout(batchPublisher, message);
+                    const messageId = await batchPublisher.publishMessage({
+                        data: message.payload,
+                        attributes: message.attributes,
+                        orderingKey: message.orderingKey,
+                    });
                     span.log({ messageId });
                     this.emitMetrics(topic, eventType, PubSubMetricResults.Success);
                     const runTime = (performance.now() - startTime) / 1000;
@@ -127,21 +127,12 @@ export class PubSubSink
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    if (e instanceof PubSubPublishTimeoutError) {
-                        this.emitMetrics(topic, eventType, PubSubMetricResults.Timeout);
-                        this.logger.warn("PubSub publish timed out, skipping", {
-                            topic,
-                            eventType,
-                            publishTimeoutMs: this.config.publishTimeoutMs,
-                        });
-                    } else {
-                        this.emitMetrics(topic, eventType, PubSubMetricResults.Error);
-                        this.logger.error("Failed to publish message to PubSub", e, {
-                            topic,
-                            eventType,
-                        });
-                        throw e;
-                    }
+                    this.emitMetrics(topic, eventType, PubSubMetricResults.Error);
+                    this.logger.error("Failed to publish message to PubSub", e, {
+                        topic,
+                        eventType,
+                    });
+                    throw e;
                 } finally {
                     span.finish();
                 }
@@ -184,36 +175,6 @@ export class PubSubSink
             topic,
             event_type: eventType,
         });
-    }
-
-    private async publishMessageWithTimeout(
-        batchPublisher: Topic,
-        message: IPayloadWithAttributes
-    ): Promise<string> {
-        const publishPromise = batchPublisher.publishMessage({
-            data: message.payload,
-            attributes: message.attributes,
-            orderingKey: message.orderingKey,
-        });
-
-        if (!this.config.publishTimeoutMs || this.config.publishTimeoutMs <= 0) {
-            return await publishPromise;
-        }
-
-        let timeout: NodeJS.Timeout | undefined;
-        const timeoutPromise = new Promise<never>((_, reject) => {
-            timeout = setTimeout(() => {
-                reject(new PubSubPublishTimeoutError(this.config.publishTimeoutMs));
-            }, this.config.publishTimeoutMs);
-        });
-
-        try {
-            return await Promise.race([publishPromise, timeoutPromise]);
-        } finally {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        }
     }
 
     private formatMessage(msg: IPublishedMessage): IPayloadWithAttributes {

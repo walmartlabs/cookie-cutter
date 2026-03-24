@@ -87,7 +87,7 @@ describe("PubSubSink Tests", () => {
     const pubSubPublisherConfigurationWithDefaultTopic: IPubSubPublisherConfiguration = {
         defaultTopic: "defaultTopic",
         encoder: new JsonMessageEncoder(),
-        publishTimeoutMs: 0,
+        publishTimeoutMs: 5000,
     };
     const err = new Error("Test Error");
     const messagesWithoutTopic: IMessage[] = [
@@ -223,7 +223,7 @@ describe("PubSubSink Tests", () => {
         });
     });
 
-    it("rejects on error from PubSub topic", async () => {
+    it("rejects on error from PubSub topic creation", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndFail);
         mockTopic.mockImplementation(() => {
             throw err;
@@ -231,7 +231,7 @@ describe("PubSubSink Tests", () => {
         await expect(testApp).rejects.toThrowError();
     });
 
-    it("rejects on error from PubSub topic", async () => {
+    it("rejects on publish errors", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndFail);
         mockPublishFn.mockImplementation(() => {
             throw err;
@@ -239,21 +239,41 @@ describe("PubSubSink Tests", () => {
         await expect(testApp).rejects.toThrowError();
     });
 
-    it("times out publish attempts and continues processing", async () => {
+    it("passes the configured timeout through gax options", async () => {
         sink = pubSubSink({
             ...gcsAuthConfig,
             ...pubSubPublisherConfigurationWithDefaultTopic,
             publishTimeoutMs: 5,
         });
-        mockPublishFn.mockImplementation(() => new Promise(() => undefined));
 
         const testApp = createTestApp(
             [messagesWithoutTopic[0]],
             sink,
-            ErrorHandlingMode.LogAndFail
+            ErrorHandlingMode.LogAndContinue
         );
         await expect(testApp).resolves.toBeUndefined();
         expect(mockPublishFn).toBeCalledTimes(1);
+        expect(mockTopic).toHaveBeenCalledWith(
+            pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            expect.objectContaining({
+                gaxOpts: { timeout: 5 },
+            })
+        );
+    });
+
+    it("uses the default publish timeout of 5000ms", async () => {
+        const testApp = createTestApp(
+            [messagesWithoutTopic[0]],
+            sink,
+            ErrorHandlingMode.LogAndContinue
+        );
+        await expect(testApp).resolves.toBeUndefined();
+        expect(mockTopic).toHaveBeenCalledWith(
+            pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            expect.objectContaining({
+                gaxOpts: { timeout: 5000 },
+            })
+        );
     });
 
     it("emits publish timing metrics for successful publishes", async () => {
@@ -292,7 +312,7 @@ describe("PubSubSink Tests", () => {
         });
     });
 
-    it("emits timeout metrics and warning logs when publish times out", async () => {
+    it("emits error metrics and logs when publish times out", async () => {
         const metrics = {
             increment: jest.fn(),
             gauge: jest.fn(),
@@ -314,21 +334,27 @@ describe("PubSubSink Tests", () => {
             ...pubSubPublisherConfigurationWithDefaultTopic,
             publishTimeoutMs: 5,
         });
-        mockPublishFn.mockImplementation(() => new Promise(() => undefined));
+        const timeoutError = Object.assign(new Error("Deadline exceeded"), { code: 4 });
+        mockPublishFn.mockRejectedValue(timeoutError);
 
         await (sink as any).initialize(ctx);
-        await sink.sink([createPublishedMessage(messagesWithoutTopic[0])][Symbol.iterator]());
+        await expect(
+            sink.sink([createPublishedMessage(messagesWithoutTopic[0])][Symbol.iterator]())
+        ).rejects.toThrow(timeoutError);
 
         expect(metrics.increment).toHaveBeenCalledWith(PubSubMetrics.MsgPublished, {
             topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
             event_type: TestEvent.name,
-            result: PubSubMetricResults.Timeout,
+            result: PubSubMetricResults.Error,
         });
-        expect(logger.warn).toHaveBeenCalledWith("PubSub publish timed out, skipping", {
-            topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
-            eventType: TestEvent.name,
-            publishTimeoutMs: 5,
-        });
-        expect(logger.error).not.toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalledWith(
+            "Failed to publish message to PubSub",
+            timeoutError,
+            {
+                topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+                eventType: TestEvent.name,
+            }
+        );
+        expect(logger.warn).not.toHaveBeenCalled();
     });
 });

@@ -135,7 +135,7 @@ export function pubSubSink(
         maximumBatchSize: 1000,
         maximumBatchWaitTime: 100,
         maxPayloadSize: 5242880,
-        publishTimeoutMs: 0,
+        publishTimeoutMs: 5000,
     });
     return new PubSubSink(configuration);
 }
