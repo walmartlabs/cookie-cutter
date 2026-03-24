@@ -127,7 +127,13 @@ export class PubSubSink
                     this.logger.debug("Message published to PubSub", { topic, messageId });
                 } catch (e) {
                     failSpan(span, e);
-                    this.emitMetrics(topic, eventType, PubSubMetricResults.Error);
+                    topicPayload.messages.forEach((message) =>
+                        this.emitMetrics(
+                            topic,
+                            message.attributes[AttributeNames.eventType],
+                            PubSubMetricResults.Error
+                        )
+                    );
                     this.logger.error("Failed to publish message to PubSub", e, {
                         topic,
                         eventType,
