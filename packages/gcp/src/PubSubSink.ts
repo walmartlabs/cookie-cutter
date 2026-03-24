@@ -186,7 +186,7 @@ export class PubSubSink
     }
 
     private isPublishTimeoutError(error: any): boolean {
-        // 4 is the code for timeout
+        // 4 is the code for timeout/deadline-exceeded. https://grpc.io/docs/guides/status-codes/
         return error?.code === 4;
     }
 
