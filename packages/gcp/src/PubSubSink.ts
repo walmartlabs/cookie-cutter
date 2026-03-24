@@ -136,7 +136,7 @@ export class PubSubSink
                         });
                     } else {
                         this.emitMetrics(topic, eventType, PubSubMetricResults.Error);
-                        this.logger.error("Failed to publish message to PubSub, skipping", e, {
+                        this.logger.error("Failed to publish message to PubSub", e, {
                             topic,
                             eventType,
                         });
