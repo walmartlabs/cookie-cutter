@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 
 import { PubSub } from "@google-cloud/pubsub";
 import {
+    IComponentContext,
     IMessage,
     MessageRef,
     JsonMessageEncoder,
@@ -20,9 +21,10 @@ import {
     StaticInputSource,
     IOutputSink,
 } from "@walmartlabs/cookie-cutter-core";
+import { MockTracer } from "opentracing";
 import { IPubSubPublisherConfiguration, IGcpAuthConfiguration, pubSubSink } from "..";
 import { PubSubMetadata } from "../PubSubSink";
-import { AttributeNames } from "../model";
+import { AttributeNames, PubSubMetrics, PubSubMetricResults } from "../model";
 
 jest.mock("@google-cloud/pubsub", () => {
     return {
@@ -64,6 +66,18 @@ function createTestApp(
         .run(retryMode);
 }
 
+function createPublishedMessage(message: IMessage): IPublishedMessage {
+    const tracer = new MockTracer();
+    const span = tracer.startSpan("test-message");
+
+    return {
+        message,
+        metadata: {},
+        original: {} as MessageRef,
+        spanContext: span.context(),
+    };
+}
+
 describe("PubSubSink Tests", () => {
     const gcsAuthConfig: IGcpAuthConfiguration = {
         projectId: "projectId",
@@ -73,6 +87,7 @@ describe("PubSubSink Tests", () => {
     const pubSubPublisherConfigurationWithDefaultTopic: IPubSubPublisherConfiguration = {
         defaultTopic: "defaultTopic",
         encoder: new JsonMessageEncoder(),
+        publishTimeoutMs: 0,
     };
     const err = new Error("Test Error");
     const messagesWithoutTopic: IMessage[] = [
@@ -221,6 +236,100 @@ describe("PubSubSink Tests", () => {
         mockPublishFn.mockImplementation(() => {
             throw err;
         });
-        await expect(testApp).rejects.toThrowError();
+        await expect(testApp).resolves.toBeUndefined();
+        expect(mockPublishFn).toBeCalledTimes(messagesWithoutTopic.length);
+    });
+
+    it("times out publish attempts and continues processing", async () => {
+        sink = pubSubSink({
+            ...gcsAuthConfig,
+            ...pubSubPublisherConfigurationWithDefaultTopic,
+            publishTimeoutMs: 5,
+        });
+        mockPublishFn.mockImplementation(() => new Promise(() => undefined));
+
+        const testApp = createTestApp(
+            [messagesWithoutTopic[0]],
+            sink,
+            ErrorHandlingMode.LogAndFail
+        );
+        await expect(testApp).resolves.toBeUndefined();
+        expect(mockPublishFn).toBeCalledTimes(1);
+    });
+
+    it("emits publish timing metrics for successful publishes", async () => {
+        const metrics = {
+            increment: jest.fn(),
+            gauge: jest.fn(),
+            timing: jest.fn(),
+        };
+        const logger = {
+            info: jest.fn(),
+            debug: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+        };
+        const ctx = {
+            logger,
+            metrics,
+            tracer: new MockTracer(),
+        } as unknown as IComponentContext;
+        sink = pubSubSink({
+            ...gcsAuthConfig,
+            ...pubSubPublisherConfigurationWithDefaultTopic,
+        });
+
+        await (sink as any).initialize(ctx);
+        await sink.sink([createPublishedMessage(messagesWithoutTopic[0])][Symbol.iterator]());
+
+        expect(metrics.increment).toHaveBeenCalledWith(PubSubMetrics.MsgPublished, {
+            topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            event_type: TestEvent.name,
+            result: PubSubMetricResults.Success,
+        });
+        expect(metrics.timing).toHaveBeenCalledWith(PubSubMetrics.PublishTime, expect.any(Number), {
+            topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            event_type: TestEvent.name,
+        });
+    });
+
+    it("emits timeout metrics and warning logs when publish times out", async () => {
+        const metrics = {
+            increment: jest.fn(),
+            gauge: jest.fn(),
+            timing: jest.fn(),
+        };
+        const logger = {
+            info: jest.fn(),
+            debug: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+        };
+        const ctx = {
+            logger,
+            metrics,
+            tracer: new MockTracer(),
+        } as unknown as IComponentContext;
+        sink = pubSubSink({
+            ...gcsAuthConfig,
+            ...pubSubPublisherConfigurationWithDefaultTopic,
+            publishTimeoutMs: 5,
+        });
+        mockPublishFn.mockImplementation(() => new Promise(() => undefined));
+
+        await (sink as any).initialize(ctx);
+        await sink.sink([createPublishedMessage(messagesWithoutTopic[0])][Symbol.iterator]());
+
+        expect(metrics.increment).toHaveBeenCalledWith(PubSubMetrics.MsgPublished, {
+            topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            event_type: TestEvent.name,
+            result: PubSubMetricResults.Timeout,
+        });
+        expect(logger.warn).toHaveBeenCalledWith("PubSub publish timed out, skipping", {
+            topic: pubSubPublisherConfigurationWithDefaultTopic.defaultTopic,
+            eventType: TestEvent.name,
+            publishTimeoutMs: 5,
+        });
+        expect(logger.error).not.toHaveBeenCalled();
     });
 });

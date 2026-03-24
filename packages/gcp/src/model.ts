@@ -14,10 +14,12 @@ export const AttributeNames = {
 export enum PubSubMetricResults {
     Success = "success",
     Error = "error",
+    Timeout = "timeout",
 }
 
 export enum PubSubMetrics {
     MsgPublished = "cookie_cutter.pubsub_sink.msg_published",
+    PublishTime = "cookie_cutter.pubsub_sink.publish_time",
     MsgSubscribed = "cookie_cutter.pubsub_source.msg_received",
 }
 
