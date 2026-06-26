@@ -317,11 +317,39 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Publish to NPM
+        continue-on-error: true
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               yarn build && node ./.ci/deploy.js
+
+  publish-to-github-packages:
+    name: Publish to GitHub Packages
+    if: ${{ github.event_name == 'push' }}
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Ubuntu Node 18
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "18"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@walmartlabs"
+      - name: Install Yarn 1.21.1
+        run: yarn set version 1.21.1
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_REGISTRY: https://npm.pkg.github.com
+        run: yarn build && node ./.ci/deploy.js
 
   publish-to-github-pages:
     name: Publish to Github Pages

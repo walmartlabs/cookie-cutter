@@ -3,6 +3,8 @@ const { execSync } = require("child_process");
 const { join } = require("path");
 const { copyFileSync, unlinkSync } = require("fs");
 
+const NPM_REGISTRY = process.env.NPM_REGISTRY || "https://registry.npmjs.org";
+
 function yarn(cmd, parseResponse = true) {
     const buffer = execSync(`yarn ${cmd}`, { encoding: "utf-8" });
     if (parseResponse) {
@@ -17,7 +19,7 @@ function yarn(cmd, parseResponse = true) {
 
 function npm(cmd) {
     try {
-        const buffer = execSync(`npm ${cmd} --json`, { encoding: "utf-8" });
+        const buffer = execSync(`npm ${cmd} --registry=${NPM_REGISTRY} --json`, { encoding: "utf-8" });
         return JSON.parse(buffer);
     } catch (e) {
         return JSON.parse(e.stdout);
@@ -48,10 +50,11 @@ function deploy(packagePath) {
     if (deployed.filter((v) => semver.eq(v, version)).length > 0) {
         console.log(`${name}@${version} is already deployed, skipping`);
     } else {
-        console.log(`publishing ${name}@${version} to ${tag}`);
+        console.log(`publishing ${name}@${version} to ${tag} (${NPM_REGISTRY})`);
         copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".yarnignore"))
         try {
-            yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive`, false);
+            const registryArg = NPM_REGISTRY !== "https://registry.npmjs.org" ? ` --registry=${NPM_REGISTRY}` : "";
+            yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive${registryArg}`, false);
         } finally {
             unlinkSync(join(fullPath, ".yarnignore"));
         }
