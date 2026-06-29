@@ -232,7 +232,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient();
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/bad request/);
+            await expect(response).rejects.toThrow(/bad request/);
         } finally {
             app.cancel();
             await app;
@@ -252,7 +252,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient();
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/bad request/);
+            await expect(response).rejects.toThrow(/bad request/);
         } finally {
             app.cancel();
             await app;
@@ -265,7 +265,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient();
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/not implemented/);
+            await expect(response).rejects.toThrow(/not implemented/);
         } finally {
             app.cancel();
             await app;
@@ -288,7 +288,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient();
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/Invalid API Key/);
+            await expect(response).rejects.toThrow(/Invalid API Key/);
         } finally {
             app.cancel();
             await app;
@@ -342,7 +342,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient(undefined, { requestTimeout: 5 });
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/Deadline exceeded/);
+            await expect(response).rejects.toThrow(/Deadline exceeded/);
         } finally {
             app.cancel();
             await app;
@@ -362,7 +362,7 @@ describe("gRPC source", () => {
         try {
             const client = await createClient("not-a-valid-host", { connectionTimeout: 50 });
             const response = client.NoStreaming({ id: 15 });
-            await expect(response).rejects.toThrowError(/Failed to connect/);
+            await expect(response).rejects.toThrow(/Failed to connect/);
         } finally {
             app.cancel();
             await app;

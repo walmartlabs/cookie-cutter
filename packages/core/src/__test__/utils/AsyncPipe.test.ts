@@ -57,7 +57,7 @@ describe("AsyncPipe", () => {
             await pipe.throw(new Error("test"));
         })();
 
-        await expect(collect(pipe)).rejects.toThrowError(/test/);
+        await expect(collect(pipe)).rejects.toThrow(/test/);
         await expect(p).resolves.toBeUndefined();
     });
 
@@ -81,7 +81,7 @@ describe("AsyncPipe", () => {
             return actual;
         })();
 
-        await expect(p).rejects.toThrowError(/can't send after close/);
+        await expect(p).rejects.toThrow(/can't send after close/);
         await expect(actual).resolves.toMatchObject([1, 2]);
     });
 
@@ -127,7 +127,7 @@ describe("AsyncPipe", () => {
         const p1 = pipe.send(1);
         const p2 = pipe.send(2);
 
-        await expect(p2).rejects.toThrowError(/there is already a pending send call/);
+        await expect(p2).rejects.toThrow(/there is already a pending send call/);
         await pipe.close();
         await expect(p1).resolves.toBeUndefined();
     });
@@ -138,7 +138,7 @@ describe("AsyncPipe", () => {
         const next = pipe.next();
         const thr = pipe.throw(new Error("test"));
 
-        await expect(next).rejects.toThrowError(/test/);
+        await expect(next).rejects.toThrow(/test/);
         await expect(thr).resolves.toBeTruthy();
     });
 

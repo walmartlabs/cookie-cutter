@@ -151,7 +151,7 @@ describe.each([
             );
 
             await testApp;
-            expect(mockMqttPublisher).toBeCalledTimes(testMessages.length);
+            expect(mockMqttPublisher).toHaveBeenCalledTimes(testMessages.length);
         });
 
         it("Verifies if CONNECT handler WITHOUT ERROR generated works as expected", async () => {
@@ -176,7 +176,7 @@ describe.each([
             );
 
             await testApp;
-            expect(mockMqttPublisher).toBeCalledTimes(testMessages.length);
+            expect(mockMqttPublisher).toHaveBeenCalledTimes(testMessages.length);
             mockMqttPublisher.mock.calls.forEach((message) => {
                 expect(message[0]).toBe(testConfig.defaultTopic);
             });
@@ -291,7 +291,7 @@ describe.each([
             );
 
             await testApp;
-            expect(mockMqttPublisher).toBeCalledTimes(testMessages.length);
+            expect(mockMqttPublisher).toHaveBeenCalledTimes(testMessages.length);
         });
 
         it("Verifies if CONNECT handler WITHOUT ERROR generated works as expected", async () => {
@@ -316,7 +316,7 @@ describe.each([
             );
 
             await testApp;
-            expect(mockMqttPublisher).toBeCalledTimes(testMessages.length);
+            expect(mockMqttPublisher).toHaveBeenCalledTimes(testMessages.length);
             mockMqttPublisher.mock.calls.forEach((message) => {
                 expect(message[0]).toBe(mockTopic);
             });
@@ -404,6 +404,6 @@ describe("Testing MQTT publisher WITHOUT default topic or mentioned in metadata"
         );
 
         await expect(testApp).rejects.toThrow();
-        expect(mockMqttPublisher).toBeCalledTimes(0);
+        expect(mockMqttPublisher).toHaveBeenCalledTimes(0);
     });
 });

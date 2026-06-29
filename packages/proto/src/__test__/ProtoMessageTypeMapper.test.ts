@@ -21,6 +21,6 @@ describe("ProtoMessageTypeMapper", () => {
         const root = await loadTestProto();
         const mapper = new ProtoMessageTypeMapper(pbjsStaticModuleRegistry(root));
         const actualFn = () => mapper.map(root.cookiecutter.test);
-        expect(actualFn).toThrowError();
+        expect(actualFn).toThrow();
     });
 });

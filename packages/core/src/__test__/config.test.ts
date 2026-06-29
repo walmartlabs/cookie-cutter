@@ -220,7 +220,7 @@ describe("Primitive Values", () => {
 
     it("throws error for unknown configuration values", () => {
         const actualFn = () => config.parse(Config, { foo: "bar" }, Default);
-        expect(actualFn).toThrowError();
+        expect(actualFn).toThrow();
     });
 
     it("persists default values", () => {

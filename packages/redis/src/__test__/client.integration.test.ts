@@ -66,7 +66,7 @@ describe("RedisClusterClient", () => {
 
     it("throws an error if neither clusterHostUrls nor host is provided", async () => {
         const client = createInvaildRedisClient();
-        expect(async () => await client.initialize(DefaultComponentContext)).toThrowError(
+        expect(async () => await client.initialize(DefaultComponentContext)).toThrow(
             "Invalid Redis configuration: either hostUrls or host and port must be provided."
         );
     });
