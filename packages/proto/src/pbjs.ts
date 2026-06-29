@@ -47,30 +47,72 @@ export function createRegistry(
     };
 }
 
-export function* analyzeStaticModule(root: any): IterableIterator<[IProtoMessageEncoder, string]> {
-    const stack: [
-        {
-            obj: any;
-            namespace: string;
+function isFullNameWritable(value: any, ns: string): boolean {
+    // Check if fullName is already set to the correct value (v7 Type instances have this)
+    if (value.fullName === ns) {
+        return false;
+    }
+    
+    // Check if the property descriptor allows writing by walking the prototype chain
+    let obj = value;
+    while (obj) {
+        const descriptor = Object.getOwnPropertyDescriptor(obj, "fullName");
+        if (descriptor) {
+            // If we found a descriptor, check if it's writable
+            // Getters without setters are read-only
+            return descriptor.writable !== false && !descriptor.get;
         }
-    ] = [{ obj: root, namespace: "" }];
+        obj = Object.getPrototypeOf(obj);
+    }
+    
+    // If no descriptor found, it's writable
+    return true;
+}
+
+function isMessageType(value: any): boolean {
+    return value.encode !== undefined;
+}
+
+function processModuleKey(
+    key: string,
+    value: any,
+    namespace: string,
+    stack: Array<{ obj: any; namespace: string }>,
+    results: Array<[IProtoMessageEncoder, string]>
+): void {
+    if (key === "google") {
+        return;
+    }
+    
+    const ns = (namespace && `${namespace}.${key}`) || key;
+    
+    if (isMessageType(value)) {
+        // For v7 protobufjs Type instances, fullName is already set and read-only
+        // For static-module generated code, we need to set it
+        if (isFullNameWritable(value, ns)) {
+            value.fullName = ns;
+        }
+        results.push([value, ns]);
+    } else {
+        stack.push({ obj: value, namespace: ns });
+    }
+}
+
+export function* analyzeStaticModule(root: any): IterableIterator<[IProtoMessageEncoder, string]> {
+    const stack: Array<{ obj: any; namespace: string }> = [{ obj: root, namespace: "" }];
+    const results: Array<[IProtoMessageEncoder, string]> = [];
 
     while (stack.length > 0) {
         const item = stack.pop();
-        if (isObject(item.obj)) {
-            for (const key of Object.keys(item.obj)) {
-                if (key === "google") {
-                    continue;
-                }
-                const value = item.obj[key];
-                const ns = (item.namespace && `${item.namespace}.${key}`) || key;
-                if (value.encode !== undefined) {
-                    value.fullName = ns;
-                    yield [value, ns];
-                } else {
-                    stack.push({ obj: value, namespace: ns });
-                }
-            }
+        if (!isObject(item?.obj)) {
+            continue;
+        }
+        
+        for (const key of Object.keys(item.obj)) {
+            const value = item.obj[key];
+            processModuleKey(key, value, item.namespace, stack, results);
         }
     }
+    
+    yield* results;
 }

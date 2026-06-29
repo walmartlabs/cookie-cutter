@@ -13,15 +13,16 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "long": "5.2.0",
-        "protobufjs": "6.11.3"
+        "long": "5.3.2",
+        "protobufjs": "7.6.4"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
-        "uglify-js": "3.7.7",
+        "protobufjs-cli": "2.5.0",
+        "uglify-js": "3.19.3",
         "eval": "0.1.8"
     },
     "scripts": {
