@@ -74,7 +74,7 @@ export interface IPELResult {
 
 type RawPELResult = {
     id: string;
-    owner: string;
+    consumer: string;
     millisecondsSinceLastDelivery: number;
     deliveriesCounter: number;
 };
@@ -92,10 +92,10 @@ type RawXClaimResult = {
 };
 
 function parseRawPELResult(results: RawPELResult[]): IPELResult[] {
-    return results.map(({ id, owner, millisecondsSinceLastDelivery, deliveriesCounter }) => {
+    return results.map(({ id, consumer, millisecondsSinceLastDelivery, deliveriesCounter }) => {
         return {
             messageId: id,
-            consumerId: owner,
+            consumerId: consumer,
             idleTime: millisecondsSinceLastDelivery,
             timesDelivered: deliveriesCounter,
         };
@@ -179,7 +179,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
         this.encoder = config.encoder;
         this.typeMapper = config.typeMapper;
         const socketConfig = {
-            tls: this.config.tls,
+            ...(this.config.tls && { tls: true as const }),
             ca: this.config.caPath ? readFileSync(this.config.caPath) : undefined,
             ...(this.config.checkServerIdentity === false && {
                 checkServerIdentity: () => undefined,
@@ -323,9 +323,10 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             let data;
 
             if (response) {
+                const str = response as string;
                 const buf = this.config.base64Encode
-                    ? Buffer.from(response, "base64")
-                    : Buffer.from(response);
+                    ? Buffer.from(str, "base64")
+                    : Buffer.from(str);
                 const msg = this.encoder.decode(new Uint8Array(buf), typeName);
                 data = msg.payload;
             }
@@ -442,7 +443,7 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
             if (typeof response === "string") {
                 return response;
             } else {
-                return response.toString();
+                return String(response);
             }
         } catch (err) {
             const alreadyExistsErrorMessage = "BUSYGROUP Consumer Group name already exists";
@@ -666,7 +667,11 @@ export class RedisClient implements IRedisClient, IRequireInitialization, IDispo
 
             if (!response || response.length < 1) return [];
 
-            const results = extractXClaimValues(response, payloadKey, typeNameKey);
+            const fullEntries = (response as any[]).filter(
+                (entry): entry is RawXClaimResult =>
+                    entry !== null && typeof entry === "object" && "id" in entry
+            );
+            const results = extractXClaimValues(fullEntries, payloadKey, typeNameKey);
             const messages: IRedisMessage[] = results.map(({ messageId, data, type }) => {
                 const buf = this.config.base64Encode
                     ? Buffer.from(data, "base64")
