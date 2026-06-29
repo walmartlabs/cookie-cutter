@@ -12,6 +12,7 @@
     "bugs": {
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
+    "deprecated": "This package is deprecated and is no longer maintained. The underlying validate.js library has a known ReDoS vulnerability (CVE-2020-26308) with no available patches. Consider migrating to a modern validation library such as Zod, Joi, or yup.",
     "dependencies": {
         "validate.js": "0.13.1"
     },

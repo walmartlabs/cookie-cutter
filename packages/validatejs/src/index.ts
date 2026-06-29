@@ -3,6 +3,14 @@ Copyright (c) Walmart Inc.
 
 This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
+
+DEPRECATED: This module is deprecated and no longer maintained. The underlying
+validate.js library contains a known Regular Expression Denial of Service (ReDoS)
+vulnerability (CVE-2020-26308) with no available patches. Consider migrating to
+a modern validation library such as:
+- Zod (https://zod.dev)
+- Joi (https://joi.dev)
+- yup (https://github.com/jquense/yup)
 */
 
 import {
@@ -25,7 +33,7 @@ export const required = {
 
 class ValidateJsMessageValidator implements IMessageValidator {
     private readonly constraints = new Map<string, any>();
-    private validateJS: validate.ValidateJS;
+    private validateJS: any;
 
     constructor(constraintsModule: any) {
         for (const item of Object.getOwnPropertyNames(constraintsModule)) {
@@ -59,5 +67,10 @@ class ValidateJsMessageValidator implements IMessageValidator {
 }
 
 export function withValidateJs(constraints: any): IMessageValidator {
+    console.warn(
+        "[DEPRECATED] @walmartlabs/cookie-cutter-validatejs is deprecated. " +
+        "The underlying validate.js library contains CVE-2020-26308 (ReDoS vulnerability) " +
+        "with no available patches. Please migrate to a modern validation library such as Zod, Joi, or yup."
+    );
     return new ValidateJsMessageValidator(constraints);
 }
