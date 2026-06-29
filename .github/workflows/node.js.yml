@@ -10,13 +10,13 @@ on:
 
 jobs:
   smoke:
-    name: Ubuntu Node 18 Smoke
+    name: Ubuntu Node 24 Smoke
     runs-on: ubuntu-latest
     outputs:
       commit_message: ${{ steps.output_message.outputs.commit_message }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with: # required for git log to access the correct commits
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get Commit Message
@@ -26,14 +26,15 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
         run: |
-              echo "::set-output name=commit_message::$COMMIT_MESSAGE"
+              echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
               echo Commit Message: "$COMMIT_MESSAGE"
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -54,17 +55,18 @@ jobs:
       commit_message: ${{ steps.output_message.outputs.commit_message }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with: # required for git log to access the correct commits
           ref: master
-      - name: Setup Ubuntu Node 18
+      - name: Setup Ubuntu Node 24
         if: ${{ github.event_name == 'schedule' }}
-        uses: actions/setup-node@v2-beta
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
         if: ${{ github.event_name == 'schedule' }}
-        run: yarn set version 1.21.1
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         if: ${{ github.event_name == 'schedule' }}
         run: yarn install --frozen-lockfile
@@ -79,13 +81,14 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Ubuntu Node 12
-  #       uses: actions/setup-node@v2-beta
+  #       uses: actions/checkout@v4
+  #     - name: Setup Ubuntu Node 24
+  #       uses: actions/setup-node@v4
   #       with:
-  #         node-version: "12"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
+  #         node-version: "24"
+  #         cache: 'yarn'
+  #     - name: Install Yarn
+  #       run: yarn set version 1.22.22
   #     - name: Install Dependencies
   #       run: yarn install --frozen-lockfile
   #     - name: Yarn Build
@@ -94,21 +97,22 @@ jobs:
   #       run: yarn test
 
   test-macOS:
-    name: MacOS Node 18 Test
+    name: MacOS Node 24 Test
     if: ${{ github.event_name == 'schedule' || ( github.event_name == 'pull_request' && ( github.base_ref == 'master' || contains(needs.smoke.outputs.commit_message, '[full ci]') || contains(needs.smoke.outputs.commit_message, '[full-ci]') ) ) }}
     needs: [smoke, master-audit]
     runs-on: macOS-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup MacOS Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup MacOS Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn set version 1.21.1
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -124,15 +128,16 @@ jobs:
   #   runs-on: windows-latest
   #   steps:
   #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Windows Node 16
-  #       uses: actions/setup-node@v2-beta
+  #       uses: actions/checkout@v4
+  #     - name: Setup Windows Node 24
+  #       uses: actions/setup-node@v4
   #       with:
-  #         node-version: "16"
+  #         node-version: "24"
+  #         cache: 'yarn'
   #       env:
   #         YARN_GPG: no # Windows build agent will hang without this
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
+  #     - name: Install Yarn
+  #       run: yarn set version 1.22.22
   #     - name: Install Dependencies
   #       run: yarn install --frozen-lockfile
   #     - name: Yarn Build
@@ -150,13 +155,14 @@ jobs:
   #   runs-on: windows-latest
   #   steps:
   #     - name: Checkout Code
-  #       uses: actions/checkout@v2
-  #     - name: Setup Windows Node 16
-  #       uses: actions/setup-node@v2-beta
+  #       uses: actions/checkout@v4
+  #     - name: Setup Windows Node 24
+  #       uses: actions/setup-node@v4
   #       with:
-  #         node-version: "16"
-  #     - name: Install Yarn 1.21.1
-  #       run: yarn set version 1.21.1
+  #         node-version: "24"
+  #         cache: 'yarn'
+  #     - name: Install Yarn
+  #       run: yarn set version 1.22.22
   #     - name: Install Dependencies
   #       run: yarn install --frozen-lockfile
   #     - name: Run Integrate
@@ -181,13 +187,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -202,13 +209,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -223,13 +231,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -244,13 +253,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -265,13 +275,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -286,13 +297,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Yarn Build
@@ -307,13 +319,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Publish to NPM
@@ -334,15 +347,16 @@ jobs:
       packages: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
+          cache: 'yarn'
           registry-url: "https://npm.pkg.github.com"
           scope: "@walmartlabs"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Publish to GitHub Packages
@@ -358,13 +372,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Ubuntu Node 18
-        uses: actions/setup-node@v2-beta
+        uses: actions/checkout@v4
+      - name: Setup Ubuntu Node 24
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - name: Install Yarn 1.21.1
-        run: yarn set version 1.21.1
+          node-version: "24"
+          cache: 'yarn'
+      - name: Install Yarn
+        run: yarn set version 1.22.22
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
       - name: Publish to Github Pages
