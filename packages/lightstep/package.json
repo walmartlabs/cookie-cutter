@@ -18,10 +18,10 @@
         "opentracing": "0.14.7"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.6.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.6.0-beta"
     },
     "scripts": {
         "build": "tsc",
