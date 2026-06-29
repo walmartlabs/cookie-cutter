@@ -25,7 +25,7 @@ export class AmqpSink
     implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable
 {
     private tracer: Tracer;
-    private conn: amqp.Connection;
+    private conn: amqp.ChannelModel;
     private channel: amqp.Channel;
 
     constructor(private config: IAmqpConfiguration) {
