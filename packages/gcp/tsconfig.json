@@ -9,7 +9,7 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "strict": true,
-    "skipLibCheck": false
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "dist"],
   "include": ["src/**/*.ts"]
