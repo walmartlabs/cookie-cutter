@@ -15,14 +15,14 @@
     "dependencies": {
         "jaeger-client": "3.19.0",
         "opentracing": "0.14.7",
-        "prom-client": "14.0.1"
+        "prom-client": "14.2.0"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
-        "@types/jaeger-client": "3.18.0"
+        "@types/jaeger-client": "3.18.7"
     },
     "scripts": {
         "build": "tsc",

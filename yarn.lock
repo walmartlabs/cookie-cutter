@@ -2445,14 +2445,14 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jaeger-client@3.18.0":
-  version "3.18.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@types/jaeger-client/-/jaeger-client-3.18.0.tgz#7c8f4759959e021af651b315ea355a60fdc61a63"
-  integrity sha512-RbQvsCpapGqnuC4jVycOH/AthHr9Ze5hzbjdHclVRta29rsrA/0iHVJCsNi+nQ/iGJ3r6bQSJjp7uE29Xd+EdA==
+"@types/jaeger-client@3.18.7":
+  version "3.18.7"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@types/jaeger-client/-/jaeger-client-3.18.7.tgz#19315eb1616d85b84210da5df01b4a62c219c5b0"
+  integrity sha512-ktEWbcM8faJY5UNEmffnvavjIJ9noNCD7clD9hAZIuQt6QMv0T97kiveH0mbvBNr9SPZXmkidOu/3UWgSy89tQ==
   dependencies:
     "@types/node" "*"
     opentracing "~0.14.3"
-    prom-client "~11.3.0 || ^12.0.0 || ^13.0.0"
+    prom-client "~11.3.0 || ^12.0.0 || ^13.0.0 || ^14.0.0"
 
 "@types/jest@30.0.0":
   version "30.0.0"
@@ -10752,17 +10752,10 @@ process@^0.11.10:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/process/-/process-0.11.10.tgz#7332300e840161bda3e69a1d1d91a7d4bc16f182"
   integrity sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==
 
-prom-client@14.0.1:
-  version "14.0.1"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/prom-client/-/prom-client-14.0.1.tgz#bdd9583e02ec95429677c0e013712d42ef1f86a8"
-  integrity sha512-HxTArb6fkOntQHoRGvv4qd/BkorjliiuO2uSWC2KC17MUTKYttWdDoXX/vxOhQdkoECEM9BBH0pj2l8G8kev6w==
-  dependencies:
-    tdigest "^0.1.1"
-
-"prom-client@~11.3.0 || ^12.0.0 || ^13.0.0":
-  version "13.2.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/prom-client/-/prom-client-13.2.0.tgz#99d13357912dd400f8911b77df19f7b328a93e92"
-  integrity sha512-wGr5mlNNdRNzEhRYXgboUU2LxHWIojxscJKmtG3R8f4/KiWqyYgXTLHs0+Ted7tG3zFT7pgHJbtomzZ1L0ARaQ==
+prom-client@14.2.0, "prom-client@~11.3.0 || ^12.0.0 || ^13.0.0 || ^14.0.0":
+  version "14.2.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/prom-client/-/prom-client-14.2.0.tgz#ca94504e64156f6506574c25fb1c34df7812cf11"
+  integrity sha512-sF308EhTenb/pDRPakm+WgiN+VdM/T1RaHj1x+MvAuT8UiQP8JmOEbxVqtkbfR4LrvOg5n7ic01kRBDGXjYikA==
   dependencies:
     tdigest "^0.1.1"
 
