@@ -89,7 +89,10 @@ export class Counter implements ICounter {
     public timestamp: number;
     public labelsTag: string;
 
-    constructor(public readonly name: string, public readonly labelObject: ILabelValues) {
+    constructor(
+        public readonly name: string,
+        public readonly labelObject: ILabelValues
+    ) {
         this.count = 0;
         this.timestamp = 0;
         this.labelsTag = generateLabelsTag(this.labelObject);
@@ -140,7 +143,10 @@ export class Gauge implements IGauge {
     public timestamp: number;
     public labelsTag: string;
 
-    constructor(public readonly name: string, public readonly labelObject: ILabelValues) {
+    constructor(
+        public readonly name: string,
+        public readonly labelObject: ILabelValues
+    ) {
         this.value = 0;
         this.timestamp = 0;
         this.labelsTag = generateLabelsTag(this.labelObject);
@@ -159,7 +165,10 @@ export class Gauge implements IGauge {
 export class HistogramSet implements IHistogramSet {
     private histograms: Map<string, IHistogram>; // map of labels string to IHistogram
 
-    constructor(public readonly name: string, private readonly buckets: number[]) {
+    constructor(
+        public readonly name: string,
+        private readonly buckets: number[]
+    ) {
         this.histograms = new Map<string, IHistogram>();
     }
 

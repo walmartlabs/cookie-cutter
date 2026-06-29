@@ -31,7 +31,11 @@ jest.mock("@google-cloud/pubsub", () => {
 });
 
 class TestEvent {
-    constructor(public value: string, public topic?: string, public orderingKey?: string) {}
+    constructor(
+        public value: string,
+        public topic?: string,
+        public orderingKey?: string
+    ) {}
 }
 
 function createTestApp(

@@ -303,9 +303,7 @@ describe("Testing Retrier", () => {
             const errorsToThrow = 10;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(asyncCallClient(client, retrier)).rejects.toThrow(
-                new RetriableError()
-            );
+            await expect(asyncCallClient(client, retrier)).rejects.toThrow(new RetriableError());
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(1);
             expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
             expect(mockNotFinalAttempt).toHaveBeenCalledTimes(0);
@@ -319,9 +317,7 @@ describe("Testing Retrier", () => {
             const errorsToThrow = behavior.retries + 1;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow);
-            await expect(asyncCallClient(client, retrier)).rejects.toThrow(
-                new RetriableError()
-            );
+            await expect(asyncCallClient(client, retrier)).rejects.toThrow(new RetriableError());
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(errorsToThrow);
             expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
             expect(mockNotFinalAttempt).toHaveBeenCalledTimes(5);
@@ -334,9 +330,7 @@ describe("Testing Retrier", () => {
             const indexOfNonRetriableError = 2;
             const retrier = createRetrier(behavior);
             const client = new ThrowingClient(errorsToThrow, indexOfNonRetriableError);
-            await expect(asyncCallClient(client, retrier)).rejects.toThrow(
-                new NonRetriableError()
-            );
+            await expect(asyncCallClient(client, retrier)).rejects.toThrow(new NonRetriableError());
             expect(asyncThrowingFunction).toHaveBeenCalledTimes(indexOfNonRetriableError + 1);
             expect(mockIsFinalAttempt).toHaveBeenCalledTimes(1);
             expect(mockNotFinalAttempt).toHaveBeenCalledTimes(2);

@@ -43,7 +43,10 @@ export class QueueClientWithLargeItemSupport {
     private tracer: Tracer;
 
     /** use WithLargeItemSupport.create unless in testing */
-    constructor(private queueClient: QueueClient, private blobClient: BlobClient) {}
+    constructor(
+        private queueClient: QueueClient,
+        private blobClient: BlobClient
+    ) {}
 
     public async initialize(context: IComponentContext) {
         this.tracer = context.tracer;

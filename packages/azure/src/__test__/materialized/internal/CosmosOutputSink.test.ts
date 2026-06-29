@@ -56,7 +56,7 @@ describe("materialized CosmosOutputSink", () => {
     const bodyDbQueryTimeout = `DB Query returned FALSE: Failed to replace document: stream_id: ${dbQueryTimeout}, sn: 0`;
     const bodyOptimisticConcurrency = `Sequence Conflict for document: stream_id: ${optimisticConcurrencyKey}, new sn: 0, expected sn: 0, actual sn: 0.`; // keep the string synced to ../resources/upsertSproc.js
     beforeEach(() => {
-        (upsert = jest.fn().mockImplementation((_, partitionKey) => {
+        ((upsert = jest.fn().mockImplementation((_, partitionKey) => {
             if (partitionKey === optimisticConcurrencyKey) {
                 throw {
                     code: 400,
@@ -89,7 +89,7 @@ describe("materialized CosmosOutputSink", () => {
                     upsert,
                     bulkInsert: jest.fn(),
                 };
-            });
+            }));
     });
     beforeEach(() => {
         upsert.mockClear();

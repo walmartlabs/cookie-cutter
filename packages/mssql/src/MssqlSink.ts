@@ -66,7 +66,10 @@ interface ITableDetails {
 }
 
 class DynamicTableType extends sql.Table {
-    constructor(public name: string, columns?: sql.columns) {
+    constructor(
+        public name: string,
+        columns?: sql.columns
+    ) {
         super(name);
         this.name = name;
         if (columns !== undefined) {

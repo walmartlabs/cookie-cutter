@@ -69,8 +69,8 @@ class ValidateJsMessageValidator implements IMessageValidator {
 export function withValidateJs(constraints: any): IMessageValidator {
     console.warn(
         "[DEPRECATED] @walmartlabs/cookie-cutter-validatejs is deprecated. " +
-        "The underlying validate.js library contains CVE-2020-26308 (ReDoS vulnerability) " +
-        "with no available patches. Please migrate to a modern validation library such as Zod, Joi, or yup."
+            "The underlying validate.js library contains CVE-2020-26308 (ReDoS vulnerability) " +
+            "with no available patches. Please migrate to a modern validation library such as Zod, Joi, or yup."
     );
     return new ValidateJsMessageValidator(constraints);
 }

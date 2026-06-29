@@ -30,7 +30,10 @@ interface IRequest {
 export class S3Sink implements IOutputSink<IPublishedMessage>, IRequireInitialization, IDisposable {
     private readonly client: Lifecycle<IS3Client>;
 
-    constructor(private readonly config: IS3PublisherConfiguration, client: IS3Client) {
+    constructor(
+        private readonly config: IS3PublisherConfiguration,
+        client: IS3Client
+    ) {
         this.client = makeLifecycle(client);
     }
 

@@ -67,7 +67,10 @@ class PartialObject {
 class PartialObjectWithMetadata extends PartialObject {}
 
 class SimpleObject {
-    constructor(public id: number, public str: string) {}
+    constructor(
+        public id: number,
+        public str: string
+    ) {}
 }
 
 class MessageWithObject {

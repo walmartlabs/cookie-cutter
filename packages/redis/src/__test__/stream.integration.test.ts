@@ -30,7 +30,7 @@ import { RedisMetrics } from "../RedisStreamSource";
 
 const RoundTripTestConfigurationPermutations: [
     string,
-    Partial<IRedisInputStreamOptions & IRedisOutputStreamOptions>
+    Partial<IRedisInputStreamOptions & IRedisOutputStreamOptions>,
 ][] = [
     ["base64_on", { base64Encode: true }],
     ["base64_off", { base64Encode: false }],

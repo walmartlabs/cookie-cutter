@@ -9,7 +9,10 @@ import { Span, SpanContext, Tracer } from "opentracing";
 import { ITracing } from "../model/tracing";
 
 export class TraceContext implements ITracing {
-    constructor(private tracer: Tracer, private readonly current: Span) {}
+    constructor(
+        private tracer: Tracer,
+        private readonly current: Span
+    ) {}
 
     public addTags(items: { [key: string]: any }): void {
         this.current.addTags(items);

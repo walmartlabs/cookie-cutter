@@ -81,10 +81,12 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
 
         const app = express();
         app.use(express.json());
-        const asyncHandler = (fn: RequestHandler) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            Promise.resolve(fn(req, res, next)).catch(next);
-        };
-        
+        const asyncHandler =
+            (fn: RequestHandler) =>
+            (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                Promise.resolve(fn(req, res, next)).catch(next);
+            };
+
         const impl: RequestHandler = async (
             req: express.Request,
             resp: express.Response,
@@ -120,7 +122,8 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                     __: MessageRef,
                     handlerReturnVal: IK8sAdmissionReviewResponse,
                     error: Error | undefined
-                ): Promise<void> => {                    this.metrics.increment(K8Metrics.AdmissionReviewProcessed, {
+                ): Promise<void> => {
+                    this.metrics.increment(K8Metrics.AdmissionReviewProcessed, {
                         event_type: msg.type,
                         namespace: request.namespace,
                         result: error ? K8MetricResult.Error : K8MetricResult.Success,

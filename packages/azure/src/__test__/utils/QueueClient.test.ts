@@ -134,7 +134,10 @@ describe("QueueClient", () => {
             const result = await client.write(span.context(), payload, headers);
             expect(result).toBeDefined();
             expect(getQueueClient).toHaveBeenCalledWith("queue123");
-            expect(sendMessage).toHaveBeenCalledWith(JSON.stringify({ payload, headers }), undefined);
+            expect(sendMessage).toHaveBeenCalledWith(
+                JSON.stringify({ payload, headers }),
+                undefined
+            );
         });
         it("should write message with options", async () => {
             const options = {

@@ -13,18 +13,18 @@ export async function loadTestProto(): Promise<any> {
     // This loads the proto file at runtime and returns Type instances for each message
     const protoPath = join(__dirname, "test.proto");
     const root = await protobuf.load(protoPath);
-    
+
     // Get the SampleMessage type and its nested type
     const SampleMessage = root.lookupType("cookiecutter.test.SampleMessage");
     const Nested = root.lookupType("cookiecutter.test.SampleMessage.Nested");
     const Timestamp = root.lookupType("google.protobuf.Timestamp");
-    
+
     // Reconstruct the nested structure that pbjsStaticModuleRegistry expects
     // The structure needs to have message types with encode/decode methods
     const SampleMessageWithNested = Object.assign(SampleMessage, {
         Nested: Nested,
     });
-    
+
     return {
         cookiecutter: {
             test: {

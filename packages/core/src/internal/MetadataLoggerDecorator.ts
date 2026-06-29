@@ -10,7 +10,10 @@ import { ILogger, ILoggerStructuredData, IMetadata } from "../model";
 
 export class MetadataLoggerDecorator implements ILogger {
     private fromMetadata: ILoggerStructuredData;
-    constructor(private readonly logger: ILogger, meta: IMetadata) {
+    constructor(
+        private readonly logger: ILogger,
+        meta: IMetadata
+    ) {
         this.fromMetadata = {};
         if (meta !== undefined) {
             for (const key of Object.keys(meta)) {

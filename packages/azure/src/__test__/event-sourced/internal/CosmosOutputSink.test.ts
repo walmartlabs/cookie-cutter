@@ -83,7 +83,7 @@ describe("event-sourced CosmosOutputSink", () => {
     const sequenceErrorBody = `Sequence Conflict for document at index: 0, stream_id: ${seqNumAlreadyUsedErrorKey}, new sn: 0, expected sn: 0, actual sn: 0.`; // keep the strings synced to ../resources/bulkInsertSproc.js
     const tooManyRequestErrorBody = `DB Query returned FALSE: createDocument failed on document at index: 0, stream_id: 0, sn: 0.`; // keep the strings synced to ../resources/bulkInsertSproc.js
     beforeEach(() => {
-        (bulkInsert = jest.fn().mockImplementation((_, partitionKey) => {
+        ((bulkInsert = jest.fn().mockImplementation((_, partitionKey) => {
             if (partitionKey === seqNumAlreadyUsedErrorKey) {
                 throw {
                     code: 400,
@@ -122,7 +122,7 @@ describe("event-sourced CosmosOutputSink", () => {
                     upsert: jest.fn(),
                     bulkInsert,
                 };
-            });
+            }));
     });
     afterEach(() => {
         tooManyRequestsErrorKey = "tooMany";

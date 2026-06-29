@@ -52,7 +52,7 @@ function isFullNameWritable(value: any, ns: string): boolean {
     if (value.fullName === ns) {
         return false;
     }
-    
+
     // Check if the property descriptor allows writing by walking the prototype chain
     let obj = value;
     while (obj) {
@@ -64,7 +64,7 @@ function isFullNameWritable(value: any, ns: string): boolean {
         }
         obj = Object.getPrototypeOf(obj);
     }
-    
+
     // If no descriptor found, it's writable
     return true;
 }
@@ -83,9 +83,9 @@ function processModuleKey(
     if (key === "google") {
         return;
     }
-    
+
     const ns = (namespace && `${namespace}.${key}`) || key;
-    
+
     if (isMessageType(value)) {
         // For v7 protobufjs Type instances, fullName is already set and read-only
         // For static-module generated code, we need to set it
@@ -107,12 +107,12 @@ export function* analyzeStaticModule(root: any): IterableIterator<[IProtoMessage
         if (!isObject(item?.obj)) {
             continue;
         }
-        
+
         for (const key of Object.keys(item.obj)) {
             const value = item.obj[key];
             processModuleKey(key, value, item.namespace, stack, results);
         }
     }
-    
+
     yield* results;
 }

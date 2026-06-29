@@ -298,10 +298,8 @@ export class S3Client implements IS3Client, IRequireInitialization {
         key: string,
         expiryMs: number
     ): Promise<string> {
-        return getSignedUrl(
-            this.client,
-            new GetObjectCommand({ Bucket: bucket, Key: key }),
-            { expiresIn: Math.floor(expiryMs / 1000) }
-        );
+        return getSignedUrl(this.client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+            expiresIn: Math.floor(expiryMs / 1000),
+        });
     }
 }

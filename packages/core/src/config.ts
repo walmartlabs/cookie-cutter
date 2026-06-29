@@ -7,7 +7,14 @@ LICENSE file in the root directory of this source tree.
 
 import ms = require("ms");
 import { IClassType } from "./model";
-import { isArray, isBoolean, isFunction, isNullOrUndefined, isNumber, isString } from "./utils/typeChecks";
+import {
+    isArray,
+    isBoolean,
+    isFunction,
+    isNullOrUndefined,
+    isNumber,
+    isString,
+} from "./utils/typeChecks";
 
 export type ValueConvertFn = (val: any) => any;
 
