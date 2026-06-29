@@ -3283,7 +3283,7 @@ async@^2.6.3:
   dependencies:
     lodash "^4.17.14"
 
-async@^3.2.3, async@^3.2.6:
+async@^3.2.4, async@^3.2.6:
   version "3.2.6"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/async/-/async-3.2.6.tgz#1b0728e14929d51b85b449b7f06e27c1145e38ce"
   integrity sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==
@@ -6856,10 +6856,10 @@ google-logging-utils@^1.0.0, google-logging-utils@^1.1.3:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-logging-utils/-/google-logging-utils-1.1.4.tgz#279c0f58efda53880e9bf0dda8b6d32789c570f9"
   integrity sha512-LXxE6ND+JHhDPYtPFt3oeWrjxFPrnRZCZ4At6lpbi1ZDSAN7bmGET9s53vvARbxT93p+xpeDUbc/nCR4C+7vcw==
 
-google-protobuf@3.20.1:
-  version "3.20.1"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-protobuf/-/google-protobuf-3.20.1.tgz#1b255c2b59bcda7c399df46c65206aa3c7a0ce8b"
-  integrity sha512-XMf1+O32FjYIV3CYu6Tuh5PNbfNEU5Xu22X+Xkdb/DUexFlCzhvv7d5Iirm4AOwn8lv4al1YvIhzGrg2j9Zfzw==
+google-protobuf@3.21.2:
+  version "3.21.2"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-protobuf/-/google-protobuf-3.21.2.tgz#4580a2bea8bbb291ee579d1fefb14d6fa3070ea4"
+  integrity sha512-3MSOYFO5U9mPGikIYCzK0SaThypfGgS6bHqrUGXG3DPHCrb+txNqeEcns1W0lkGfk0rCyNXm7xB9rMxnCiZOoA==
 
 gopd@^1.0.1, gopd@^1.2.0:
   version "1.2.0"
@@ -8790,18 +8790,18 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lightstep-tracer@0.34.0:
-  version "0.34.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/lightstep-tracer/-/lightstep-tracer-0.34.0.tgz#3da01b83790ef30324c1157c6fd1ca53643a58d3"
-  integrity sha512-+Hem/mrSq5zaeGTNHvfH3uBdvYWtZwsmFSbHWq5MFDlXe1AeMbL0C6Hd3WWp7dvfSyGvEz8dGuTgrstJ9zEoGg==
+lightstep-tracer@0.35.0:
+  version "0.35.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/lightstep-tracer/-/lightstep-tracer-0.35.0.tgz#3cdc7e692d2fe6614d6b5f8e55f360feb8fc60dc"
+  integrity sha512-trDG23dVzEuvjIAauGUqVlGG2I9i0xF7YlHo1Tlnw/YtNGtSx7vVIBF9qrSEmHqsL7FqpDXc8kdkbEsalos2nQ==
   dependencies:
-    async "^3.2.3"
+    async "^3.2.4"
     eventemitter3 "4.0.7"
-    google-protobuf "3.20.1"
+    google-protobuf "3.21.2"
     hex2dec "1.1.2"
     opentracing "^0.14.7"
     source-map-support "0.5.21"
-    thrift "^0.16.0"
+    thrift "^0.17.0"
 
 lines-and-columns@^1.1.6:
   version "1.2.4"
@@ -12588,10 +12588,10 @@ thread-stream@^3.0.0:
   dependencies:
     real-require "^0.2.0"
 
-thrift@^0.16.0:
-  version "0.16.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/thrift/-/thrift-0.16.0.tgz#6497711610aa32d2f94fc2546f88ee4ff6e4106c"
-  integrity sha512-W8DpGyTPlIaK3f+e1XOCLxefaUWXtrOXAaVIDbfYhmVyriYeAKgsBVFNJUV1F9SQ2SPt2sG44AZQxSGwGj/3VA==
+thrift@^0.17.0:
+  version "0.17.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/thrift/-/thrift-0.17.0.tgz#6d9c2d28437909cdb4aa21055d46d628aaa39a5b"
+  integrity sha512-F9kO3RIusa1iZw5waHfwmejJHqgcEqzE6d+ZHyhI5wQxk2zMFWSjP2rvYvCnolRiXGfW365+J8X1TF3rF6Ki+w==
   dependencies:
     browser-or-node "^1.2.1"
     isomorphic-ws "^4.0.1"
