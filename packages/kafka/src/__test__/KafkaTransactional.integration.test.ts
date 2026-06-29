@@ -30,13 +30,25 @@ import {
     MessageRef,
     sleep,
 } from "@walmartlabs/cookie-cutter-core";
-import * as ip from "ip";
+import * as os from "node:os";
 import { Consumer, Kafka } from "kafkajs";
 import { KafkaMessagePublishingStrategy, KafkaMetadata, kafkaSink } from "..";
 import { KafkaSink } from "../KafkaSink";
 import { TRACE_HEADER } from "../model";
 
 jest.setTimeout(60000);
+
+function getHostIp(): string {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name] ?? []) {
+            if (iface.family === "IPv4" && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return "127.0.0.1";
+}
 
 describe("Kafka Integration Tests", () => {
     let topicName;
@@ -47,7 +59,7 @@ describe("Kafka Integration Tests", () => {
     beforeEach(async () => {
         id = Date.now();
         topicName = `test-topic-${id}`;
-        const host = process.env.HOST_IP || ip.address();
+        const host = process.env.HOST_IP || getHostIp();
         broker = `${host}:30001`;
 
         const client = new Kafka({ clientId: "integration", brokers: [broker] });

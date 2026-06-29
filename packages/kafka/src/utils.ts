@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.
 
 import { getRootProjectPackageInfo } from "@walmartlabs/cookie-cutter-core";
 import { CompressionCodecs, CompressionTypes } from "kafkajs";
-import * as LZ4Codec from "kafkajs-lz4";
+import LZ4Codec from "@2l/kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
 import * as uuid from "uuid";
 

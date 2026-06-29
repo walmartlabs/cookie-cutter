@@ -23,7 +23,7 @@ import {
     DefaultComponentContext,
     IInputSourceContext,
 } from "@walmartlabs/cookie-cutter-core";
-import * as ip from "ip";
+import * as os from "node:os";
 import * as kafkajs from "kafkajs";
 import * as ot from "opentracing";
 import {
@@ -70,11 +70,23 @@ class DummyState<T> {
 }
 
 function generateBrokerAddr(): string {
-    const host = process.env.HOST_IP || ip.address();
+    const host = process.env.HOST_IP || getHostIp();
     if (!host) {
         throw new Error("HOST_IP env is incorrectly set");
     }
     return `${host}:30001`;
+}
+
+function getHostIp(): string {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name] ?? []) {
+            if (iface.family === "IPv4" && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return "127.0.0.1";
 }
 
 function producer(
