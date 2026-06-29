@@ -1,6 +1,7 @@
 {
     "name": "@walmartlabs/cookie-cutter-lightstep",
     "version": "1.6.0-beta.0",
+    "deprecated": "LightStep was acquired by ServiceNow and the lightstep-tracer package is no longer maintained. Migrate to OpenTelemetry with an OTLP exporter instead.",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

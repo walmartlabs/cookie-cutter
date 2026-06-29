@@ -5,8 +5,23 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
+/**
+ * @deprecated This package is deprecated. LightStep was acquired by ServiceNow
+ * and the lightstep-tracer package is no longer maintained.
+ * Migrate to OpenTelemetry with an OTLP exporter instead.
+ * @see https://opentelemetry.io/docs/languages/js/
+ */
+
 import { config, getRootProjectPackageInfo, ITracerBuilder } from "@walmartlabs/cookie-cutter-core";
 import { Tracer } from "opentracing";
+
+process.emitWarning(
+    "The @walmartlabs/cookie-cutter-lightstep package is deprecated. " +
+        "LightStep was acquired by ServiceNow and the lightstep-tracer package is no longer maintained. " +
+        "Migrate to OpenTelemetry with an OTLP exporter instead. " +
+        "See https://opentelemetry.io/docs/languages/js/",
+    "DeprecationWarning"
+);
 
 export enum LogLevel {
     None = 0, // the client library will never log to the console
@@ -128,6 +143,10 @@ class LightStepBuilder implements ITracerBuilder {
     }
 }
 
+/**
+ * @deprecated This package is deprecated. Migrate to OpenTelemetry with an OTLP exporter.
+ * @see https://opentelemetry.io/docs/languages/js/
+ */
 export function lightstepTracer(configuration: ILightStepConfiguration): ITracerBuilder {
     const packageInfo = getRootProjectPackageInfo();
     const parsedConfig = config.parse(LightStepConfiguration, configuration, {
