@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { CosmosClient as Client } from "@azure/cosmos";
+import { CosmosClient as Client, PartitionKeyKind } from "@azure/cosmos";
 
 const key = process.env.COSMOS_SECRET_KEY;
 const url = "https://localhost:8081";
@@ -25,7 +25,7 @@ export async function setup(config: CosmosConfig[]) {
             id: entry.databaseId,
         });
 
-        const partitionKey = { kind: "Hash", paths: ["/stream_id"] };
+        const partitionKey = { kind: PartitionKeyKind.Hash, paths: ["/stream_id"] };
         await client
             .database(entry.databaseId)
             .containers.createIfNotExists(
