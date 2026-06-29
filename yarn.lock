@@ -1328,17 +1328,17 @@
     "@eslint/core" "^1.2.1"
     levn "^0.4.1"
 
-"@google-cloud/bigquery@8.1.1":
-  version "8.1.1"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/bigquery/-/bigquery-8.1.1.tgz#2dd48c497a0229f653e39ff14499c7cd4378df1f"
-  integrity sha512-2GHlohfA/VJffTvibMazMsZi6jPRx8MmaMberyDTL8rnhVs/frKSXVVRtLU83uSAy2j/5SD4mOs4jMQgJPON2g==
+"@google-cloud/bigquery@8.3.1":
+  version "8.3.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/bigquery/-/bigquery-8.3.1.tgz#d32709faf7c4797d3b0b29a740c48a03d27efe5b"
+  integrity sha512-F4g9oMgI3EB5Uo+6npRHDSWn1HkVko8GebG1tJtzasn/gknAEFeobQzuLeGYC6SJ92RVdaBpGVisw86P70RrHQ==
   dependencies:
     "@google-cloud/common" "^6.0.0"
     "@google-cloud/paginator" "^6.0.0"
     "@google-cloud/precise-date" "^5.0.0"
     "@google-cloud/promisify" "^5.0.0"
     arrify "^3.0.0"
-    big.js "^6.2.2"
+    big.js "^7.0.0"
     duplexify "^4.1.3"
     extend "^3.0.2"
     stream-events "^1.0.5"
@@ -1404,10 +1404,10 @@
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/promisify/-/promisify-5.0.1.tgz#d512d9fdc6a94dd01adb94ed66635bf10f41b0b9"
   integrity sha512-Ste6NGraHq30ge3Sdq7m+pZE6lRUlkt2YgsEdq/vcoEgdbdZ/7h37Z1dMvivjhlbgrcmYRvlLF9FgI7tXm5wjg==
 
-"@google-cloud/pubsub@5.2.0":
-  version "5.2.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/pubsub/-/pubsub-5.2.0.tgz#e5eb823d55a2d1ec1ec29709fe7473b106b2aa7b"
-  integrity sha512-YNSRBo85mgPQ9QuuzAHjmLwngIwmy2RjAUAoPl2mOL2+bCM0cAVZswPb8ylcsWJP7PgDJlck+ybv0MwJ9AM0sg==
+"@google-cloud/pubsub@5.3.1":
+  version "5.3.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/pubsub/-/pubsub-5.3.1.tgz#94f1d6f77c3ad023ae606e6a8dfd8e30180a3cbe"
+  integrity sha512-xXAQBVVrFviWz8L8yDKEqv1ziVw/gMSpYHt3IxSYRSY0fTyjis+xOrKJILj8dd8PAUHGnGiAIYuTprflkE9jsQ==
   dependencies:
     "@google-cloud/paginator" "^6.0.0"
     "@google-cloud/precise-date" "^5.0.0"
@@ -1415,20 +1415,22 @@
     "@google-cloud/promisify" "^5.0.0"
     "@opentelemetry/api" "~1.9.0"
     "@opentelemetry/core" "^1.30.1"
-    "@opentelemetry/semantic-conventions" "~1.34.0"
+    "@opentelemetry/semantic-conventions" "~1.39.0"
     arrify "^2.0.0"
     extend "^3.0.2"
-    google-auth-library "^10.0.0-rc.1"
-    google-gax "^5.0.1-rc.0"
+    google-auth-library "^10.5.0"
+    google-gax "^5.0.5"
+    google-logging-utils "^1.1.3"
     heap-js "^2.6.0"
     is-stream-ended "^0.1.4"
     lodash.snakecase "^4.1.1"
+    long "^5.3.1"
     p-defer "^3.0.0"
 
-"@google-cloud/storage@7.18.0":
-  version "7.18.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/storage/-/storage-7.18.0.tgz#1b0e7415633e97b8ce0364c3e3aac033a52cb318"
-  integrity sha512-r3ZwDMiz4nwW6R922Z1pwpePxyRwE5GdevYX63hRmAQUkUQJcBH/79EnQPDv5cOv1mFBgevdNWQfi3tie3dHrQ==
+"@google-cloud/storage@7.21.0":
+  version "7.21.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@google-cloud/storage/-/storage-7.21.0.tgz#46b89afbdc3014e18b60afdfba5d9212a23e7b58"
+  integrity sha512-l+IFTkd+6Y5LoAuXyYCKNAKtw/Ci+rAMqgdTB1jv4iZiLhw0rtq+0qjIRbBizXkNzEFmXiXUW0H7sZQQvk1ffA==
   dependencies:
     "@google-cloud/paginator" "^5.0.0"
     "@google-cloud/projectify" "^4.0.0"
@@ -1436,7 +1438,7 @@
     abort-controller "^3.0.0"
     async-retry "^1.3.3"
     duplexify "^4.1.3"
-    fast-xml-parser "^4.4.1"
+    fast-xml-parser "^5.3.4"
     gaxios "^6.0.2"
     google-auth-library "^9.6.3"
     html-entities "^2.5.2"
@@ -1444,7 +1446,6 @@
     p-limit "^3.0.1"
     retry-request "^7.0.0"
     teeny-request "^9.0.0"
-    uuid "^8.0.0"
 
 "@grpc/grpc-js@1.6.10":
   version "1.6.10"
@@ -1865,6 +1866,11 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
+"@nodable/entities@^2.2.0":
+  version "2.2.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@nodable/entities/-/entities-2.2.0.tgz#a1d45a992b022591b1c2b03a77935c939375b642"
+  integrity sha512-9uGyhaQavEUMC8AIddIjau4NsnsXhou+j5sBAGojCM1oxmQpVKTWR/9JxABD6UAv12vpIms55fPZKFQEhG6uBg==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -1908,10 +1914,10 @@
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@opentelemetry/semantic-conventions/-/semantic-conventions-1.28.0.tgz#337fb2bca0453d0726696e745f50064411f646d6"
   integrity sha512-lp4qAiMTD4sNWW4DbKLBkfiMZ4jbAboJIGOQr5DvciMRI494OapieI9qiODpOt0XBr1LjIDy1xAGAnVs5supTA==
 
-"@opentelemetry/semantic-conventions@~1.34.0":
-  version "1.34.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@opentelemetry/semantic-conventions/-/semantic-conventions-1.34.0.tgz#8b6a46681b38a4d5947214033ac48128328c1738"
-  integrity sha512-aKcOkyrorBGlajjRdVoJWHTxfxO1vCNHLJVlSDaRHDIdjU+pX8IYQPvPDkYiujKLbRnWU+1TBwEt0QRgSm4SGA==
+"@opentelemetry/semantic-conventions@~1.39.0":
+  version "1.39.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@opentelemetry/semantic-conventions/-/semantic-conventions-1.39.0.tgz#f653b2752171411feb40310b8a8953d7e5c543b7"
+  integrity sha512-R5R9tb2AXs2IRLNKLBJDynhkfmx7mX0vi8NkhZb3gUkPWHn6HXk5J8iQ/dql0U3ApfWym4kXXmBDRGO+oeOfjg==
 
 "@panva/asn1.js@^1.0.0":
   version "1.0.0"
@@ -2309,13 +2315,6 @@
   version "12.20.55"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@types/node/-/node-12.20.55.tgz#c329cbd434c42164f846b909bd6f85b5537f6240"
   integrity sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==
-
-"@types/node@^18":
-  version "18.19.130"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/@types/node/-/node-18.19.130.tgz#da4c6324793a79defb7a62cba3947ec5add00d59"
-  integrity sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==
-  dependencies:
-    undici-types "~5.26.4"
 
 "@types/q@^1.5.1":
   version "1.5.8"
@@ -2748,6 +2747,11 @@ anymatch@^3.0.3:
   dependencies:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
+
+anynum@^1.0.1:
+  version "1.0.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/anynum/-/anynum-1.0.1.tgz#2aac00e08dfad3726c1d462e60dbc2f831659a44"
+  integrity sha512-N6//FLET/tXYNM/F6ABca1oH6fWB+KlTt909Le28WMDBk8oaT4vY17DCrwg2MvmuqUKt3Ni4N5dGJ/EoBgcO6A==
 
 arch@^2.1.0:
   version "2.2.0"
@@ -3189,10 +3193,10 @@ big.js@^5.2.2:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/big.js/-/big.js-5.2.2.tgz#65f0af382f578bcdc742bd9c281e9cb2d7768328"
   integrity sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==
 
-big.js@^6.2.2:
-  version "6.2.2"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/big.js/-/big.js-6.2.2.tgz#be3bb9ac834558b53b099deef2a1d06ac6368e1a"
-  integrity sha512-y/ie+Faknx7sZA5MfGA2xKlu0GDv8RWrXGsmlteyJQ2lvoKv9GBK/fpRMc2qlSoBAgNxrixICFCBefIq8WCQpQ==
+big.js@^7.0.0:
+  version "7.0.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/big.js/-/big.js-7.0.1.tgz#c537c649ec6ea11d1306723d13c096ba199aadc4"
+  integrity sha512-iFgV784tD8kq4ccF1xtNMZnXeZzVuXWWM+ERFzKQjv+A5G9HC8CY3DuV45vgzFFcW+u2tIvmF95+AzWgs6BjCg==
 
 bignumber.js@^9.0.0:
   version "9.3.1"
@@ -5716,12 +5720,32 @@ fast-levenshtein@^2.0.6:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==
 
-fast-xml-parser@^4.1.3, fast-xml-parser@^4.4.1:
+fast-xml-builder@^1.2.0:
+  version "1.2.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/fast-xml-builder/-/fast-xml-builder-1.2.0.tgz#abd2363145a7625d9789ad96da375fabe3cff28c"
+  integrity sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q==
+  dependencies:
+    path-expression-matcher "^1.5.0"
+    xml-naming "^0.1.0"
+
+fast-xml-parser@^4.1.3:
   version "4.5.6"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/fast-xml-parser/-/fast-xml-parser-4.5.6.tgz#4ff57d4aca13a2d11aa42ad460495cf00f32b655"
   integrity sha512-Yd4vkROfJf8AuJrDIVMVmYfULKmIJszVsMv7Vo71aocsKgFxpdlpSHXSaInvyYfgw2PRuObQSW2GFpVMUjxu9A==
   dependencies:
     strnum "^1.0.5"
+
+fast-xml-parser@^5.3.4:
+  version "5.9.3"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/fast-xml-parser/-/fast-xml-parser-5.9.3.tgz#9db7a6dba7ac6f8dc1ee924d69547b2d4750d60c"
+  integrity sha512-brCNCeScma/kqa54J4PIDriSSSLssRkuYaUCpvHJulGc3HGI/xxKUCTDcYkAdqJsyb//ydpbxecjC3hB9+tb/g==
+  dependencies:
+    "@nodable/entities" "^2.2.0"
+    fast-xml-builder "^1.2.0"
+    is-unsafe "^1.0.1"
+    path-expression-matcher "^1.5.0"
+    strnum "^2.4.1"
+    xml-naming "^0.1.0"
 
 fastq@^1.6.0:
   version "1.20.1"
@@ -6500,7 +6524,7 @@ google-auth-library@10.5.0:
     gtoken "^8.0.0"
     jws "^4.0.0"
 
-google-auth-library@^10.0.0-rc.1:
+google-auth-library@^10.0.0-rc.1, google-auth-library@^10.5.0:
   version "10.9.0"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-auth-library/-/google-auth-library-10.9.0.tgz#61e742af957818f572c3a5bce634c68355241d64"
   integrity sha512-xtvUqvINPhTaBm7nXqlYPcrMHJPm1lCNdSovxnKKhTm+4JsvQ+KGVYJViLoH9Yxu8w+T0Qv5HubzYT9BLrppJg==
@@ -6524,7 +6548,7 @@ google-auth-library@^9.6.3:
     gtoken "^7.0.0"
     jws "^4.0.0"
 
-google-gax@^5.0.1-rc.0:
+google-gax@^5.0.5:
   version "5.0.7"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-gax/-/google-gax-5.0.7.tgz#306132df351163abfbfd3cccee3494001eb6bd8b"
   integrity sha512-EhiqaWWJ+9h7sCcKJTsoo6tMcjokVHhWsbSuWCnZJT4vIBP3y4mAoFLnt9SzgkVZeq24ZsFaArr06nnYYku2yA==
@@ -6551,7 +6575,7 @@ google-logging-utils@^0.0.2:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-logging-utils/-/google-logging-utils-0.0.2.tgz#5fd837e06fa334da450433b9e3e1870c1594466a"
   integrity sha512-NEgUnEcBiP5HrPzufUkBzJOD/Sxsco3rLNo1F1TNf7ieU8ryUzBhqba8r756CjLX7rn3fHl6iLEwPYuqpoKgQQ==
 
-google-logging-utils@^1.0.0:
+google-logging-utils@^1.0.0, google-logging-utils@^1.1.3:
   version "1.1.4"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/google-logging-utils/-/google-logging-utils-1.1.4.tgz#279c0f58efda53880e9bf0dda8b6d32789c570f9"
   integrity sha512-LXxE6ND+JHhDPYtPFt3oeWrjxFPrnRZCZ4At6lpbi1ZDSAN7bmGET9s53vvARbxT93p+xpeDUbc/nCR4C+7vcw==
@@ -7638,6 +7662,11 @@ is-unicode-supported@^0.1.0:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/is-unicode-supported/-/is-unicode-supported-0.1.0.tgz#3f26c76a809593b52bfa2ecb5710ed2779b522a7"
   integrity sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==
 
+is-unsafe@^1.0.1:
+  version "1.0.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/is-unsafe/-/is-unsafe-1.0.1.tgz#ce89b55dec0034364f5beda41e10481efa8fa317"
+  integrity sha512-CLK2+VdgERgD96EYm5lUQssZYlRg2tkZnbsxZoacmSiRxiFJ4Nk4SzjCl+Ur+v3kXIY9dTIdb3IH22y1mZ56LA==
+
 is-url@^1.2.2:
   version "1.2.4"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/is-url/-/is-url-1.2.4.tgz#04a4df46d28c4cff3d73d01ff06abeb318a1aa52"
@@ -8682,7 +8711,7 @@ logalot@^2.0.0:
     figures "^1.3.5"
     squeak "^1.0.0"
 
-long@*, long@^5.0.0, long@^5.3.2:
+long@*, long@^5.0.0, long@^5.3.1, long@^5.3.2:
   version "5.3.2"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/long/-/long-5.3.2.tgz#1d84463095999262d7d7b7f8bfd4a8cc55167f83"
   integrity sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==
@@ -9865,6 +9894,11 @@ path-exists@^4.0.0:
   version "4.0.0"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/path-exists/-/path-exists-4.0.0.tgz#513bdbe2d3b95d7762e8c1137efa195c6c61b5b3"
   integrity sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==
+
+path-expression-matcher@^1.5.0:
+  version "1.6.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/path-expression-matcher/-/path-expression-matcher-1.6.1.tgz#fb190513954875d7e1b05c8caabe7fdd0a4cd75b"
+  integrity sha512-h7bxdzhHk8Knyc4Tj+jMaa7fEEoUJy7p1qtbVgkYg1Uhpe5Np5VuGXCRZnkZvU+Q42M1vStt0ifa3ueykRJPmQ==
 
 path-is-absolute@^1.0.0:
   version "1.0.1"
@@ -12009,6 +12043,13 @@ strnum@^1.0.5:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/strnum/-/strnum-1.1.2.tgz#57bca4fbaa6f271081715dbc9ed7cee5493e28e4"
   integrity sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==
 
+strnum@^2.4.1:
+  version "2.4.1"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/strnum/-/strnum-2.4.1.tgz#85417f683113badea0fe7e17227676f889ff7e58"
+  integrity sha512-M9eUSMT2dCB2cTNPG7UYj6KuK7RJR2SN2+yCV/fTW3xzTCS6EaGZ5pSMgDIjB7r8zSfTGk+dvvn9rTjpVS9Mwg==
+  dependencies:
+    anynum "^1.0.1"
+
 stubs@^3.0.0:
   version "3.0.0"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/stubs/-/stubs-3.0.0.tgz#e8d2ba1fa9c90570303c030b6900f7d5f89abe5b"
@@ -12544,11 +12585,6 @@ typescript@5.3.3:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/typescript/-/typescript-5.3.3.tgz#b3ce6ba258e72e6305ba66f5c9b452aaee3ffe37"
   integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
 
-typescript@^5.2:
-  version "5.9.3"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/typescript/-/typescript-5.9.3.tgz#5b4f59e15310ab17a216f5d6cf53ee476ede670f"
-  integrity sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==
-
 uglify-js@3.7.7:
   version "3.7.7"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/uglify-js/-/uglify-js-3.7.7.tgz#21e52c7dccda80a53bf7cde69628a7e511aec9c9"
@@ -12584,11 +12620,6 @@ unbzip2-stream@^1.0.9:
   version "1.13.8"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/underscore/-/underscore-1.13.8.tgz#a93a21186c049dbf0e847496dba72b7bd8c1e92b"
   integrity sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ==
-
-undici-types@^7.16.0:
-  version "7.28.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/undici-types/-/undici-types-7.28.0.tgz#295c3e632e0c0bbfaf9ab66b6d573e97df39b9b3"
-  integrity sha512-LJAfY+2w6HGeT8d8J1wNQsUGUEGio6NWWpwdwurQe4f6oojzCFuGLizl1KSve4irsTxyLly1QhEeE6iapdaIvQ==
 
 undici-types@~5.26.4:
   version "5.26.5"
@@ -12804,7 +12835,7 @@ uuid@8.0.0:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/uuid/-/uuid-8.0.0.tgz#bc6ccf91b5ff0ac07bbcdbf1c7c4e150db4dbb6c"
   integrity sha512-jOXGuXZAWdsTH7eZLtyXMqUb9EcWMGZNbL9YcGBJl4MH4nrxHmZJhEHvyLFrkxo+28uLb/NYRcStH48fnD0Vzw==
 
-uuid@8.3.2, uuid@^8.0.0, uuid@^8.3.0, uuid@^8.3.2:
+uuid@8.3.2, uuid@^8.3.0, uuid@^8.3.2:
   version "8.3.2"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
@@ -13091,6 +13122,11 @@ xml-js@^1.6.11:
   integrity sha512-7rVi2KMfwfWFl+GpPg6m80IVMWXLRjO+PxTq7V2CDhoGak0wzYzFgUY2m4XJ47OGdXd8eLE8EmwfAmdjw7lC1g==
   dependencies:
     sax "^1.2.4"
+
+xml-naming@^0.1.0:
+  version "0.1.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/xml-naming/-/xml-naming-0.1.0.tgz#8ab7106c5b8d23caa2fabac1cadf17136379fbd8"
+  integrity sha512-k8KO9hrMyNk6tUWqUfkTEZbezRRpONVOzUTnc97VnCvyj6Tf9lyUR9EDAIeiVLv56jsMcoXEwjW8Kv5yPY52lw==
 
 xml2js@0.4.19:
   version "0.4.19"
