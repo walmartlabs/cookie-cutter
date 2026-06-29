@@ -7416,12 +7416,12 @@ hosted-git-info@^2.1.4:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/hosted-git-info/-/hosted-git-info-2.8.9.tgz#dffc0bf9a21c02209090f2aa69429e1414daf3f9"
   integrity sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==
 
-hot-shots@9.1.0:
-  version "9.1.0"
-  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/hot-shots/-/hot-shots-9.1.0.tgz#05373e832cc44f8467bcd41da73e8f123f4a7189"
-  integrity sha512-CbNGD3/mn8yhVafjATd5/c3LeX1EMJ4IChOyEmC2WUT414TvnjD/O5LvEAPgbkBLHsjpTH1XJqVbQpZuMo+n1g==
+hot-shots@16.0.0:
+  version "16.0.0"
+  resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/hot-shots/-/hot-shots-16.0.0.tgz#51d6f0b51dc383965f16300f8c63797d84d68058"
+  integrity sha512-1WHuq7vv0Hj6wiSmR89XpxxiNnw9s1W50yGJExC3/PSqVv+Kr7GSk3rz0jsTWjhIkF1c5Nz9mpLdzJ+CqKKwMg==
   optionalDependencies:
-    unix-dgram "2.0.x"
+    unix-dgram "2.x"
 
 hpagent@^1.2.0:
   version "1.2.0"
@@ -13198,7 +13198,7 @@ universalify@^2.0.0:
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/universalify/-/universalify-2.0.1.tgz#168efc2180964e6386d061e094df61afe239b18d"
   integrity sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==
 
-unix-dgram@2.0.x:
+unix-dgram@2.x:
   version "2.0.7"
   resolved "https://npm.ci.artifacts.walmart.com:443/artifactory/api/npm/kepler-npm/unix-dgram/-/unix-dgram-2.0.7.tgz#cd27b075869d8d66c79d7b18f5e62b69b8178abf"
   integrity sha512-pWaQorcdxEUBFIKjCqqIlQaOoNVmchyoaNAJ/1LwyyfK2XSxcBhgJNiSE8ZRhR0xkNGyk4xInt1G03QPoKXY5A==
