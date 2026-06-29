@@ -32,7 +32,7 @@
         "postbuild": "node postbuild.js",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
         "integrate": "sh integrate.sh",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

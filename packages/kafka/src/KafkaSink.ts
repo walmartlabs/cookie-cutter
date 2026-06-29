@@ -21,7 +21,7 @@ import {
 import { paramCase } from "change-case";
 import * as kafkajs from "kafkajs";
 import Long = require("long");
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import {
     IKafkaBrokerConfiguration,
     IKafkaPublisherConfiguration,

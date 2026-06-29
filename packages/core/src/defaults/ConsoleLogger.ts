@@ -6,7 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import _ = require("lodash");
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "../utils/typeChecks";
 import { ILogger, ILoggerStructuredData } from "../model";
 
 export interface IConsoleLoggerOptions {

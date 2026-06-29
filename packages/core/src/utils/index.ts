@@ -14,6 +14,7 @@ import { OpenTracingTagKeys } from "../model";
 export * from "./AsyncPipe";
 export * from "./Future";
 export * from "./BoundedPriorityQueue";
+export * from "./typeChecks";
 export { createRetrier, createRetrierContext, IRetrier, RetrierContext } from "./retry";
 
 export type CancelablePromise<T> = Promise<T> & { cancel(): void };

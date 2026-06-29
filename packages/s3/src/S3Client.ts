@@ -20,7 +20,7 @@ import {
 import * as AWS from "aws-sdk";
 import { PromiseResult } from "aws-sdk/lib/request";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { isString } from "util";
+import { isString } from "@walmartlabs/cookie-cutter-core";
 import {
     IMultipartUploader,
     IS3Client,

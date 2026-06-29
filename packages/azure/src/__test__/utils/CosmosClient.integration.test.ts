@@ -20,7 +20,7 @@ import { setup, teardown } from "../integrationSetup";
 import { CosmosOutputSink } from "../../event-sourced/internal";
 import { cosmosMetadata, ICosmosDocument } from "../../utils";
 import { SpanContext } from "opentracing";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 
 jest.setTimeout(90000);
 

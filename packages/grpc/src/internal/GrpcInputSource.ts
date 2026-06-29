@@ -31,7 +31,7 @@ import {
 } from "@grpc/grpc-js";
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
 import { performance } from "perf_hooks";
-import { isError } from "util";
+import { isError } from "@walmartlabs/cookie-cutter-core";
 import {
     convertOperationPath,
     createGrpcConfiguration,

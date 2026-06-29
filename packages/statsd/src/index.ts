@@ -17,7 +17,7 @@ import {
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
 import { StatsD } from "hot-shots";
-import { isNumber } from "util";
+import { isNumber } from "@walmartlabs/cookie-cutter-core";
 
 export interface IStatsDConfiguration {
     /**

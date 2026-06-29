@@ -42,15 +42,16 @@ export function getCollectionInfo(key: string): { collectionId?: string; partiti
  * and on completion joins chunks together into a single string.
  * @param readableStream input to be converted to string
  */
-export function streamToString(readableStream: Stream): Promise<string> {
+export function streamToString(readableStream: Stream | NodeJS.ReadableStream): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const chunks = [];
-        readableStream.on("data", (data) => {
+        const stream = readableStream as NodeJS.ReadableStream;
+        stream.on("data", (data) => {
             chunks.push(data.toString());
         });
-        readableStream.on("end", () => {
+        stream.on("end", () => {
             resolve(chunks.join(""));
         });
-        readableStream.on("error", reject);
+        stream.on("error", reject);
     });
 }

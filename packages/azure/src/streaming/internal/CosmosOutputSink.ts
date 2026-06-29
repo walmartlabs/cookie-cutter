@@ -6,7 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { IOutputSink, IPublishedMessage, RetrierContext } from "@walmartlabs/cookie-cutter-core";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import { ICosmosConfiguration } from "../..";
 import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
 

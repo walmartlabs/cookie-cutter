@@ -36,7 +36,7 @@ import {
     WatchError,
 } from "redis";
 import { readFileSync } from "fs";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import { IRedisOptions, IRedisClient, IRedisMessage } from ".";
 
 export enum RedisClientMetrics {

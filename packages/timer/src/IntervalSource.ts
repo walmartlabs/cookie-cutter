@@ -25,7 +25,7 @@ export const INTERVAL_EVENT_TYPE = "internal.Interval";
 
 export class IntervalSource implements IInputSource, IRequireInitialization {
     private readonly pipe: AsyncPipe<MessageRef>;
-    private timer: NodeJS.Timer | undefined;
+    private timer: ReturnType<typeof setTimeout> | undefined;
     private tracer: Tracer;
 
     constructor(private readonly config: IIntervalConfig) {

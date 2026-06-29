@@ -25,7 +25,7 @@ import * as jsonpatch from "fast-json-patch";
 import * as https from "https";
 import * as _ from "lodash";
 import { Span, Tags, Tracer } from "opentracing";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import {
     IAdmissionReviewRequest,
     IK8sAdmissionControllerSourceConfiguration,
