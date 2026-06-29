@@ -29,7 +29,7 @@ import { AttributeNames, MqttMetricResults, MqttMetrics, MQTTOpenTracingTagKeys 
 
 export class MqttSubscriberSource implements IInputSource, IRequireInitialization, IDisposable {
     private done: boolean = false;
-    private client: mqtt.Client;
+    private client: mqtt.MqttClient;
     private tracer: Tracer;
     private logger: ILogger;
     private metrics: IMetrics;

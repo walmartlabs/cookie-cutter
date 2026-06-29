@@ -16,7 +16,7 @@ import {
     JsonMessageEncoder,
     sleep,
 } from "@walmartlabs/cookie-cutter-core";
-import { QoS } from "mqtt";
+import type { QoS } from "mqtt-packet";
 import {
     IMqttAuthConfig,
     IMqttMessage,

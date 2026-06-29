@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "mqtt": "4.3.7"
+        "mqtt": "5.15.1"
     },
     "peerDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"

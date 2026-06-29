@@ -19,7 +19,7 @@ import {
     StaticInputSource,
     StaticInputSourceType,
 } from "@walmartlabs/cookie-cutter-core";
-import { QoS } from "mqtt";
+import type { QoS } from "mqtt-packet";
 import { IMqttAuthConfig, IMqttPublisherConfiguration, MqttMetadata, mqttSink } from "..";
 import { AttributeNames } from "../model";
 
