@@ -167,12 +167,15 @@ module.exports = {
 
     // A map from regular expressions to paths to transformers
     "transform": {
-      "^.+\\.tsx?$": ["ts-jest", {}]
+      "^.+\\.tsx?$": ["ts-jest", {}],
+      "node_modules/(@kubernetes/client-node|openid-client|oauth4webapi|jose)/.*\\.js$": ["babel-jest", {
+        presets: [["@babel/preset-env", { targets: { node: "current" }, modules: "commonjs" }]]
+      }]
     },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
     "transformIgnorePatterns": [
-      "node_modules/(?!@walmartlabs)"
+      "node_modules/(?!(@walmartlabs|@kubernetes/client-node|openid-client|oauth4webapi|jose))"
     ],
   
     // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them

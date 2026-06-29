@@ -17,7 +17,6 @@ import {
     timeout,
 } from "@walmartlabs/cookie-cutter-core";
 import * as _ from "lodash";
-import request from "request";
 import { IK8sQueryProvider, IK8sWatchConfiguration, IWatchQueryParams } from ".";
 import { KubernetesBase } from "./KubernetesBaseSource";
 
@@ -176,39 +175,41 @@ export class KubernetesPollSource
     }
 
     public poll(kubeConfig: KubeConfig, path: string, queryParams: any): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
-            const cluster = kubeConfig.getCurrentCluster();
-            if (!cluster) {
-                throw new Error("No currently active cluster");
+        return new Promise<any>(async (resolve, reject) => {
+            try {
+                const cluster = kubeConfig.getCurrentCluster();
+                if (!cluster) {
+                    throw new Error("No currently active cluster");
+                }
+                const url = cluster.server + path;
+
+                // Build fetch options
+                const fetchOptions: any = {
+                    method: "GET",
+                };
+
+                // Apply kubeconfig authentication to fetch options
+                await kubeConfig.applyToFetchOptions(fetchOptions);
+
+                // Build URL with query parameters
+                const urlObj = new URL(url);
+                for (const [key, value] of Object.entries(queryParams || {})) {
+                    if (value) {
+                        urlObj.searchParams.append(key, String(value));
+                    }
+                }
+
+                const response = await fetch(urlObj.toString(), fetchOptions);
+
+                if (response.status !== 200) {
+                    reject(new Error(`${response.status}: ${response.statusText}`));
+                } else {
+                    const body = await response.json();
+                    resolve(body);
+                }
+            } catch (error) {
+                reject(error);
             }
-            const url = cluster.server + path;
-
-            const headerParams: any = {};
-
-            const requestOptions: request.Options = {
-                method: "GET",
-                qs: queryParams,
-                headers: headerParams,
-                uri: url,
-                useQuerystring: true,
-                json: true,
-            };
-            kubeConfig
-                .applyToRequest(requestOptions)
-                .then(() => {
-                    request(requestOptions, (error, response, body) => {
-                        if (error) {
-                            reject(error);
-                        } else if (response && response.statusCode !== 200) {
-                            reject(new Error(response.statusMessage));
-                        } else {
-                            resolve(body);
-                        }
-                    });
-                })
-                .catch((err) => {
-                    reject(err);
-                });
         });
     }
 

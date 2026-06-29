@@ -21,7 +21,6 @@
     },
     "devDependencies": {
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
-        "protobufjs-cli": "2.5.0",
         "uglify-js": "3.19.3",
         "eval": "0.1.8"
     },

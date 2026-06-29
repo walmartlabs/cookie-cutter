@@ -17,9 +17,7 @@ import {
     IRequireInitialization,
     MessageRef,
 } from "@walmartlabs/cookie-cutter-core";
-import * as bodyParser from "body-parser";
 import express from "express";
-import asyncHandler from "express-async-handler";
 import { RequestHandler } from "express-serve-static-core";
 import * as jsonpatch from "fast-json-patch";
 import * as https from "https";
@@ -82,11 +80,15 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
         this.metrics = ctx.metrics;
 
         const app = express();
-        app.use(bodyParser.json()); // for parsing application/json
+        app.use(express.json());
+        const asyncHandler = (fn: RequestHandler) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            Promise.resolve(fn(req, res, next)).catch(next);
+        };
+        
         const impl: RequestHandler = async (
             req: express.Request,
             resp: express.Response,
-            next: express.NextFunction
+            _next: express.NextFunction
         ) => {
             const request: any = req.body.request;
             const uid: string = req.body.request.uid;
@@ -118,8 +120,7 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                     __: MessageRef,
                     handlerReturnVal: IK8sAdmissionReviewResponse,
                     error: Error | undefined
-                ): Promise<void> => {
-                    this.metrics.increment(K8Metrics.AdmissionReviewProcessed, {
+                ): Promise<void> => {                    this.metrics.increment(K8Metrics.AdmissionReviewProcessed, {
                         event_type: msg.type,
                         namespace: request.namespace,
                         result: error ? K8MetricResult.Error : K8MetricResult.Success,
@@ -132,12 +133,10 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                     // expected server response format: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response
                     if (error) {
                         resp.json({ response: { uid, allowed: false } });
-                        next();
                         return;
                     }
                     if (!this.isValidK8sAdmissionReviewResponse(originalObject, handlerReturnVal)) {
                         resp.json({ response: { uid, allowed: true } });
-                        next();
                         return;
                     }
                     const admissionReviewResp: any = {
@@ -160,7 +159,6 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                             Buffer.from(jsonString).toString("base64");
                     }
                     resp.json(admissionReviewResp);
-                    next();
                 }
             );
 
