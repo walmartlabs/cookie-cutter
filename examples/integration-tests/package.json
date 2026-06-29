@@ -17,7 +17,7 @@
         "postbuild": "pbjs -t static-module -w commonjs -o ./dist/tally.js tally.proto",
         "start": "node dist/index",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

@@ -12,7 +12,7 @@
         "start:producer": "node dist/producer",
         "start:consumer": "node dist/consumer",
         "test": "echo '- no tests -'",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

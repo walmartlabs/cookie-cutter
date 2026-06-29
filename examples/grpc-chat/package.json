@@ -19,7 +19,7 @@
         "start:server": "node dist/server",
         "start:client": "node dist/client",
         "test": "echo '- no tests -'",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

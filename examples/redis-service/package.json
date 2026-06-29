@@ -12,7 +12,7 @@
         "build": "tsc",
         "start": "node dist/index",
         "test": "echo 'NO TESTS'",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }
