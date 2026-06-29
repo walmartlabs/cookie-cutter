@@ -13,8 +13,7 @@ import {
     IRequireInitialization,
     StaticInputSource,
 } from "@walmartlabs/cookie-cutter-core";
-import * as AWS from "aws-sdk";
-import { default as fetch } from "node-fetch";
+import { S3Client, CreateBucketCommand } from "@aws-sdk/client-s3";
 import { IS3Client, s3Client, S3Metadata, s3Sink } from "..";
 
 export class Increment {
@@ -91,21 +90,15 @@ describe("s3Sink", () => {
     const bucket = "s3-sink-client-bucket";
     let client;
     beforeAll(async () => {
-        const awsClient = new AWS.S3({
+        const awsClient = new S3Client({
             endpoint: s3Endpoint,
-            credentials: new AWS.Credentials({
-                accessKeyId,
-                secretAccessKey,
-            }),
-            sslEnabled: false,
-            s3BucketEndpoint: false,
-            s3ForcePathStyle: true,
+            credentials: { accessKeyId, secretAccessKey },
+            tls: false,
+            forcePathStyle: true,
+            region: "us-east-1",
         });
-        const params: AWS.S3.Types.CreateBucketRequest = {
-            Bucket: bucket,
-        };
         client = await testClient(s3Endpoint, accessKeyId, secretAccessKey);
-        await awsClient.createBucket(params).promise();
+        await awsClient.send(new CreateBucketCommand({ Bucket: bucket }));
     });
 
     it("processes input messages and saves objects to an existing s3 compliant backend bucket", async () => {
@@ -150,21 +143,15 @@ describe("s3Client", () => {
     let client;
 
     beforeAll(async () => {
-        const awsClient = new AWS.S3({
+        const awsClient = new S3Client({
             endpoint: s3Endpoint,
-            credentials: new AWS.Credentials({
-                accessKeyId,
-                secretAccessKey,
-            }),
-            sslEnabled: false,
-            s3BucketEndpoint: false,
-            s3ForcePathStyle: true,
+            credentials: { accessKeyId, secretAccessKey },
+            tls: false,
+            forcePathStyle: true,
+            region: "us-east-1",
         });
-        const params: AWS.S3.Types.CreateBucketRequest = {
-            Bucket: bucket,
-        };
         client = await testClient(s3Endpoint, accessKeyId, secretAccessKey);
-        await awsClient.createBucket(params).promise();
+        await awsClient.send(new CreateBucketCommand({ Bucket: bucket }));
     });
 
     it("saves objects to an existing s3 compliant backend bucket", async () => {
@@ -212,7 +199,7 @@ describe("s3Client", () => {
 
     it("generates pre-signed urls for get operations", async () => {
         await client.putObject(undefined, Buffer.name, Buffer.from(s3Object), bucket, "clientkey");
-        const url = client.createPresignedReadOnlyUrl(bucket, "clientkey", 5000);
+        const url = await client.createPresignedReadOnlyUrl(bucket, "clientkey", 5000);
         const response = await fetch(url);
         await expect(response.text()).resolves.toBe("test_blob");
     });

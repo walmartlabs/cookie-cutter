@@ -51,7 +51,6 @@ export function s3Sink(
 ): IOutputSink<IPublishedMessage> {
     configuration = config.parse(S3PublisherConfiguration, configuration, {
         sslEnabled: false,
-        apiVersion: "2006-03-01",
         encoder: new NullMessageEncoder(),
         typeMapper: new ObjectNameMessageTypeMapper(),
         timeout: undefined,
@@ -75,13 +74,12 @@ export interface IS3Client {
         bucket: string,
         key: string
     ): Promise<IMultipartUploader<T>>;
-    createPresignedReadOnlyUrl(bucket: string, key: string, expiryMs: number): string;
+    createPresignedReadOnlyUrl(bucket: string, key: string, expiryMs: number): Promise<string>;
 }
 
 export function s3Client(configuration: IS3Configuration): IS3Client & IRequireInitialization {
     configuration = config.parse(S3Configuration, configuration, {
         sslEnabled: false,
-        apiVersion: "2006-03-01",
         encoder: new NullMessageEncoder(),
         typeMapper: new ObjectNameMessageTypeMapper(),
         timeout: undefined,
