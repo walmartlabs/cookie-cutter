@@ -16,7 +16,6 @@
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "devDependencies": {
-        "@types/request-promise-native": "1.0.18",
         "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
     },
     "scripts": {
@@ -26,8 +25,5 @@
         "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     },
-    "dependencies": {
-        "request-promise-native": "1.0.9",
-        "ip": "2.0.1"
-    }
+    "dependencies": {}
 }
