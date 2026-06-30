@@ -340,7 +340,7 @@ jobs:
 
   publish-to-github-releases:
     name: Publish to GitHub Releases
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/develop') }}
     needs: smoke
     runs-on: ubuntu-latest
     permissions:
@@ -363,9 +363,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG=${GITHUB_REF#refs/tags/}
+            PRERELEASE=""
+          else
+            VERSION=$(node -e "console.log(require('./package.json').version)")
+            TAG="v${VERSION}"
+            PRERELEASE="--prerelease"
+          fi
           echo "Creating/updating release for tag: $TAG"
-          gh release create "$TAG" --generate-notes --title "$TAG" || true
+          gh release create "$TAG" --generate-notes --title "$TAG" $PRERELEASE || true
           echo "Uploading release assets"
           for tgz in release-assets/*.tgz; do
             echo "  uploading $tgz"

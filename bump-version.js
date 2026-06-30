@@ -19,6 +19,17 @@ for (const file of globSync("**/package.json", { ignore: ["node_modules/**", "pa
     updatePackageLock(file);
 }
 
+// Also bump the root package.json version (used as the release version tag)
+updateRootVersion("package.json");
+
+function updateRootVersion(path) {
+    const spec = JSON.parse(fs.readFileSync(path, { encoding: "utf8" }));
+    spec.version = newVersion;
+    fs.writeFileSync(path, JSON.stringify(spec, undefined, 4), { options: "utf8" });
+    fs.appendFileSync(path, "\n", { encoding: "utf8" });
+    console.log(`  bumped root package.json to ${newVersion}`);
+}
+
 function updatePackageLock(path) {
     const spec = JSON.parse(fs.readFileSync(path, { encoding: "utf8" }));
     if (!spec.name) return;
