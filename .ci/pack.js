@@ -1,6 +1,6 @@
 const { execSync } = require("child_process");
 const { join } = require("path");
-const { mkdirSync, renameSync, existsSync } = require("fs");
+const { mkdirSync } = require("fs");
 
 const OUTPUT_DIR = join(__dirname, "..", "release-assets");
 
@@ -37,13 +37,7 @@ function pack(packagePath) {
     const outFile = join(OUTPUT_DIR, `${safeName(name)}-${version}.tgz`);
 
     console.log(`packing ${name}@${version} -> ${outFile}`);
-    execSync(`yarn pack`, { cwd: fullPath, encoding: "utf-8" });
-
-    const packedFile = join(fullPath, "package.tgz");
-    if (!existsSync(packedFile)) {
-        throw new Error(`yarn pack did not produce package.tgz in ${fullPath}`);
-    }
-    renameSync(packedFile, outFile);
+    execSync(`yarn pack --filename "${outFile}"`, { cwd: fullPath, encoding: "utf-8" });
     console.log(`  -> ${outFile}`);
 }
 
