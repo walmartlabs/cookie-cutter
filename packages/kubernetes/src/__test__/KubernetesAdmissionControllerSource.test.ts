@@ -20,14 +20,62 @@ import {
     ErrorHandlingMode,
     IDispatchContext,
 } from "@walmartlabs/cookie-cutter-core";
-import * as fs from "fs";
-import * as path from "path";
-import rp from "request-promise-native";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import {
     IK8sAdmissionReviewResponse,
     k8sAdmissionControllerSource,
     K8sAdmissionReviewRequest,
 } from "..";
+
+// Helper to make HTTPS requests with self-signed certs (for testing)
+async function makeTestRequest(url: string, body: any, retries = 5): Promise<any> {
+    const https = await import("node:https");
+    const parsedUrl = new URL(url);
+    const attempt = (): Promise<any> =>
+        new Promise((resolve, reject) => {
+            const payload = JSON.stringify(body);
+            const req = https.request(
+                {
+                    hostname: parsedUrl.hostname,
+                    port: parsedUrl.port,
+                    path: parsedUrl.pathname,
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Content-Length": Buffer.byteLength(payload),
+                    },
+                    rejectUnauthorized: false,
+                },
+                (res) => {
+                    let data = "";
+                    res.on("data", (chunk) => (data += chunk));
+                    res.on("end", () => {
+                        try {
+                            resolve(JSON.parse(data));
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+                }
+            );
+            req.on("error", reject);
+            req.write(payload);
+            req.end();
+        });
+
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await attempt();
+        } catch (err: any) {
+            if (i < retries - 1 && (err.code === "ECONNRESET" || err.code === "ECONNREFUSED")) {
+                await new Promise((r) => setTimeout(r, 100));
+                continue;
+            }
+            throw err;
+        }
+    }
+}
 
 function testApp(handler: any, emptyCreds?: boolean): CancelablePromise<void> {
     const privateKey = emptyCreds
@@ -93,12 +141,7 @@ describe("KubernetesAdmissionControllerSource", () => {
             },
         });
         try {
-            const resp = await rp("https://127.0.0.1:8443/mutate", {
-                method: "POST",
-                rejectUnauthorized: false,
-                body: testRequestBody,
-                json: true,
-            });
+            const resp = await makeTestRequest("https://127.0.0.1:8443/mutate", testRequestBody);
             expect(resp).toMatchObject({ response: { allowed: true, uid: testUid } });
         } finally {
             app.cancel();
@@ -116,12 +159,7 @@ describe("KubernetesAdmissionControllerSource", () => {
             },
         });
         try {
-            const resp = await rp("https://127.0.0.1:8443/mutate", {
-                method: "POST",
-                rejectUnauthorized: false,
-                body: testRequestBody,
-                json: true,
-            });
+            const resp = await makeTestRequest("https://127.0.0.1:8443/mutate", testRequestBody);
             expect(resp).toMatchObject({
                 response: {
                     allowed: false,
@@ -150,12 +188,7 @@ describe("KubernetesAdmissionControllerSource", () => {
             },
         });
         try {
-            const resp = await rp("https://127.0.0.1:8443/mutate", {
-                method: "POST",
-                rejectUnauthorized: false,
-                body: testRequestBody,
-                json: true,
-            });
+            const resp = await makeTestRequest("https://127.0.0.1:8443/mutate", testRequestBody);
             expect(resp).toMatchObject({
                 response: {
                     allowed: true,

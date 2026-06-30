@@ -15,7 +15,7 @@ import {
     IMetricTags,
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
-import { isNullOrUndefined, isNumber, isString } from "util";
+import { isNullOrUndefined, isNumber, isString } from "@walmartlabs/cookie-cutter-core";
 import {
     IConfiguredHistogramBuckets,
     IPrometheusConfiguration,

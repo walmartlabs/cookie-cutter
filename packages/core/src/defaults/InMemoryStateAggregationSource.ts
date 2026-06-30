@@ -8,9 +8,9 @@ LICENSE file in the root directory of this source tree.
 import { SpanContext } from "opentracing";
 import { IAggregableState, IMessage, IStateAggregationSource } from "../model";
 
-export class InMemoryStateAggregationSource<TSnapshot>
-    implements IStateAggregationSource<TSnapshot>
-{
+export class InMemoryStateAggregationSource<
+    TSnapshot,
+> implements IStateAggregationSource<TSnapshot> {
     constructor(private readonly storage: Map<string, IMessage[]>) {}
 
     public async load(

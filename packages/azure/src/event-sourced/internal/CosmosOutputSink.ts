@@ -12,7 +12,7 @@ import {
     IStoredMessage,
     RetrierContext,
 } from "@walmartlabs/cookie-cutter-core";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import { ICosmosConfiguration, CosmosMetadata } from "../../";
 import { cosmosMetadata, CosmosOutputSinkBase, ICosmosDocument } from "../../utils";
 

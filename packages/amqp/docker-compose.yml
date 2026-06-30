@@ -1,11 +1,16 @@
-version: "3"
+version: "3.8"
 services:
   rabbitmq:
-    # can't connect to server for sha256:0dd96b9e8204012158bcdaaa992148700710c5eb81f1ef36351e03e6c69541b8
-    image: rabbitmq@sha256:39b5939a9c5b40e655a71bfcc5a4238963aed1f127ab51265f456f8296376855
+    image: rabbitmq:3.13-alpine
     ports:
       - "5672:5672"
     environment:
       - RABBITMQ_DEFAULT_USER=test
       - RABBITMQ_DEFAULT_PASS=test
       - RABBITMQ_DEFAULT_VHOST=test
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 20s

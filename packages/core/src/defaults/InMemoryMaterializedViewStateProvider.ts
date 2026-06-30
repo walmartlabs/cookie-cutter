@@ -11,7 +11,7 @@ import { SpanContext } from "opentracing";
 
 export class InMemoryMaterializedViewStateProvider<
     TState extends IState<TSnapshot>,
-    TSnapshot
+    TSnapshot,
 > extends MaterializedViewStateProvider<TState, TSnapshot> {
     public constructor(
         TState: IStateType<TState, TSnapshot>,

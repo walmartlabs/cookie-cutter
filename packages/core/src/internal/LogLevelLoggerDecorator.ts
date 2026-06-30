@@ -8,7 +8,10 @@ LICENSE file in the root directory of this source tree.
 import { ILogger, ILoggerStructuredData, LogLevel } from "../model";
 
 export class LogLevelLoggerDecorator implements ILogger {
-    constructor(private readonly logger: ILogger, private readonly level: LogLevel) {}
+    constructor(
+        private readonly logger: ILogger,
+        private readonly level: LogLevel
+    ) {}
 
     public info(message: string, data?: ILoggerStructuredData): void {
         if (this.level <= LogLevel.Info) {

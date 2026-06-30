@@ -110,7 +110,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const ctx = mockContext();
 
         await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
-        expect(ctx.logger.info).toBeCalledWith("test");
+        expect(ctx.logger.info).toHaveBeenCalledWith("test");
     });
 
     it("invokes function by message type name", async () => {
@@ -125,7 +125,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const ctx = mockContext();
 
         await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
-        expect(ctx.logger.info).toBeCalledWith("test");
+        expect(ctx.logger.info).toHaveBeenCalledWith("test");
     });
 
     it("returns handler's return value", async () => {
@@ -170,7 +170,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const ctx = mockContext();
 
         await dispatcher.dispatch(msg, ctx, { validation: { success: true } });
-        expect(ctx.logger.info).toBeCalledWith("test");
+        expect(ctx.logger.info).toHaveBeenCalledWith("test");
     });
 
     it("indicates if it can dispatch a message", () => {
@@ -211,7 +211,7 @@ describe("ConventionBasedMessageDispatcher", () => {
         const ctx = mockContext();
 
         await dispatcher.dispatch(msg, ctx, { validation: { success: false } });
-        expect(ctx.logger.info).toBeCalledWith("test");
+        expect(ctx.logger.info).toHaveBeenCalledWith("test");
     });
 
     it("returns async invalid message handler's return value", async () => {

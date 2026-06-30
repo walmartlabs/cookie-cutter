@@ -40,10 +40,10 @@ export class AmqpSource implements IInputSource, IRequireInitialization, IDispos
     private logger: ILogger;
     private metrics: IMetrics;
     private tracer: Tracer;
-    private conn: amqp.Connection;
+    private conn: amqp.ChannelModel;
     private channel: amqp.Channel;
     private running: boolean;
-    private loop: NodeJS.Timer;
+    private loop: ReturnType<typeof setTimeout>;
 
     constructor(private config: IAmqpConfiguration) {
         this.logger = DefaultComponentContext.logger;

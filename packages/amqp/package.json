@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-amqp",
-    "version": "1.6.0-beta.0",
+    "version": "1.6.0-beta.6",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,17 +13,16 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "amqplib": "0.10.0"
+        "amqplib": "2.0.1"
     },
     "devDependencies": {
-        "@types/amqplib": "0.8.2",
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.6.0-beta"
     },
     "scripts": {
         "build": "tsc",
         "test": "jest --passWithNoTests --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
-        "lint": "tslint --project tsconfig.json",
+        "integrate": "docker compose up -d --wait && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker compose down; bash -c \"exit $R\"",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

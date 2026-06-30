@@ -20,7 +20,7 @@ import {
     MessageRef,
 } from "@walmartlabs/cookie-cutter-core";
 import { FORMAT_HTTP_HEADERS, Tags, Tracer } from "opentracing";
-import { isArray } from "util";
+import { isArray } from "@walmartlabs/cookie-cutter-core";
 import { IQueueConfiguration, QueueMetadata } from "..";
 import {
     IQueueReadOptions,
@@ -47,7 +47,7 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
     private logger: ILogger;
     private tracer: Tracer;
     private running = false;
-    private loop: NodeJS.Timer;
+    private loop: ReturnType<typeof setTimeout>;
     private config: IQueueConfiguration & IQueueReadOptions;
 
     constructor(config: IQueueConfiguration & IQueueReadOptions) {

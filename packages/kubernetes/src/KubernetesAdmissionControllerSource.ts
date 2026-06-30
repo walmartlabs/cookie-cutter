@@ -17,15 +17,13 @@ import {
     IRequireInitialization,
     MessageRef,
 } from "@walmartlabs/cookie-cutter-core";
-import * as bodyParser from "body-parser";
 import express from "express";
-import asyncHandler from "express-async-handler";
 import { RequestHandler } from "express-serve-static-core";
 import * as jsonpatch from "fast-json-patch";
 import * as https from "https";
 import * as _ from "lodash";
 import { Span, Tags, Tracer } from "opentracing";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import {
     IAdmissionReviewRequest,
     IK8sAdmissionControllerSourceConfiguration,
@@ -82,11 +80,17 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
         this.metrics = ctx.metrics;
 
         const app = express();
-        app.use(bodyParser.json()); // for parsing application/json
+        app.use(express.json());
+        const asyncHandler =
+            (fn: RequestHandler) =>
+            (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                Promise.resolve(fn(req, res, next)).catch(next);
+            };
+
         const impl: RequestHandler = async (
             req: express.Request,
             resp: express.Response,
-            next: express.NextFunction
+            _next: express.NextFunction
         ) => {
             const request: any = req.body.request;
             const uid: string = req.body.request.uid;
@@ -132,12 +136,10 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                     // expected server response format: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response
                     if (error) {
                         resp.json({ response: { uid, allowed: false } });
-                        next();
                         return;
                     }
                     if (!this.isValidK8sAdmissionReviewResponse(originalObject, handlerReturnVal)) {
                         resp.json({ response: { uid, allowed: true } });
-                        next();
                         return;
                     }
                     const admissionReviewResp: any = {
@@ -160,7 +162,6 @@ export class KubernetesAdmissionControllerSource implements IInputSource, IRequi
                             Buffer.from(jsonString).toString("base64");
                     }
                     resp.json(admissionReviewResp);
-                    next();
                 }
             );
 

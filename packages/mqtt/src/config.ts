@@ -6,7 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { config, IMessageEncoder } from "@walmartlabs/cookie-cutter-core";
-import { QoS } from "mqtt";
+import type { QoS } from "mqtt-packet";
 import {
     IMqttAuthConfig,
     IMqttPreprocessor,

@@ -11,7 +11,7 @@ import {
     IEncodedMessageEmbedder,
 } from "@walmartlabs/cookie-cutter-core";
 import { IProtoMessageEncoderRegistry } from ".";
-import { isString } from "util";
+import { isString } from "@walmartlabs/cookie-cutter-core";
 
 export class ProtoMessageEncoder implements IMessageEncoder, IEncodedMessageEmbedder {
     public readonly mimeType: string = "application/x-protobuf";

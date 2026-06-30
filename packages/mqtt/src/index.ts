@@ -14,7 +14,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import { MQTTPublisherConfiguration, MQTTSubscriberConfiguration } from "./config";
 import { MqttPublisherSink } from "./MqttSink";
-import { QoS } from "mqtt";
+import type { QoS } from "mqtt-packet";
 import { MqttSubscriberSource } from "./MqttSource";
 
 export enum MqttMetadata {

@@ -31,7 +31,11 @@ jest.mock("@google-cloud/pubsub", () => {
 });
 
 class TestEvent {
-    constructor(public value: string, public topic?: string, public orderingKey?: string) {}
+    constructor(
+        public value: string,
+        public topic?: string,
+        public orderingKey?: string
+    ) {}
 }
 
 function createTestApp(
@@ -108,12 +112,12 @@ describe("PubSubSink Tests", () => {
     it("writes to default topic in pubsub", async () => {
         const testApp = createTestApp(messagesWithoutTopic, sink, ErrorHandlingMode.LogAndContinue);
         await testApp;
-        expect(mockPubSub).toBeCalledTimes(1);
-        expect(mockTopic).toBeCalledTimes(1);
+        expect(mockPubSub).toHaveBeenCalledTimes(1);
+        expect(mockTopic).toHaveBeenCalledTimes(1);
         expect(mockTopic.mock.calls[0]).toContain(
             pubSubPublisherConfigurationWithDefaultTopic.defaultTopic
         );
-        expect(mockPublishFn).toBeCalledTimes(messagesWithoutTopic.length);
+        expect(mockPublishFn).toHaveBeenCalledTimes(messagesWithoutTopic.length);
         messagesWithoutTopic.forEach((message, idx) => {
             expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
                 message.type
@@ -137,13 +141,13 @@ describe("PubSubSink Tests", () => {
         ];
         const testApp = createTestApp(messagesWithTopic, sink, ErrorHandlingMode.LogAndContinue);
         await testApp;
-        expect(mockPubSub).toBeCalledTimes(1);
-        expect(mockTopic).toBeCalledTimes(messagesWithTopic.length);
+        expect(mockPubSub).toHaveBeenCalledTimes(1);
+        expect(mockTopic).toHaveBeenCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
             expect(mockTopic.mock.calls[idx]).toContain(message.payload.topic);
             expect(mockTopic.mock.calls[idx][1].messageOrdering).toBeFalsy();
         });
-        expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
+        expect(mockPublishFn).toHaveBeenCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
             expect(mockPublishFn.mock.calls[idx][0].attributes[AttributeNames.eventType]).toBe(
                 message.type
@@ -164,13 +168,13 @@ describe("PubSubSink Tests", () => {
         ];
         const testApp = createTestApp(messagesWithTopic, sink, ErrorHandlingMode.LogAndContinue);
         await testApp;
-        expect(mockPubSub).toBeCalledTimes(1);
-        expect(mockTopic).toBeCalledTimes(messagesWithTopic.length);
+        expect(mockPubSub).toHaveBeenCalledTimes(1);
+        expect(mockTopic).toHaveBeenCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
             expect(mockTopic.mock.calls[idx]).toContain(message.payload.topic);
             expect(mockTopic.mock.calls[idx][1].messageOrdering).toBeTruthy();
         });
-        expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
+        expect(mockPublishFn).toHaveBeenCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
             expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBe(
                 message.payload.orderingKey
@@ -191,13 +195,13 @@ describe("PubSubSink Tests", () => {
         ];
         const testApp = createTestApp(messagesWithTopic, sink, ErrorHandlingMode.LogAndContinue);
         await testApp;
-        expect(mockTopic).toBeCalledTimes(1);
-        expect(mockPubSub).toBeCalledTimes(1);
+        expect(mockTopic).toHaveBeenCalledTimes(1);
+        expect(mockPubSub).toHaveBeenCalledTimes(1);
         messagesWithTopic.forEach((message) => {
             expect(mockTopic.mock.calls[0]).toContain(message.payload.topic);
             expect(mockTopic.mock.calls[0][1].messageOrdering).toBeTruthy();
         });
-        expect(mockPublishFn).toBeCalledTimes(messagesWithTopic.length);
+        expect(mockPublishFn).toHaveBeenCalledTimes(messagesWithTopic.length);
         messagesWithTopic.forEach((message, idx) => {
             expect(mockPublishFn.mock.calls[idx][0][PubSubMetadata.Key]).toBe(
                 message.payload.orderingKey
@@ -213,7 +217,7 @@ describe("PubSubSink Tests", () => {
         mockTopic.mockImplementation(() => {
             throw err;
         });
-        await expect(testApp).rejects.toThrowError();
+        await expect(testApp).rejects.toThrow();
     });
 
     it("rejects on error from PubSub topic", async () => {
@@ -221,6 +225,6 @@ describe("PubSubSink Tests", () => {
         mockPublishFn.mockImplementation(() => {
             throw err;
         });
-        await expect(testApp).rejects.toThrowError();
+        await expect(testApp).rejects.toThrow();
     });
 });

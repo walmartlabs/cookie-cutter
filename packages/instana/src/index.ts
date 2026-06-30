@@ -76,7 +76,7 @@ class InstanaBuilder implements ITracerBuilder {
 
         instana({
             tracing: {
-                disableAutomaticTracing: true,
+                automaticTracingEnabled: false,
             },
             serviceName: this.configuration.package.name,
             reportUncaughtException: true,
@@ -103,7 +103,7 @@ export function instanaTracer(
 
         instana({
             tracing: {
-                disableAutomaticTracing: true,
+                automaticTracingEnabled: false,
             },
             serviceName: parsedConfig.package.name,
             reportUncaughtException: true,

@@ -8,9 +8,10 @@ LICENSE file in the root directory of this source tree.
 import { IAggregableState, IMessage, IState, IStateAggregator, IStateType } from "../model";
 import { prettyEventName } from "../utils";
 
-export class ConventionBasedStateAggregator<TState extends IState<TSnapshot>, TSnapshot>
-    implements IStateAggregator<TState, TSnapshot>
-{
+export class ConventionBasedStateAggregator<
+    TState extends IState<TSnapshot>,
+    TSnapshot,
+> implements IStateAggregator<TState, TSnapshot> {
     constructor(
         private readonly TState: IStateType<TState, TSnapshot>,
         private readonly target: any

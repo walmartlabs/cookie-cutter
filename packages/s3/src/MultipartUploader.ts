@@ -11,8 +11,12 @@ import {
     IMessageEncoder,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
-import * as AWS from "aws-sdk";
-import { PromiseResult } from "aws-sdk/lib/request";
+import {
+    S3Client,
+    UploadPartCommand,
+    CompleteMultipartUploadCommand,
+    CompletedPart,
+} from "@aws-sdk/client-s3";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
 import { S3OpenTracingTagKeys } from "./S3Client";
 
@@ -23,11 +27,11 @@ export interface IMultipartUploader<T> {
 
 export class MultipartUploader<T> implements IMultipartUploader<T> {
     private uploadIdCounter: number = 0;
-    private uploadIdFinishedParts: AWS.S3.CompletedPart[] = new Array();
+    private uploadIdFinishedParts: CompletedPart[] = new Array();
     private spanOperationName: string = "S3 MultipartUploader Client Call";
 
     public constructor(
-        private readonly client: AWS.S3,
+        private readonly client: S3Client,
         private encoder: IMessageEncoder,
         private endpoint: string,
         private type: string,
@@ -51,9 +55,9 @@ export class MultipartUploader<T> implements IMultipartUploader<T> {
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
         span.setTag(Tags.COMPONENT, "cookie-cutter-s3");
         span.setTag(Tags.DB_INSTANCE, this.bucket);
-        span.setTag(Tags.DB_TYPE, AWS.S3.name);
+        span.setTag(Tags.DB_TYPE, "S3");
         span.setTag(Tags.PEER_ADDRESS, this.endpoint);
-        span.setTag(Tags.PEER_SERVICE, AWS.S3.name);
+        span.setTag(Tags.PEER_SERVICE, "S3");
         span.setTag(OpenTracingTagKeys.FunctionName, funcName);
         span.setTag(S3OpenTracingTagKeys.BucketName, this.bucket);
     }
@@ -70,28 +74,19 @@ export class MultipartUploader<T> implements IMultipartUploader<T> {
         try {
             const partNumber = this.uploadIdCounter + 1;
             this.uploadIdCounter = partNumber;
-            const params: AWS.S3.Types.UploadPartRequest = {
-                Body: encodedBody,
-                Bucket: this.bucket,
-                Key: this.key,
-                UploadId: this.uploadId,
-                PartNumber: partNumber,
-            };
-            const req = await this.client.uploadPart(params).promise();
-            if (req.$response.error) {
-                throw new Error(
-                    `code: ${req.$response.error.code}, message: ${req.$response.error.message}`
-                );
+            const result = await this.client.send(
+                new UploadPartCommand({
+                    Body: encodedBody,
+                    Bucket: this.bucket,
+                    Key: this.key,
+                    UploadId: this.uploadId,
+                    PartNumber: partNumber,
+                })
+            );
+            if (!result.ETag) {
+                throw new Error(`no eTag returned from uploadPart request`);
             }
-            const completedPart: AWS.S3.CompletedPart = {
-                PartNumber: partNumber,
-            };
-            if (req.$response.data && req.$response.data.ETag) {
-                completedPart.ETag = req.$response.data.ETag;
-            } else {
-                throw new Error(`no eTag returned from uploadPart request: ${req.$response.data}}`);
-            }
-            this.uploadIdFinishedParts.push(completedPart);
+            this.uploadIdFinishedParts.push({ PartNumber: partNumber, ETag: result.ETag });
         } catch (e) {
             failSpan(span, e);
             throw e;
@@ -104,26 +99,23 @@ export class MultipartUploader<T> implements IMultipartUploader<T> {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: this.context });
         this.spanLogAndSetTags(span, this.completeMultipartUpload.name);
 
-        let req: PromiseResult<AWS.S3.CompleteMultipartUploadOutput, AWS.AWSError>;
+        let statusCode: number | undefined;
         try {
-            const params: AWS.S3.Types.CompleteMultipartUploadRequest = {
-                Bucket: this.bucket,
-                Key: this.key,
-                UploadId: this.uploadId,
-                MultipartUpload: { Parts: this.uploadIdFinishedParts },
-            };
-            req = await this.client.completeMultipartUpload(params).promise();
-            if (req.$response.error) {
-                throw new Error(
-                    `code: ${req.$response.error.code}, message: ${req.$response.error.message}`
-                );
-            }
+            const result = await this.client.send(
+                new CompleteMultipartUploadCommand({
+                    Bucket: this.bucket,
+                    Key: this.key,
+                    UploadId: this.uploadId,
+                    MultipartUpload: { Parts: this.uploadIdFinishedParts },
+                })
+            );
+            statusCode = result.$metadata.httpStatusCode;
         } catch (e) {
             failSpan(span, e);
             throw e;
         } finally {
-            if (req) {
-                span.setTag(Tags.HTTP_STATUS_CODE, req.$response.httpResponse.statusCode);
+            if (statusCode !== undefined) {
+                span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
             }
             span.finish();
         }

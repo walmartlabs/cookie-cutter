@@ -1,4 +1,4 @@
-const glob = require("glob");
+const { globSync } = require("glob");
 const fs = require("fs");
 
 const newVersion = process.argv[2];
@@ -15,16 +15,28 @@ if (newVersion.indexOf("-") > 0) {
 
 console.log(`bumping to version ${newVersion}, peer dependency = ${peerDepVersion}`);
 
-glob("**/package.json", { ignore: ["node_modules/**", "package.json"] }, (_, files) => {
-    for (const file of files) {
-        updatePackageLock(file);
-    }
-});
+for (const file of globSync("**/package.json", { ignore: ["node_modules/**", "package.json"] })) {
+    updatePackageLock(file);
+}
+
+// Also bump the root package.json version (used as the release version tag)
+updateRootVersion("package.json");
+
+function updateRootVersion(path) {
+    const spec = JSON.parse(fs.readFileSync(path, { encoding: "utf8" }));
+    spec.version = newVersion;
+    fs.writeFileSync(path, JSON.stringify(spec, undefined, 4), { options: "utf8" });
+    fs.appendFileSync(path, "\n", { encoding: "utf8" });
+    console.log(`  bumped root package.json to ${newVersion}`);
+}
 
 function updatePackageLock(path) {
     const spec = JSON.parse(fs.readFileSync(path, { encoding: "utf8" }));
-    if (spec.name.startsWith("@walmartlabs/")) {
+    if (!spec.name) return;
+    if (spec.name.startsWith("@walmartlabs/") && !spec.deprecated) {
         spec.version = newVersion;
+    } else if (spec.deprecated) {
+        console.log(`  skipping version bump for deprecated package: ${spec.name}`);
     }
 
     const sections = [

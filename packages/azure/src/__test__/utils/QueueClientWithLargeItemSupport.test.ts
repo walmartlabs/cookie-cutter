@@ -61,21 +61,21 @@ describe("QueueClientWithLargeItemSupport", () => {
         it("should initialize underlying clients", async () => {
             const { client, blob, queue } = buildClient();
             await client.initialize({} as IComponentContext);
-            expect(blob.initialize).toBeCalled();
-            expect(queue.initialize).toBeCalled();
+            expect(blob.initialize).toHaveBeenCalled();
+            expect(queue.initialize).toHaveBeenCalled();
         });
         it("should initialize container", async () => {
             const { client, blob } = buildClient();
             await client.initialize({} as IComponentContext);
-            expect(blob.createContainerIfNotExists).toBeCalled();
+            expect(blob.createContainerIfNotExists).toHaveBeenCalled();
         });
     });
     describe("write", () => {
         it("should not do anything if write succeeds", async () => {
             const { client, blob, queue } = buildClient();
             await client.write(context, payload, headers);
-            expect(queue.write).toBeCalled();
-            expect(blob.write).not.toBeCalled();
+            expect(queue.write).toHaveBeenCalled();
+            expect(blob.write).not.toHaveBeenCalled();
         });
         it("should write to blob if error is 413", async () => {
             const { client, blob, queue } = buildClient();
@@ -84,8 +84,8 @@ describe("QueueClientWithLargeItemSupport", () => {
             queue.write.mockRejectedValueOnce(error);
             await client.initialize({ tracer } as unknown as IComponentContext);
             await client.write(context, payload, headers);
-            expect(queue.write).toBeCalledTimes(2);
-            expect(blob.write).toBeCalled();
+            expect(queue.write).toHaveBeenCalledTimes(2);
+            expect(blob.write).toHaveBeenCalled();
         });
     });
     describe("read", () => {
@@ -94,7 +94,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             queue.read.mockResolvedValue([messageQueueResult]);
             const result = await client.read(context);
             expect(result[0]).toMatchObject(messageQueueResult);
-            expect(blob.readAsText).not.toBeCalled();
+            expect(blob.readAsText).not.toHaveBeenCalled();
         });
         it("should read from blob if blob header", async () => {
             const { client, queue, blob } = buildClient();
@@ -110,7 +110,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             queue.read.mockResolvedValue([messageResult]);
             blob.readAsText.mockResolvedValue(messageQueueResult.messageText);
             const result = await client.read(context);
-            expect(blob.readAsText).toBeCalled();
+            expect(blob.readAsText).toHaveBeenCalled();
             expect(result[0]).toMatchObject(messageQueueResult);
         });
         it("should read mixed", async () => {
@@ -127,7 +127,7 @@ describe("QueueClientWithLargeItemSupport", () => {
             queue.read.mockResolvedValue([messageResult, messageQueueResult]);
             blob.readAsText.mockResolvedValue(messageQueueResult.messageText);
             const result = await client.read(context);
-            expect(blob.readAsText).toBeCalledTimes(1);
+            expect(blob.readAsText).toHaveBeenCalledTimes(1);
             expect(result).toMatchObject([messageQueueResult, messageQueueResult]);
         });
     });

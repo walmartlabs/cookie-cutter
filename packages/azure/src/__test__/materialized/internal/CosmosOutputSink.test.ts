@@ -56,7 +56,7 @@ describe("materialized CosmosOutputSink", () => {
     const bodyDbQueryTimeout = `DB Query returned FALSE: Failed to replace document: stream_id: ${dbQueryTimeout}, sn: 0`;
     const bodyOptimisticConcurrency = `Sequence Conflict for document: stream_id: ${optimisticConcurrencyKey}, new sn: 0, expected sn: 0, actual sn: 0.`; // keep the string synced to ../resources/upsertSproc.js
     beforeEach(() => {
-        (upsert = jest.fn().mockImplementation((_, partitionKey) => {
+        ((upsert = jest.fn().mockImplementation((_, partitionKey) => {
             if (partitionKey === optimisticConcurrencyKey) {
                 throw {
                     code: 400,
@@ -89,7 +89,7 @@ describe("materialized CosmosOutputSink", () => {
                     upsert,
                     bulkInsert: jest.fn(),
                 };
-            });
+            }));
     });
     beforeEach(() => {
         upsert.mockClear();
@@ -141,7 +141,7 @@ describe("materialized CosmosOutputSink", () => {
         };
 
         expect(spyBail).toHaveBeenCalledTimes(0);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining(expected),
             expected.stream_id,
             currentSn
@@ -179,7 +179,7 @@ describe("materialized CosmosOutputSink", () => {
         );
 
         expect(spyBail).toHaveBeenCalledTimes(0);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining({ sn: 3, data: { value: "bar" } }),
             streamId,
             currentSn
@@ -217,7 +217,7 @@ describe("materialized CosmosOutputSink", () => {
         );
 
         expect(spyBail).toHaveBeenCalledTimes(0);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining({ sn: 3, data: undefined }),
             streamId,
             currentSn
@@ -250,7 +250,7 @@ describe("materialized CosmosOutputSink", () => {
         });
 
         expect(spyBail).toHaveBeenCalledTimes(1);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
             not400ErrorKey,
             currentSn
@@ -287,7 +287,7 @@ describe("materialized CosmosOutputSink", () => {
         );
 
         expect(spyBail).toHaveBeenCalledTimes(1);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
             optimisticConcurrencyKey,
             currentSn
@@ -323,7 +323,7 @@ describe("materialized CosmosOutputSink", () => {
 
         expect(spySetNextRetryInterval).toHaveBeenCalledWith(ms);
         expect(spyBail).toHaveBeenCalledTimes(0);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
             dbQueryTimeout,
             currentSn
@@ -369,7 +369,7 @@ describe("materialized CosmosOutputSink", () => {
         ).resolves.toBe(undefined);
         expect(spyBail).toHaveBeenCalledTimes(0);
         expect(upsert).toHaveBeenCalledTimes(numErrors + 1);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining({ sn: 2, data: { value: "test" } }),
             expectedKey,
             currentSn
@@ -430,7 +430,7 @@ describe("materialized CosmosOutputSink", () => {
         };
 
         expect(spyBail).toHaveBeenCalledTimes(0);
-        expect(upsert).lastCalledWith(
+        expect(upsert).toHaveBeenLastCalledWith(
             expect.objectContaining(expected),
             expected.stream_id,
             currentSn

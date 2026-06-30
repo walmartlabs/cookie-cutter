@@ -5,7 +5,7 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import * as LRU from "lru-cache";
+import { LRUCache } from "lru-cache";
 import { ICacheOptions } from "./cache";
 import { EventSourcedMetadata, IDispatchContext, IState, IStateType, StateRef } from "./model";
 
@@ -22,7 +22,7 @@ export function createEventStreamHandler<TState extends IState<TSnapshot>, TSnap
     options?: ICacheOptions
 ): any {
     options = options || {};
-    const cache: LRU<string, StateRef<TState>> = new LRU({ max: options.maxSize || 1000 });
+    const cache = new LRUCache<string, StateRef<TState>>({ max: options.maxSize || 1000 });
 
     const handler = {};
     for (const prop of Object.getOwnPropertyNames(aggregator.__proto__)) {

@@ -10,7 +10,10 @@ import { Span, SpanOptions, Tracer } from "opentracing";
 import { ISpanTags } from "../model";
 
 export class TracerDecorator extends Tracer {
-    constructor(private inner: Tracer, private readonly globalTags: ISpanTags) {
+    constructor(
+        private inner: Tracer,
+        private readonly globalTags: ISpanTags
+    ) {
         super();
     }
 

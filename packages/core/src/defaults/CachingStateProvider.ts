@@ -5,10 +5,10 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import * as LRU from "lru-cache";
+import { LRUCache } from "lru-cache";
 import { SpanContext } from "opentracing";
-import { isString } from "util";
 import { ICacheOptions } from "..";
+import { isString } from "../utils/typeChecks";
 import {
     IClassType,
     IComponentContext,
@@ -30,7 +30,7 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         IRequireInitialization,
         IDisposable
 {
-    private readonly cache: LRU<string, StateRef<TState>>;
+    private readonly cache: LRUCache<string, StateRef<TState>>;
     private readonly underlying: Lifecycle<IStateProvider<TState>>;
     private readonly callbacks: Set<(item: StateRef<TState>) => void>;
     private callbacksDisabledFor: Set<string>;
@@ -42,11 +42,11 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
     ) {
         this.callbacks = new Set();
         this.callbacksDisabledFor = new Set();
-        this.cache = new LRU({
+        this.cache = new LRUCache({
             max: options.maxSize || 1000,
-            maxAge: options.maxTTL,
+            ttl: options.maxTTL,
             noDisposeOnSet: true,
-            dispose: (_, val) => {
+            dispose: (val) => {
                 if (!this.callbacksDisabledFor.has((val as any).key)) {
                     for (const cb of this.callbacks.values()) {
                         cb(val as any);
@@ -86,7 +86,7 @@ export class CachingStateProvider<TState extends IState<TSnapshot>, TSnapshot>
         const fn = (key: string) => {
             this.callbacksDisabledFor.add(key);
             try {
-                this.cache.del(key);
+                this.cache.delete(key);
             } finally {
                 this.callbacksDisabledFor.delete(key);
             }

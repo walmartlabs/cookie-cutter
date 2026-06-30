@@ -1,6 +1,7 @@
 {
     "name": "@walmartlabs/cookie-cutter-lightstep",
     "version": "1.6.0-beta.0",
+    "deprecated": "LightStep was acquired by ServiceNow and the lightstep-tracer package is no longer maintained. Migrate to OpenTelemetry with an OTLP exporter instead.",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,19 +14,19 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "lightstep-tracer": "0.34.0",
+        "lightstep-tracer": "0.35.0",
         "opentracing": "0.14.7"
     },
     "peerDependencies": {
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.6.0-beta"
     },
     "devDependencies": {
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.6.0-beta"
     },
     "scripts": {
         "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

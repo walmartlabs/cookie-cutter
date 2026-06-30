@@ -133,8 +133,11 @@ describe("QueueClient", () => {
         it("should write message with defaults", async () => {
             const result = await client.write(span.context(), payload, headers);
             expect(result).toBeDefined();
-            expect(getQueueClient).toBeCalledWith("queue123");
-            expect(sendMessage).toBeCalledWith(JSON.stringify({ payload, headers }), undefined);
+            expect(getQueueClient).toHaveBeenCalledWith("queue123");
+            expect(sendMessage).toHaveBeenCalledWith(
+                JSON.stringify({ payload, headers }),
+                undefined
+            );
         });
         it("should write message with options", async () => {
             const options = {
@@ -143,8 +146,8 @@ describe("QueueClient", () => {
                 messageTimeToLive: 124,
             };
             await client.write(span.context(), payload, headers, options);
-            expect(sendMessage).toBeCalledWith(JSON.stringify({ payload, headers }), options);
-            expect(getQueueClient).toBeCalledWith(options.queueName);
+            expect(sendMessage).toHaveBeenCalledWith(JSON.stringify({ payload, headers }), options);
+            expect(getQueueClient).toHaveBeenCalledWith(options.queueName);
         });
         it("should pass client failure up", async () => {
             const error = new Error("something bad happend");
@@ -156,7 +159,7 @@ describe("QueueClient", () => {
         it("should error if text is to big", async () => {
             const bigText = Buffer.alloc(65 * 1024);
             const result = client.write(span.context(), bigText, headers);
-            expect(sendMessage).not.toBeCalled();
+            expect(sendMessage).not.toHaveBeenCalled();
             await expect(result).rejects.toEqual(
                 new Error("Queue Message too big, must be less than 64kb, is: 173.423828125")
             );
@@ -172,7 +175,7 @@ describe("QueueClient", () => {
                 return Promise.reject(error);
             });
             const result = client.write(span.context(), bigText, headers);
-            expect(sendMessage).toBeCalled();
+            expect(sendMessage).toHaveBeenCalled();
             await expect(result).rejects.toEqual(error);
         });
 
@@ -189,8 +192,8 @@ describe("QueueClient", () => {
                 createQueueIfNotExists: true,
             });
             const result = await configuredClient.write(span.context(), payload, headers);
-            expect(sendMessage).toBeCalledTimes(2);
-            expect(create).toBeCalled();
+            expect(sendMessage).toHaveBeenCalledTimes(2);
+            expect(create).toHaveBeenCalled();
             expect(result).toBeDefined();
         });
         it("should not retry on 404s if not configured to", async () => {
@@ -200,8 +203,8 @@ describe("QueueClient", () => {
             });
             const result = client.write(span.context(), payload, headers);
             await expect(result).rejects.toMatchObject({ statusCode: 404 });
-            expect(create).not.toBeCalled();
-            expect(sendMessage).toBeCalledTimes(1);
+            expect(create).not.toHaveBeenCalled();
+            expect(sendMessage).toHaveBeenCalledTimes(1);
         });
 
         it("should not retry on other errors (even if configured to)", async () => {
@@ -215,8 +218,8 @@ describe("QueueClient", () => {
             });
             const result = configuredClient.write(span.context(), payload, headers);
             await expect(result).rejects.toMatchObject({ statusCode: 401 });
-            expect(create).not.toBeCalled();
-            expect(sendMessage).toBeCalledTimes(1);
+            expect(create).not.toHaveBeenCalled();
+            expect(sendMessage).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -230,7 +233,7 @@ describe("QueueClient", () => {
                 expect(message.headers[QueueMetadata.PopReceipt]).toBe(mockMessages[i].popReceipt);
                 expect(message.payload).toStrictEqual({ testKey: "testValue" });
             });
-            expect(receiveMessages).toBeCalledWith({
+            expect(receiveMessages).toHaveBeenCalledWith({
                 numOfMessages: undefined,
                 visibilityTimeout: undefined,
             });
@@ -253,7 +256,7 @@ describe("QueueClient", () => {
                 preprocessor: new EnvelopeQueueMessagePreprocessor(),
             });
             await client.read(span.context(), options);
-            expect(receiveMessages).toBeCalledWith({
+            expect(receiveMessages).toHaveBeenCalledWith({
                 numberOfMessages: options.numOfMessages,
                 visibilityTimeout: options.visibilityTimeout,
             });
@@ -272,14 +275,14 @@ describe("QueueClient", () => {
         const client = new QueueClient(configuration);
         it("should delete message when processed with default queue name", async () => {
             await client.markAsProcessed(span.context(), "123", "pop123");
-            expect(deleteMessage).toBeCalledWith("123", "pop123");
+            expect(deleteMessage).toHaveBeenCalledWith("123", "pop123");
         });
         it("should delete message when processed with different queue name", async () => {
             const options = { queueName: "different" };
             await client.markAsProcessed(span.context(), "123", "pop123", options.queueName);
 
-            expect(getQueueClient).toBeCalledWith(options.queueName);
-            expect(deleteMessage).toBeCalledWith("123", "pop123");
+            expect(getQueueClient).toHaveBeenCalledWith(options.queueName);
+            expect(deleteMessage).toHaveBeenCalledWith("123", "pop123");
         });
         it("should raise error", async () => {
             const error = new Error("something went wrong");

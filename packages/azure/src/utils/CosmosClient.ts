@@ -29,7 +29,7 @@ import * as http from "http";
 import * as path from "path";
 import * as tunnel from "tunnel";
 import * as url from "url";
-import * as uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { isSequenceConflict } from ".";
 import { ICosmosConfiguration, ICosmosQuery, ICosmosQueryClient } from "..";
 import { getCollectionInfo } from "./helpers";
@@ -245,7 +245,7 @@ export class CosmosClient
             if (!this.spInitialized.get(sprocID)) {
                 await this.initializeStoredProcedure(sprocID, collectionId);
             }
-            let docTraceId = uuid.v4();
+            let docTraceId = uuidv4();
             for (const doc of documents) {
                 if (doc.trace && doc.trace instanceof SpanContext) {
                     if (doc.id) {

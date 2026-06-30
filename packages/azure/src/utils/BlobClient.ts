@@ -189,7 +189,7 @@ export class BlobClient implements IBlobClient, IRequireInitialization {
             );
             span.setTag(Tags.HTTP_STATUS_CODE, result._response.status);
 
-            return streamToString(result.readableStreamBody);
+            return streamToString(result.readableStreamBody as NodeJS.ReadableStream);
         } catch (error) {
             this.metrics.increment(
                 BlobMetrics.ReadAsText,

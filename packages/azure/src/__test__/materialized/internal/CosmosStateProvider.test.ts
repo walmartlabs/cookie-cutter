@@ -64,6 +64,6 @@ describe("CosmosStateProvider", () => {
 
     it("throws if multiple documents with same key exist", async () => {
         const provider = await createProvider({}, {});
-        await expect(provider.get(undefined, "key1")).rejects.toThrowError();
+        await expect(provider.get(undefined, "key1")).rejects.toThrow();
     });
 });

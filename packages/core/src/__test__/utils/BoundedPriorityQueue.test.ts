@@ -140,7 +140,7 @@ describe("BoundedPriorityQueue", () => {
         const queue = new BoundedPriorityQueue<number>(1);
         const enqueuePromise = queue.enqueue(1);
         const dequeuePromise = queue.dequeue();
-        expect(() => queue.close()).not.toThrowError();
+        expect(() => queue.close()).not.toThrow();
         await enqueuePromise;
         await dequeuePromise;
     });

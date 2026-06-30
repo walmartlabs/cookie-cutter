@@ -19,7 +19,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import * as sql from "mssql";
 import { Span, Tags, Tracer } from "opentracing";
-import { isArray, isObject } from "util";
+import { isArray, isObject } from "@walmartlabs/cookie-cutter-core";
 import { IMssqlConfiguration, Mode } from "./index";
 
 export enum MsSqlMetadata {
@@ -66,7 +66,10 @@ interface ITableDetails {
 }
 
 class DynamicTableType extends sql.Table {
-    constructor(public name: string, columns?: sql.columns) {
+    constructor(
+        public name: string,
+        columns?: sql.columns
+    ) {
         super(name);
         this.name = name;
         if (columns !== undefined) {

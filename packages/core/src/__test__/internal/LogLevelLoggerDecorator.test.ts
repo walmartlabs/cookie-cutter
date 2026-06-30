@@ -23,9 +23,9 @@ describe("LogLevelLoggerDecorator", () => {
         decorator.warn("test");
         decorator.error("test");
 
-        expect(logger.debug).not.toBeCalled();
-        expect(logger.info).not.toBeCalled();
-        expect(logger.warn).toBeCalled();
-        expect(logger.error).toBeCalled();
+        expect(logger.debug).not.toHaveBeenCalled();
+        expect(logger.info).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalled();
     });
 });

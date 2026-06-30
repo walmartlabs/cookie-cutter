@@ -5,12 +5,15 @@ This source code is licensed under the Apache 2.0 license found in the
 LICENSE file in the root directory of this source tree.
 */
 
-import { isDate, isNumber, isString } from "util";
+import { isDate, isNumber, isString } from "../utils/typeChecks";
 import { ILogger, ILoggerStructuredData, IMetadata } from "../model";
 
 export class MetadataLoggerDecorator implements ILogger {
     private fromMetadata: ILoggerStructuredData;
-    constructor(private readonly logger: ILogger, meta: IMetadata) {
+    constructor(
+        private readonly logger: ILogger,
+        meta: IMetadata
+    ) {
         this.fromMetadata = {};
         if (meta !== undefined) {
             for (const key of Object.keys(meta)) {

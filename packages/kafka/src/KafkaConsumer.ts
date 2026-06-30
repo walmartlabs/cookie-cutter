@@ -74,7 +74,7 @@ export class KafkaConsumer implements IRequireInitialization, IDisposable {
     private pipe = new AsyncPipe<IRawKafkaMessage>();
     private done = false;
     private offsetCommitIntervalMs: number;
-    private timer: NodeJS.Timer;
+    private timer: ReturnType<typeof setTimeout>;
     private groupEpoch: number = 0;
     private brokerMetadataErrors: number = 0;
 

@@ -47,7 +47,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
     protected readonly inputQueue: BoundedPriorityQueue<MessageRef>;
     protected readonly outputQueue: BoundedPriorityQueue<IQueueItem<BufferedDispatchContext>>;
     private lastDispatchedMessageTimestamp: number;
-    private queueValidationTimer?: NodeJS.Timer | undefined;
+    private queueValidationTimer?: ReturnType<typeof setInterval> | undefined;
     private isProcessorClosed: Future<void>;
 
     public constructor(
@@ -117,7 +117,7 @@ export class ConcurrentMessageProcessor extends BaseMessageProcessor implements 
         dispatchRetrier: IRetrier,
         sinkRetrier: IRetrier
     ): Promise<void> {
-        let timer: NodeJS.Timer | undefined;
+        let timer: ReturnType<typeof setInterval> | undefined;
         try {
             if (this.config.emitMetricsForQueues) {
                 timer = setInterval(

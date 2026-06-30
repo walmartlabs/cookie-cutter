@@ -17,7 +17,7 @@ import {
     StateRef,
 } from "@walmartlabs/cookie-cutter-core";
 import { SpanContext } from "opentracing";
-import { isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "@walmartlabs/cookie-cutter-core";
 import { ICosmosConfiguration, CosmosMetadata } from "../..";
 import {
     cosmosMetadata,

@@ -17,10 +17,16 @@ import {
     IRequireInitialization,
     OpenTracingTagKeys,
 } from "@walmartlabs/cookie-cutter-core";
-import * as AWS from "aws-sdk";
-import { PromiseResult } from "aws-sdk/lib/request";
+import {
+    S3Client as AwsS3Client,
+    PutObjectCommand,
+    GetObjectCommand,
+    DeleteObjectCommand,
+    CreateMultipartUploadCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Span, SpanContext, Tags, Tracer } from "opentracing";
-import { isString } from "util";
+import { isString } from "@walmartlabs/cookie-cutter-core";
 import {
     IMultipartUploader,
     IS3Client,
@@ -47,7 +53,7 @@ export enum S3OpenTracingTagKeys {
 }
 
 export class S3Client implements IS3Client, IRequireInitialization {
-    private readonly client: AWS.S3;
+    private readonly client: AwsS3Client;
     private encoder: IMessageEncoder;
     private typeMapper: IMessageTypeMapper;
     private tracer: Tracer;
@@ -55,19 +61,18 @@ export class S3Client implements IS3Client, IRequireInitialization {
     private spanOperationName: string = "S3 Client Call";
 
     constructor(private readonly config: IS3Configuration & IS3PublisherConfiguration) {
-        this.client = new AWS.S3({
+        this.client = new AwsS3Client({
             endpoint: this.config.endpoint,
-            credentials: new AWS.Credentials({
+            credentials: {
                 accessKeyId: this.config.accessKeyId,
                 secretAccessKey: this.config.secretAccessKey,
-            }),
-            sslEnabled: this.config.sslEnabled,
-            s3BucketEndpoint: false,
-            apiVersion: this.config.apiVersion,
-            s3ForcePathStyle: true,
-            httpOptions: {
-                timeout: this.config.timeout,
             },
+            tls: this.config.sslEnabled,
+            forcePathStyle: true,
+            region: "us-east-1",
+            requestHandler: this.config.timeout
+                ? { requestTimeout: this.config.timeout }
+                : undefined,
         });
         this.encoder = config.encoder;
         this.typeMapper = config.typeMapper;
@@ -95,9 +100,9 @@ export class S3Client implements IS3Client, IRequireInitialization {
         span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_CLIENT);
         span.setTag(Tags.COMPONENT, "cookie-cutter-s3");
         span.setTag(Tags.DB_INSTANCE, bucket);
-        span.setTag(Tags.DB_TYPE, AWS.S3.name);
+        span.setTag(Tags.DB_TYPE, "S3");
         span.setTag(Tags.PEER_ADDRESS, this.config.endpoint);
-        span.setTag(Tags.PEER_SERVICE, AWS.S3.name);
+        span.setTag(Tags.PEER_SERVICE, "S3");
         span.setTag(OpenTracingTagKeys.FunctionName, funcName);
         span.setTag(S3OpenTracingTagKeys.BucketName, bucket);
     }
@@ -118,24 +123,17 @@ export class S3Client implements IS3Client, IRequireInitialization {
         };
 
         const encodedBody = Buffer.from(this.encoder.encode(msg));
-        let req: PromiseResult<AWS.S3.PutObjectOutput, AWS.AWSError>;
-        let errorCode;
-        let statusCode;
+        let statusCode: number | undefined;
         try {
-            const params: AWS.S3.Types.PutObjectRequest = {
-                Body: encodedBody,
-                Bucket: bucket,
-                Key: key,
-                Metadata: { [S3Metadata.Type]: msg.type },
-            };
-            req = await this.client.putObject(params).promise();
-            if (req.$response.error) {
-                errorCode = req.$response.error.code;
-                statusCode = req.$response.error.statusCode;
-                throw new Error(
-                    `code: ${req.$response.error.code}, message: ${req.$response.error.message}`
-                );
-            }
+            const result = await this.client.send(
+                new PutObjectCommand({
+                    Body: encodedBody,
+                    Bucket: bucket,
+                    Key: key,
+                    Metadata: { [S3Metadata.Type]: msg.type },
+                })
+            );
+            statusCode = result.$metadata.httpStatusCode;
             this.metrics.increment(S3Metrics.Put, {
                 type,
                 bucket,
@@ -147,13 +145,12 @@ export class S3Client implements IS3Client, IRequireInitialization {
                 type,
                 bucket,
                 result: S3MetricResults.Error,
-                error_code: errorCode,
                 status_code: statusCode,
             });
             throw e;
         } finally {
-            if (req) {
-                span.setTag(Tags.HTTP_STATUS_CODE, req.$response.httpResponse.statusCode);
+            if (statusCode !== undefined) {
+                span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
             }
             span.finish();
         }
@@ -163,30 +160,24 @@ export class S3Client implements IS3Client, IRequireInitialization {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.getObject.name, bucket, key);
 
-        let req: PromiseResult<AWS.S3.GetObjectOutput, AWS.AWSError>;
-        let errorCode;
-        let statusCode;
+        let statusCode: number | undefined;
         try {
-            req = await this.client
-                .getObject({
+            const result = await this.client.send(
+                new GetObjectCommand({
                     Bucket: bucket,
                     Key: key,
                 })
-                .promise();
-            if (req.$response.error) {
-                errorCode = req.$response.error.code;
-                statusCode = req.$response.error.statusCode;
-                throw new Error(
-                    `code: ${req.$response.error.code}, message: ${req.$response.error.message}`
-                );
-            }
+            );
+            statusCode = result.$metadata.httpStatusCode;
+
             let data: T;
-            let type;
-            if (req.$response.data && req.$response.data.Metadata) {
-                type = req.$response.data.Metadata[S3Metadata.Type];
+            let type: string | undefined;
+            if (result.Metadata) {
+                type = result.Metadata[S3Metadata.Type];
             }
-            if (req.$response.data && req.$response.data.Body) {
-                const msg = this.encoder.decode(req.$response.data.Body as Buffer, type);
+            if (result.Body) {
+                const bodyBytes = await result.Body.transformToByteArray();
+                const msg = this.encoder.decode(bodyBytes, type);
                 data = msg.payload;
             }
             this.metrics.increment(S3Metrics.Get, {
@@ -200,13 +191,12 @@ export class S3Client implements IS3Client, IRequireInitialization {
             this.metrics.increment(S3Metrics.Get, {
                 bucket,
                 result: S3MetricResults.Error,
-                error_code: errorCode,
                 status_code: statusCode,
             });
             throw e;
         } finally {
-            if (req) {
-                span.setTag(Tags.HTTP_STATUS_CODE, req.$response.httpResponse.statusCode);
+            if (statusCode !== undefined) {
+                span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
             }
             span.finish();
         }
@@ -216,24 +206,15 @@ export class S3Client implements IS3Client, IRequireInitialization {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.deleteObject.name, bucket, key);
 
-        let req: PromiseResult<AWS.S3.DeleteObjectOutput, AWS.AWSError>;
-        let errorCode;
-        let statusCode;
+        let statusCode: number | undefined;
         try {
-            req = await this.client
-                .deleteObject({
+            const result = await this.client.send(
+                new DeleteObjectCommand({
                     Bucket: bucket,
                     Key: key,
                 })
-                .promise();
-
-            if (req.$response.error) {
-                errorCode = req.$response.error.code;
-                statusCode = req.$response.error.statusCode;
-                throw new Error(
-                    `code: ${req.$response.error.code}, message: ${req.$response.error.message}`
-                );
-            }
+            );
+            statusCode = result.$metadata.httpStatusCode;
             this.metrics.increment(S3Metrics.Delete, {
                 bucket,
                 result: S3MetricResults.Success,
@@ -243,13 +224,12 @@ export class S3Client implements IS3Client, IRequireInitialization {
             this.metrics.increment(S3Metrics.Delete, {
                 bucket,
                 result: S3MetricResults.Error,
-                error_code: errorCode,
                 status_code: statusCode,
             });
             throw e;
         } finally {
-            if (req) {
-                span.setTag(Tags.HTTP_STATUS_CODE, req.$response.httpResponse.statusCode);
+            if (statusCode !== undefined) {
+                span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
             }
             span.finish();
         }
@@ -264,72 +244,62 @@ export class S3Client implements IS3Client, IRequireInitialization {
         const span = this.tracer.startSpan(this.spanOperationName, { childOf: context });
         this.spanLogAndSetTags(span, this.multipartUpload.name, bucket, key);
 
-        let req: PromiseResult<AWS.S3.CreateMultipartUploadOutput, AWS.AWSError>;
         const typeName = this.getTypeName(type);
-        let errorCode;
-        let statusCode;
+        let statusCode: number | undefined;
         try {
-            req = await this.client
-                .createMultipartUpload({
+            const result = await this.client.send(
+                new CreateMultipartUploadCommand({
                     Bucket: bucket,
                     Key: key,
                     Metadata: { [S3Metadata.Type]: typeName },
                 })
-                .promise();
+            );
+            statusCode = result.$metadata.httpStatusCode;
 
-            if (req.$response.error) {
-                errorCode = req.$response.error.code;
-                statusCode = req.$response.error.statusCode;
-                throw new Error(
-                    `code: ${req.$response.error.code}, message: ${req.$response.error.message}`
-                );
+            if (!result.UploadId) {
+                throw new Error(`no uploadId returned in multipart upload request`);
             }
-            if (req.$response.data && req.$response.data.UploadId) {
-                const uploadId = req.$response.data.UploadId;
-                this.metrics.increment(S3Metrics.MultipartUpload, {
-                    type,
-                    bucket,
-                    result: S3MetricResults.Success,
-                });
-                return new MultipartUploader<T>(
-                    this.client,
-                    this.encoder,
-                    this.config.endpoint,
-                    typeName,
-                    bucket,
-                    key,
-                    uploadId,
-                    this.tracer,
-                    span.context()
-                );
-            } else {
-                throw new Error(
-                    `no uploadId returned in multipart upload request, data: ${req.$response.data}}`
-                );
-            }
+
+            this.metrics.increment(S3Metrics.MultipartUpload, {
+                type,
+                bucket,
+                result: S3MetricResults.Success,
+            });
+            return new MultipartUploader<T>(
+                this.client,
+                this.encoder,
+                this.config.endpoint,
+                typeName,
+                bucket,
+                key,
+                result.UploadId,
+                this.tracer,
+                span.context()
+            );
         } catch (e) {
             failSpan(span, e);
             this.metrics.increment(S3Metrics.MultipartUpload, {
                 type,
                 bucket,
                 result: S3MetricResults.Error,
-                error_code: errorCode,
                 status_code: statusCode,
             });
             throw e;
         } finally {
-            if (req) {
-                span.setTag(Tags.HTTP_STATUS_CODE, req.$response.httpResponse.statusCode);
+            if (statusCode !== undefined) {
+                span.setTag(Tags.HTTP_STATUS_CODE, statusCode);
             }
             span.finish();
         }
     }
 
-    public createPresignedReadOnlyUrl(bucket: string, key: string, expiryMs: number): string {
-        return this.client.getSignedUrl("getObject", {
-            Bucket: bucket,
-            Key: key,
-            Expires: expiryMs,
+    public async createPresignedReadOnlyUrl(
+        bucket: string,
+        key: string,
+        expiryMs: number
+    ): Promise<string> {
+        return getSignedUrl(this.client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+            expiresIn: Math.floor(expiryMs / 1000),
         });
     }
 }

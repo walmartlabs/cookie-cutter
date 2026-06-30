@@ -4,15 +4,15 @@
     "version": "0.0.0",
     "license": "Apache-2.0",
     "dependencies": {
-        "@walmartlabs/cookie-cutter-core": "~1.6.0-beta",
-        "@walmartlabs/cookie-cutter-amqp": "~1.6.0-beta"
+        "@walmartlabs/cookie-cutter-core": "^1.6.0-beta",
+        "@walmartlabs/cookie-cutter-amqp": "^1.6.0-beta"
     },
     "scripts": {
         "build": "tsc",
         "start:producer": "node dist/producer",
         "start:consumer": "node dist/consumer",
         "test": "echo '- no tests -'",
-        "lint": "tslint --project tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }
 }

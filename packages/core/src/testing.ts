@@ -6,7 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 import { SpanContext } from "opentracing";
-import { isArray } from "util";
+import { isArray } from "./utils/typeChecks";
 import {
     CapturingOutputSink,
     ErrorHandlingMode,

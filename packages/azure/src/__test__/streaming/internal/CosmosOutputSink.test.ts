@@ -86,7 +86,7 @@ describe("streaming CosmosOutputSink", () => {
     const ms = 11;
     const tooManyRequestErrorBody = `DB Query returned FALSE: createDocument failed on document at index: 0 stream_id: ${tooManyRequestsErrorKey}, sn: 0.`; // keep the strings synced to ../resources/bulkInsertSproc.js
     beforeEach(() => {
-        (bulkInsert = jest.fn().mockImplementation((_, partitionKey) => {
+        ((bulkInsert = jest.fn().mockImplementation((_, partitionKey) => {
             if (partitionKey === tooManyRequestsErrorKey) {
                 counter++;
                 if (counter >= numErrors + 1) {
@@ -119,7 +119,7 @@ describe("streaming CosmosOutputSink", () => {
                     upsert: jest.fn(),
                     bulkInsert,
                 };
-            });
+            }));
     });
     afterEach(() => {
         tooManyRequestsErrorKey = "tooMany";

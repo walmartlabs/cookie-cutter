@@ -17,7 +17,7 @@ import {
     IRequireInitialization,
 } from "@walmartlabs/cookie-cutter-core";
 import { StatsD } from "hot-shots";
-import { isNumber } from "util";
+import { isNumber } from "@walmartlabs/cookie-cutter-core";
 
 export interface IStatsDConfiguration {
     /**
@@ -193,7 +193,6 @@ class StatsDMetrics implements IMetrics, IRequireInitialization, IDisposable {
     public async dispose(): Promise<void> {
         if (this.client) {
             await new Promise<void>((resolve, reject) => {
-                // @ts-ignore
                 this.client.close((err: Error | undefined) => {
                     if (err) {
                         this.logger.error(`Unable to close StatsdClient: ${err}`);

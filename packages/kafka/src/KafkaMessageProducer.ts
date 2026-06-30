@@ -14,7 +14,7 @@ import {
 } from "@walmartlabs/cookie-cutter-core";
 import * as kafkajs from "kafkajs";
 import { FORMAT_HTTP_HEADERS, Span, Tags, Tracer } from "opentracing";
-import * as uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import {
     IKafkaBrokerConfiguration,
     IKafkaPublisherConfiguration,
@@ -84,7 +84,7 @@ export class KafkaMessageProducer {
     ) {
         const spans: Span[] = [];
         try {
-            const batchId = uuid.v4();
+            const batchId = uuidv4();
             for (const msg of messages) {
                 const span = this.createSpanForTopic(msg, batchId, topic);
                 this.injectTraceIntoHeaders(span, msg);

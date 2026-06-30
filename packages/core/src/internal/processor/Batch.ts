@@ -9,7 +9,10 @@ export class Batch<T> {
     public readonly items: T[];
     private waited: boolean;
 
-    constructor(private readonly min, private readonly max) {
+    constructor(
+        private readonly min,
+        private readonly max
+    ) {
         this.items = [];
         this.waited = false;
     }

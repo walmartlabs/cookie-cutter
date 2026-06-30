@@ -6,8 +6,15 @@ LICENSE file in the root directory of this source tree.
 */
 
 import ms = require("ms");
-import { isArray, isBoolean, isFunction, isNullOrUndefined, isNumber, isString } from "util";
 import { IClassType } from "./model";
+import {
+    isArray,
+    isBoolean,
+    isFunction,
+    isNullOrUndefined,
+    isNumber,
+    isString,
+} from "./utils/typeChecks";
 
 export type ValueConvertFn = (val: any) => any;
 
@@ -264,7 +271,8 @@ export const converters = {
             if (isNumber(val)) {
                 sourceTime = val;
             } else if (isString(val)) {
-                sourceTime = ms(val);
+                // @ts-ignore - ms@2.1.3 accepts strings despite type definitions
+                sourceTime = ms(val) as number;
                 source = TimeSpanTargetUnit.Milliseconds;
             } else {
                 throw new Error(`unable to convert '${val}' of type '${typeof val}' to timespan`);
