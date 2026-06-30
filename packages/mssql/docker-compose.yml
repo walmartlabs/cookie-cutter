@@ -1,10 +1,16 @@
-version: '2'
+version: '3.8'
 services:
   ms-sql:
-    image: mcr.microsoft.com/mssql/server:2017-latest
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    platform: linux/amd64
     ports:
       - "1433:1433"
     environment:
       ACCEPT_EULA: 'Y'
-      SA_PASSWORD: ${MSSQL_PASSWORD}
-    command: /opt/mssql/bin/sqlservr
+      MSSQL_SA_PASSWORD: ${MSSQL_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" -No 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s

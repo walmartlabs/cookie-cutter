@@ -338,35 +338,6 @@ jobs:
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               yarn build && node ./.ci/deploy.js
 
-  publish-to-github-packages:
-    name: Publish to GitHub Packages
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
-    needs: smoke
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Setup Ubuntu Node 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: 'yarn'
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@walmartlabs"
-      - name: Install Yarn
-        run: yarn set version 1.22.22
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile
-      - name: Publish to GitHub Packages
-        env:
-          NPM_REGISTRY: https://npm.pkg.github.com
-        run: yarn build && node ./.ci/deploy.js
-
   publish-to-github-releases:
     name: Publish to GitHub Releases
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
@@ -393,7 +364,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG=${GITHUB_REF#refs/tags/}
-          echo "Uploading release assets for tag: $TAG"
+          echo "Creating/updating release for tag: $TAG"
+          gh release create "$TAG" --generate-notes --title "$TAG" || true
+          echo "Uploading release assets"
           for tgz in release-assets/*.tgz; do
             echo "  uploading $tgz"
             gh release upload "$TAG" "$tgz" --clobber

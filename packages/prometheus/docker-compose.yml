@@ -1,7 +1,7 @@
-version: '3.7'
+version: '3.8'
 services:
   prometheus:
-    image: prom/prometheus:v2.15.2
+    image: prom/prometheus:v2.55.0
     volumes:
       - ./config/:/etc/prometheus/
     command:
@@ -9,3 +9,11 @@ services:
     ports:
       - 9090:9090
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

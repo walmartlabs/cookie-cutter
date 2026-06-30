@@ -28,7 +28,7 @@
     "scripts": {
         "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "export HOST_IP=$(node -e \"const os = require('os'); const interfaces = os.networkInterfaces(); for (const name of Object.keys(interfaces)) { for (const iface of interfaces[name] ?? []) { if (iface.family === 'IPv4' && !iface.internal) { console.log(iface.address); process.exit(0); } } } console.log('127.0.0.1');\") && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
+        "integrate": "export HOST_IP=$(node -e \"const os = require('os'); const interfaces = os.networkInterfaces(); for (const name of Object.keys(interfaces)) { for (const iface of interfaces[name] ?? []) { if (iface.family === 'IPv4' && !iface.internal) { console.log(iface.address); process.exit(0); } } } console.log('127.0.0.1');\") && docker compose up -d --wait && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker compose down; bash -c \"exit $R\"",
         "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }

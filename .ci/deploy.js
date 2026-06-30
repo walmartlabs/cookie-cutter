@@ -3,8 +3,6 @@ const { execSync } = require("child_process");
 const { join } = require("path");
 const { copyFileSync, unlinkSync } = require("fs");
 
-const NPM_REGISTRY = process.env.NPM_REGISTRY || "https://registry.npmjs.org";
-
 function yarn(cmd, parseResponse = true) {
     const buffer = execSync(`yarn ${cmd}`, { encoding: "utf-8" });
     if (parseResponse) {
@@ -19,7 +17,7 @@ function yarn(cmd, parseResponse = true) {
 
 function npm(cmd) {
     try {
-        const buffer = execSync(`npm ${cmd} --registry=${NPM_REGISTRY} --json`, { encoding: "utf-8" });
+        const buffer = execSync(`npm ${cmd} --json`, { encoding: "utf-8" });
         return JSON.parse(buffer);
     } catch (e) {
         return JSON.parse(e.stdout);
@@ -27,44 +25,33 @@ function npm(cmd) {
 }
 
 function filter(workspace) {
-    const paths = [ ];
+    const paths = [];
     for (const item of Object.keys(workspace)) {
         if (workspace[item].location.startsWith("packages/")) {
             paths.push(workspace[item].location);
         }
     }
-
     return paths;
 }
 
 function deploy(packagePath) {
     const fullPath = join(__filename, "..", "..", packagePath);
     const { name, version } = require(join(fullPath, "package.json"));
-    const tag = getTag(version);
+    const tag = version.indexOf("-") > 0 ? "next" : "latest";
     const info = npm(`show ${name}`);
-    let deployed = info.versions;
-    if (info.error && info.error.code === "E404") {
-        deployed = [];
-    }
+    const deployed = info.error && info.error.code === "E404" ? [] : info.versions;
 
     if (deployed.filter((v) => semver.eq(v, version)).length > 0) {
         console.log(`${name}@${version} is already deployed, skipping`);
     } else {
-        console.log(`publishing ${name}@${version} to ${tag} (${NPM_REGISTRY})`);
-        copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".yarnignore"))
+        console.log(`publishing ${name}@${version} to ${tag}`);
+        copyFileSync(join(__dirname, "..", ".yarnignore"), join(fullPath, ".yarnignore"));
         try {
-            const registryArg = NPM_REGISTRY !== "https://registry.npmjs.org" ? ` --registry=${NPM_REGISTRY}` : "";
-            yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive${registryArg}`, false);
+            yarn(`publish --cwd="${fullPath}" --tag=${tag} --access=public --non-interactive`, false);
         } finally {
             unlinkSync(join(fullPath, ".yarnignore"));
         }
     }
-}
-
-function getTag(version) {
-    // 1.1.0-beta.1 goes to next
-    // 1.1.0 goes to latest
-    return version.indexOf("-") > 0 ? "next" : "latest";
 }
 
 console.log("npm version: ", execSync(`npm --version`, { encoding: "utf-8" }).toString());

@@ -26,7 +26,7 @@
     "scripts": {
         "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "export MSSQL_PASSWORD=\"$(openssl rand -base64 32)\" && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
+        "integrate": "if [ \"$(uname -m)\" = \"arm64\" ] || [ \"$(uname -m)\" = \"aarch64\" ]; then echo 'SKIP: MSSQL SQL Server image does not run under QEMU emulation on ARM64. Requires an x86_64 host or Rancher Desktop with Rosetta 2 enabled.'; exit 0; fi && export MSSQL_PASSWORD=\"$(openssl rand -base64 32)\" && docker compose up -d --wait && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker compose down; bash -c \"exit $R\"",
         "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }

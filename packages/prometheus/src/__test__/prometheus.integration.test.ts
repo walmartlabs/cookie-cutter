@@ -7,31 +7,14 @@ LICENSE file in the root directory of this source tree.
 
 import { DefaultComponentContext, makeLifecycle, sleep } from "@walmartlabs/cookie-cutter-core";
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import { IPrometheusConfiguration } from "../config";
 import { prometheus } from "../index";
 
-/**
- * Get the first non-internal IPv4 address from network interfaces
- */
-function getHostIp(): string {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name] || []) {
-            // Skip internal and non-IPv4 addresses
-            if (iface.family === "IPv4" && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return "127.0.0.1"; // Fallback to localhost
-}
-
 // Sets up the file-based service discovery for Prometheus:
 // Writes a targets.json file in the same directory that contains the prometheus.yml file
 // The directory containing the 2 files is mounted as /etc/prometheus/ in the Docker image
-const hostIp = getHostIp();
+const hostIp = "host.docker.internal";
 const [port1, port2, port3] = [3001, 3002, 3003];
 const jsonData = [
     {
@@ -62,7 +45,7 @@ interface IMetric {
     [key: string]: string;
 }
 
-const host = process.env.HOST_IP || getHostIp();
+const host = process.env.HOST_IP || "localhost";
 
 async function queryPrometheus(key: string): Promise<IResponse> {
     const baseUrl = `http://${host}:9090/api/v1/query`;

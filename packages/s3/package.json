@@ -26,7 +26,7 @@
     "scripts": {
         "build": "tsc",
         "test": "jest --config=../../jest.unit.config.js --rootDir=.",
-        "integrate": "export MINIO_ACCESS_KEY=\"$(openssl rand -base64 32)\" MINIO_SECRET_KEY=\"$(openssl rand -base64 32)\" && docker-compose up -d && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker-compose down; bash -c \"exit $R\"",
+        "integrate": "export MINIO_ACCESS_KEY=\"$(openssl rand -base64 32)\" MINIO_SECRET_KEY=\"$(openssl rand -base64 32)\" && docker compose up -d --wait && jest --config=../../jest.integration.config.js --rootDir=.; R=$?; docker compose down; bash -c \"exit $R\"",
         "lint": "eslint . --ext .ts,.tsx",
         "lint:fix": "yarn run lint --fix"
     }

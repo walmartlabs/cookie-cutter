@@ -165,7 +165,7 @@ describe("s3Client", () => {
                 undefined,
                 Buffer.name,
                 Buffer.from(s3Object),
-                "invalid_bucket",
+                "nonexistent-test-bucket",
                 "clientkey"
             );
         } catch (e) {

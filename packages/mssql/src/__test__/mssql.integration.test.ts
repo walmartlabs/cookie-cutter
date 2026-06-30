@@ -189,10 +189,9 @@ describe("Microsoft SQL", () => {
     describe("MssqlSink that saves records to an existing database", () => {
         let client: sql.ConnectionPool;
         beforeAll(async () => {
-            // even though docker-compose up finished successfully there are
-            // sometimes intermittent connection issues so we wait a little before
-            // trying to establish a connection with the db.
-            await sleep(10000);
+            // docker compose --wait ensures the container is healthy before jest starts,
+            // but SQL Server may still need a brief moment to be fully ready for connections
+            await sleep(2000);
             client = await testClient();
         });
 
