@@ -6,7 +6,7 @@
     "packages/*",
     "docs/website",
     "examples/*"
-  ],
+  ], 
   "engines": {
     "node": ">=24.0.0"
   },
