@@ -12,6 +12,7 @@ import {
     CosmosHeaders,
     StoredProcedureDefinition,
 } from "@azure/cosmos";
+import { ClientSecretCredential } from "@azure/identity";
 import {
     DefaultComponentContext,
     failSpan,
@@ -124,11 +125,27 @@ export class CosmosClient
             this.agent = new Agent(requestAgentOptions);
         }
 
-        this.client = new Client({
-            endpoint: config.url,
-            key: config.key,
-            agent: this.agent,
-        });
+        if (config.key) {
+            this.client = new Client({
+                endpoint: config.url,
+                key: config.key,
+                agent: this.agent,
+            });
+        } else if (config.dcswClientId && config.dcswClientSecret && config.dcswTenantId) {
+            this.client = new Client({
+                endpoint: config.url,
+                aadCredentials: new ClientSecretCredential(
+                    config.dcswTenantId,
+                    config.dcswClientId,
+                    config.dcswClientSecret
+                ),
+                agent: this.agent,
+            });
+        } else {
+            throw new Error(
+                "CosmosClient requires either 'key' (master key) or 'dcswClientId', 'dcswClientSecret', and 'dcswTenantId' (DCS-W SPN auth)"
+            );
+        }
     }
 
     public async initialize(context: IComponentContext) {
