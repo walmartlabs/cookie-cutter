@@ -25,6 +25,29 @@ export class CosmosConfiguration implements ICosmosConfiguration {
     public get key(): string {
         return config.noop();
     }
+    @config.field(config.converters.string)
+    public set dcswClientId(_: string) {
+        config.noop();
+    }
+    public get dcswClientId(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set dcswClientSecret(_: string) {
+        config.noop();
+    }
+    public get dcswClientSecret(): string {
+        return config.noop();
+    }
+
+    @config.field(config.converters.string)
+    public set dcswTenantId(_: string) {
+        config.noop();
+    }
+    public get dcswTenantId(): string {
+        return config.noop();
+    }
 
     @config.field(config.converters.string)
     public set databaseId(_: string) {
