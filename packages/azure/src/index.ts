@@ -19,7 +19,10 @@ export const Streaming = st;
 
 export interface ICosmosConfiguration {
     readonly url: string;
-    readonly key: string;
+    readonly key?: string;
+    readonly dcswClientId?: string;
+    readonly dcswClientSecret?: string;
+    readonly dcswTenantId?: string;
     readonly databaseId: string;
     readonly collectionId: string;
     readonly encoder: IMessageEncoder;
