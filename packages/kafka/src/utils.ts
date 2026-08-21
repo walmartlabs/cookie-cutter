@@ -9,10 +9,10 @@ import { getRootProjectPackageInfo } from "@walmartlabs/cookie-cutter-core";
 import { CompressionCodecs, CompressionTypes } from "kafkajs";
 import LZ4Codec from "@2l/kafkajs-lz4";
 import * as SnappyCodec from "kafkajs-snappy";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 export function generateClientId(clientIdPrefix?: string) {
-    const clientId = `${getRootProjectPackageInfo().name}-${uuidv4()}`;
+    const clientId = `${getRootProjectPackageInfo().name}-${randomUUID()}`;
     if (clientIdPrefix) {
         return `${clientIdPrefix}-${clientId}`;
     }
