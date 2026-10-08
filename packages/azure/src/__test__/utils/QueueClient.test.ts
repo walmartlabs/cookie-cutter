@@ -231,6 +231,12 @@ describe("QueueClient", () => {
             messages.forEach((message, i) => {
                 expect(message.headers[QueueMetadata.MessageId]).toBe(mockMessages[i].messageId);
                 expect(message.headers[QueueMetadata.PopReceipt]).toBe(mockMessages[i].popReceipt);
+                expect(message.headers[QueueMetadata.TimeToNextVisible]).toBe(
+                    mockMessages[i].nextVisibleOn.toUTCString()
+                );
+                expect(message.headers[QueueMetadata.ExpirationTime]).toBe(
+                    mockMessages[i].expiresOn.toUTCString()
+                );
                 expect(message.payload).toStrictEqual({ testKey: "testValue" });
             });
             expect(receiveMessages).toHaveBeenCalledWith({

@@ -122,6 +122,10 @@ export class QueueInputSource implements IInputSource, IRequireInitialization {
                 const metadata: IMetadata = {
                     [QueueMetadata.VisibilityTimeout]:
                         message.headers[QueueMetadata.VisibilityTimeout],
+                    [QueueMetadata.TimeToNextVisible]:
+                        message.headers[QueueMetadata.TimeToNextVisible],
+                    [QueueMetadata.ExpirationTime]:
+                        message.headers[QueueMetadata.ExpirationTime],
                     [QueueMetadata.DequeueCount]: parseInt(
                         message.headers[QueueMetadata.DequeueCount] || "1",
                         10

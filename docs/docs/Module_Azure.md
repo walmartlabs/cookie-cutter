@@ -349,6 +349,7 @@ The following metadata is available
 | QueueMetadata.TimeToLiveMs | When passed into msg metadata via `publish`/`store`: The time-to-live interval for the message, in milliseconds. |
 | QueueMetadata.TimeToLive | When read from the MessageRef metadata: Returns the date when the message will expire in string format: "Tue, 21 Apr 2020 16:33:23 GMT" |
 | QueueMetadata.DequeueCount | Number of times a message has been dequeued  |
-| QueueMetadata.TimeToNextVisible | not used |
+| QueueMetadata.TimeToNextVisible | When read from the MessageRef metadata: Returns the date when the message will next be visible in string format: "Tue, 21 Apr 2020 16:33:23 GMT" |
+| QueueMetadata.ExpirationTime | When read from the MessageRef metadata: Returns the date when the message will expire in string format: "Tue, 21 Apr 2020 16:33:23 GMT" |
 | QueueMetadata.MessageId | The message identifier of the message |
 | QueueMetadata.PopReceipt | A valid pop receipt value returned from an earlier call to the Get Messages or Update Message operation |

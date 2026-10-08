@@ -107,6 +107,7 @@ export enum QueueMetadata {
     TimeToLiveMs = "queue.time_to_live_ms",
     DequeueCount = "queue.dequeue_count",
     TimeToNextVisible = "queue.time_to_next_visible",
+    ExpirationTime = "queue.expiration_time",
     MessageId = "queue.message_id",
     PopReceipt = "queue.pop_receipt",
 }
