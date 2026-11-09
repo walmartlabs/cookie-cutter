@@ -1,6 +1,6 @@
 {
     "name": "@walmartlabs/cookie-cutter-mssql",
-    "version": "1.6.0-beta.7",
+    "version": "1.6.0-beta.8",
     "license": "Apache-2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,7 +13,7 @@
         "url": "https://github.com/walmartlabs/cookie-cutter/issues"
     },
     "dependencies": {
-        "mssql": "12.6.0",
+        "mssql": "12.7.14",
         "opentracing": "0.14.7"
     },
     "peerDependencies": {
